@@ -23,8 +23,11 @@ public class Piece {
 }
 public class Site {
  public string Name;public PointF P;public int Owner=-1;public float Capture;
- public RectangleF Body {get{return new RectangleF(P.X-65,P.Y-65,48,48);}}
- public Site(string name,int x,int y){Name=name;P=new PointF(x,y);}
+ public const float CaptureRadius=49;
+ public readonly RectangleF Body;
+ public Site(string name,int x,int y,int bodyX,int bodyY){
+  Name=name;P=new PointF(x,y);Body=new RectangleF(bodyX,bodyY,2*Campaign.Tile,2*Campaign.Tile);
+ }
 }
 public class Shot {public PointF A,B;public float Life;public int Side;public bool Shell;}
 public partial class Campaign {
@@ -46,7 +49,7 @@ public partial class Campaign {
   new TypeInfo("miner","采矿车","factory",195,310,0,0,89,38,9,0)};
  public static TypeInfo Info(string k){return Array.Find(Types,t=>t.Key==k);}
  public readonly List<Piece> Units=new List<Piece>();public readonly List<Shot> Shots=new List<Shot>();
- public readonly Site[] Sites={new Site("西岸仓库",172,214),new Site("中央货场",660,444),new Site("港务中心",1330,292)};
+ public readonly Site[] Sites={new Site("西岸仓库",172,214,96,144),new Site("中央货场",660,444,576,408),new Site("港务中心",1330,292,1265,227)};
  public int[] Funds={1150,540};public bool[] Upgraded={false,true};public float Time,Hold,Scan; public bool Landing,Won,Lost;public string Radio="展开工程车，在西南建立登陆基地。";
  int seq,aiTurn,wave;float nextEnemyRefinery=3,aiClock,nextWave=92;bool counter;
  public readonly bool Tutorial,Assisted;
@@ -205,7 +208,7 @@ public partial class Campaign {
   foreach(var o in Units.ToArray())UnitTick(o,dt,power[o.Side]);
   Units.RemoveAll(o=>!o.Alive&&o.Dead>24);
   foreach(var s in Sites){
-   bool blue=Live(0).Any(o=>o.T.Foot&&Dist(o.P,s.P)<49),red=Live(1).Any(o=>o.T.Foot&&Dist(o.P,s.P)<49);
+   bool blue=Live(0).Any(o=>o.T.Foot&&Dist(o.P,s.P)<Site.CaptureRadius),red=Live(1).Any(o=>o.T.Foot&&Dist(o.P,s.P)<Site.CaptureRadius);
    if(blue!=red){s.Capture=Math.Max(-5,Math.Min(5,s.Capture+(blue?1:-1)*dt));
     int owner=s.Capture>=5?0:s.Capture<=-5?1:s.Owner;
     if(owner!=s.Owner){s.Owner=owner;if(owner==0||Explored(0,s.P))SetEvent(s.P,s.Name+"易手");Radio=s.Name+(owner==0?"已由我方控制。":"已被敌军夺取。");}}

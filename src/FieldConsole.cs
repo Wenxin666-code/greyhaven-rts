@@ -24,10 +24,6 @@ partial class CommandWindow {
    if(o.T.Key=="barracks"){DrawTiles(g,Campaign.Muster(lot),teal,true);foreach(var seat in o.Berths)Rect(g,seat.X-3,seat.Y-3,6,6,gold);}
    for(int i=-1;i<=1;i++){float x=o.P.X+i*12,y=gate.Top+8;Line(g,x-4,y,x,y+4,gold);Line(g,x,y+4,x+4,y,gold);}
   }
-  foreach(var s in world.Sites.Take(2)){
-   var p=s.P;Rect(g,p.X-42,p.Y-25,84,50,Color.FromArgb(110,ink));
-   for(int i=0;i<8;i++)Line(g,p.X-39+i*10,p.Y+24,p.X-35+i*10,p.Y+18,gold,2);
-  }
   if(place!=null||showGrid){using(var pen=new Pen(Color.FromArgb(65,pale))){
    for(int x=0;x<Campaign.Width;x+=Campaign.Tile)g.DrawLine(pen,x,100,x,Campaign.Height);
    for(int y=120;y<Campaign.Height;y+=Campaign.Tile)g.DrawLine(pen,0,y,Campaign.Width,y);}}
@@ -134,17 +130,18 @@ partial class CommandWindow {
   }
   if(key=="hold")return "保持泊位畅通。运输船靠岸还需 "+Math.Ceiling(Math.Max(0,world.HoldTime-world.Hold))+" 秒。";
   var siteGoal=world.Sites[key=="west"?0:2];
-  if(own.Any(o=>o.T.Foot&&Campaign.Dist(o.P,siteGoal.P)<49))return "我方步兵已进入占领区。请保持驻留，并清除圈内的敌方步兵以继续占领。";
+  if(own.Any(o=>o.T.Foot&&Campaign.Dist(o.P,siteGoal.P)<Greyhaven.Site.CaptureRadius))return "我方步兵已进入占领区。请保持驻留，并清除圈内的敌方步兵以继续占领。";
   if(!selection.Any(o=>o.T.Foot))return "点「定位本步」选中步兵，再左键金圈内的空地。只有步兵能占点。";
   return key=="west"?"左键金圈内的空地，让步兵驻留到仓库变蓝。":"带上步兵和战车。按 A 后左键港务中心，清除守军并占领。";
  }
  bool nearbyPointNeedsFoot(){
-  return selection.Any(o=>!o.T.Building&&!o.T.Foot&&world.Sites.Any(s=>s.Owner!=0&&Campaign.Dist(s.P,o.P)<60&&!world.Live(0).Any(f=>f.T.Foot&&Campaign.Dist(f.P,s.P)<49)));
+  return selection.Any(o=>!o.T.Building&&!o.T.Foot&&world.Sites.Any(s=>s.Owner!=0&&Campaign.Dist(s.P,o.P)<60&&!world.Live(0).Any(f=>f.T.Foot&&Campaign.Dist(f.P,s.P)<Greyhaven.Site.CaptureRadius)));
  }
  void DrawCoach(Graphics g){
   string advice=world.Coach();
   if(!world.Tutorial&&advice==null&&nearbyPointNeedsFoot())advice="车辆可以掩护占点。把一个步兵班带进据点圈内，已装载的步兵要先下车。";
   if(!world.Tutorial&&advice==null)return;
+  hits.Add(new HitBox{Box=new RectangleF(16,MapTop+9,810,65),Run=()=>{}});
   Plate(g,new RectangleF(16,MapTop+9,810,65),panel,C("#b49457"));
   Rect(g,24,MapTop+16,5,24,gold);Rect(g,33,MapTop+16,115,24,gold);
   Txt(g,world.Tutorial?"训练  "+(world.Lesson+1)+" / "+Campaign.Lessons.Length:"战术提醒",40,MapTop+16,16,ink,true);

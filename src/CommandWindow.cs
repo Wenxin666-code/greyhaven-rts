@@ -35,9 +35,9 @@ partial class CommandWindow:Form {
   painted["ore"]=OreSprites();
   foreach(var t in Campaign.Types.Where(t=>t.Foot))atlas[t.Key]=WreckSheet(t);
   Restart();pulse.Interval=15;pulse.Tick+=(s,e)=>{double now=watch.Elapsed.TotalSeconds;float dt=(float)Math.Min(.12,now-last);last=now;
-   if(!briefing&&!paused&&!world.Won&&!world.Lost){for(int i=0;i<speed;i++)world.Tick(dt);selection.RemoveAll(o=>!o.Alive||o.Carrier!=null);}
+   if(!briefing&&!paused&&!world.Won&&!world.Lost){if(ContainsFocus&&Control.MouseButtons==MouseButtons.None)EdgeScroll(dt);else edgeDwell=0;for(int i=0;i<speed;i++)world.Tick(dt);selection.RemoveAll(o=>!o.Alive||o.Carrier!=null);}
    if(!briefing||hudDirty)Invalidate();};pulse.Start(); FormClosed+=(s,e)=>{pulse.Stop();pulse.Dispose();if(timerPrecision)timeEndPeriod(1);ground.Dispose();projectedGround.Dispose();radarGround.Dispose();if(terrainView!=null)terrainView.Dispose();ReleaseFrame();ClearLabelCache();ClearStampCache();foreach(var b in painted.Values)b.Dispose();foreach(var i in atlas.Values)i.Dispose();foreach(var f in fonts.Values)f.Dispose();};
-  Deactivate+=(s,e)=>{frontEnterHeld=false;tHeld=false;selectType=null;if(!briefing&&!world.Won&&!world.Lost)paused=true;drag=false;panning=false;Capture=false;};
+  Deactivate+=(s,e)=>{ResetEdgeScroll();frontEnterHeld=false;tHeld=false;selectType=null;if(!briefing&&!world.Won&&!world.Lost)paused=true;drag=false;panning=false;Capture=false;};
  }
  static Bitmap WreckSheet(TypeInfo t){
   using(var stream=typeof(CommandWindow).Assembly.GetManifestResourceStream("Greyhaven.Art."+t.Key+".png"))
@@ -51,7 +51,7 @@ partial class CommandWindow:Form {
   int dark=1,caption=ColorTranslator.ToWin32(ink),text=ColorTranslator.ToWin32(pale);
   DwmSetWindowAttribute(Handle,20,ref dark,4);DwmSetWindowAttribute(Handle,35,ref caption,4);DwmSetWindowAttribute(Handle,36,ref text,4);
  }
- void Restart(){missionPicker=false;hudDirty=true;drag=false;Capture=false;Array.Clear(bookmarks,0,bookmarks.Length);selectType=null;tHeld=false;markedPoint=null;markedEnemy=null;camera=new PointF(255,465);zoom=1.7f;sweep=false;panning=false;syncMarch=true;queueOpen=false;queueIndex=0;world=new Campaign();selection.Clear();selection.Add(world.Units[0]);briefing=true;paused=false;help=false;army=false;place=null;attack=false;speed=1;}
+ void Restart(){ResetEdgeScroll();missionPicker=false;hudDirty=true;drag=false;Capture=false;Array.Clear(bookmarks,0,bookmarks.Length);selectType=null;tHeld=false;markedPoint=null;markedEnemy=null;camera=new PointF(255,465);zoom=1.7f;sweep=false;panning=false;syncMarch=true;queueOpen=false;queueIndex=0;world=new Campaign();selection.Clear();selection.Add(world.Units[0]);briefing=true;paused=false;help=false;army=false;place=null;attack=false;speed=1;}
  Font F(float size,bool bold){string key=size.ToString()+bold;Font f;if(!fonts.TryGetValue(key,out f))fonts[key]=f=new Font("Microsoft YaHei UI",size,bold?FontStyle.Bold:FontStyle.Regular,GraphicsUnit.Pixel);return f;}
  void Txt(Graphics g,string s,float x,float y,float size,Color c,bool bold=false){var font=F(size,bold);
   if(!drawingClient){using(var b=new SolidBrush(c))g.DrawString(s,font,b,x,y,StringFormat.GenericTypographic);return;}
@@ -235,7 +235,7 @@ partial class CommandWindow:Form {
   }
   attack=false;
  }
- protected override void OnMouseDown(MouseEventArgs e){selectType=null;base.OnMouseDown(e);hudDirty=true;mouse=ToScreenPoint(e);
+ protected override void OnMouseDown(MouseEventArgs e){selectType=null;base.OnMouseDown(e);edgeDwell=0;hudDirty=true;mouse=ToScreenPoint(e);
   if(e.Button==MouseButtons.Left){var b=hits.LastOrDefault(h=>h.Box.Contains(mouse));if(b!=null){b.Run();Invalidate();return;}}
   if(briefing||paused||world.Won||world.Lost||mouse.X<0||mouse.X>=MW||mouse.Y<MapTop||mouse.Y>MapTop+MH)return;
   var p=WorldOf(mouse);
@@ -249,7 +249,7 @@ partial class CommandWindow:Form {
   if(place!=null){if(world.Build(place,p))place=null;return;}
   start=mouse;drag=true;dragged=false;Capture=true;
  }
- protected override void OnMouseMove(MouseEventArgs e){base.OnMouseMove(e);var old=mouse;mouse=ToScreenPoint(e);if(briefing&&old!=mouse)hudDirty=true;if(old!=mouse&&(old.X>=MW||mouse.X>=MW||old.Y<MapTop||mouse.Y<MapTop||old.Y>=MapTop+MH||mouse.Y>=MapTop+MH))hudDirty=true;if(panning){Pan(panPoint.X-mouse.X,panPoint.Y-mouse.Y);panPoint=mouse;Invalidate();return;}if(drag&&Campaign.Dist(start,mouse)>6)dragged=true;}
+ protected override void OnMouseMove(MouseEventArgs e){base.OnMouseMove(e);pointerInside=true;var old=mouse;mouse=ToScreenPoint(e);if(briefing&&old!=mouse)hudDirty=true;if(old!=mouse&&(old.X>=MW||mouse.X>=MW||old.Y<MapTop||mouse.Y<MapTop||old.Y>=MapTop+MH||mouse.Y>=MapTop+MH))hudDirty=true;if(panning){Pan(panPoint.X-mouse.X,panPoint.Y-mouse.Y);panPoint=mouse;Invalidate();return;}if(drag&&Campaign.Dist(start,mouse)>6)dragged=true;}
  protected override void OnMouseUp(MouseEventArgs e){base.OnMouseUp(e);hudDirty=true;if(panning){panning=false;Capture=false;return;}if(!drag)return;drag=false;Capture=false;mouse=ToScreenPoint(e);
   if(mouse.X<0||mouse.X>=MW||mouse.Y<MapTop||mouse.Y>=MapTop+MH){if(!dragged)return;}
   if(dragged){attack=false;if((ModifierKeys&Keys.Shift)==0)selection.Clear();var r=DragRect();foreach(var u in world.Live(0).Where(u=>!u.T.Building&&r.Contains(ScreenOf(u.P))))if(!selection.Contains(u))selection.Add(u);return;}
@@ -259,7 +259,7 @@ partial class CommandWindow:Form {
  protected override void OnKeyDown(KeyEventArgs e){base.OnKeyDown(e);hudDirty=true;if(briefing){if(e.KeyCode==Keys.Enter){if(frontEnterHeld)return;frontEnterHeld=true;}FrontKey(e.KeyCode);return;}
   if(world.Won||world.Lost)return;
   if(e.KeyCode==Keys.Escape&&(place!=null||attack||sweep)){place=null;attack=false;sweep=false;return;}
-  if(e.KeyCode==Keys.Pause||e.KeyCode==Keys.Escape){paused=!paused;help=false;return;}if(e.KeyCode==Keys.F5){paused=true;help=true;return;}if(paused)return;
+  if(e.KeyCode==Keys.Pause||e.KeyCode==Keys.Escape){paused=!paused;edgeDwell=0;help=false;return;}if(e.KeyCode==Keys.F5){paused=true;help=true;return;}if(paused)return;
   if(FieldKey(e))return;
   if(e.KeyCode==Keys.S){foreach(var unit in selection)world.Halt(unit);markedPoint=null;markedEnemy=null;attack=false;world.Radio="所选部队已停止。";}
   if(e.KeyCode==Keys.G)showGrid=!showGrid;

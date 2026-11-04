@@ -16,7 +16,7 @@ class WindowChecks {
  }
  [STAThread]static int Main(string[] args){try{Run(args);return 0;}catch(Exception e){Console.Error.WriteLine(e.Message);Console.Error.WriteLine(e.StackTrace);return 1;}}
  static void Run(string[] args){
-  using(var f=new CommandWindow()){if(args.Length==1&&args[0]=="--window"){f.ProfileWindow();return;}if(args.Length==1&&args[0]=="--profile"){f.ProfileBattle();return;}if(args.Length==2&&args[0]=="--mine"){f.RecordOreTrip(args[1]);return;}if(args.Length==2&&args[0]=="--drive"){f.RecordStreetTurn(args[1]);return;}f.CheckFocusAndMining();if(args.Length>0)f.CheckScreenTravel(args[0]);f.CheckPlates(args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"角度校准.png"));Frame(f,args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"主界面.png"));Press(f,220,571);
+  using(var f=new CommandWindow()){if(args.Length==1&&args[0]=="--window"){f.ProfileWindow();return;}if(args.Length==1&&args[0]=="--profile"){f.ProfileBattle();return;}if(args.Length==2&&args[0]=="--mine"){f.RecordOreTrip(args[1]);return;}if(args.Length==2&&args[0]=="--drive"){f.RecordStreetTurn(args[1]);return;}if(args.Length>0)f.CheckWarehouseView(args[0]);f.CheckEdgeScroll();f.CheckFocusAndMining();if(args.Length>0)f.CheckScreenTravel(args[0]);f.CheckPlates(args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"角度校准.png"));Frame(f,args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"主界面.png"));Press(f,220,571);
    if(!(bool)Field(f,"missionPicker")||!(bool)Field(f,"briefing"))throw new Exception("start must open mission selection");
    Press(f,190,348);Press(f,865,551);Frame(f,args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"关卡选择.png"));
    Press(f,1194,651);var standard=(Campaign)Field(f,"world");
@@ -98,6 +98,36 @@ class WindowChecks {
 
 namespace Greyhaven {
 partial class CommandWindow {
+ internal void CheckWarehouseView(string screenshot){
+  StartMission(true,true);var site=world.Sites[0];
+  CenterAt(site.P);zoom=2.4f;world.Spawn("squad",0,site.P.X+12,site.P.Y+14);
+  for(int i=0;i<70;i++)world.Tick(.1f);
+  if(site.Owner!=0)throw new Exception("warehouse was not captured");
+  using(var b=new Bitmap(MW,MapTop+MH))using(var g=Graphics.FromImage(b)){
+   scale=1;ox=oy=0;g.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;DrawBattle(g);
+   using(var crop=b.Clone(new Rectangle(MW/2-266,MapTop+MH/2-246,532,410),b.PixelFormat))
+    crop.Save(Path.Combine(Path.GetDirectoryName(screenshot),"西岸仓库.png"),System.Drawing.Imaging.ImageFormat.Png);
+  }
+  Restart();
+ }
+ internal void CheckEdgeScroll(){
+  StartMission(true,true);camera=new PointF(800,500);scale=1;ox=oy=0;var home=camera;
+  Action<int,int> point=(x,y)=>OnMouseMove(new MouseEventArgs(MouseButtons.None,0,x,y,0));
+  Action advance=()=>{for(int i=0;i<20;i++)EdgeScroll(.02f);};
+  for(int dx=-1;dx<=1;dx++)for(int dy=-1;dy<=1;dy++){
+   camera=home;ResetEdgeScroll();point(dx==0?MW/2:dx<0?1:MW-1,MapTop+(dy==0?MH/2:dy<0?1:MH-1));
+   EdgeScroll(.02f);if(camera!=home)throw new Exception("passing edge should not pan");advance();
+   var screen=ScreenOf(home);float x=MW*.5f-screen.X,y=MapTop+MH*.5f-screen.Y;
+   if((dx==0?Math.Abs(x)>.01:Math.Sign(x)!=dx)||(dy==0?Math.Abs(y)>.01:Math.Sign(y)!=dy))throw new Exception("edge direction");
+  }
+  camera=home;point(MW+6,300);advance();if(camera!=home)throw new Exception("sidebar pan");
+  point(0,300);OnMouseLeave(EventArgs.Empty);advance();if(camera!=home)throw new Exception("pan outside window");
+  point(0,300);paused=true;advance();paused=false;drag=true;advance();drag=false;
+  hits.Add(new HitBox{Box=new RectangleF(0,280,22,40)});advance();hits.Clear();if(camera!=home)throw new Exception("pan behind overlay or while dragging");
+  camera=new PointF(Campaign.Width,0);point(MW-1,MapTop+MH/2);advance();
+  if(camera.X!=Campaign.Width||camera.Y!=0)throw new Exception("world edge clamp");
+  Restart();Console.WriteLine("Edge pan: eight directions, dwell, map bounds, sidebar, mouse leave, pause and drag passed.");
+ }
  internal void CheckFocusAndMining(){
   StartMission(true,true);var near=world.Live(0).First(u=>u.T.Key=="squad");
   var far=world.Spawn("squad",0,1480,840);var enemy=world.Spawn("squad",1,242,402);

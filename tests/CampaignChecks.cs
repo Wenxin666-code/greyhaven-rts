@@ -168,8 +168,16 @@ class CampaignChecks {
   }
   Check(plant.LastReceipt==180&&hidden.Stock<3,"discover, collect and bank from a hidden field");
  }
+ static void WarehouseCapture(){
+  var w=new Campaign(true);var site=w.Sites[0];var original=(int[])w.Funds.Clone();
+  foreach(var yard in w.Sites.Take(2))Check(yard.Body.X%Campaign.Tile==0&&yard.Body.Y%Campaign.Tile==0&&!Campaign.Roads.Any(r=>r.IntersectsWith(yard.Body)),"warehouse off road and on grid");
+  var foot=w.Spawn("squad",0,site.P.X,site.P.Y);Wait(w,8);
+  Check(site.Owner==0&&w.Funds.SequenceEqual(original),"entry and capture must not pay");
+  foot.P=new PointF(260,580);w.Spawn("squad",1,site.P.X,site.P.Y);Wait(w,20);
+  Check(site.Owner==1&&w.Funds.SequenceEqual(original),"holding and recapturing must not pay");
+ }
  static int Main(){try{Run();return 0;}catch(Exception ex){Console.Error.WriteLine(ex.Message);return 1;}}
- static void Run(){ProspectChecks();OreChecks();ContactChecks();StreetChecks();InfantryWaves();HeadingChecks();ReconAndMarch();Navigation();Training();Play(true);Play(false);var w=new Campaign();var h=Begin(w);var enemy=w.Spawn("tank",1,h.P.X+82,h.P.Y);w.Attack(enemy,h);Wait(w,190);Check(w.Lost,"base loss");
+ static void Run(){WarehouseCapture();ProspectChecks();OreChecks();ContactChecks();StreetChecks();InfantryWaves();HeadingChecks();ReconAndMarch();Navigation();Training();Play(true);Play(false);var w=new Campaign();var h=Begin(w);var enemy=w.Spawn("tank",1,h.P.X+82,h.P.Y);w.Attack(enemy,h);Wait(w,190);Check(w.Lost,"base loss");
   w=new Campaign();var car=w.Spawn("ifv",0,212,431);w.Load(car);Check(w.Units.Any(o=>o.Carrier==car),"embark");w.Load(car);Check(!w.Units.Any(o=>o.Carrier==car),"disembark");
   Console.WriteLine("All checks passed.");}
 }
