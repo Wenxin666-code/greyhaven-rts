@@ -17,11 +17,24 @@ partial class CommandWindow {
  protected override void OnMouseWheel(MouseEventArgs e){base.OnMouseWheel(e);var p=ToScreenPoint(e);if(briefing||paused||p.X<0||p.X>=MW||p.Y<MapTop||p.Y>=MapTop+MH)return;
   var before=WorldOf(p);zoom=Math.Max(.62f,Math.Min(3.1f,zoom*(float)Math.Pow(1.18,e.Delta/120.0)));var after=WorldOf(p);CenterAt(new PointF(camera.X+before.X-after.X,camera.Y+before.Y-after.Y));Invalidate();}
  void GroundSpace(Graphics g){var origin=ScreenOf(PointF.Empty);using(var m=new Matrix(Axis*zoom,Rise*zoom,-Axis*zoom,Rise*zoom,origin.X,origin.Y))g.MultiplyTransform(m);}
+ Campaign fogWorld;int fogRevision;RectangleF[] fogRuns;
  void Shroud(Graphics g){
-  using(var brush=new SolidBrush(C("#152323"))){for(int y=0;y<Campaign.FogRows;y++){
-   for(int x=0;x<Campaign.FogCols;){if(world.Seen(0,x,y)){x++;continue;}int left=x++;while(x<Campaign.FogCols&&!world.Seen(0,x,y))x++;
-    g.FillRectangle(brush,left*Campaign.FogSize,y*Campaign.FogSize,(x-left)*Campaign.FogSize+.45f,Campaign.FogSize+.45f);}
-  }}
+  if(fogWorld!=world||fogRevision!=world.FogRevision){
+   var runs=new List<RectangleF>();var previous=new Dictionary<int,int>();
+   for(int y=0;y<Campaign.FogRows;y++){
+    var next=new Dictionary<int,int>();
+    for(int x=0;x<Campaign.FogCols;){
+     if(world.Seen(0,x,y)){x++;continue;}int start=x++;while(x<Campaign.FogCols&&!world.Seen(0,x,y))x++;
+     int key=start*(Campaign.FogCols+1)+x,index;
+     if(previous.TryGetValue(key,out index)){var r=runs[index];r.Height+=Campaign.FogSize;runs[index]=r;}
+     else{index=runs.Count;runs.Add(new RectangleF(start*Campaign.FogSize,y*Campaign.FogSize,(x-start)*Campaign.FogSize+.45f,Campaign.FogSize+.45f));}
+     next[key]=index;
+    }
+    previous=next;
+   }
+   fogRuns=runs.ToArray();fogWorld=world;fogRevision=world.FogRevision;
+  }
+  if(fogRuns.Length>0)using(var brush=new SolidBrush(C("#152323")))g.FillRectangles(brush,fogRuns);
  }
  // Cache only immutable terrain, at physical display resolution. The extra
  // border lets small pans reuse the same pixels without rerasterizing the map.
@@ -62,10 +75,11 @@ partial class CommandWindow {
   g.DrawImageUnscaled(terrainView,(int)Math.Round(ox)+dx-TerrainMargin,(int)Math.Round(oy+MapTop*scale)+dy-TerrainMargin);g.Restore(state);
  }
  void DrawBattle(Graphics g){
-  var view=g.Save();g.SetClip(new Rectangle(0,MapTop,MW,MH));Rect(g,0,MapTop,MW,MH,C("#132122"));
+  var view=g.Save();g.SetClip(new Rectangle(0,MapTop,MW,MH));
   DrawGroundView(g);var land=g.Save();GroundSpace(g);DrawTerrainPlan(g);
   if(world.Hold>0){float bx=world.Sites[2].P.X-175*(1-world.Hold/world.HoldTime);Rect(g,bx,41,85,23,ink);Rect(g,bx+5,44,18,16,pale);for(int i=0;i<3;i++)Rect(g,bx+26+i*16,44,13,16,dim);}
   var mode=g.SmoothingMode;g.SmoothingMode=SmoothingMode.None;Shroud(g);g.SmoothingMode=mode;g.Restore(land);
+  DrawOre(g);
   if(selection.Count==1){
    var u=selection[0];
    if(u.Deployed&&u.T.Hit>0){
@@ -75,7 +89,7 @@ partial class CommandWindow {
     }
    }
   }
-  foreach(var site in world.Sites){var p=ScreenOf(site.P);bool seen=world.Explored(0,site.P);Color c=seen&&site.Owner>=0?Team(site.Owner):gold;
+  foreach(var site in world.Sites){var p=ScreenOf(site.P);if(p.X< -110||p.X>MW+110||p.Y<MapTop-90||p.Y>MapTop+MH+90)continue;bool seen=world.Explored(0,site.P);Color c=seen&&site.Owner>=0?Team(site.Owner):gold;
    using(var pen=new Pen(c,1.5f)){pen.DashStyle=DashStyle.Dash;g.DrawEllipse(pen,p.X-41*zoom,p.Y-18*zoom,82*zoom,36*zoom);}
    Rect(g,p.X-38,p.Y-32,77,21,Color.FromArgb(211,ink));Txt(g,site.Name,p.X-32,p.Y-32,14,c,true);
    if(seen)Line(g,p.X,p.Y-9,p.X+site.Capture*5,p.Y-9,site.Capture>0?Team(0):Team(1),3);
@@ -87,6 +101,8 @@ partial class CommandWindow {
    if(p.X< -s||p.X>MW+s||p.Y<MapTop-s||p.Y>MapTop+MH+s)continue;
    if(selection.Contains(o)){using(var pen=new Pen(teal,2.2f))g.DrawEllipse(pen,p.X-s*.32f,p.Y-s*.13f,s*.64f,s*.31f);}
    DrawFieldSprite(g,o,p,s);
+   float age=world.Time-o.ReceiptAt;
+   if(o.Side==0&&o.Alive&&o.LastReceipt>0&&age<2.3f)Txt(g,"+"+o.LastReceipt,p.X-14,p.Y-s*.33f-age*8,15,gold,true);
    if(o.Alive){float y=p.Y+s*.10f;Line(g,p.X-5,y,p.X+5,y,Team(o.Side),3);
     if(selection.Contains(o)||o.Hp<o.T.Hp||o.Ready<1){Rect(g,p.X-20,y+4,40,4,ink);Rect(g,p.X-20,y+4,40*(o.Ready<1?o.Ready:o.Hp/o.T.Hp),4,o.Ready<1?gold:teal);}
    }
@@ -137,9 +153,14 @@ partial class CommandWindow {
  void DrawRadar(Graphics g,float x){
   var state=g.Save();g.SmoothingMode=SmoothingMode.None;g.SetClip(new RectangleF(x,102,244,107));g.TranslateTransform(x,102);g.ScaleTransform(244f/Campaign.Width,107f/Campaign.Height);
   g.DrawImage(radarGround,0,0,Campaign.Width,Campaign.Height);Shroud(g);
+  foreach(var patch in world.Ore)if(patch.Stock>0&&world.Explored(0,patch.P))Rect(g,patch.P.X-5,patch.P.Y-5,14,14,gold);
   bool radar=world.Power(0)>=0&&world.Live(0).Any(o=>o.T.Key=="radar");
   foreach(var o in world.Units.Where(a=>a.Alive&&a.Carrier==null&&(a.Side==0||radar&&world.Visible(a))))Rect(g,o.P.X-6,o.P.Y-6,o.T.Building?26:16,o.T.Building?26:16,Team(o.Side));
   foreach(var site in world.Sites)using(var pen=new Pen(gold,5))g.DrawRectangle(pen,site.P.X-15,site.P.Y-15,30,30);
+  if(world.LastEvent.HasValue&&world.Time-world.EventTime<4){
+   var p=world.LastEvent.Value;float r=17+(world.Time-world.EventTime)%1*32;
+   using(var pen=new Pen(red,6))g.DrawEllipse(pen,p.X-r,p.Y-r,r*2,r*2);
+  }
   using(var pen=new Pen(pale,6))g.DrawPolygon(pen,new[]{new PointF(0,MapTop),new PointF(MW,MapTop),new PointF(MW,MapTop+MH),new PointF(0,MapTop+MH)}.Select(WorldOf).ToArray());g.Restore(state);
   hits.Add(new HitBox{Box=new RectangleF(x,102,244,107),Run=()=>CenterAt(new PointF((mouse.X-x)*Campaign.Width/244,(mouse.Y-102)*Campaign.Height/107))});
  }

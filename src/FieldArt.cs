@@ -63,7 +63,7 @@ partial class CommandWindow {
  }
  void BuildingArt(Graphics g,string key,int row,RectangleF box,float built){
   var state=g.Save();
-  if(built<1){float reveal=.19f+.81f*built;g.IntersectClip(new RectangleF(box.X,box.Bottom-box.Height*reveal,box.Width,box.Height*reveal));}
+  if(built<1){float reveal=.16f+.84f*built*built*(3-2*built);g.IntersectClip(new RectangleF(box.X,box.Bottom-box.Height*reveal,box.Width,box.Height*reveal));}
   DrawStamp(g,key,new Rectangle(0,row*FrameSize,FrameSize,FrameSize),box);g.Restore(state);
  }
  void DrawLive(Graphics g,TypeInfo t,int side,int dir,PointF p,float s,float built){
@@ -86,17 +86,39 @@ partial class CommandWindow {
    else Sprite(g,o.T,o.Side,dir,o.Dead<.4f?1+o.Side:0,new RectangleF(p.X-size/2,p.Y-size*.59f,size,size));
    return;
   }
+  if(o.T.Key=="refinery"&&o.Ready>=1){
+   int frame=(int)(o.MillPhase*16)%16;var rect=BuildingRect(Campaign.Footprint(o.T,o.P),p,zoom);
+   DrawStamp(g,"refining",new Rectangle(frame%8*FrameSize,(2*o.Side+frame/8)*FrameSize,FrameSize,FrameSize),rect);return;
+  }
+  if(o.T.Key=="miner"&&o.Cargo>10){
+   DrawStamp(g,"miner-full",SourceCell(o.T,o.Side,dir),VehicleRect(o.T,p,size));return;
+  }
   if(o.T.Foot&&o.Path.Count>0)p.Y-=(float)Math.Abs(Math.Sin(world.Time*10+o.Id))*zoom;
   DrawLive(g,o.T,o.Side,dir,p,size,o.Ready);
+  if(o.T.Building&&o.Ready<1){
+   var box=BuildingRect(Campaign.Footprint(o.T,o.P),p,zoom);
+   float t=o.Ready,front=box.Bottom-box.Height*(.16f+.84f*t*t*(3-2*t));
+   float span=box.Width*.21f,travel=(float)Math.Sin(world.Time*2.4f+o.Id)*span;
+   Line(g,p.X-span,front,p.X+span,front,Color.FromArgb(135,gold),1);
+   Line(g,p.X+travel-3,front,p.X+travel+3,front,gold,2);Line(g,p.X+travel,front-3,p.X+travel,front+3,pale);
+  }
   if(o.T.Key=="factory"&&o.Ready>=1){
    float open=Math.Min(1,o.Door*3);
    if(o.Queue.Count>0)open=Math.Max(open,Math.Max(0,1-(o.Queue.Peek().Seconds-o.Work)/.6f));
-   var box=BuildingRect(Campaign.Footprint(o.T,o.P),p,zoom);var st=g.Save();
+   open=open*open*(3-2*open);var box=BuildingRect(Campaign.Footprint(o.T,o.P),p,zoom);var st=g.Save();
    g.TranslateTransform(box.Left,box.Top);g.ScaleTransform(box.Width/FrameSize,box.Height/FrameSize);
    // Reprojected upper corners of the roller door. Travel stays vertical in every zoom level.
-   float h=39.49f*(1-open);
-   using(var brush=new SolidBrush(C("#49565b")))g.FillPolygon(brush,new[]{new PointF(82.43f,179.00f),new PointF(149.8f,209.47f),new PointF(149.8f,209.47f+h),new PointF(82.43f,179.00f+h)});
-   for(int j=4;j<h;j+=6)Line(g,82.43f,179.00f+j,149.8f,209.47f+j,C("#77817e"),1);g.Restore(st);
+   const float door=39.49f;float h=door*(1-open);
+   if(open>.01f){
+    using(var shade=new SolidBrush(C("#202929")))g.FillPolygon(shade,new[]{new PointF(82.43f,179+h),new PointF(149.8f,209.47f+h),new PointF(149.8f,209.47f+door),new PointF(82.43f,179+door)});
+    Line(g,84,179+h,148,208.9f+h,C("#8a9182"),2.2f);
+    Rect(g,82,177,4,2,gold);Rect(g,149,207,4,2,gold);
+   }
+   if(h>.2f){
+    using(var brush=new SolidBrush(C("#49565b")))g.FillPolygon(brush,new[]{new PointF(82.43f,179),new PointF(149.8f,209.47f),new PointF(149.8f,209.47f+h),new PointF(82.43f,179+h)});
+    for(float j=h-3;j>0;j-=6)Line(g,82.43f,179+j,149.8f,209.47f+j,C("#77817e"),1);
+   }
+   g.Restore(st);
   }
  }
  bool MobileHit(Piece o,PointF p,float size,PointF screen){

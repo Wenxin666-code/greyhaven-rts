@@ -33,7 +33,7 @@ public partial class Campaign {
    if(!src.Berths.Contains(p)&&BerthClear(src,p))return p;
   }return null;
  }
- public void Halt(Piece o){o.Path.Clear();o.FirePoint=null;o.Target=null;o.Contact=ContactOrder.None;o.ResumeMarch=false;o.Formation=null;o.Advancing=false;}
+ public void Halt(Piece o){o.Mining=false;o.Dock=null;o.Unload=0;o.Path.Clear();o.FirePoint=null;o.Target=null;o.Contact=ContactOrder.None;o.ResumeMarch=false;o.Formation=null;o.Advancing=false;}
  public bool Suppress(Piece o,PointF p){
   if(!o.Deployed||o.T.Hit==0||p.X<0||p.Y<0||p.X>=Width||p.Y>=Height)return false;
   Halt(o);o.FirePoint=p;o.Replan=0;return true;

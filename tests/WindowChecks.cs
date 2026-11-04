@@ -16,7 +16,7 @@ class WindowChecks {
  }
  [STAThread]static int Main(string[] args){try{Run(args);return 0;}catch(Exception e){Console.Error.WriteLine(e.Message);Console.Error.WriteLine(e.StackTrace);return 1;}}
  static void Run(string[] args){
-  using(var f=new CommandWindow()){if(args.Length==1&&args[0]=="--window"){f.ProfileWindow();return;}if(args.Length==1&&args[0]=="--profile"){f.ProfileBattle();return;}if(args.Length==2&&args[0]=="--drive"){f.RecordStreetTurn(args[1]);return;}if(args.Length>0)f.CheckScreenTravel(args[0]);f.CheckPlates(args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"角度校准.png"));Frame(f,null);Press(f,410,575);if((bool)Field(f,"briefing"))throw new Exception("briefing");
+  using(var f=new CommandWindow()){if(args.Length==1&&args[0]=="--window"){f.ProfileWindow();return;}if(args.Length==1&&args[0]=="--profile"){f.ProfileBattle();return;}if(args.Length==2&&args[0]=="--mine"){f.RecordOreTrip(args[1]);return;}if(args.Length==2&&args[0]=="--drive"){f.RecordStreetTurn(args[1]);return;}f.CheckFocusAndMining();if(args.Length>0)f.CheckScreenTravel(args[0]);f.CheckPlates(args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"角度校准.png"));Frame(f,null);Press(f,410,575);if((bool)Field(f,"briefing"))throw new Exception("briefing");
    var screen=new PointF(647,405);var inv=typeof(CommandWindow).GetMethod("WorldOf",flags);
    var before=(PointF)inv.Invoke(f,new object[]{screen});float ui=(float)Field(f,"scale");
    typeof(CommandWindow).GetMethod("OnMouseWheel",flags).Invoke(f,new object[]{new MouseEventArgs(MouseButtons.None,0,(int)(screen.X*ui+(float)Field(f,"ox")),(int)(screen.Y*ui+(float)Field(f,"oy")),120)});
@@ -72,6 +72,45 @@ class WindowChecks {
 
 namespace Greyhaven {
 partial class CommandWindow {
+ internal void CheckFocusAndMining(){
+  StartMission(true,true);var near=world.Live(0).First(u=>u.T.Key=="squad");
+  var far=world.Spawn("squad",0,1480,840);var enemy=world.Spawn("squad",1,242,402);
+  CenterAt(near.P);selection.Clear();selection.Add(near);
+  Action<Keys> tap=k=>{OnKeyDown(new KeyEventArgs(k));OnKeyUp(new KeyEventArgs(k));};
+  tap(Keys.T);if(selection.Count!=2||selection.Contains(far)||selection.Contains(enemy))throw new Exception("viewport type select");
+  tap(Keys.T);if(selection.Count!=3||!selection.Contains(far)||selection.Contains(enemy))throw new Exception("global type select");
+  var saved=camera;float z=zoom;tap(Keys.Control|Keys.F1);zoom=3;CenterAt(far.P);tap(Keys.F1);
+  if(camera!=saved||zoom!=z)throw new Exception("camera bookmark");
+  for(int slot=0;slot<4;slot++){
+   CenterAt(new PointF(190+slot*100,210+slot*90));tap(Keys.Control|(Keys)((int)Keys.F1+slot));
+  }
+  for(int slot=3;slot>=0;slot--){tap((Keys)((int)Keys.F1+slot));if(camera!=new PointF(190+slot*100,210+slot*90))throw new Exception("independent bookmarks");}
+  tap(Keys.H);if(camera!=world.Units[0].P)throw new Exception("home before deploy");
+  for(int i=0;i<5;i++)world.Tick(.1f);
+  if(!world.LastEvent.HasValue)throw new Exception("incoming attack event");
+  tap(Keys.Space);if(camera!=world.LastEvent.Value||paused)throw new Exception("jump to event");
+  var truck=world.Live(0).Single(u=>u.T.Key=="miner");world.Halt(truck);
+  var ore=world.Ore.First();selection.Clear();selection.Add(truck);CenterAt(ore.P);mouse=ScreenOf(ore.P);ContextOrder(Keys.None);
+  if(!truck.Mining||truck.Patch!=ore)throw new Exception("click visible ore");
+  var hq=world.Units[0];if(!world.Deploy(hq))throw new Exception("deploy during focus test");
+  CenterAt(far.P);tap(Keys.H);if(camera!=hq.P)throw new Exception("home after deployment");
+  Restart();tap(Keys.Enter);var fresh=camera;tap(Keys.F1);if(camera!=fresh)throw new Exception("old bookmark leaked");
+  Restart();Console.WriteLine("Same-type selection, four-slot camera controls, event focus and miner orders passed.");
+ }
+ internal void RecordOreTrip(string folder){
+  Directory.CreateDirectory(folder);ClientSize=new Size(W,H);StartMission(false,true);
+  var plant=world.Live(0).First(u=>u.T.Key=="refinery");
+  CenterAt(new PointF(70,534));zoom=1.75f;selection.Clear();
+  using(var frame=new Bitmap(W,H))using(var g=Graphics.FromImage(frame)){
+   for(int i=0;i<160;i++){
+    for(int n=0;n<6;n++)world.Tick(1f/60);
+    var state=g.Save();OnPaint(new PaintEventArgs(g,ClientRectangle));g.Restore(state);
+    using(var clip=frame.Clone(new Rectangle(305,172,565,408),frame.PixelFormat))
+     clip.Save(Path.Combine(folder,i.ToString("D3")+".png"),System.Drawing.Imaging.ImageFormat.Png);
+   }
+  }
+  if(plant.LastReceipt<=0)throw new Exception("filmed route never deposited any ore");
+ }
  internal void RecordStreetTurn(string folder){
   Directory.CreateDirectory(folder);ClientSize=new Size(W,H);briefing=false;world=new Campaign(true);
   var tank=world.Spawn("tank",0,696,361);tank.Turn=4;tank.Dir=4;
@@ -97,9 +136,10 @@ partial class CommandWindow {
  }
  internal void ProfileWindow(){
   ClientSize=new Size(1260,706);StartMission(true,true);
-  var tank=world.Spawn("tank",0,690,361);CenterAt(new PointF(748,392));Show();paused=false;
+  var tank=world.Spawn("tank",0,201,486);CenterAt(new PointF(129,516));
+  world.Spawn("factory",0,323,548).Ready=.18f;Show();paused=false;
   var probe=new PaintTimes();probe.AssignHandle(Handle);int run=0;
-  var goals=new[]{new PointF(766,410),new PointF(686,361),new PointF(766,433)};
+  var goals=new[]{new PointF(251,492),new PointF(204,479),new PointF(247,510)};
   var results=new System.Collections.Generic.List<double[]>();
   try{
    using(var loop=new ApplicationContext())using(var deadline=new Timer{Interval=2600}){

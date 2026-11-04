@@ -18,6 +18,8 @@ public class March {
 public partial class Campaign {
  public const int FogSize=12,FogCols=Width/FogSize,FogRows=Height/FogSize;
  readonly bool[,,] discovered=new bool[2,FogCols,FogRows];
+ public int FogRevision {get;private set;}
+ void Discover(int side,int x,int y){if(!discovered[side,x,y]){discovered[side,x,y]=true;if(side==0)FogRevision++;}}
  float visionTimer;
  public bool Seen(int side,int x,int y){return x>=0&&y>=0&&x<FogCols&&y<FogRows&&discovered[side,x,y];}
  public bool Explored(int side,PointF p){return Seen(side,(int)(p.X/FogSize),(int)(p.Y/FogSize));}
@@ -26,14 +28,14 @@ public partial class Campaign {
    for(int y=Math.Max(0,(int)((o.P.Y-r)/FogSize));y<=Math.Min(FogRows-1,(int)((o.P.Y+r)/FogSize));y++)
     for(int x=Math.Max(0,(int)((o.P.X-r)/FogSize));x<=Math.Min(FogCols-1,(int)((o.P.X+r)/FogSize));x++){
      if(discovered[o.Side,x,y])continue;float dx=(x+.5f)*FogSize-o.P.X,dy=(y+.5f)*FogSize-o.P.Y;
-     if(dx*dx+dy*dy<=r*r)discovered[o.Side,x,y]=true;
+     if(dx*dx+dy*dy<=r*r)Discover(o.Side,x,y);
     }
   }
  }
  public bool Sweep(PointF p){
   if(Power(0)<0||!Live(0).Any(o=>o.T.Key=="radar")||Funds[0]<80||Scan>0)return false;
   Funds[0]-=80;Scan=10;
-  for(int x=0;x<FogCols;x++)for(int y=0;y<FogRows;y++)if(Dist(new PointF((x+.5f)*FogSize,(y+.5f)*FogSize),p)<215)discovered[0,x,y]=true;
+  for(int x=0;x<FogCols;x++)for(int y=0;y<FogRows;y++)if(Dist(new PointF((x+.5f)*FogSize,(y+.5f)*FogSize),p)<215)Discover(0,x,y);
   Radio="雷达已揭示目标区域，可继续派部队向外探索。";return true;
  }
  // Match frontage to direction of travel. Fighting vehicles lead; artillery and repair crews follow.
@@ -54,7 +56,7 @@ public partial class Campaign {
   }return assigned.Count;
  }
  public bool SetRally(Piece src,PointF dest){
-  if(src==null||!src.Deployed||src.Side!=0||!HasGate(src.T)||Blocked(dest,11,null)||!ParkingAllowed(src.Side,dest))return false;
+  if(src==null||!src.Deployed||src.Side!=0||src.T.Key=="refinery"||!HasGate(src.T)||Blocked(dest,11,null)||!ParkingAllowed(src.Side,dest))return false;
   src.Rally=dest;Radio=src.T.Name+"的集结点已设置。";return true;
  }
  void RallyNewUnit(Piece source,Piece unit){

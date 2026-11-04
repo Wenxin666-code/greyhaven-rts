@@ -7,20 +7,21 @@ namespace Greyhaven {
 public partial class Campaign {
  public const int Tile=24, Width=1680, Height=960;
  public static RectangleF Footprint(TypeInfo t,PointF pointer){
-  int w=(t.Key=="factory"?4:t.Key=="hq"||t.Key=="barracks"?3:2)*Tile;
+  int w=(t.Key=="factory"?4:t.Key=="hq"||t.Key=="barracks"||t.Key=="refinery"?3:2)*Tile;
   int h=(t.Key=="hq"||t.Key=="factory"?3:2)*Tile;
   return new RectangleF((float)Math.Round((pointer.X-w*.5f)/Tile)*Tile,(float)Math.Round((pointer.Y-h*.5f)/Tile)*Tile,w,h);
  }
  public static PointF Middle(RectangleF r){return new PointF(r.Left+r.Width/2,r.Top+r.Height/2);}
  static RectangleF Inflated(RectangleF r,float pad){r.Inflate(pad,pad);return r;}
  public static readonly RectangleF[] Roads={new RectangleF(0,330,Width,63),new RectangleF(735,98,61,Height-98),new RectangleF(735,743,755,50),new RectangleF(1435,295,55,498)};
- public static bool HasGate(TypeInfo t){return t.Key=="barracks"||t.Key=="factory"||t.Key=="hq";}
+ public static bool HasGate(TypeInfo t){return t.Key=="barracks"||t.Key=="factory"||t.Key=="hq"||t.Key=="refinery";}
  public static RectangleF Gate(RectangleF body){return new RectangleF(body.Left,body.Bottom,body.Width,Tile);}
  public static readonly RectangleF[] YardWalls={new RectangleF(842,214,74,8),new RectangleF(962,214,77,8),new RectangleF(1094,214,70,8)};
  public bool CanPlace(TypeInfo t,PointF p,Piece skip){
   var r=Footprint(t,p);var mid=Middle(r);var reserve=ReservedLot(t,r);
   if(skip==null&&!(Explored(0,new PointF(r.Left,r.Top))&&Explored(0,new PointF(r.Right,r.Top))&&Explored(0,new PointF(r.Left,r.Bottom))&&Explored(0,new PointF(r.Right,r.Bottom))))return false;
   if(reserve.Left<0||reserve.Right>Width||reserve.Top<99||reserve.Bottom>Height||Roads.Concat(YardWalls).Any(b=>b.IntersectsWith(reserve)))return false;
+  if(Ore.Any(patch=>patch.Stock>0&&Inflated(reserve,12).Contains(patch.P)))return false;
   if(Sites.Any(site=>site.Body.IntersectsWith(reserve)))return false;
   if(Units.Any(o=>o!=skip&&o.Alive&&o.T.Building&&(reserve.IntersectsWith(ReservedLot(o.T,Footprint(o.T,o.P))))))return false;
   if(Units.Any(o=>o!=skip&&o.Alive&&!o.T.Building&&o.Carrier==null&&Inflated(t.Key=="barracks"?reserve:r,Clearance(o)).Contains(o.P)))return false;

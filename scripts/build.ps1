@@ -1,5 +1,5 @@
 ﻿[CmdletBinding()]
-param([switch]$Test,[switch]$MeasureFrames,[string]$DriveFrames)
+param([switch]$Test,[switch]$MeasureFrames,[string]$DriveFrames,[string]$OreFrames)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
@@ -17,7 +17,7 @@ $options = @('/nologo','/optimize+','/platform:x64','/codepage:65001',('/win32ma
 $exe = Join-Path $root '断线前沿.exe'
 & $compiler @options /target:winexe "/out:$exe" @resources @source
 if ($LASTEXITCODE) { throw '构建失败，请先关闭正在运行的游戏。' }
-if ($Test -or $MeasureFrames -or $DriveFrames) {
+if ($Test -or $MeasureFrames -or $DriveFrames -or $OreFrames) {
     foreach ($suite in @('CampaignChecks','WindowChecks')) {
         if (!$Test -and $suite -eq 'CampaignChecks') { continue }
         $check = Join-Path ([IO.Path]::GetTempPath()) ("greyhaven-{0}-{1}.exe" -f $suite,[guid]::NewGuid())
@@ -31,6 +31,8 @@ if ($Test -or $MeasureFrames -or $DriveFrames) {
             if ($MeasureFrames -and $suite -eq 'WindowChecks') { & $check --window }
             if ($LASTEXITCODE) { throw "$suite 未通过。" }
             if ($DriveFrames -and $suite -eq 'WindowChecks') { & $check --drive $DriveFrames }
+            if ($LASTEXITCODE) { throw "$suite 未通过。" }
+            if ($OreFrames -and $suite -eq 'WindowChecks') { & $check --mine $OreFrames }
             if ($LASTEXITCODE) { throw "$suite 未通过。" }
         } finally {
             if (Test-Path -LiteralPath $check -PathType Leaf) { Remove-Item -LiteralPath $check }

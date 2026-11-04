@@ -13,13 +13,13 @@ class CampaignChecks {
   Check(w.Move(foot[0],w.Sites[0].P,true),"path west");Check(w.Move(foot[1],w.Sites[1].P,true),"path middle");
   Build(w,"power",260,550);Build(w,"barracks",120,610);Build(w,"factory",342,551);
   Check(!w.Build(Campaign.Info("power"),new PointF(260,550)),"overlap blocked");
-  Check(w.Sites[0].Owner==0&&w.Sites[1].Owner==0,"capture and income");
+  Check(w.Sites[0].Owner==0&&w.Sites[1].Owner==0,"capture both objectives");
   w.Upgrade();Check(w.Upgraded[0],"upgrade");
   int order=0;string[] list=armor?new[]{"tank","engineer","ifv","squad","tank","at"}:new[]{"ifv","squad","at","arty","engineer","squad"};
   while(!w.Won&&!w.Lost&&w.Time<560){
    string k=list[order%list.Length];if(w.Train(Campaign.Info(k),0,null))order++;
    if(w.Time>(armor?107:95)){
-    int i=0;foreach(var o in w.Live(0).Where(o=>!o.T.Building).ToArray()){
+    int i=0;foreach(var o in w.Live(0).Where(o=>!o.T.Building&&o.T.Key!="miner").ToArray()){
      var p=w.Sites[2].P;
      if(o.T.Key=="arty")p=new PointF(w.Sites[2].P.X-146,319);
      else p=new PointF(p.X+(i%4-1)*12,p.Y+(i/4%4-1)*13);
@@ -39,7 +39,7 @@ class CampaignChecks {
   var foot=w.LastReady;Check(w.Lesson==4&&foot.T.Key=="squad","delivery");
   Check(w.Move(foot,w.Sites[0].P,true),"reach west");Wait(w,40);Check(w.Lesson==5,"capture advances tutorial");
   var f=Build(w,"factory",342,551);w.Train(Campaign.Info("ifv"),0,f);Wait(w,9);Check(w.Lesson==7,"vehicle delivered");
-  foreach(var u in w.Live(0).Where(o=>!o.T.Building).ToArray())w.Move(u,new PointF(w.Sites[2].P.X+(u.Id%3)*12,w.Sites[2].P.Y+u.Id%2*16),true);
+  foreach(var u in w.Live(0).Where(o=>!o.T.Building&&o.T.Key!="miner").ToArray())w.Move(u,new PointF(w.Sites[2].P.X+(u.Id%3)*12,w.Sites[2].P.Y+u.Id%2*16),true);
   Wait(w,110);Check(w.Won&&w.Lesson==8,"full tutorial ends at extraction");Console.WriteLine("All nine tutorial milestones passed, including a ten-minute idle start.");
  }
  static void Navigation(){
@@ -128,8 +128,28 @@ class CampaignChecks {
   Check(tower.P==pos&&tower.Target!=gun,"stationary gun cannot chase");
   Console.WriteLine("Moving acquisition, structure attack, resuming orders and out-of-sight return fire passed.");
  }
+ static void OreChecks(){
+  var w=new Campaign(true);Begin(w);var truck=w.Live(0).Single(o=>o.T.Key=="miner");
+  var plant=w.Live(0).Single(o=>o.T.Key=="refinery");w.Halt(truck);
+  w.Sites[0].Owner=w.Sites[1].Owner=0;int start=w.Funds[0];Wait(w,18);
+  Check(w.Funds[0]==start&&w.OreReceipts[0]==0,"no passive money from HQ, objectives or parked vehicle");
+  w.MineOrder(truck,null,null);for(int i=0;i<350&&truck.Cargo<Campaign.LoadValue;i++)w.Tick(.1f);
+  Check(truck.Cargo==Campaign.LoadValue&&w.Funds[0]==start,"cargo stays on truck");
+  for(int i=0;i<180&&w.Funds[0]==start;i++)w.Tick(.1f);
+  Check(w.Funds[0]==start+Campaign.LoadValue&&truck.Cargo==0,"one docking payment");
+  var mine=w.Spawn("miner",0,93,588);int before=w.OreReceipts[0];Wait(w,60);
+  Check(w.OreReceipts[0]>=before+4*Campaign.LoadValue,"two vehicles cycle through one dock");
+  w.Halt(truck);w.Halt(mine);mine.Cargo=70;w.MineOrder(mine,null,plant);plant.Hp=0;
+  before=w.OreReceipts[0];Wait(w,6);Check(mine.Cargo==70&&w.OreReceipts[0]==before,"no deposit at destroyed refinery");
+  var choice=(from x in Enumerable.Range(4,12) from y in Enumerable.Range(18,9)
+   let pos=new PointF(x*24,y*24) where w.CanPlace(Campaign.Info("refinery"),pos,null) orderby Campaign.Dist(pos,plant.P) select pos).First();
+  var replacement=Build(w,"refinery",(int)choice.X,(int)choice.Y);Wait(w,25);
+  Check(replacement.StarterDelivered&&w.Live(0).Count(o=>o.T.Key=="miner")==3&&w.OreReceipts[0]>=before+70,"replacement dock and one starter");
+  var enemy=new Campaign();Wait(enemy,25);Check(enemy.OreReceipts[1]>0,"enemy must deliver ore too");
+  Console.WriteLine("Ore extraction, interrupted work, no passive income, shared dock, replacement and enemy deliveries passed.");
+ }
  static int Main(){try{Run();return 0;}catch(Exception ex){Console.Error.WriteLine(ex.Message);return 1;}}
- static void Run(){ContactChecks();StreetChecks();InfantryWaves();HeadingChecks();ReconAndMarch();Navigation();Training();Play(true);Play(false);var w=new Campaign();var h=Begin(w);var enemy=w.Spawn("tank",1,h.P.X+82,h.P.Y);w.Attack(enemy,h);Wait(w,190);Check(w.Lost,"base loss");
+ static void Run(){OreChecks();ContactChecks();StreetChecks();InfantryWaves();HeadingChecks();ReconAndMarch();Navigation();Training();Play(true);Play(false);var w=new Campaign();var h=Begin(w);var enemy=w.Spawn("tank",1,h.P.X+82,h.P.Y);w.Attack(enemy,h);Wait(w,190);Check(w.Lost,"base loss");
   w=new Campaign();var car=w.Spawn("ifv",0,212,431);w.Load(car);Check(w.Units.Any(o=>o.Carrier==car),"embark");w.Load(car);Check(!w.Units.Any(o=>o.Carrier==car),"disembark");
   Console.WriteLine("All checks passed.");}
 }

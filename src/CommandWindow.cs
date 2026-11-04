@@ -19,7 +19,8 @@ partial class CommandWindow:Form {
  Bitmap ground;Dictionary<string,Bitmap> atlas=new Dictionary<string,Bitmap>();Dictionary<string,Font> fonts=new Dictionary<string,Font>();
  Color ink=C("#111d20"),panel=C("#1d2c2c"),pale=C("#e3e6d3"),dim=C("#9eafa1"),gold=C("#ebc17c"),teal=C("#82d0b4"),red=C("#ee8b72");
  class HitBox {public RectangleF Box;public Action Run;}
- static Color C(string s){return ColorTranslator.FromHtml(s);}
+ static readonly Dictionary<string,Color> palette=new Dictionary<string,Color>();
+ static Color C(string s){Color c;if(!palette.TryGetValue(s,out c))palette[s]=c=ColorTranslator.FromHtml(s);return c;}
  [System.Runtime.InteropServices.DllImport("winmm.dll")]static extern uint timeBeginPeriod(uint ms);
  [System.Runtime.InteropServices.DllImport("winmm.dll")]static extern uint timeEndPeriod(uint ms);
  bool timerPrecision;
@@ -29,12 +30,13 @@ partial class CommandWindow:Form {
   KeyPreview=true;SetStyle(ControlStyles.ResizeRedraw|ControlStyles.Opaque|ControlStyles.AllPaintingInWmPaint,true);
   Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);
   world=new Campaign();ground=MakeGround();projectedGround=ProjectTerrain();radarGround=new Bitmap(488,214,System.Drawing.Imaging.PixelFormat.Format32bppPArgb);using(var rg=Graphics.FromImage(radarGround))rg.DrawImage(ground,0,0,488,214);
-  foreach(var key in new[]{"hq","power","factory","barracks","radar","post","squad","at","engineer","tank","ifv","mcv","arty","depot","freight","harbormaster"})painted[key]=Raw((key=="squad"||key=="at"||key=="engineer"?"hd-":"iso-")+key);
+  foreach(var key in new[]{"hq","power","factory","barracks","radar","post","squad","at","engineer","tank","ifv","mcv","arty","depot","freight","harbormaster","refinery","miner","miner-full","refining"})painted[key]=Raw((key=="squad"||key=="at"||key=="engineer"?"hd-":"iso-")+key);
+  painted["ore"]=OreSprites();
   foreach(var t in Campaign.Types.Where(t=>t.Foot))atlas[t.Key]=WreckSheet(t);
   Restart();pulse.Interval=15;pulse.Tick+=(s,e)=>{double now=watch.Elapsed.TotalSeconds;float dt=(float)Math.Min(.12,now-last);last=now;
    if(!briefing&&!paused&&!world.Won&&!world.Lost){for(int i=0;i<speed;i++)world.Tick(dt);selection.RemoveAll(o=>!o.Alive||o.Carrier!=null);}
-   Invalidate();};pulse.Start(); FormClosed+=(s,e)=>{pulse.Stop();pulse.Dispose();if(timerPrecision)timeEndPeriod(1);ground.Dispose();projectedGround.Dispose();radarGround.Dispose();if(terrainView!=null)terrainView.Dispose();ReleaseFrame();ClearStampCache();foreach(var b in painted.Values)b.Dispose();foreach(var i in atlas.Values)i.Dispose();foreach(var f in fonts.Values)f.Dispose();};
-  Deactivate+=(s,e)=>{if(!briefing&&!world.Won&&!world.Lost)paused=true;drag=false;panning=false;Capture=false;};
+   Invalidate();};pulse.Start(); FormClosed+=(s,e)=>{pulse.Stop();pulse.Dispose();if(timerPrecision)timeEndPeriod(1);ground.Dispose();projectedGround.Dispose();radarGround.Dispose();if(terrainView!=null)terrainView.Dispose();ReleaseFrame();ClearLabelCache();ClearStampCache();foreach(var b in painted.Values)b.Dispose();foreach(var i in atlas.Values)i.Dispose();foreach(var f in fonts.Values)f.Dispose();};
+  Deactivate+=(s,e)=>{tHeld=false;selectType=null;if(!briefing&&!world.Won&&!world.Lost)paused=true;drag=false;panning=false;Capture=false;};
  }
  static Bitmap WreckSheet(TypeInfo t){
   using(var stream=typeof(CommandWindow).Assembly.GetManifestResourceStream("Greyhaven.Art."+t.Key+".png"))
@@ -48,9 +50,11 @@ partial class CommandWindow:Form {
   int dark=1,caption=ColorTranslator.ToWin32(ink),text=ColorTranslator.ToWin32(pale);
   DwmSetWindowAttribute(Handle,20,ref dark,4);DwmSetWindowAttribute(Handle,35,ref caption,4);DwmSetWindowAttribute(Handle,36,ref text,4);
  }
- void Restart(){markedPoint=null;markedEnemy=null;camera=new PointF(255,465);zoom=1.7f;sweep=false;panning=false;syncMarch=true;queueOpen=false;queueIndex=0;world=new Campaign();selection.Clear();selection.Add(world.Units[0]);briefing=true;paused=false;help=false;army=false;place=null;attack=false;speed=1;}
+ void Restart(){Array.Clear(bookmarks,0,bookmarks.Length);selectType=null;tHeld=false;markedPoint=null;markedEnemy=null;camera=new PointF(255,465);zoom=1.7f;sweep=false;panning=false;syncMarch=true;queueOpen=false;queueIndex=0;world=new Campaign();selection.Clear();selection.Add(world.Units[0]);briefing=true;paused=false;help=false;army=false;place=null;attack=false;speed=1;}
  Font F(float size,bool bold){string key=size.ToString()+bold;Font f;if(!fonts.TryGetValue(key,out f))fonts[key]=f=new Font("Microsoft YaHei UI",size,bold?FontStyle.Bold:FontStyle.Regular,GraphicsUnit.Pixel);return f;}
- void Txt(Graphics g,string s,float x,float y,float size,Color c,bool bold=false){using(var b=new SolidBrush(c))g.DrawString(s,F(size,bold),b,x,y,StringFormat.GenericTypographic);}
+ void Txt(Graphics g,string s,float x,float y,float size,Color c,bool bold=false){var font=F(size,bold);
+  if(!drawingClient){using(var b=new SolidBrush(c))g.DrawString(s,font,b,x,y,StringFormat.GenericTypographic);return;}
+  DrawLabel(g,s,font,c,x,y);}
  void Rect(Graphics g,float x,float y,float w,float h,Color c){using(var b=new SolidBrush(c))g.FillRectangle(b,x,y,w,h);}
  void Line(Graphics g,float x,float y,float xx,float yy,Color c,float width=1){using(var p=new Pen(c,width))g.DrawLine(p,x,y,xx,yy);}
  void Plate(Graphics g,RectangleF r,Color fill,Color edge){float x=r.X,y=r.Y,w=r.Width,h=r.Height;
@@ -137,24 +141,27 @@ partial class CommandWindow:Form {
   Txt(g,"断 线 前 沿",22,9,29,pale,true);Txt(g,"GREYHAVEN   /   LANDING FORCE",23,44,10,gold,true);
   Line(g,240,12,240,54,C("#4d655b"));Txt(g,world.Tutorial?"野外训练  /  DRILL":world.Assisted?"宽松战役  /  OP.01":"标准战役  /  OP.01",258,9,12,teal,true);
   Txt(g,world.Tutorial?(world.Lesson+1)+" / 9　"+Campaign.Lessons[world.Lesson]:!world.Landing?"展开工程车并建立基地":world.Sites[2].Owner==0?"守住港务中心　"+(int)world.Hold+" / 45 秒":"派步兵夺取港务中心",258,27,20,pale,true);
-  Metric(g,728,"军费  /  CR",world.Funds[0]+"  +"+world.Income(0)+"/秒",gold);Metric(g,930,"电力余量  /  PWR",world.Power(0).ToString("+#;-#;0"),world.Power(0)<0?red:teal);
+  Metric(g,728,"军费  /  CR",world.Funds[0].ToString(),gold);Metric(g,930,"电力余量  /  PWR",world.Power(0).ToString("+#;-#;0"),world.Power(0)<0?red:teal);
   Metric(g,1085,"行动时钟",TimeSpan.FromSeconds(world.Time).ToString(@"mm\:ss"),pale);
   Button(g,1222,15,103,35,"速度 ×"+speed,()=>speed=speed==1?2:1);Button(g,1334,15,120,35,"暂停",()=>paused=true);
   Rect(g,MW,MapTop,W-MW,MH,panel);Line(g,MW,MapTop,MW,MapTop+MH,gold,2);
-  float x=1214;Txt(g,"战区态势   /   TACTICAL",x,79,14,teal,true);DrawRadar(g,x);
+  float x=1214;Txt(g,"战区态势",x,79,14,teal,true);Button(g,x+80,73,74,25,"基地 H",GoHome);Button(g,x+158,73,85,25,"事件",world.LastEvent.HasValue?(Action)GoEvent:null);DrawRadar(g,x);
   Button(g,x,221,76,34,"建设",()=>{army=false;queueOpen=false;place=null;},!army&&!queueOpen);Button(g,x+81,221,76,34,"生产",()=>{army=true;queueOpen=false;place=null;},army&&!queueOpen);Button(g,x+162,221,81,34,"队列 "+Pending(),OpenQueue,queueOpen);
   var cards=Campaign.Types.Where(t=>army?!t.Building:t.Building&&t.Key!="hq").ToArray();if(queueOpen)DrawQueue(g,x);else for(int i=0;i<cards.Length;i++)Card(g,cards[i],x+(i%2)*124,266+(i/2)*61);
   var unit=selection.FirstOrDefault();Txt(g,"指令席   /   ORDERS",x,521,13,teal,true);
   Txt(g,unit==null?"未选中单位":selection.Count>1?"混合编队  ×"+selection.Count:unit.T.Name+(unit.Ready<1?" · 建造中":""),x,545,20,pale,true);
   if(unit!=null&&unit.Queue.Count>0)Txt(g,"排产 "+unit.Queue.Peek().Name+"  "+(int)(unit.Work/unit.Queue.Peek().Seconds*100)+"%  ×"+unit.Queue.Count,x,574,13,gold);
-  else Txt(g,unit!=null&&unit.T.Key=="engineer"?"靠近受损载具或建筑自动维修":unit!=null&&Campaign.HasGate(unit.T)?"左键空地设置出厂集结点":selection.Count==1&&unit.T.Hit>0?"虚线圈内自动锁敌 · 再点本单位取消选中":"左键选人 / 下令　右键取消",x,574,13,dim);
+  else if(unit!=null&&unit.T.Key=="miner")Txt(g,world.MiningStatus(unit),x,574,13,gold);
+  else if(unit!=null&&unit.T.Key=="refinery")Txt(g,"卸矿结算 · 累计入账 "+world.OreReceipts[0],x,574,13,gold);
+  else Txt(g,unit!=null&&unit.T.Key=="engineer"?"靠近受损载具或建筑自动维修":unit!=null&&unit.T.Key!="refinery"&&Campaign.HasGate(unit.T)?"左键空地设置出厂集结点":selection.Count==1&&unit.T.Hit>0?"虚线圈内自动锁敌 · 再点本单位取消选中":"左键选人 / 下令　右键取消",x,574,13,dim);
   if(unit!=null&&unit.T.Key=="mcv")Button(g,x,602,243,36,"展开指挥部   [D]",()=>world.Deploy(unit),true);
+  else if(unit!=null&&unit.T.Key=="miner")Button(g,x,602,243,36,"恢复自动采矿",()=>world.MineOrder(unit,null,null));
   else if(unit!=null&&unit.T.Key=="ifv")Button(g,x,602,243,36,"装载 / 卸载步兵   [D]",()=>world.Load(unit));
   else Button(g,x,602,243,36,"攻击移动   [A]",!selection.Any(o=>o.Deployed&&!o.T.Building)?(Action)null:()=>{place=null;attack=true;world.Radio="请点选攻击移动的目的地。";},attack);
   Button(g,x,647,119,34,world.Upgraded[0]?"装甲已升级":!world.Live(0).Any(o=>o.T.Key=="factory")?"需车辆工厂":"升级  $260",(world.Upgraded[0]||world.Funds[0]<260||!world.Live(0).Any(o=>o.T.Key=="factory"))?(Action)null:()=>world.Upgrade());
   bool scanReady=world.Power(0)>=0&&world.Live(0).Any(o=>o.T.Key=="radar")&&world.Funds[0]>=80&&world.Scan<=0;
   Button(g,x+125,647,118,34,scanReady?"扫描 $80":!world.Live(0).Any(o=>o.T.Key=="radar")?"需雷达站":world.Power(0)<0?"缺电":world.Scan>0?"扫描冷却":"需 $80",scanReady?(Action)(()=>{sweep=true;place=null;attack=false;world.Radio="左键选择揭图中心，右键取消。";}):null);
-  Button(g,x,694,117,33,"手册 F1",()=>{paused=true;help=true;});Button(g,x+125,694,118,33,syncMarch?"队形开 F":"队形关 F",()=>syncMarch=!syncMarch,syncMarch);
+  Button(g,x,694,117,33,"手册 F5",()=>{paused=true;help=true;});Button(g,x+125,694,118,33,syncMarch?"队形开 F":"队形关 F",()=>syncMarch=!syncMarch,syncMarch);
   Rect(g,0,742,W,77,ink);Rect(g,15,755,4,47,gold);Txt(g,"作战电台　/　COMMS",28,751,12,gold,true);Txt(g,world.Radio,28,772,18,pale,true);
   DrawQueueStrip(g);
  }
@@ -174,9 +181,9 @@ partial class CommandWindow:Form {
   Txt(g,"LANDING FORCE      //      OPERATIONS COMMAND      01—GH",324,203,14,gold,true);
   string title=world.Won?(world.Tutorial?"训练完成":"行动成功"):world.Lost?"行动终止":briefing?"灰港登陆":help?"战地手册":"指挥已暂停";
   Txt(g,title,323,245,49,pale,true);Line(g,329,325,1140,325,C("#5d7265"));
-  string[] lines=briefing?new[]{"新手训练　跟随九个小目标，亲手展开基地、出兵、占点并护送运输船。","训练港区只有一支守军。可以慢慢试，教官会在地图上标出下一步。","宽松战役　更多起始军费，首波敌袭推迟到 175 秒。","标准战役　首波敌袭在 92 秒，适合熟悉编队和生产后的指挥官。"}:world.Won?new[]{"运输船已接岸。港区走廊重新开放。","作战用时 "+TimeSpan.FromSeconds(world.Time).ToString(@"mm\:ss")+"　｜　存活部队 "+world.Live(0).Count(o=>!o.T.Building)}:
+  string[] lines=briefing?new[]{"新手训练　跟随九个小目标，亲手展开基地、出兵、占点并护送运输船。","登陆区配有精炼厂和采矿车。矿车满载回厂卸货后，军费才会到账。","宽松战役　更多起始军费，首波敌袭推迟到 175 秒。","标准战役　首波敌袭在 92 秒，适合熟悉编队和生产后的指挥官。"}:world.Won?new[]{"运输船已接岸。港区走廊重新开放。","作战用时 "+TimeSpan.FromSeconds(world.Time).ToString(@"mm\:ss")+"　｜　存活部队 "+world.Live(0).Count(o=>!o.T.Building)}:
    world.Lost?new[]{"最后一座指挥部与工程车均已损失，登陆部队撤离。","先保护指挥部，再让步兵夺取仓库，扩大生产。"}:
-   new[]{"01    选择工程车按 D 展开。建电站、兵营和车辆工厂，升级后可生产坦克。","02    左键选中我方部队，点地面移动，点敌方单位集火。A 后点地边打边走；Ctrl 点地压制，S 停火。","03    步兵靠近西岸仓库、中央货场可增加军费。夺下港务中心后清开近敌，守住 "+world.HoldTime+" 秒。","04    滚轮缩放，中键拖图或点小地图定位。F 切换混编队形，步兵也能揭开黑幕。"};
+   new[]{"01    选择工程车按 D 展开。建电站、兵营和车辆工厂，升级后可生产坦克。","02    左键选中我方部队，点地面移动，点敌方单位集火。A 后点地边打边走；Ctrl 点地压制，S 停火。","03    矿车卸货换取军费，车辆工厂可补造矿车。夺下港务中心后清开近敌，守住 "+world.HoldTime+" 秒。","04    H 回基地，空格看事件，Ctrl+F1～F4 存镜头，F1～F4 返回。T 选同类，连按两次选全图。"};
   for(int i=0;i<lines.Length;i++)Txt(g,lines[i],328,347+i*41,17,i==0?gold:pale);
   if(briefing){
    Button(g,328,553,235,49,"▶   新手训练   [Enter]",()=>StartMission(true,false),true);
@@ -195,6 +202,11 @@ partial class CommandWindow:Form {
    int count=selection.Count(o=>world.Suppress(o,p));attack=false;
    if(count>0){Mark(p,null,true);world.Radio="压制指定地面；按 S 停火。";}return;
   }
+  if(!attack&&mods==Keys.None&&selection.Count>0&&selection.All(u=>u.Deployed&&u.T.Key=="miner")){
+   var plant=hit!=null&&hit.Deployed&&hit.Side==0&&hit.T.Key=="refinery"?hit:null;
+   var patch=hit==null&&world.Explored(0,p)?world.OreAt(p):null;
+   if(plant!=null||patch!=null){foreach(var u in selection)world.MineOrder(u,patch,plant);world.Radio=patch!=null?"已指定矿点，装满后自动返厂。":"有载货的矿车将返回精炼厂卸货。";return;}
+  }
   if(!attack&&!shortcut&&hit!=null&&hit.Side==0){
    if((mods&Keys.Shift)!=0){if(!selection.Remove(hit))selection.Add(hit);}
    else if(selection.Count==1&&selection[0]==hit)selection.Clear();
@@ -211,7 +223,7 @@ partial class CommandWindow:Form {
    var fighters=selection.Where(o=>o.Deployed&&o.T.Hit>0).ToArray();
    if(fighters.Length==0)world.Radio="所选部队没有可攻击的武器。";
    else{foreach(var o in fighters)world.Attack(o,enemy);Mark(enemy.P,enemy,true);world.Radio="集火："+enemy.T.Name+" #"+enemy.Id;}
-  }else if(troops.Length==0&&selection.Count==1&&Campaign.HasGate(selection[0].T)){
+  }else if(troops.Length==0&&selection.Count==1&&selection[0].T.Key!="refinery"&&Campaign.HasGate(selection[0].T)){
    if(world.SetRally(selection[0],p))Mark(p,null,false);else world.Radio="集结点需要可通行的空地。";
   }else if(troops.Length==0){world.Radio="请先点选我方部队，或拖框选择多支部队。";}
   else{
@@ -220,7 +232,7 @@ partial class CommandWindow:Form {
   }
   attack=false;
  }
- protected override void OnMouseDown(MouseEventArgs e){base.OnMouseDown(e);hudDirty=true;mouse=ToScreenPoint(e);
+ protected override void OnMouseDown(MouseEventArgs e){selectType=null;base.OnMouseDown(e);hudDirty=true;mouse=ToScreenPoint(e);
   if(e.Button==MouseButtons.Left){var b=hits.LastOrDefault(h=>h.Box.Contains(mouse));if(b!=null){b.Run();Invalidate();return;}}
   if(briefing||paused||world.Won||world.Lost||mouse.X<0||mouse.X>=MW||mouse.Y<MapTop||mouse.Y>MapTop+MH)return;
   var p=WorldOf(mouse);
@@ -244,7 +256,8 @@ partial class CommandWindow:Form {
  protected override void OnKeyDown(KeyEventArgs e){base.OnKeyDown(e);hudDirty=true;if(world.Won||world.Lost)return;
   if(briefing){if(e.KeyCode==Keys.Enter)StartMission(true,false);return;}
   if(e.KeyCode==Keys.Escape&&(place!=null||attack||sweep)){place=null;attack=false;sweep=false;return;}
-  if(e.KeyCode==Keys.Space||e.KeyCode==Keys.Escape){paused=!paused;help=false;return;}if(e.KeyCode==Keys.F1){paused=true;help=true;return;}if(paused)return;
+  if(e.KeyCode==Keys.Pause||e.KeyCode==Keys.Escape){paused=!paused;help=false;return;}if(e.KeyCode==Keys.F5){paused=true;help=true;return;}if(paused)return;
+  if(FieldKey(e))return;
   if(e.KeyCode==Keys.S){foreach(var unit in selection)world.Halt(unit);markedPoint=null;markedEnemy=null;attack=false;world.Radio="所选部队已停止。";}
   if(e.KeyCode==Keys.G)showGrid=!showGrid;
   if(e.KeyCode==Keys.F)syncMarch=!syncMarch;
