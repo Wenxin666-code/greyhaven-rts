@@ -147,7 +147,7 @@ partial class CommandWindow:Form {
   var unit=selection.FirstOrDefault();Txt(g,"指令席   /   ORDERS",x,521,13,teal,true);
   Txt(g,unit==null?"未选中单位":selection.Count>1?"混合编队  ×"+selection.Count:unit.T.Name+(unit.Ready<1?" · 建造中":""),x,545,20,pale,true);
   if(unit!=null&&unit.Queue.Count>0)Txt(g,"排产 "+unit.Queue.Peek().Name+"  "+(int)(unit.Work/unit.Queue.Peek().Seconds*100)+"%  ×"+unit.Queue.Count,x,574,13,gold);
-  else Txt(g,unit!=null&&unit.T.Key=="engineer"?"靠近受损载具或建筑自动维修":unit!=null&&Campaign.HasGate(unit.T)?"左键空地设置出厂集结点":"左键选人 / 下令　右键取消",x,574,13,dim);
+  else Txt(g,unit!=null&&unit.T.Key=="engineer"?"靠近受损载具或建筑自动维修":unit!=null&&Campaign.HasGate(unit.T)?"左键空地设置出厂集结点":selection.Count==1&&unit.T.Hit>0?"虚线圈内自动锁敌 · 再点本单位取消选中":"左键选人 / 下令　右键取消",x,574,13,dim);
   if(unit!=null&&unit.T.Key=="mcv")Button(g,x,602,243,36,"展开指挥部   [D]",()=>world.Deploy(unit),true);
   else if(unit!=null&&unit.T.Key=="ifv")Button(g,x,602,243,36,"装载 / 卸载步兵   [D]",()=>world.Load(unit));
   else Button(g,x,602,243,36,"攻击移动   [A]",!selection.Any(o=>o.Deployed&&!o.T.Building)?(Action)null:()=>{place=null;attack=true;world.Radio="请点选攻击移动的目的地。";},attack);
@@ -196,7 +196,10 @@ partial class CommandWindow:Form {
    if(count>0){Mark(p,null,true);world.Radio="压制指定地面；按 S 停火。";}return;
   }
   if(!attack&&!shortcut&&hit!=null&&hit.Side==0){
-   if((mods&Keys.Shift)==0)selection.Clear();if(!selection.Contains(hit))selection.Add(hit);return;
+   if((mods&Keys.Shift)!=0){if(!selection.Remove(hit))selection.Add(hit);}
+   else if(selection.Count==1&&selection[0]==hit)selection.Clear();
+   else{selection.Clear();selection.Add(hit);}
+   return;
   }
   if(selection.Count==0)return;attack|=shortcut;Issue(ApproachSite(mouse,p),hit);
  }

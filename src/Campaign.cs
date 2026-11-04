@@ -6,12 +6,15 @@ using System.Linq;
 namespace Greyhaven {
 public class TypeInfo {
  public string Key,Name,Producer; public int Price,Hp,Hit,Range,Size; public float Speed,Seconds,Reload;
+ public float LockRange {get{return Hit==0?0:Building?Range:Range+3*Campaign.Tile;}}
  public bool Building {get{return Speed==0;}} public bool Foot {get{return Key=="squad"||Key=="at"||Key=="engineer";}}
  public TypeInfo(string key,string name,string from,int price,int hp,int hit,int range,int size,float speed,float time,float reload){
   Key=key;Name=name;Producer=from;Price=price;Hp=hp;Hit=hit;Range=range;Size=size;Speed=speed;Seconds=time;Reload=reload;
  }
 }
+public enum ContactOrder { None, Directed, Automatic, ReturnFire }
 public class Piece {
+ public ContactOrder Contact;public bool ResumeMarch;public PointF LastContact;public float ScanIn;
  public int RouteVersion,Id,Side,Dir,Group; public TypeInfo T; public PointF P; public float Hp,Ready=1,Cool,Dead,Replan,Turn,Door,Rollout;
  public bool Alive {get{return Hp>0;}} public bool Deployed {get{return Alive&&Ready>=1&&Carrier==null;}}
  public Queue<PointF> Path=new Queue<PointF>(); public Queue<TypeInfo> Queue=new Queue<TypeInfo>(); public float Work,TrafficWait;
@@ -89,9 +92,9 @@ public partial class Campaign {
  }
  public void Upgrade(){if(!Upgraded[0]&&Funds[0]>=260&&Live(0).Any(o=>o.T.Key=="factory")){Funds[0]-=260;Upgraded[0]=true;Radio="装甲升级完成，可以生产坦克和自行火炮。";}else Radio="升级需要已建成的车辆工厂和 260 军费。";}
  public bool Move(Piece o,PointF p,bool attack){
-  if(!o.Deployed||o.T.Building)return false;if(!ParkingAllowed(o.Side,p)||!Route(o,p))return false;o.FirePoint=null;o.Formation=null;o.Target=null;o.Advancing=attack;o.Goal=p;return true;
+  if(!o.Deployed||o.T.Building)return false;if(!ParkingAllowed(o.Side,p)||!Route(o,p))return false;o.FirePoint=null;o.Formation=null;o.Target=null;o.Contact=ContactOrder.None;o.ResumeMarch=false;o.Advancing=attack;o.Goal=p;return true;
  }
- public void Attack(Piece o,Piece target){if(!o.Deployed||o.T.Hit==0)return;o.FirePoint=null;o.Formation=null;o.Target=target;o.Advancing=true;o.Path.Clear();o.Replan=0;o.Goal=target.P;}
+ public void Attack(Piece o,Piece target){if(!o.Deployed||o.T.Hit==0)return;o.FirePoint=null;o.Formation=null;o.Target=target;o.Contact=ContactOrder.Directed;o.ResumeMarch=false;o.Advancing=true;o.Path.Clear();o.Replan=0;o.Goal=target.P;}
  void ApproachPoint(Piece o,PointF target){
   float length=Dist(o.P,target);if(length<1)return;float range=Math.Max(43,o.T.Range*.78f);
   double angle=Math.Atan2(o.P.Y-target.Y,o.P.X-target.X);
@@ -101,7 +104,7 @@ public partial class Campaign {
   if(car==null||car.T.Key!="ifv"||!car.Alive)return;var cargo=Units.FirstOrDefault(o=>o.Alive&&o.Carrier==car);
   if(cargo!=null){PointF drop;if(Exit(car,out drop)){cargo.Carrier=null;cargo.P=drop;Radio="步兵已下车。";}else Radio="周围缺少下车空间。";return;}
   var foot=Live(car.Side).Where(o=>o.T.Foot&&Dist(o.P,car.P)<70).OrderBy(o=>Dist(o.P,car.P)).FirstOrDefault();
-  if(foot==null){Radio="先把一个步兵班组移到战车旁。";return;}foot.Carrier=car;foot.Path.Clear();foot.Target=null;Radio=foot.T.Name+"已登车。";
+  if(foot==null){Radio="先把一个步兵班组移到战车旁。";return;}Halt(foot);foot.Carrier=car;Radio=foot.T.Name+"已登车。";
  }
  bool Exit(Piece o,out PointF p){
   if(o.T.Key=="barracks"&&o.Berths.Count>0){
@@ -128,7 +131,7 @@ public partial class Campaign {
   if(o.T.Key=="ifv"&&e.T.Foot)factor=1.55f;if(o.T.Key=="squad"&&e.T.Key=="tank")factor=.29f;
   if(o.T.Foot&&o.P.X<735&&o.P.Y<324)factor*=1.12f;
   Shots.Add(new Shot{A=o.P,B=e.P,Side=o.Side,Life=.23f,Shell=o.T.Key=="arty"});
-  e.Hp-=o.T.Hit*factor;if(e.Hp<=0)Kill(e);
+  e.Hp-=o.T.Hit*factor;if(e.Hp<=0)Kill(e);else OnIncomingFire(e,o);
  }
  static float Bearing(PointF from,PointF to){return (float)(Math.Atan2(to.X-from.X,to.Y-from.Y)*8/Math.PI+16)%16;}
  static float TurnToward(Piece o,float heading,float dt){
@@ -155,21 +158,13 @@ public partial class Campaign {
   o.Cool-=dt;o.Replan-=dt;o.TrafficWait-=dt;o.Door=Math.Max(0,o.Door-dt);o.Rollout=Math.Max(0,o.Rollout-dt);
   if(o.Queue.Count>0){var t=o.Queue.Peek();o.Work=Math.Min(t.Seconds,o.Work+dt*(powered?1:.45f));
    if(o.Work>=t.Seconds){PointF p;if(Exit(o,out p)){var u=Spawn(t.Key,o.Side,p.X,p.Y);u.Dir=o.Dir;u.Turn=o.Dir;u.Rollout=.6f;o.Door=1;o.Work=0;o.Queue.Dequeue();if(o.Berths.Count>0)o.Berths.RemoveAt(0);RallyNewUnit(o,u);if(o.Side==0){LastReady=u;ReadyAt=Time;if(t.Key=="squad")InfantryDelivered++;if(t.Key=="ifv")VehiclesDelivered++;Radio=t.Name+"已从"+o.T.Name+" #"+o.Id+" 出列。";}}}}
-  var e=o.Target;
-  if(e!=null&&(!e.Deployed||!VisibleTo(o.Side,e))){o.Target=null;o.Path.Clear();e=null;}
   if(o.T.Key=="engineer"&&o.Cool<=0){
    var wounded=Live(o.Side).FirstOrDefault(f=>!f.T.Foot&&f.Hp<f.T.Hp&&Dist(o.P,f.P)<67);
    if(wounded!=null){wounded.Hp=Math.Min(wounded.T.Hp,wounded.Hp+13);o.Cool=1;}
   }
   bool stop=false;
   if(o.FirePoint.HasValue)stop=GroundFireTick(o,dt);
-  else if(o.T.Hit>0&&(o.Path.Count==0||o.Advancing||e!=null)){
-   if(e==null)e=Live(1-o.Side).Where(f=>Dist(o.P,f.P)<=o.T.Range&&VisibleTo(o.Side,f)).OrderBy(f=>f.T.Hit==0?1:0).ThenBy(f=>Dist(o.P,f.P)).FirstOrDefault();
-   if(e!=null){
-    if(Dist(o.P,e.P)<=o.T.Range+2){stop=true;if(!o.T.Building)Face(o,e.P,dt);if(o.Cool<=0&&(o.T.Key!="tank"||Aligned(o,e.P)))Fire(o,e);}
-    else if(!o.T.Building&&o.Replan<=0){ApproachPoint(o,e.P);o.Replan=1.8f;}
-   }
-  }
+  else if(o.T.Hit>0)stop=FightContact(o,dt);
   if(!stop&&o.Path.Count>0){if(o.RouteVersion!=topology&&!Route(o,o.Path.Last())){o.Path.Clear();return;}var p=o.Path.Peek();
    float speed=o.Formation==null?o.T.Speed:o.Formation.Speed(o);
    if(!o.T.Foot)DriveTracks(o,p,speed,dt);

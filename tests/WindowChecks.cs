@@ -50,6 +50,8 @@ class WindowChecks {
    Press(f,688,574);w=(Campaign)Field(f,"world");if(w.Tutorial||!w.Assisted)throw new Exception("handoff to assisted mission");var trooper=w.Live(0).First(o=>o.T.Foot);var nearby=w.Spawn("squad",1,351,421);for(int i=0;i<3;i++)w.Tick(.1f);Frame(f,null);
    MapClick(f,(int)trooper.P.X,(int)trooper.P.Y);var units=(System.Collections.Generic.List<Piece>)Field(f,"selection");
    if(!units.Contains(trooper))throw new Exception("classic select");
+   MapClick(f,(int)trooper.P.X,(int)trooper.P.Y);if(units.Count!=0)throw new Exception("second click should deselect");
+   MapClick(f,(int)trooper.P.X,(int)trooper.P.Y);if(!units.Contains(trooper))throw new Exception("third click selects again");
    MapClick(f,395,470);if(!units.Contains(trooper)||trooper.Path.Count==0)throw new Exception("classic ground movement");
    MapClick(f,(int)nearby.P.X,(int)nearby.P.Y);if(trooper.Target!=nearby)throw new Exception("classic direct targeting");
    MapClick(f,395,470,MouseButtons.Right);if(units.Count!=0||trooper.Target!=nearby)throw new Exception("right deselect must not issue a move");

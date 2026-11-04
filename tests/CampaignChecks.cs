@@ -110,8 +110,26 @@ class CampaignChecks {
    }
   }Console.WriteLine("Street, junction and return drives passed at 30, 60 and 120 updates/s.");
  }
+ static void ContactChecks(){
+  var w=new Campaign(true);var unit=w.Spawn("tank",0,380,770);
+  var building=w.Spawn("power",1,504,768);var goal=new PointF(680,855);
+  Check(w.Move(unit,goal,false),"ordinary march accepted");Wait(w,.4f);
+  Check(unit.Target==building&&unit.ResumeMarch,"march locks enemy structure outside firing range");
+  Wait(w,3);Check(building.Hp<building.T.Hp,"advance into range and fire at structure");
+  building.Hp=0;Wait(w,18);Check(Campaign.Dist(unit.P,goal)<1,"resume interrupted order");
+  w=new Campaign(true);var foot=w.Spawn("squad",0,400,750);var gun=w.Spawn("arty",1,612,750);
+  w.Attack(gun,foot);w.Spawn("engineer",1,400,920);gun.Cool=.05f;
+  w.Tick(.1f);Check(foot.Target==gun&&foot.Contact==ContactOrder.ReturnFire&&!w.Explored(0,gun.P),"retaliate to distant unseen shot");
+  gun.Cool=100;float hp=gun.Hp;Wait(w,8);
+  Check(gun.Hp<hp&&Campaign.Dist(foot.P,gun.P)<=foot.T.Range,"close distance and return fire");
+  var at=foot.P;Wait(w,.5f);Check(Campaign.Dist(at,foot.P)<.01f,"stop within weapon range");
+  w=new Campaign(true);var tower=w.Spawn("post",0,408,756);gun=w.Spawn("arty",1,610,755);var pos=tower.P;
+  w.Spawn("engineer",1,445,755);w.Attack(gun,tower);Wait(w,1);
+  Check(tower.P==pos&&tower.Target!=gun,"stationary gun cannot chase");
+  Console.WriteLine("Moving acquisition, structure attack, resuming orders and out-of-sight return fire passed.");
+ }
  static int Main(){try{Run();return 0;}catch(Exception ex){Console.Error.WriteLine(ex.Message);return 1;}}
- static void Run(){StreetChecks();InfantryWaves();HeadingChecks();ReconAndMarch();Navigation();Training();Play(true);Play(false);var w=new Campaign();var h=Begin(w);var enemy=w.Spawn("tank",1,h.P.X+82,h.P.Y);w.Attack(enemy,h);Wait(w,190);Check(w.Lost,"base loss");
+ static void Run(){ContactChecks();StreetChecks();InfantryWaves();HeadingChecks();ReconAndMarch();Navigation();Training();Play(true);Play(false);var w=new Campaign();var h=Begin(w);var enemy=w.Spawn("tank",1,h.P.X+82,h.P.Y);w.Attack(enemy,h);Wait(w,190);Check(w.Lost,"base loss");
   w=new Campaign();var car=w.Spawn("ifv",0,212,431);w.Load(car);Check(w.Units.Any(o=>o.Carrier==car),"embark");w.Load(car);Check(!w.Units.Any(o=>o.Carrier==car),"disembark");
   Console.WriteLine("All checks passed.");}
 }

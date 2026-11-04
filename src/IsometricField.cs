@@ -66,6 +66,15 @@ partial class CommandWindow {
   DrawGroundView(g);var land=g.Save();GroundSpace(g);DrawTerrainPlan(g);
   if(world.Hold>0){float bx=world.Sites[2].P.X-175*(1-world.Hold/world.HoldTime);Rect(g,bx,41,85,23,ink);Rect(g,bx+5,44,18,16,pale);for(int i=0;i<3;i++)Rect(g,bx+26+i*16,44,13,16,dim);}
   var mode=g.SmoothingMode;g.SmoothingMode=SmoothingMode.None;Shroud(g);g.SmoothingMode=mode;g.Restore(land);
+  if(selection.Count==1){
+   var u=selection[0];
+   if(u.Deployed&&u.T.Hit>0){
+    var p=ScreenOf(u.P);float r=u.T.LockRange*zoom*(float)Math.Sqrt(2);
+    using(var ring=new Pen(Color.FromArgb(118,teal),1)){
+     ring.DashStyle=DashStyle.Dash;g.DrawEllipse(ring,p.X-Axis*r,p.Y-Rise*r,2*Axis*r,2*Rise*r);
+    }
+   }
+  }
   foreach(var site in world.Sites){var p=ScreenOf(site.P);bool seen=world.Explored(0,site.P);Color c=seen&&site.Owner>=0?Team(site.Owner):gold;
    using(var pen=new Pen(c,1.5f)){pen.DashStyle=DashStyle.Dash;g.DrawEllipse(pen,p.X-41*zoom,p.Y-18*zoom,82*zoom,36*zoom);}
    Rect(g,p.X-38,p.Y-32,77,21,Color.FromArgb(211,ink));Txt(g,site.Name,p.X-32,p.Y-32,14,c,true);
