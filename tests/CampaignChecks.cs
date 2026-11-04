@@ -89,14 +89,29 @@ class CampaignChecks {
    var end=new PointF(start.X+50*(float)Math.Sin(a),start.Y+50*(float)Math.Cos(a));
    Check(w.Move(v,end,false),"unobstructed movement");
    int steps=0;for(int i=0;i<110;i++){var prev=v.P;w.Tick(.025f);if(Campaign.Dist(prev,v.P)<.005f)continue;steps++;
-    if(k=="tank"){float dx=v.P.X-prev.X,dy=v.P.Y-prev.Y;bool axis=Math.Abs(dx)<.0002||Math.Abs(dy)<.0002||Math.Abs(Math.Abs(dx)-Math.Abs(dy))<.0002;
+    {float dx=v.P.X-prev.X,dy=v.P.Y-prev.Y;bool axis=Math.Abs(dx)<.0002||Math.Abs(dy)<.0002||Math.Abs(Math.Abs(dx)-Math.Abs(dy))<.0002;
      Check(axis&&v.Dir%2==0,"tank off axis "+dir+" d="+dx+","+dy+" at "+v.P+" path "+String.Join(" ",v.Path)+" frame "+v.Dir);double desired=(Math.Atan2(dx,dy)*8/Math.PI+16)%16;Check(Math.Abs((v.Dir-desired+24)%16-8)<.02,"tracks versus velocity");}
-    else Check(v.Dir==dir,"direction must match actual displacement: "+k+" / "+dir);}
+    }
    Check(steps>0&&Campaign.Dist(v.P,end)<.3f,"depart and reach arbitrary point: "+k+" / "+dir);
-  }Console.WriteLine("16 destinations per vehicle verified, with eight legal tank travel bearings.");
+  }Console.WriteLine("16 destinations per vehicle verified, with eight legal travel bearings on all four vehicles.");
+ }
+ static void StreetChecks(){
+  foreach(float dt in new[]{1f/30,1f/60,1f/120}){
+   var w=new Campaign(true);var t=w.Spawn("tank",0,650,360);
+   Check(w.Move(t,new PointF(714,365),false)&&t.Path.Peek().Y==360,"keep the main leg parallel to the kerb");
+   foreach(var goal in new[]{new PointF(767,481),new PointF(660,359)}){
+    var old=t.P;Check(w.Move(t,goal,false)&&t.Path.Count==2,"turn at actual street intersection");
+    var corner=t.Path.Peek();Check(Campaign.Roads[0].Contains(corner)&&Campaign.Roads[1].Contains(corner),"junction bounds");
+    for(int i=0;i<20/dt&&t.Path.Count>0;i++){
+     w.Tick(dt);Check(Campaign.Roads[0].Contains(t.P)||Campaign.Roads[1].Contains(t.P),"cut through a block");
+     if(Campaign.Dist(t.P,old)>.001f)Check((t.Dir%4)==0,"street-axis frame");old=t.P;
+    }
+    Check(Campaign.Dist(t.P,goal)<.02f,"missed street destination");
+   }
+  }Console.WriteLine("Street, junction and return drives passed at 30, 60 and 120 updates/s.");
  }
  static int Main(){try{Run();return 0;}catch(Exception ex){Console.Error.WriteLine(ex.Message);return 1;}}
- static void Run(){InfantryWaves();HeadingChecks();ReconAndMarch();Navigation();Training();Play(true);Play(false);var w=new Campaign();var h=Begin(w);var enemy=w.Spawn("tank",1,h.P.X+82,h.P.Y);w.Attack(enemy,h);Wait(w,190);Check(w.Lost,"base loss");
+ static void Run(){StreetChecks();InfantryWaves();HeadingChecks();ReconAndMarch();Navigation();Training();Play(true);Play(false);var w=new Campaign();var h=Begin(w);var enemy=w.Spawn("tank",1,h.P.X+82,h.P.Y);w.Attack(enemy,h);Wait(w,190);Check(w.Lost,"base loss");
   w=new Campaign();var car=w.Spawn("ifv",0,212,431);w.Load(car);Check(w.Units.Any(o=>o.Carrier==car),"embark");w.Load(car);Check(!w.Units.Any(o=>o.Carrier==car),"disembark");
   Console.WriteLine("All checks passed.");}
 }

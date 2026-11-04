@@ -20,16 +20,20 @@ partial class CommandWindow:Form {
  Color ink=C("#111d20"),panel=C("#1d2c2c"),pale=C("#e3e6d3"),dim=C("#9eafa1"),gold=C("#ebc17c"),teal=C("#82d0b4"),red=C("#ee8b72");
  class HitBox {public RectangleF Box;public Action Run;}
  static Color C(string s){return ColorTranslator.FromHtml(s);}
+ [System.Runtime.InteropServices.DllImport("winmm.dll")]static extern uint timeBeginPeriod(uint ms);
+ [System.Runtime.InteropServices.DllImport("winmm.dll")]static extern uint timeEndPeriod(uint ms);
+ bool timerPrecision;
+ protected override void OnShown(EventArgs e){base.OnShown(e);timerPrecision=timeBeginPeriod(1)==0;last=watch.Elapsed.TotalSeconds;}
  public CommandWindow(){
-  Text="断线前沿  /  灰港登陆";StartPosition=FormStartPosition.CenterScreen;MinimumSize=new Size(900,575);ClientSize=new Size(1260,706);BackColor=Color.FromArgb(17,29,32);
-  DoubleBuffered=true;KeyPreview=true;SetStyle(ControlStyles.ResizeRedraw,true);
+  Text="断线前沿  /  灰港登陆";StartPosition=FormStartPosition.CenterScreen;MinimumSize=new Size(900,575);var area=Screen.FromPoint(Cursor.Position).WorkingArea;float fit=Math.Min(1f,Math.Min((area.Width-32f)/W,(area.Height-64f)/H));ClientSize=new Size((int)(W*fit),(int)(H*fit));BackColor=Color.FromArgb(17,29,32);
+  KeyPreview=true;SetStyle(ControlStyles.ResizeRedraw|ControlStyles.Opaque|ControlStyles.AllPaintingInWmPaint,true);
   Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);
-  world=new Campaign();ground=MakeGround();
+  world=new Campaign();ground=MakeGround();projectedGround=ProjectTerrain();radarGround=new Bitmap(488,214,System.Drawing.Imaging.PixelFormat.Format32bppPArgb);using(var rg=Graphics.FromImage(radarGround))rg.DrawImage(ground,0,0,488,214);
   foreach(var key in new[]{"hq","power","factory","barracks","radar","post","squad","at","engineer","tank","ifv","mcv","arty","depot","freight","harbormaster"})painted[key]=Raw((key=="squad"||key=="at"||key=="engineer"?"hd-":"iso-")+key);
   foreach(var t in Campaign.Types.Where(t=>t.Foot))atlas[t.Key]=WreckSheet(t);
-  Restart();pulse.Interval=32;pulse.Tick+=(s,e)=>{double now=watch.Elapsed.TotalSeconds;float dt=(float)Math.Min(.12,now-last);last=now;
+  Restart();pulse.Interval=15;pulse.Tick+=(s,e)=>{double now=watch.Elapsed.TotalSeconds;float dt=(float)Math.Min(.12,now-last);last=now;
    if(!briefing&&!paused&&!world.Won&&!world.Lost){for(int i=0;i<speed;i++)world.Tick(dt);selection.RemoveAll(o=>!o.Alive||o.Carrier!=null);}
-   Invalidate();};pulse.Start(); FormClosed+=(s,e)=>{pulse.Stop();pulse.Dispose();ground.Dispose();foreach(var b in painted.Values)b.Dispose();foreach(var i in atlas.Values)i.Dispose();foreach(var f in fonts.Values)f.Dispose();};
+   Invalidate();};pulse.Start(); FormClosed+=(s,e)=>{pulse.Stop();pulse.Dispose();if(timerPrecision)timeEndPeriod(1);ground.Dispose();projectedGround.Dispose();radarGround.Dispose();if(terrainView!=null)terrainView.Dispose();ReleaseFrame();ClearStampCache();foreach(var b in painted.Values)b.Dispose();foreach(var i in atlas.Values)i.Dispose();foreach(var f in fonts.Values)f.Dispose();};
   Deactivate+=(s,e)=>{if(!briefing&&!world.Won&&!world.Lost)paused=true;drag=false;panning=false;Capture=false;};
  }
  static Bitmap WreckSheet(TypeInfo t){
@@ -77,10 +81,55 @@ partial class CommandWindow:Form {
   }
  }
  void Sprite(Graphics g,TypeInfo t,int side,int dir,int group,RectangleF box){var bmp=atlas[t.Key];g.DrawImage(bmp,box,new RectangleF((dir%8)*192,(group*2+dir/8)*192,192,192),GraphicsUnit.Pixel);}
+ [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+ struct DibHeader {
+  public uint Size;public int Width,Height;public ushort Planes,BitCount;
+  public uint Compression,ImageSize;public int XPels,YPels;public uint Colors,Important;
+ }
+ [System.Runtime.InteropServices.DllImport("gdi32.dll")]static extern IntPtr CreateDIBSection(IntPtr dc,ref DibHeader header,uint usage,out IntPtr pixels,IntPtr section,uint offset);
+ [System.Runtime.InteropServices.DllImport("gdi32.dll")]static extern IntPtr CreateCompatibleDC(IntPtr dc);
+ [System.Runtime.InteropServices.DllImport("gdi32.dll")]static extern IntPtr SelectObject(IntPtr dc,IntPtr obj);
+ [System.Runtime.InteropServices.DllImport("gdi32.dll")]static extern bool DeleteObject(IntPtr obj);
+ [System.Runtime.InteropServices.DllImport("gdi32.dll")]static extern bool DeleteDC(IntPtr dc);
+ [System.Runtime.InteropServices.DllImport("gdi32.dll")]static extern bool BitBlt(IntPtr dest,int x,int y,int w,int h,IntPtr src,int sx,int sy,uint op);
+ Bitmap frameBuffer;Graphics frameGraphics;IntPtr frameDC,frameDib,oldDib;
+ void ReleaseFrame(){
+  if(frameGraphics!=null){frameGraphics.Dispose();frameGraphics=null;}
+  if(frameBuffer!=null){frameBuffer.Dispose();frameBuffer=null;}
+  if(oldDib!=IntPtr.Zero){SelectObject(frameDC,oldDib);oldDib=IntPtr.Zero;}
+  if(frameDib!=IntPtr.Zero){DeleteObject(frameDib);frameDib=IntPtr.Zero;}
+  if(frameDC!=IntPtr.Zero){DeleteDC(frameDC);frameDC=IntPtr.Zero;}
+ }
+ void AllocateFrame(){
+  ReleaseFrame();int w=ClientSize.Width,h=ClientSize.Height;IntPtr pixels;
+  var header=new DibHeader{Size=40,Width=w,Height=-h,Planes=1,BitCount=32};
+  frameDC=CreateCompatibleDC(IntPtr.Zero);frameDib=CreateDIBSection(frameDC,ref header,0,out pixels,IntPtr.Zero,0);
+  if(frameDC!=IntPtr.Zero&&frameDib!=IntPtr.Zero)oldDib=SelectObject(frameDC,frameDib);
+  if(oldDib!=IntPtr.Zero&&oldDib!=new IntPtr(-1))frameBuffer=new Bitmap(w,h,w*4,System.Drawing.Imaging.PixelFormat.Format32bppPArgb,pixels);
+  else{ReleaseFrame();frameBuffer=new Bitmap(w,h,System.Drawing.Imaging.PixelFormat.Format32bppPArgb);}
+  frameGraphics=Graphics.FromImage(frameBuffer);
+ }
+ bool hudDirty=true,previousOverlay;int hudHitCount;float hudTime;Campaign hudWorld;
  protected override void OnPaint(PaintEventArgs e){
-  var g=e.Graphics;scale=Math.Min(ClientSize.Width/(float)W,ClientSize.Height/(float)H);ox=(ClientSize.Width-W*scale)/2;oy=(ClientSize.Height-H*scale)/2;
-  g.Clear(ink);g.TranslateTransform(ox,oy);g.ScaleTransform(scale,scale);g.SmoothingMode=SmoothingMode.AntiAlias;g.InterpolationMode=InterpolationMode.Bilinear;
-  hits.Clear();DrawBattle(g);DrawHud(g);if(briefing||paused||world.Won||world.Lost)Overlay(g);
+  if(ClientSize.Width<=0||ClientSize.Height<=0)return;
+  if(frameBuffer==null||frameBuffer.Size!=ClientSize){AllocateFrame();hudDirty=true;}
+  var g=frameGraphics;g.ResetTransform();
+  scale=Math.Min(ClientSize.Width/(float)W,ClientSize.Height/(float)H);ox=(ClientSize.Width-W*scale)/2;oy=(ClientSize.Height-H*scale)/2;
+  bool overlay=briefing||paused||world.Won||world.Lost;
+  bool refresh=hudDirty||overlay||previousOverlay||hudWorld!=world||world.Time-hudTime>=.1f;
+  if(refresh)g.Clear(ink);
+  g.TranslateTransform(ox,oy);g.ScaleTransform(scale,scale);g.SmoothingMode=SmoothingMode.AntiAlias;g.InterpolationMode=InterpolationMode.Bilinear;
+  drawingClient=true;DrawBattle(g);
+  if(refresh){
+   hits.Clear();DrawHud(g);hudHitCount=hits.Count;hudTime=world.Time;hudWorld=world;hudDirty=false;
+  }else if(hits.Count>hudHitCount)hits.RemoveRange(hudHitCount,hits.Count-hudHitCount);
+  DrawCoach(g);drawingClient=false;previousOverlay=overlay;if(overlay)Overlay(g);
+  g.Flush(FlushIntention.Sync);
+  if(frameDC==IntPtr.Zero){e.Graphics.DrawImageUnscaled(frameBuffer,0,0);return;}
+  var target=e.Graphics.GetHdc();bool copied;
+  try{copied=BitBlt(target,0,0,frameBuffer.Width,frameBuffer.Height,frameDC,0,0,0x00CC0020);}
+  finally{e.Graphics.ReleaseHdc(target);}
+  if(!copied)e.Graphics.DrawImageUnscaled(frameBuffer,0,0);
  }
  Color Team(int s){return s==0?C("#6dcced"):red;}
  void DrawHud(Graphics g){
@@ -107,7 +156,7 @@ partial class CommandWindow:Form {
   Button(g,x+125,647,118,34,scanReady?"扫描 $80":!world.Live(0).Any(o=>o.T.Key=="radar")?"需雷达站":world.Power(0)<0?"缺电":world.Scan>0?"扫描冷却":"需 $80",scanReady?(Action)(()=>{sweep=true;place=null;attack=false;world.Radio="左键选择揭图中心，右键取消。";}):null);
   Button(g,x,694,117,33,"手册 F1",()=>{paused=true;help=true;});Button(g,x+125,694,118,33,syncMarch?"队形开 F":"队形关 F",()=>syncMarch=!syncMarch,syncMarch);
   Rect(g,0,742,W,77,ink);Rect(g,15,755,4,47,gold);Txt(g,"作战电台　/　COMMS",28,751,12,gold,true);Txt(g,world.Radio,28,772,18,pale,true);
-  DrawQueueStrip(g);DrawCoach(g);
+  DrawQueueStrip(g);
  }
  void Metric(Graphics g,int x,string label,string val,Color color){Txt(g,label,x,8,12,dim);Txt(g,val,x,27,21,color,true);}
  void Card(Graphics g,TypeInfo t,float x,float y){
@@ -127,7 +176,7 @@ partial class CommandWindow:Form {
   Txt(g,title,323,245,49,pale,true);Line(g,329,325,1140,325,C("#5d7265"));
   string[] lines=briefing?new[]{"新手训练　跟随九个小目标，亲手展开基地、出兵、占点并护送运输船。","训练港区只有一支守军。可以慢慢试，教官会在地图上标出下一步。","宽松战役　更多起始军费，首波敌袭推迟到 175 秒。","标准战役　首波敌袭在 92 秒，适合熟悉编队和生产后的指挥官。"}:world.Won?new[]{"运输船已接岸。港区走廊重新开放。","作战用时 "+TimeSpan.FromSeconds(world.Time).ToString(@"mm\:ss")+"　｜　存活部队 "+world.Live(0).Count(o=>!o.T.Building)}:
    world.Lost?new[]{"最后一座指挥部与工程车均已损失，登陆部队撤离。","先保护指挥部，再让步兵夺取仓库，扩大生产。"}:
-   new[]{"01    选择工程车按 D 展开。建电站、兵营和车辆工厂，升级后可生产坦克。","02    左键选蓝军，点地移动、点敌集火。A 后点地边打边走；Ctrl 点地压制，S 停火。","03    步兵靠近西岸仓库、中央货场可增加军费。夺下港务中心后清开近敌，守住 "+world.HoldTime+" 秒。","04    滚轮缩放，中键拖图或点小地图定位。F 切换混编队形，步兵也能揭开黑幕。"};
+   new[]{"01    选择工程车按 D 展开。建电站、兵营和车辆工厂，升级后可生产坦克。","02    左键选中我方部队，点地面移动，点敌方单位集火。A 后点地边打边走；Ctrl 点地压制，S 停火。","03    步兵靠近西岸仓库、中央货场可增加军费。夺下港务中心后清开近敌，守住 "+world.HoldTime+" 秒。","04    滚轮缩放，中键拖图或点小地图定位。F 切换混编队形，步兵也能揭开黑幕。"};
   for(int i=0;i<lines.Length;i++)Txt(g,lines[i],328,347+i*41,17,i==0?gold:pale);
   if(briefing){
    Button(g,328,553,235,49,"▶   新手训练   [Enter]",()=>StartMission(true,false),true);
@@ -161,14 +210,14 @@ partial class CommandWindow:Form {
    else{foreach(var o in fighters)world.Attack(o,enemy);Mark(enemy.P,enemy,true);world.Radio="集火："+enemy.T.Name+" #"+enemy.Id;}
   }else if(troops.Length==0&&selection.Count==1&&Campaign.HasGate(selection[0].T)){
    if(world.SetRally(selection[0],p))Mark(p,null,false);else world.Radio="集结点需要可通行的空地。";
-  }else if(troops.Length==0){world.Radio="请先点选蓝军部队，或拖框选择多支部队。";}
+  }else if(troops.Length==0){world.Radio="请先点选我方部队，或拖框选择多支部队。";}
   else{
    world.Radio=attack?"部队将沿途交战，向指定地点推进。":"部队正前往指定地点。";int failed=troops.Length-world.MarchTo(troops,p,attack,syncMarch);
    if(failed<troops.Length)Mark(p,null,attack);if(failed>0)world.Radio=failed+" 支部队的目标位置被阻挡。请点建筑外的空地。";
   }
   attack=false;
  }
- protected override void OnMouseDown(MouseEventArgs e){base.OnMouseDown(e);mouse=ToScreenPoint(e);
+ protected override void OnMouseDown(MouseEventArgs e){base.OnMouseDown(e);hudDirty=true;mouse=ToScreenPoint(e);
   if(e.Button==MouseButtons.Left){var b=hits.LastOrDefault(h=>h.Box.Contains(mouse));if(b!=null){b.Run();Invalidate();return;}}
   if(briefing||paused||world.Won||world.Lost||mouse.X<0||mouse.X>=MW||mouse.Y<MapTop||mouse.Y>MapTop+MH)return;
   var p=WorldOf(mouse);
@@ -182,14 +231,14 @@ partial class CommandWindow:Form {
   if(place!=null){if(world.Build(place,p))place=null;return;}
   start=mouse;drag=true;dragged=false;Capture=true;
  }
- protected override void OnMouseMove(MouseEventArgs e){base.OnMouseMove(e);mouse=ToScreenPoint(e);if(panning){Pan(panPoint.X-mouse.X,panPoint.Y-mouse.Y);panPoint=mouse;Invalidate();return;}if(drag&&Campaign.Dist(start,mouse)>6)dragged=true;}
- protected override void OnMouseUp(MouseEventArgs e){base.OnMouseUp(e);if(panning){panning=false;Capture=false;return;}if(!drag)return;drag=false;Capture=false;mouse=ToScreenPoint(e);
+ protected override void OnMouseMove(MouseEventArgs e){base.OnMouseMove(e);var old=mouse;mouse=ToScreenPoint(e);if(old!=mouse&&(old.X>=MW||mouse.X>=MW||old.Y<MapTop||mouse.Y<MapTop||old.Y>=MapTop+MH||mouse.Y>=MapTop+MH))hudDirty=true;if(panning){Pan(panPoint.X-mouse.X,panPoint.Y-mouse.Y);panPoint=mouse;Invalidate();return;}if(drag&&Campaign.Dist(start,mouse)>6)dragged=true;}
+ protected override void OnMouseUp(MouseEventArgs e){base.OnMouseUp(e);hudDirty=true;if(panning){panning=false;Capture=false;return;}if(!drag)return;drag=false;Capture=false;mouse=ToScreenPoint(e);
   if(mouse.X<0||mouse.X>=MW||mouse.Y<MapTop||mouse.Y>=MapTop+MH){if(!dragged)return;}
   if(dragged){attack=false;if((ModifierKeys&Keys.Shift)==0)selection.Clear();var r=DragRect();foreach(var u in world.Live(0).Where(u=>!u.T.Building&&r.Contains(ScreenOf(u.P))))if(!selection.Contains(u))selection.Add(u);return;}
   ContextOrder(ModifierKeys);Invalidate();
 
  }
- protected override void OnKeyDown(KeyEventArgs e){base.OnKeyDown(e);if(world.Won||world.Lost)return;
+ protected override void OnKeyDown(KeyEventArgs e){base.OnKeyDown(e);hudDirty=true;if(world.Won||world.Lost)return;
   if(briefing){if(e.KeyCode==Keys.Enter)StartMission(true,false);return;}
   if(e.KeyCode==Keys.Escape&&(place!=null||attack||sweep)){place=null;attack=false;sweep=false;return;}
   if(e.KeyCode==Keys.Space||e.KeyCode==Keys.Escape){paused=!paused;help=false;return;}if(e.KeyCode==Keys.F1){paused=true;help=true;return;}if(paused)return;

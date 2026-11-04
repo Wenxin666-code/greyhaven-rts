@@ -16,7 +16,7 @@ class WindowChecks {
  }
  [STAThread]static int Main(string[] args){try{Run(args);return 0;}catch(Exception e){Console.Error.WriteLine(e.Message);Console.Error.WriteLine(e.StackTrace);return 1;}}
  static void Run(string[] args){
-  using(var f=new CommandWindow()){if(args.Length>0)f.CheckScreenTravel(args[0]);f.CheckPlates(args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"角度校准.png"));Frame(f,null);Press(f,410,575);if((bool)Field(f,"briefing"))throw new Exception("briefing");
+  using(var f=new CommandWindow()){if(args.Length==1&&args[0]=="--window"){f.ProfileWindow();return;}if(args.Length==1&&args[0]=="--profile"){f.ProfileBattle();return;}if(args.Length==2&&args[0]=="--drive"){f.RecordStreetTurn(args[1]);return;}if(args.Length>0)f.CheckScreenTravel(args[0]);f.CheckPlates(args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"角度校准.png"));Frame(f,null);Press(f,410,575);if((bool)Field(f,"briefing"))throw new Exception("briefing");
    var screen=new PointF(647,405);var inv=typeof(CommandWindow).GetMethod("WorldOf",flags);
    var before=(PointF)inv.Invoke(f,new object[]{screen});float ui=(float)Field(f,"scale");
    typeof(CommandWindow).GetMethod("OnMouseWheel",flags).Invoke(f,new object[]{new MouseEventArgs(MouseButtons.None,0,(int)(screen.X*ui+(float)Field(f,"ox")),(int)(screen.Y*ui+(float)Field(f,"oy")),120)});
@@ -70,6 +70,70 @@ class WindowChecks {
 
 namespace Greyhaven {
 partial class CommandWindow {
+ internal void RecordStreetTurn(string folder){
+  Directory.CreateDirectory(folder);ClientSize=new Size(W,H);briefing=false;world=new Campaign(true);
+  var tank=world.Spawn("tank",0,696,361);tank.Turn=4;tank.Dir=4;
+  CenterAt(new PointF(755,384));zoom=2.4f;selection.Clear();selection.Add(tank);
+  if(!world.Move(tank,new PointF(766,437),false))throw new Exception("street turn blocked");
+  using(var frame=new Bitmap(W,H))using(var g=Graphics.FromImage(frame)){
+   for(int i=0;i<80;i++){
+    for(int n=0;n<4;n++)world.Tick(1f/60);
+    var state=g.Save();OnPaint(new PaintEventArgs(g,ClientRectangle));g.Restore(state);
+    using(var clip=frame.Clone(new Rectangle(320,208,550,350),frame.PixelFormat))
+     clip.Save(Path.Combine(folder,i.ToString("D3")+".png"),System.Drawing.Imaging.ImageFormat.Png);
+   }
+  }
+  if(Campaign.Dist(tank.P,new PointF(766,437))>.02f)throw new Exception("road drive incomplete");
+ }
+ sealed class PaintTimes:NativeWindow {
+  public readonly System.Collections.Generic.List<double> Intervals=new System.Collections.Generic.List<double>();
+  readonly System.Diagnostics.Stopwatch clock=System.Diagnostics.Stopwatch.StartNew();double previous;
+  protected override void WndProc(ref Message m){
+   base.WndProc(ref m);if(m.Msg!=15)return;double now=clock.Elapsed.TotalMilliseconds;
+   if(previous!=0)Intervals.Add(now-previous);previous=now;
+  }
+ }
+ internal void ProfileWindow(){
+  ClientSize=new Size(1260,706);StartMission(true,true);
+  var tank=world.Spawn("tank",0,690,361);CenterAt(new PointF(748,392));Show();paused=false;
+  var probe=new PaintTimes();probe.AssignHandle(Handle);int run=0;
+  var goals=new[]{new PointF(766,410),new PointF(686,361),new PointF(766,433)};
+  var results=new System.Collections.Generic.List<double[]>();
+  try{
+   using(var loop=new ApplicationContext())using(var deadline=new Timer{Interval=2600}){
+    world.Move(tank,goals[run],false);
+    deadline.Tick+=(sender,args)=>{
+     results.Add(probe.Intervals.Skip(2).OrderBy(v=>v).ToArray());probe.Intervals.Clear();
+     if(++run==goals.Length){deadline.Stop();loop.ExitThread();}else world.Move(tank,goals[run],false);
+    };
+    deadline.Start();Application.Run(loop);
+   }
+   foreach(var times in results){
+    if(times.Length<4)throw new Exception("no window paints");
+    Console.WriteLine("Live 1260x706: {0:F1} paints/s, p95 interval {1:F1}ms",1000/times.Average(),times[(int)(times.Length*.95)]);
+   }
+  }finally{probe.ReleaseHandle();Close();}
+ }
+ internal void ProfileBattle(){
+  briefing=false;var tank=world.Spawn("tank",0,590,361);
+  foreach(var size in new[]{new Size(1260,706),new Size(1920,1080)}){
+   ClientSize=size;
+   using(var surface=new Bitmap(size.Width,size.Height,System.Drawing.Imaging.PixelFormat.Format32bppPArgb))
+   using(var g=Graphics.FromImage(surface)){
+    foreach(bool pan in new[]{false,true}){
+     camera=new PointF(600,361);world.Move(tank,new PointF(tank.P.X<720?780:540,361),false);
+     var samples=new System.Collections.Generic.List<double>();
+     for(int i=0;i<50;i++){
+      var timer=System.Diagnostics.Stopwatch.StartNew();world.Tick(1f/60);
+      if(pan)Pan(2,1);
+      var state=g.Save();OnPaint(new PaintEventArgs(g,ClientRectangle));g.Restore(state);g.Flush(System.Drawing.Drawing2D.FlushIntention.Sync);
+      if(i>=5)samples.Add(timer.Elapsed.TotalMilliseconds);
+     }
+     samples.Sort();Console.WriteLine("{0}x{1} {2} median {3:F2}ms p95 {4:F2}ms",size.Width,size.Height,pan?"pan":"fixed",samples[22],samples[42]);
+    }
+   }
+  }
+ }
  internal void CheckScreenTravel(string shot){
   var measurements=File.ReadAllLines(Path.Combine(Path.GetDirectoryName(shot),"../art/source/aligned/tank-bearing-check.csv")).Skip(1)
    .Select(line=>line.Split(',').Select(s=>double.Parse(s,System.Globalization.CultureInfo.InvariantCulture)).ToArray()).ToArray();
@@ -110,7 +174,7 @@ partial class CommandWindow {
    }
    Line(g,24,584,1130,584,dim);Txt(g,"车辆接地方向  /  斜向与正侧面",28,596,20,gold,true);
    int j=0;foreach(var k in new[]{"mcv","ifv","tank","arty"}){
-    var t=Campaign.Info(k);var sheet=painted[k];if(k=="tank"?sheet.Width!=8*192||sheet.Height!=24*192:sheet.Width!=FrameSize*8||sheet.Height!=FrameSize*6)throw new Exception(k+" directional sheet");
+    var t=Campaign.Info(k);var sheet=painted[k];if(k=="tank"?sheet.Width!=8*TankCellSize||sheet.Height!=24*TankCellSize:sheet.Width!=FrameSize*8||sheet.Height!=FrameSize*6)throw new Exception(k+" directional sheet");
     var baseX=40+j++*285;Txt(g,t.Name,baseX,641,16,pale,true);
     for(int n=0;n<2;n++){int dir=n==0?14:4;double yaw=dir*Math.PI/8;
      var pt=new PointF(baseX+50+n*120,741);float dx=(float)Math.Sin(yaw)*60,dy=(float)Math.Cos(yaw)*30;

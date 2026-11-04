@@ -23,9 +23,47 @@ partial class CommandWindow {
     g.FillRectangle(brush,left*Campaign.FogSize,y*Campaign.FogSize,(x-left)*Campaign.FogSize+.45f,Campaign.FogSize+.45f);}
   }}
  }
+ // Cache only immutable terrain, at physical display resolution. The extra
+ // border lets small pans reuse the same pixels without rerasterizing the map.
+ const int TerrainMargin=144;
+ Bitmap terrainView,radarGround;
+ PointF terrainCamera;float terrainZoom,terrainScale;
+ const float TerrainDensity=2;
+ Bitmap projectedGround;
+ Bitmap ProjectTerrain(){
+  var map=new Bitmap((int)Math.Ceiling((Campaign.Width+Campaign.Height)*Axis*TerrainDensity)+2,
+   (int)Math.Ceiling((Campaign.Width+Campaign.Height)*Rise*TerrainDensity)+2,PixelFormat.Format32bppPArgb);
+  using(var g=Graphics.FromImage(map))
+  using(var m=new Matrix(Axis*TerrainDensity,Rise*TerrainDensity,-Axis*TerrainDensity,Rise*TerrainDensity,Campaign.Height*Axis*TerrainDensity,0)){
+   g.Clear(C("#132122"));g.Transform=m;g.InterpolationMode=InterpolationMode.Bilinear;g.DrawImage(ground,0,0,ground.Width,ground.Height);
+  }
+  return map;
+ }
+ void DrawGroundView(Graphics g){
+  int w=(int)Math.Ceiling(MW*scale)+2*TerrainMargin,h=(int)Math.Ceiling(MH*scale)+2*TerrainMargin;
+  var anchor=ScreenOf(terrainCamera);
+  int dx=(int)Math.Round((anchor.X-MW*.5f)*scale),dy=(int)Math.Round((anchor.Y-MapTop-MH*.5f)*scale);
+  if(terrainView==null||terrainView.Width!=w||terrainView.Height!=h||zoom!=terrainZoom||scale!=terrainScale||Math.Abs(dx)>=TerrainMargin||Math.Abs(dy)>=TerrainMargin){
+   if(terrainView==null||terrainView.Width!=w||terrainView.Height!=h){
+    if(terrainView!=null)terrainView.Dispose();terrainView=new Bitmap(w,h,PixelFormat.Format32bppPArgb);
+   }
+   terrainCamera=camera;terrainScale=scale;terrainZoom=zoom;dx=dy=0;
+   using(var bg=Graphics.FromImage(terrainView)){
+    bg.Clear(C("#132122"));bg.InterpolationMode=InterpolationMode.Bilinear;
+    var origin=ScreenOf(new PointF(0,Campaign.Height));
+    var top=ScreenOf(PointF.Empty);
+    float k=zoom*scale/TerrainDensity;
+    var dst=new RectangleF(TerrainMargin+origin.X*scale,TerrainMargin+(top.Y-MapTop)*scale,projectedGround.Width*k,projectedGround.Height*k);
+    var draw=RectangleF.Intersect(dst,new RectangleF(0,0,w,h));
+    if(!draw.IsEmpty)bg.DrawImage(projectedGround,draw,new RectangleF((draw.X-dst.X)/k,(draw.Y-dst.Y)/k,draw.Width/k,draw.Height/k),GraphicsUnit.Pixel);
+   }
+  }
+  var state=g.Save();g.ResetTransform();
+  g.DrawImageUnscaled(terrainView,(int)Math.Round(ox)+dx-TerrainMargin,(int)Math.Round(oy+MapTop*scale)+dy-TerrainMargin);g.Restore(state);
+ }
  void DrawBattle(Graphics g){
   var view=g.Save();g.SetClip(new Rectangle(0,MapTop,MW,MH));Rect(g,0,MapTop,MW,MH,C("#132122"));
-  var land=g.Save();GroundSpace(g);g.DrawImage(ground,0,0,Campaign.Width,Campaign.Height);DrawTerrainPlan(g);
+  DrawGroundView(g);var land=g.Save();GroundSpace(g);DrawTerrainPlan(g);
   if(world.Hold>0){float bx=world.Sites[2].P.X-175*(1-world.Hold/world.HoldTime);Rect(g,bx,41,85,23,ink);Rect(g,bx+5,44,18,16,pale);for(int i=0;i<3;i++)Rect(g,bx+26+i*16,44,13,16,dim);}
   var mode=g.SmoothingMode;g.SmoothingMode=SmoothingMode.None;Shroud(g);g.SmoothingMode=mode;g.Restore(land);
   foreach(var site in world.Sites){var p=ScreenOf(site.P);bool seen=world.Explored(0,site.P);Color c=seen&&site.Owner>=0?Team(site.Owner):gold;
@@ -89,7 +127,7 @@ partial class CommandWindow {
  }
  void DrawRadar(Graphics g,float x){
   var state=g.Save();g.SmoothingMode=SmoothingMode.None;g.SetClip(new RectangleF(x,102,244,107));g.TranslateTransform(x,102);g.ScaleTransform(244f/Campaign.Width,107f/Campaign.Height);
-  g.DrawImage(ground,0,0,Campaign.Width,Campaign.Height);Shroud(g);
+  g.DrawImage(radarGround,0,0,Campaign.Width,Campaign.Height);Shroud(g);
   bool radar=world.Power(0)>=0&&world.Live(0).Any(o=>o.T.Key=="radar");
   foreach(var o in world.Units.Where(a=>a.Alive&&a.Carrier==null&&(a.Side==0||radar&&world.Visible(a))))Rect(g,o.P.X-6,o.P.Y-6,o.T.Building?26:16,o.T.Building?26:16,Team(o.Side));
   foreach(var site in world.Sites)using(var pen=new Pen(gold,5))g.DrawRectangle(pen,site.P.X-15,site.P.Y-15,30,30);
@@ -127,6 +165,9 @@ partial class CommandWindow {
    }return bmp;
   }
  }
- static Bitmap Raw(string name){using(var stream=typeof(CommandWindow).Assembly.GetManifestResourceStream("Greyhaven.Art."+name+".png"))using(var src=new Bitmap(stream))return new Bitmap(src);}
+ static Bitmap Raw(string name){using(var stream=typeof(CommandWindow).Assembly.GetManifestResourceStream("Greyhaven.Art."+name+".png"))using(var src=new Bitmap(stream)){
+  var bmp=new Bitmap(src.Width,src.Height,PixelFormat.Format32bppPArgb);
+  using(var g=Graphics.FromImage(bmp)){g.CompositingMode=CompositingMode.SourceCopy;g.DrawImageUnscaled(src,0,0);}return bmp;
+ }}
 }
 }

@@ -19,10 +19,34 @@ partial class CommandWindow {
   return new Rectangle(dir%8*FrameSize,(row*2+dir/8)*FrameSize,FrameSize,FrameSize);
  }
  static int TankFrame(Piece o){return ((int)Math.Round(o.Turn*4)+56)%64;}
- static Rectangle TankCell(int side,int angle){return new Rectangle(angle%8*192,(side*8+angle/8)*192,192,192);}
+ const int TankCellSize=288;
+ static Rectangle TankCell(int side,int angle){return new Rectangle(angle%8*TankCellSize,(side*8+angle/8)*TankCellSize,TankCellSize,TankCellSize);}
+ // Reuse the final physical-size sprite while the camera scale is unchanged.
+ bool drawingClient;
+ float stampScale,stampZoom;long stampBytes;
+ readonly Dictionary<Tuple<string,Rectangle,Size>,Bitmap> stamps=new Dictionary<Tuple<string,Rectangle,Size>,Bitmap>();
+ void ClearStampCache(){foreach(var img in stamps.Values)img.Dispose();stamps.Clear();stampBytes=0;}
+ void DrawStamp(Graphics g,string key,Rectangle source,RectangleF box){
+  if(!drawingClient){g.DrawImage(painted[key],box,source,GraphicsUnit.Pixel);return;}
+  if(!g.IsVisible(box))return;
+  if(stampScale!=scale||stampZoom!=zoom){ClearStampCache();stampScale=scale;stampZoom=zoom;}
+  var size=new Size(Math.Max(1,(int)Math.Round(box.Width*scale)),Math.Max(1,(int)Math.Round(box.Height*scale)));
+  var id=Tuple.Create(key,source,size);Bitmap stamp;
+  if(!stamps.TryGetValue(id,out stamp)){
+   long bytes=4L*size.Width*size.Height;
+   if(stampBytes+bytes>64L*1024*1024){g.DrawImage(painted[key],box,source,GraphicsUnit.Pixel);return;}
+   stamp=new Bitmap(size.Width,size.Height,System.Drawing.Imaging.PixelFormat.Format32bppPArgb);
+   using(var target=Graphics.FromImage(stamp)){
+    target.InterpolationMode=System.Drawing.Drawing2D.InterpolationMode.Bilinear;
+    target.DrawImage(painted[key],new Rectangle(Point.Empty,size),source,GraphicsUnit.Pixel);
+   }
+   stamps.Add(id,stamp);stampBytes+=bytes;
+  }
+  var state=g.Save();g.ResetTransform();g.DrawImageUnscaled(stamp,(int)Math.Round(ox+box.X*scale),(int)Math.Round(oy+box.Y*scale));g.Restore(state);
+ }
  void PaintFrame(Graphics g,TypeInfo t,int side,int dir,RectangleF r){
   var crop=SourceCell(t,side,dir);
-  g.DrawImage(painted[t.Key],r,crop,GraphicsUnit.Pixel);
+  DrawStamp(g,t.Key,crop,r);
  }
  readonly Dictionary<string,Rectangle> cardCrops=new Dictionary<string,Rectangle>();
  void DrawCardArt(Graphics g,TypeInfo t,RectangleF slot){
@@ -35,12 +59,12 @@ partial class CommandWindow {
    source=Rectangle.Intersect(r,Rectangle.FromLTRB(l-3,top-3,right+4,bottom+4));cardCrops[t.Key]=source;
   }
   float k=Math.Min(slot.Width/source.Width,slot.Height/source.Height),w=source.Width*k,h=source.Height*k;
-  g.DrawImage(sheet,new RectangleF(slot.X+(slot.Width-w)/2,slot.Y+(slot.Height-h)/2,w,h),source,GraphicsUnit.Pixel);
+  DrawStamp(g,t.Key,source,new RectangleF(slot.X+(slot.Width-w)/2,slot.Y+(slot.Height-h)/2,w,h));
  }
  void BuildingArt(Graphics g,string key,int row,RectangleF box,float built){
   var state=g.Save();
   if(built<1){float reveal=.19f+.81f*built;g.IntersectClip(new RectangleF(box.X,box.Bottom-box.Height*reveal,box.Width,box.Height*reveal));}
-  g.DrawImage(painted[key],box,new RectangleF(0,row*FrameSize,FrameSize,FrameSize),GraphicsUnit.Pixel);g.Restore(state);
+  DrawStamp(g,key,new Rectangle(0,row*FrameSize,FrameSize,FrameSize),box);g.Restore(state);
  }
  void DrawLive(Graphics g,TypeInfo t,int side,int dir,PointF p,float s,float built){
   if(t.Foot){
@@ -54,7 +78,7 @@ partial class CommandWindow {
   int dir=(o.Dir+14)%16;
   if(o.T.Key=="tank"){
    int frame=TankFrame(o);
-   g.DrawImage(painted["tank"],VehicleRect(o.T,p,size),TankCell(o.Alive?o.Side:2,frame),GraphicsUnit.Pixel);return;
+   DrawStamp(g,"tank",TankCell(o.Alive?o.Side:2,frame),VehicleRect(o.T,p,size));return;
   }
   if(!o.Alive){
    if(o.T.Building)BuildingArt(g,o.T.Key,2,BuildingRect(Campaign.Footprint(o.T,o.P),p,zoom),1);

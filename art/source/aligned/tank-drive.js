@@ -40,7 +40,7 @@ function armourSkin(model,turret,tex,side){
  }
 }
 async function driveAtlas(){
- const n=64, px=192, sheet=canvas(8*px,24*px),ctx=sheet.getContext('2d');
+ const n=64, px=288, sheet=canvas(8*px,24*px),ctx=sheet.getContext('2d');
  const cam=camera(8.65,8.65*(188/320-.5)/Math.cos(Math.PI/6),false);
  renderer.setSize(px,px);
  window.bearingAudit=[];const source=await loadArt('tank');

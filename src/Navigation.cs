@@ -67,18 +67,35 @@ public partial class Campaign {
   float dx=b.X-a.X,dy=b.Y-a.Y,d=Math.Min(Math.Abs(dx),Math.Abs(dy));
   var diag=new PointF(d*Math.Sign(dx),d*Math.Sign(dy));
   var first=new PointF(a.X+diag.X,a.Y+diag.Y);var last=new PointF(b.X-diag.X,b.Y-diag.Y);
-  foreach(var bend in new[]{first,last}){
+  // On a shared street, keep the long leg parallel to its kerbs.
+  bool followStreet=Roads.Any(r=>r.Contains(a)&&r.Contains(b)&&
+   (r.Width>r.Height?Math.Abs(dx)>=Math.Abs(dy):Math.Abs(dy)>=Math.Abs(dx)));
+  foreach(var bend in followStreet?new[]{last,first}:new[]{first,last}){
    if(!Clear(a,bend,blocks)||!Clear(bend,b,blocks))continue;
    if(result!=null){if(Dist(a,bend)>.001f&&Dist(bend,b)>.001f)result.Enqueue(bend);result.Enqueue(b);}
    return true;
   }return false;
  }
+ // Preserve the lane offset through the intersection. Only prefer the corner
+ // when both endpoints are on different streets and meet at an open junction.
+ static bool StreetCorner(PointF a,PointF b,RectangleF[] blocks,Queue<PointF> route){
+  foreach(var from in Roads){
+   if(!from.Contains(a)||from.Contains(b))continue;
+   foreach(var to in Roads){
+    if(!to.Contains(b)||to.Contains(a)||(from.Width>from.Height)==(to.Width>to.Height))continue;
+    var corner=from.Width>from.Height?new PointF(b.X,a.Y):new PointF(a.X,b.Y);
+    if(!from.Contains(corner)||!to.Contains(corner))continue;
+    if(Clear(a,corner,blocks)&&Clear(corner,b,blocks)){route.Enqueue(corner);route.Enqueue(b);return true;}
+   }
+  }return false;
+ }
  static bool CanLink(bool tracks,PointF a,PointF b,RectangleF[] blocks){return tracks?TrackLegs(a,b,blocks,null):Clear(a,b,blocks);}
  public bool Route(Piece o,PointF dest){return PlanRoute(o,dest,null);}
  bool PlanRoute(Piece o,PointF dest,RectangleF[] temporary){
-  bool tracks=o.T.Key=="tank";
+  bool tracks=!o.T.Foot&&!o.T.Building;
   float pad=Clearance(o);if(Blocked(dest,pad,null))return false;
   var grid=Grid(pad);if(temporary!=null)grid=new NavigationGrid{Barriers=grid.Barriers.Concat(temporary).ToArray()};var blocks=grid.Barriers;var route=new Queue<PointF>();
+  if(tracks&&StreetCorner(o.P,dest,blocks,route)){o.Path=route;o.RouteVersion=topology;return true;}
   if(!CanLink(tracks,o.P,dest,blocks)){
    if(grid.Open==null){grid.Open=new bool[N*M];for(int i=0;i<grid.Open.Length;i++){var c=Center(i);grid.Open[i]=c.X>=pad&&c.X<=Width-pad&&c.Y>=99+pad&&c.Y<=Height-pad&&!blocks.Any(r=>r.Contains(c));}}
    bool[] open=grid.Open;

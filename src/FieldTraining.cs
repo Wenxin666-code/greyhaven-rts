@@ -33,7 +33,7 @@ public partial class Campaign {
   if(stuck!=null&&stuck.T.Key=="barracks")return "兵营集合格被占用，正在改派空位或疏散驻足的友军。";
   if(stuck!=null)return stuck.T.Name+" #"+stuck.Id+" 已完工但出口堵塞，请移开门口的部队。";
   if(Power(0)<0)return "供电不足，生产以 45% 速度运行。增建电站可恢复速度。";
-  if(Sites[2].Owner==0&&Live(1).Any(e=>!e.T.Building&&Dist(e.P,Sites[2].P)<72))return "泊位有敌军，靠岸计时暂停。优先清理港务中心附近的红军。";
+  if(Sites[2].Owner==0&&Live(1).Any(e=>!e.T.Building&&Dist(e.P,Sites[2].P)<72))return "敌方部队正在争夺泊位，靠岸计时暂停。优先清除港务中心附近的敌方部队。";
   return null;
  }
  public bool CancelOrder(Piece o,int slot){

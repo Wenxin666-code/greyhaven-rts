@@ -109,7 +109,7 @@ partial class CommandWindow {
   }
   if(key=="hold")return "保持泊位畅通。运输船靠岸还需 "+Math.Ceiling(Math.Max(0,world.HoldTime-world.Hold))+" 秒。";
   var siteGoal=world.Sites[key=="west"?0:2];
-  if(own.Any(o=>o.T.Foot&&Campaign.Dist(o.P,siteGoal.P)<49))return "步兵已进圈。保持驻留；圈内还有红军时，占领会暂停。";
+  if(own.Any(o=>o.T.Foot&&Campaign.Dist(o.P,siteGoal.P)<49))return "我方步兵已进入占领区。请保持驻留，并清除圈内的敌方步兵以继续占领。";
   if(!selection.Any(o=>o.T.Foot))return "点「定位本步」选中步兵，再左键金圈内的空地。只有步兵能占点。";
   return key=="west"?"左键金圈内的空地，让步兵驻留到仓库变蓝。":"带上步兵和战车。按 A 后左键港务中心，清除守军并占领。";
  }

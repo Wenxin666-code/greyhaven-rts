@@ -130,8 +130,25 @@ public partial class Campaign {
   Shots.Add(new Shot{A=o.P,B=e.P,Side=o.Side,Life=.23f,Shell=o.T.Key=="arty"});
   e.Hp-=o.T.Hit*factor;if(e.Hp<=0)Kill(e);
  }
- static void Face(Piece o,PointF p,float dt){double angle=Math.Atan2(p.X-o.P.X,p.Y-o.P.Y);float want=(float)(angle*8/Math.PI+16)%16;
-  float diff=(want-o.Turn+24)%16-8;o.Turn=(o.Turn+Math.Sign(diff)*Math.Min(Math.Abs(diff),dt*15)+16)%16;o.Dir=(int)Math.Round(o.Turn)%16;}
+ static float Bearing(PointF from,PointF to){return (float)(Math.Atan2(to.X-from.X,to.Y-from.Y)*8/Math.PI+16)%16;}
+ static float TurnToward(Piece o,float heading,float dt){
+  float diff=(heading-o.Turn+24)%16-8,seconds=Math.Abs(diff)/15;
+  o.Turn=seconds<=dt?heading:(o.Turn+Math.Sign(diff)*dt*15+16)%16;
+  o.Dir=(int)Math.Round(o.Turn)%16;return Math.Max(0,dt-seconds);
+ }
+ static void Face(Piece o,PointF p,float dt){TurnToward(o,Bearing(o.P,p),dt);}
+ void DriveTracks(Piece o,PointF end,float speed,float dt){
+  float dx=end.X-o.P.X,dy=end.Y-o.P.Y,span=Math.Max(Math.Abs(dx),Math.Abs(dy));
+  if(span<.001f){o.P=end;return;}
+  float heading=((int)Math.Round(Bearing(o.P,end)/2)*2)%16;
+  float remaining=TurnToward(o,heading,dt);
+  if(remaining<=0)return;
+  bool alongX=Math.Abs(dx)>span*.5f,alongY=Math.Abs(dy)>span*.5f;
+  float travel=speed*remaining*(alongX&&alongY?.70710678f:1);
+  float left=Math.Max(0,span-travel);
+  var next=new PointF(end.X-(alongX?Math.Sign(dx)*left:0),end.Y-(alongY?Math.Sign(dy)*left:0));
+  o.P=TrackStep(o,end,next);
+ }
  void UnitTick(Piece o,float dt,bool powered){
   if(!o.Alive){o.Dead+=dt;return;}if(o.Carrier!=null){o.P=o.Carrier.P;return;}
   if(o.Ready<1){o.Ready=Math.Min(1,o.Ready+dt/o.T.Seconds);return;}
@@ -154,12 +171,15 @@ public partial class Campaign {
    }
   }
   if(!stop&&o.Path.Count>0){if(o.RouteVersion!=topology&&!Route(o,o.Path.Last())){o.Path.Clear();return;}var p=o.Path.Peek();
-   float d=Dist(o.P,p),speed=(o.Formation==null?o.T.Speed:o.Formation.Speed(o))*dt;var next=d<=speed?p:new PointF(o.P.X+(p.X-o.P.X)*speed/d,o.P.Y+(p.Y-o.P.Y)*speed/d);var step=o.T.Key=="tank"?TrackStep(o,p,next):Avoid(o,next);
-   if(Dist(o.P,step)>.001f){
-    Face(o,step,dt);
-    float heading=(float)(Math.Atan2(step.X-o.P.X,step.Y-o.P.Y)*8/Math.PI+16)%16;
-    if(o.T.Foot||Math.Abs((heading-o.Turn+24)%16-8)<.001f){o.Turn=heading;o.Dir=(int)Math.Round(heading)%16;o.P=step;}
-   }if(o.Path.Count>0&&(Dist(o.P,p)<(o.T.Key=="tank"?.001f:.1f)||(o.Path.Count==1&&Dist(o.P,p)<9&&Units.Any(u=>u!=o&&u.Deployed&&Dist(u.P,p)<15))))o.Path.Dequeue();}
+   float speed=o.Formation==null?o.T.Speed:o.Formation.Speed(o);
+   if(!o.T.Foot)DriveTracks(o,p,speed,dt);
+   else{
+    float d=Dist(o.P,p),travel=speed*dt;
+    var next=d<=travel?p:new PointF(o.P.X+(p.X-o.P.X)*travel/d,o.P.Y+(p.Y-o.P.Y)*travel/d);
+    var step=Avoid(o,next);
+    if(Dist(o.P,step)>.001f){o.Turn=Bearing(o.P,step);o.Dir=(int)Math.Round(o.Turn)%16;o.P=step;}
+   }
+   if(o.Path.Count>0&&(Dist(o.P,p)<(o.T.Foot?.1f:.001f)||(o.Path.Count==1&&Dist(o.P,p)<9&&Units.Any(u=>u!=o&&u.Deployed&&Dist(u.P,p)<15))))o.Path.Dequeue();}
  }
  bool VisibleTo(int side,Piece e){return Explored(side,e.P);}
  void EnemyOrders(bool urgent){
