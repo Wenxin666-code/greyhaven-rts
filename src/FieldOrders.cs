@@ -56,7 +56,9 @@ public partial class Campaign {
   }return assigned.Count;
  }
  public bool SetRally(Piece src,PointF dest){
-  if(src==null||!src.Deployed||src.Side!=0||src.T.Key=="refinery"||!HasGate(src.T)||Blocked(dest,11,null)||!ParkingAllowed(src.Side,dest))return false;
+  if(src==null||!src.Deployed||src.Side!=0||src.T.Key=="refinery"||!HasGate(src.T)||!ParkingAllowed(src.Side,dest))return false;
+  float pad=Types.Where(t=>!t.Building&&t.Producer==src.T.Key).Max(t=>t.Clearance);
+  if(Blocked(dest,pad,null))return false;
   src.Rally=dest;Radio=src.T.Name+"的集结点已设置。";return true;
  }
  void RallyNewUnit(Piece source,Piece unit){

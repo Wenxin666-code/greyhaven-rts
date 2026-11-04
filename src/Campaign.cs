@@ -7,6 +7,7 @@ namespace Greyhaven {
 public class TypeInfo {
  public string Key,Name,Producer; public int Price,Hp,Hit,Range,Size; public float Speed,Seconds,Reload;
  public float LockRange {get{return Hit==0?0:Building?Range:Range+3*Campaign.Tile;}}
+ public float Clearance {get{return Foot?5:Key=="miner"?5.25f:8.8f;}}
  public bool Building {get{return Speed==0;}} public bool Foot {get{return Key=="squad"||Key=="at"||Key=="engineer";}}
  public TypeInfo(string key,string name,string from,int price,int hp,int hit,int range,int size,float speed,float time,float reload){
   Key=key;Name=name;Producer=from;Price=price;Hp=hp;Hit=hit;Range=range;Size=size;Speed=speed;Seconds=time;Reload=reload;
@@ -41,12 +42,12 @@ public partial class Campaign {
   new TypeInfo("squad","步枪兵","barracks",85,110,10,73,58,32,5,1.25f),
   new TypeInfo("at","反装甲兵","barracks",135,85,30,115,61,29,8,2.5f),
   new TypeInfo("engineer","工兵","barracks",95,90,0,0,58,34,6,1),
-  new TypeInfo("ifv","步兵战车","factory",185,210,16,96,82,45,8,1.3f),
-  new TypeInfo("tank","主战坦克","factory",290,355,38,115,94,36,12,2),
-  new TypeInfo("arty","自行火炮","factory",315,150,54,222,87,31,13,3.5f),
-  new TypeInfo("mcv","工程车","hq",340,290,0,0,91,31,13,0),
+  new TypeInfo("ifv","步兵战车","factory",185,210,16,96,66,45,8,1.3f),
+  new TypeInfo("tank","主战坦克","factory",290,355,38,115,75,36,12,2),
+  new TypeInfo("arty","自行火炮","factory",315,150,54,222,70,31,13,3.5f),
+  new TypeInfo("mcv","工程车","hq",340,290,0,0,73,31,13,0),
   new TypeInfo("refinery","矿石精炼厂","hq",390,720,0,0,136,0,9,0),
-  new TypeInfo("miner","采矿车","factory",195,310,0,0,89,38,9,0)};
+  new TypeInfo("miner","采矿车","factory",195,310,0,0,44,38,9,0)};
  public static TypeInfo Info(string k){return Array.Find(Types,t=>t.Key==k);}
  public readonly List<Piece> Units=new List<Piece>();public readonly List<Shot> Shots=new List<Shot>();
  public readonly Site[] Sites={new Site("港务中心",1330,292,1265,227)};
@@ -126,11 +127,14 @@ public partial class Campaign {
  }
  public void Load(Piece car){
   if(car==null||car.T.Key!="ifv"||!car.Alive)return;var cargo=Units.FirstOrDefault(o=>o.Alive&&o.Carrier==car);
-  if(cargo!=null){PointF drop;if(Exit(car,out drop)){cargo.Carrier=null;cargo.P=drop;Radio="步兵已下车。";}else Radio="周围缺少下车空间。";return;}
+  if(cargo!=null){PointF drop;if(Exit(car,cargo.T,out drop)){cargo.Carrier=null;cargo.P=drop;Radio="步兵已下车。";}else Radio="周围缺少下车空间。";return;}
   var foot=Live(car.Side).Where(o=>o.T.Foot&&Dist(o.P,car.P)<70).OrderBy(o=>Dist(o.P,car.P)).FirstOrDefault();
   if(foot==null){Radio="先把一名步兵移到战车旁。";return;}Halt(foot);foot.Carrier=car;Radio=foot.T.Name+"已登车。";
  }
- bool Exit(Piece o,out PointF p){
+ bool ExitClear(Piece source,TypeInfo exiting,PointF point){
+  return !Blocked(point,exiting.Clearance,null)&&!Units.Any(u=>u!=source&&u.Deployed&&!u.T.Building&&Dist(u.P,point)<exiting.Clearance+u.T.Clearance);
+ }
+ bool Exit(Piece o,TypeInfo exiting,out PointF p){
   if(o.T.Key=="barracks"&&o.Berths.Count>0){
    p=o.Berths[0];if(BerthClear(o,p))return true;
    var alt=FreeBerth(o);if(alt.HasValue){p=alt.Value;o.Berths[0]=p;return true;}
@@ -139,12 +143,12 @@ public partial class Campaign {
   if(o.T.Building){
    var gate=Gate(Footprint(o.T,o.P));foreach(float offset in new[]{0f,-.31f,.31f}){
     var candidate=new PointF(o.P.X+gate.Width*offset,gate.Bottom-6);
-    if(!Blocked(candidate,11,null)&&!Units.Any(u=>u!=o&&u.Deployed&&!u.T.Building&&Dist(u.P,candidate)<17)){p=candidate;return true;}
+    if(ExitClear(o,exiting,candidate)){p=candidate;return true;}
    }p=o.P;return false;
   }
   for(int j=0;j<24;j++){double a=(o.Dir+j%8*2)*Math.PI/8;float d=(o.T.Building?Radius(o.T)+20:27)+j/8*19;
    p=new PointF(o.P.X+(float)Math.Sin(a)*d,o.P.Y+(float)Math.Cos(a)*d*.85f);
-   var candidate=p;if(!Blocked(candidate,11,null)&&!Units.Any(u=>u!=o&&u.Deployed&&!u.T.Building&&Dist(u.P,candidate)<14))return true;
+   var candidate=p;if(ExitClear(o,exiting,candidate))return true;
   }p=o.P;return false;
  }
  void Kill(Piece o){if(o.T.Building)Changed();o.Hp=0;o.Path.Clear();o.Queue.Clear();o.Berths.Clear();foreach(var c in Units.Where(c=>c.Carrier==o)){c.Carrier=null;c.P=o.P;c.Hp=0;}
@@ -184,7 +188,7 @@ public partial class Campaign {
   if(o.T.Key=="refinery")RunRefinery(o,dt);
   if(o.Mining)RunMiner(o,dt);
   if(o.Queue.Count>0){var t=o.Queue.Peek();o.Work=Math.Min(t.Seconds,o.Work+dt*(powered?1:.45f));
-   if(o.Work>=t.Seconds){PointF p;if(Exit(o,out p)){var u=Spawn(t.Key,o.Side,p.X,p.Y);u.Dir=o.Dir;u.Turn=o.Dir;u.Rollout=.6f;o.Door=1;o.Work=0;o.Queue.Dequeue();if(o.Berths.Count>0)o.Berths.RemoveAt(0);if(u.T.Key!="miner")RallyNewUnit(o,u);if(o.Side==0){LastReady=u;ReadyAt=Time;if(Time-lastStrike>3)SetEvent(u.P,u.T.Name+"出列");if(t.Key=="squad")InfantryDelivered++;if(t.Key=="ifv")VehiclesDelivered++;Radio=t.Name+"已从"+o.T.Name+" #"+o.Id+" 出列。";}}}}
+   if(o.Work>=t.Seconds){PointF p;if(Exit(o,t,out p)){var u=Spawn(t.Key,o.Side,p.X,p.Y);u.Dir=o.Dir;u.Turn=o.Dir;u.Rollout=.6f;o.Door=1;o.Work=0;o.Queue.Dequeue();if(o.Berths.Count>0)o.Berths.RemoveAt(0);if(u.T.Key!="miner")RallyNewUnit(o,u);if(o.Side==0){LastReady=u;ReadyAt=Time;if(Time-lastStrike>3)SetEvent(u.P,u.T.Name+"出列");if(t.Key=="squad")InfantryDelivered++;if(t.Key=="ifv")VehiclesDelivered++;Radio=t.Name+"已从"+o.T.Name+" #"+o.Id+" 出列。";}}}}
   if(o.T.Key=="engineer"&&o.Cool<=0){
    var wounded=Live(o.Side).FirstOrDefault(f=>!f.T.Foot&&f.Hp<f.T.Hp&&Dist(o.P,f.P)<67);
    if(wounded!=null){wounded.Hp=Math.Min(wounded.T.Hp,wounded.Hp+13);o.Cool=1;}
@@ -201,7 +205,7 @@ public partial class Campaign {
     var step=Avoid(o,next);
     if(Dist(o.P,step)>.001f){o.Turn=Bearing(o.P,step);o.Dir=(int)Math.Round(o.Turn)%16;o.P=step;}
    }
-   if(o.Path.Count>0&&(Dist(o.P,p)<(o.T.Foot?.1f:.001f)||(o.Path.Count==1&&Dist(o.P,p)<9&&Units.Any(u=>u!=o&&u.Deployed&&Dist(u.P,p)<15))))o.Path.Dequeue();}
+   if(o.Path.Count>0&&(Dist(o.P,p)<(o.T.Foot?.1f:.001f)||(!o.Mining&&o.Path.Count==1&&Dist(o.P,p)<9&&Units.Any(u=>u!=o&&u.Deployed&&Dist(u.P,p)<15))))o.Path.Dequeue();}
  }
  bool VisibleTo(int side,Piece e){return Explored(side,e.P);}
  public int Remaining(int side){return Units.Count(o=>o.Alive&&o.Side==side);}

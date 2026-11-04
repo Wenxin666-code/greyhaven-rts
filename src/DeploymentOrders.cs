@@ -13,6 +13,9 @@ public partial class Campaign {
   if(obstacle==null)return next;
   if(o.TrafficWait<=0){
    o.TrafficWait=.65f;
+   if(o.Mining){
+    var destination=o.Path.Last();PlanRoute(o,destination,MineTraffic(o,destination));return o.P;
+   }
    // Reserve the blocking vehicle's immediate envelope. Keep the starting
    // contact outside the temporary rectangle so a tank can reverse out.
    float gap=Math.Max(Math.Abs(o.P.X-obstacle.P.X),Math.Abs(o.P.Y-obstacle.P.Y));

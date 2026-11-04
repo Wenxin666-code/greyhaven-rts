@@ -47,7 +47,7 @@ class CampaignChecks {
   var w=new Campaign(true);var mover=w.Spawn("tank",0,300,443);var dest=new PointF(500,443);
   Check(w.Move(mover,dest,false)&&mover.Path.Count==1,"clear ground is one straight segment");
   var obs=w.Spawn("factory",0,395,444);var box=Campaign.Footprint(obs.T,obs.P);Check(box.Width==96&&box.Height==72&&box.Left%24==0&&box.Top%24==0,"factory footprint aligned");
-  var expanded=box;expanded.Inflate(10,10);int bends=0;
+  var expanded=box;expanded.Inflate(mover.T.Clearance-.1f,mover.T.Clearance-.1f);int bends=0;
   for(int i=0;i<180;i++){w.Tick(.1f);bends=Math.Max(bends,mover.Path.Count);Check(!expanded.Contains(mover.P),"no penetration after new construction");}
   Check(bends>=2&&bends<=5&&Campaign.Dist(mover.P,dest)<1,"replan around existing walls then arrive");
   Check(!w.Move(mover,new PointF(39,30),false),"water blocked");
@@ -72,7 +72,7 @@ class CampaignChecks {
   var outpost=new PointF(1580,870);Check(w.Move(a,outpost,false),"extended southern flank navigable");Wait(w,55);Check(Campaign.Dist(a.P,outpost)<2,"expanded area reachable");
   var v1=w.Spawn("tank",0,300,810);var v2=w.Spawn("ifv",0,510,810);w.Move(v1,new PointF(510,810),false);w.Move(v2,new PointF(300,810),false);
   float min=999;for(int i=0;i<400;i++){w.Tick(.05f);min=Math.Min(min,Campaign.Dist(v1.P,v2.P));}
-  Check(min>=15&&v1.P.X>504&&v2.P.X<306,"head-on vehicles must pass, not overlap");
+  Check(min>=(v1.T.Clearance+v2.T.Clearance)*.78f-.01f&&v1.P.X>504&&v2.P.X<306,"head-on vehicles must pass, not overlap");
   Console.WriteLine("Permanent shroud, formation pacing, expanded flank and head-on passing checks passed.");
  }
  static void InfantryWaves(){
@@ -217,8 +217,31 @@ class CampaignChecks {
   w=new Campaign(true);w.Units[0].Hp=0;w.Tick(.1f);Check(!w.Lost,"surviving infantry stay in play");
   foreach(var o in w.Live(0).ToArray())o.Hp=0;w.Tick(.1f);Check(w.Lost&&!w.Won,"player elimination");
  }
+ static void CrowdedOreRun(float dt){
+  var w=new Campaign(true);w.Ore.Clear();var vein=new OrePatch(460,802,18000);w.Ore.Add(vein);
+  w.Spawn("refinery",0,360,660);Wait(w,.5f);
+  for(int x=-1;x<=1;x+=2)for(int y=-1;y<=1;y+=2)w.Spawn("mcv",0,vein.P.X+12*x,vein.P.Y+12*y);
+  w.Spawn("squad",0,vein.P.X,vein.P.Y);
+  var trucks=new[]{w.Live(0).Single(u=>u.T.Key=="miner"),w.Spawn("miner",0,400,710),w.Spawn("miner",0,418,727),w.Spawn("miner",0,475,727)};
+  var receipts=new int[trucks.Length];foreach(var u in trucks)w.MineOrder(u,vein,null);
+  for(int i=0;i<(int)Math.Ceiling(180/dt);i++){
+   var before=trucks.Select(t=>t.Cargo).ToArray();w.Tick(dt);
+   for(int j=0;j<trucks.Length;j++)if(before[j]>0&&trucks[j].Cargo==0)receipts[j]++;
+  }
+  Console.WriteLine("Crowded mine shipments per truck: "+String.Join(", ",receipts));
+  Check(receipts.All(n=>n>=2),"mine traffic: "+String.Join(" | ",trucks.Select(u=>u.P+" cargo="+u.Cargo+" returning="+u.Returning+" path="+String.Join(";",u.Path)+" goal="+u.WorkPoint+" turn="+u.Turn)));
+  Check(Math.Abs(vein.Initial-vein.Stock-trucks.Sum(t=>t.Cargo)-w.OreReceipts[0])<4,"cargo conservation");
+ }
+ static void NarrowGate(){
+  var w=new Campaign(true);var plant=w.Spawn("factory",0,520,650);var lot=Campaign.Footprint(plant.T,plant.P);
+  var miner=w.Spawn("miner",0,lot.Left-35,lot.Top-6.5f);var goal=new PointF(lot.Right+28,lot.Top-6.5f);
+  w.Halt(miner);Check(w.Move(miner,goal,false)&&miner.Path.Count==1,"miner fits past building edge");
+  var tank=w.Spawn("tank",0,lot.Left-35,lot.Top-24);
+  Check(!w.Move(tank,new PointF(plant.P.X,lot.Top-6.5f),false),"tank must still respect its wider hull");
+  Wait(w,12);Check(Campaign.Dist(miner.P,goal)<.1f,"miner completed tight passage");
+ }
  static int Main(){try{Run();return 0;}catch(Exception ex){Console.Error.WriteLine(ex.Message);return 1;}}
- static void Run(){MinerMidRouteBlock();EnemySupplyChain();MinerTraffic();ExhaustedFields();ProspectChecks();OreChecks();ContactChecks();StreetChecks();InfantryWaves();HeadingChecks();ReconAndMarch();Navigation();Training();Play(true);Play(false);EliminationChecks();
+ static void Run(){NarrowGate();CrowdedOreRun(.05f);CrowdedOreRun(1f/60);MinerMidRouteBlock();EnemySupplyChain();MinerTraffic();ExhaustedFields();ProspectChecks();OreChecks();ContactChecks();StreetChecks();InfantryWaves();HeadingChecks();ReconAndMarch();Navigation();Training();Play(true);Play(false);EliminationChecks();
   var w=new Campaign();var car=w.Spawn("ifv",0,212,431);w.Load(car);Check(w.Units.Any(o=>o.Carrier==car),"embark");w.Load(car);Check(!w.Units.Any(o=>o.Carrier==car),"disembark");
   Console.WriteLine("All checks passed.");}
 }

@@ -28,7 +28,7 @@ public partial class Campaign {
   if(t.Key=="barracks"&&Units.Any(o=>o.Alive&&o.Path.Count>0&&reserve.Contains(o.Path.Last())))return false;
   return !Sites.Any(s=>Inflated(r,28).Contains(s.P))&&(skip!=null||Live(side).Any(o=>o.T.Key=="hq"&&Dist(o.P,mid)<265));
  }
- static float Clearance(Piece o){return o.T.Foot?5:11;}
+ static float Clearance(Piece o){return o.T.Clearance;}
  IEnumerable<RectangleF> Obstacles(){
   foreach(var site in Sites)yield return site.Body;
   foreach(var r in YardWalls)yield return r;
