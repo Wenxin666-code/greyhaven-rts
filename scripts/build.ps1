@@ -5,11 +5,12 @@ $root = Split-Path -Parent $PSScriptRoot
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
 $source = @(Get-ChildItem -LiteralPath (Join-Path $root 'src') -Filter '*.cs' | ForEach-Object FullName)
 $art = Join-Path $root 'art/source'
-$images = @(Get-Item -LiteralPath (Join-Path $art 'v02/port.png'))
+$images = @(Get-ChildItem -LiteralPath (Join-Path $art 'isometric/packed') -Filter '*.png')
 foreach ($folder in @('v02/sprites','campaign/sprites')) {
-    $images += Get-ChildItem -LiteralPath (Join-Path $art $folder) -Filter '*.png'
+    $images += Get-ChildItem -LiteralPath (Join-Path $art $folder) -Filter '*.png' | Where-Object BaseName -ne 'scout'
 }
 $resources = @($images | ForEach-Object { '/resource:' + $_.FullName + ',Greyhaven.Art.' + $_.Name })
+$resources += '/resource:' + (Join-Path $art 'isometric/ground.png') + ',Greyhaven.Art.materials.png'
 $options = @('/nologo','/optimize+','/platform:x64','/codepage:65001','/r:System.Windows.Forms.dll','/r:System.Drawing.dll',('/win32icon:' + (Join-Path $root 'art/command.ico')))
 $exe = Join-Path $root '断线前沿.exe'
 & $compiler @options /target:winexe "/out:$exe" @resources @source

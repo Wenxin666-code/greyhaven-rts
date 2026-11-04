@@ -21,7 +21,7 @@ class CampaignChecks {
    if(w.Time>(armor?107:95)){
     int i=0;foreach(var o in w.Live(0).Where(o=>!o.T.Building).ToArray()){
      var p=w.Sites[2].P;
-     if(o.T.Key=="arty")p=new PointF(900,319);
+     if(o.T.Key=="arty")p=new PointF(w.Sites[2].P.X-146,319);
      else p=new PointF(p.X+(i%4-1)*12,p.Y+(i/4%4-1)*13);
      if(Campaign.Dist(o.P,p)>55&&o.Path.Count==0)w.Move(o,p,true);
      i++;
@@ -58,8 +58,22 @@ class CampaignChecks {
   w.Move(block[0],new PointF(600,637),false);Wait(w,4);Check(barracks.Queue.Count==0&&w.LastReady!=null,"unblocking gate releases finished order");
   Console.WriteLine("Straight path, live obstacle rerouting, tile grid, exit blocking and refund checks passed.");
  }
+ static void ReconAndMarch(){
+  var w=new Campaign(true);var enemy=w.Live(1).First();Check(!w.Visible(enemy)&&Campaign.Info("scout")==null,"unexplored enemy and retired scout");
+  var a=w.Spawn("ifv",0,350,680);var b=w.Spawn("squad",0,350,710);var goal=new PointF(650,695);
+  Check(w.MarchTo(new[]{a,b},goal,true,true)==2&&a.Formation==b.Formation,"mixed march order");
+  Check(Math.Abs(a.Formation.Speed(a)-b.T.Speed)<.01f&&Campaign.Dist(a.Goal,b.Goal)>20,"slowest speed and distinct slots");
+  Wait(w,18);Check(Campaign.Dist(a.P,a.Goal)<2&&Campaign.Dist(b.P,b.Goal)<2,"mixed group arrived together");
+  var initial=b.P;var sight=w.Spawn("engineer",0,enemy.P.X-125,enemy.P.Y);Wait(w,1);
+  Check(w.Visible(enemy),"foot patrol opens shroud");w.Move(sight,initial,false);Wait(w,45);Check(w.Visible(enemy),"opened ground remains visible after withdrawal");
+  var outpost=new PointF(1580,870);Check(w.Move(a,outpost,false),"extended southern flank navigable");Wait(w,55);Check(Campaign.Dist(a.P,outpost)<2,"expanded area reachable");
+  var v1=w.Spawn("tank",0,300,810);var v2=w.Spawn("ifv",0,510,810);w.Move(v1,new PointF(510,810),false);w.Move(v2,new PointF(300,810),false);
+  float min=999;for(int i=0;i<400;i++){w.Tick(.05f);min=Math.Min(min,Campaign.Dist(v1.P,v2.P));}
+  Check(min>=15&&v1.P.X>504&&v2.P.X<306,"head-on vehicles must pass, not overlap");
+  Console.WriteLine("Permanent shroud, formation pacing, expanded flank and head-on passing checks passed.");
+ }
  static int Main(){try{Run();return 0;}catch(Exception ex){Console.Error.WriteLine(ex.Message);return 1;}}
- static void Run(){Navigation();Training();Play(true);Play(false);var w=new Campaign();var h=Begin(w);var enemy=w.Spawn("tank",1,h.P.X+82,h.P.Y);w.Attack(enemy,h);Wait(w,190);Check(w.Lost,"base loss");
+ static void Run(){ReconAndMarch();Navigation();Training();Play(true);Play(false);var w=new Campaign();var h=Begin(w);var enemy=w.Spawn("tank",1,h.P.X+82,h.P.Y);w.Attack(enemy,h);Wait(w,190);Check(w.Lost,"base loss");
   w=new Campaign();var car=w.Spawn("ifv",0,212,431);w.Load(car);Check(w.Units.Any(o=>o.Carrier==car),"embark");w.Load(car);Check(!w.Units.Any(o=>o.Carrier==car),"disembark");
   Console.WriteLine("All checks passed.");}
 }

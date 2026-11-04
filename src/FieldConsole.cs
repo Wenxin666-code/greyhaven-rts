@@ -28,8 +28,8 @@ partial class CommandWindow {
    for(int i=0;i<8;i++)Line(g,p.X-39+i*10,p.Y+24,p.X-35+i*10,p.Y+18,gold,2);
   }
   if(place!=null){using(var pen=new Pen(Color.FromArgb(65,pale))){
-   for(int x=0;x<1200;x+=Campaign.Tile)g.DrawLine(pen,x,100,x,669);
-   for(int y=120;y<669;y+=Campaign.Tile)g.DrawLine(pen,0,y,1200,y);}}
+   for(int x=0;x<Campaign.Width;x+=Campaign.Tile)g.DrawLine(pen,x,100,x,Campaign.Height);
+   for(int y=120;y<Campaign.Height;y+=Campaign.Tile)g.DrawLine(pen,0,y,Campaign.Width,y);}}
   foreach(var o in world.Units.Where(o=>o.Alive&&o.T.Building&&world.Visible(o)))DrawTiles(g,Campaign.Footprint(o.T,o.P),Team(o.Side),place!=null);
  }
  int Pending(){return world.Live(0).Sum(o=>o.Queue.Count);}
@@ -61,7 +61,7 @@ partial class CommandWindow {
   int count=Pending();var src=world.Live(0).FirstOrDefault(o=>o.Queue.Count>0);
   string s=src==null?"生产总览　空闲":"排产 "+count+"　"+src.Queue.Peek().Name+" · "+world.QueueState(src);
   Button(g,925,759,322,39,s,OpenQueue);
-  var ready=world.LastReady;Button(g,1261,759,192,39,ready!=null&&ready.Alive?"选中最新 "+ready.T.Name:"暂无新兵",ready!=null&&ready.Deployed?(Action)(()=>{selection.Clear();selection.Add(ready);queueOpen=false;}):null);
+  var ready=world.LastReady;Button(g,1261,759,192,39,ready!=null&&ready.Alive?"选中最新 "+ready.T.Name:"暂无新兵",ready!=null&&ready.Deployed?(Action)(()=>{selection.Clear();selection.Add(ready);CenterAt(ready.P);queueOpen=false;}):null);
  }
  PointF SuggestSpot(TypeInfo t){
   var h=world.Live(0).FirstOrDefault(o=>o.T.Key=="hq");if(h==null)return PointF.Empty;
@@ -83,12 +83,11 @@ partial class CommandWindow {
  }
  void DrawObjectiveMarker(Graphics g){
   if(!world.Tutorial)return;var p=Marker();if(p.IsEmpty)return;
-  if(BuildingLesson())DrawTiles(g,Campaign.Footprint(Campaign.Info(world.LessonKey),p),gold,true);
-  using(var pen=new Pen(gold,2)){pen.DashStyle=DashStyle.Dash;g.DrawEllipse(pen,p.X-45,p.Y-25,90,50);}
-  Txt(g,"▼ 训练目标",p.X-38,p.Y-61,15,gold,true);
+  var q=ScreenOf(p);if(BuildingLesson()){var state=g.Save();GroundSpace(g);DrawTiles(g,Campaign.Footprint(Campaign.Info(world.LessonKey),p),gold,true);g.Restore(state);}
+  using(var pen=new Pen(gold,2)){pen.DashStyle=DashStyle.Dash;g.DrawEllipse(pen,q.X-45,q.Y-25,90,50);}Txt(g,"▼ 训练目标",q.X-38,q.Y-61,15,gold,true);
  }
  void FocusLesson(){
-  string key=world.LessonKey;queueOpen=false;place=null;attack=false;
+  var marker=Marker();if(!marker.IsEmpty)CenterAt(marker);string key=world.LessonKey;queueOpen=false;place=null;attack=false;
   if(BuildingLesson()){army=false;var t=Campaign.Info(key);if(world.Require(t,0)==null&&!world.Units.Any(o=>o.Side==0&&o.Alive&&o.T==t))place=t;return;}
   if(key=="squad"||key=="ifv"){army=true;return;}
   var focus=world.Live(0).Where(o=>key=="hq"?o.T.Key=="mcv":world.Lesson==4?o.T.Foot:!o.T.Building&&o.T.Hit>0).ToList();

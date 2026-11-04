@@ -1,0 +1,110 @@
+using System;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
+using System.Linq;
+using System.Windows.Forms;
+using System.Collections.Generic;
+
+namespace Greyhaven {
+partial class CommandWindow {
+ float zoom=1.7f;PointF camera=new PointF(255,465),panPoint;bool panning,sweep,syncMarch=true;
+ const float Axis=.87f, Rise=.435f;
+ PointF ScreenOf(PointF w){return new PointF(MW*.5f+zoom*Axis*(w.X-camera.X-w.Y+camera.Y),MapTop+MH*.5f+zoom*Rise*(w.X-camera.X+w.Y-camera.Y));}
+ PointF WorldOf(PointF s){float a=(s.X-MW*.5f)/(Axis*zoom),b=(s.Y-MapTop-MH*.5f)/(Rise*zoom);return new PointF(camera.X+(b+a)/2,camera.Y+(b-a)/2);}
+ void CenterAt(PointF p){camera=new PointF(Math.Max(0,Math.Min(Campaign.Width,p.X)),Math.Max(0,Math.Min(Campaign.Height,p.Y)));}
+ void Pan(float x,float y){CenterAt(WorldOf(new PointF(MW/2+x,MapTop+MH/2+y)));}
+ protected override void OnMouseWheel(MouseEventArgs e){base.OnMouseWheel(e);var p=ToScreenPoint(e);if(briefing||paused||p.X<0||p.X>=MW||p.Y<MapTop||p.Y>=MapTop+MH)return;
+  var before=WorldOf(p);zoom=Math.Max(.62f,Math.Min(3.1f,zoom*(float)Math.Pow(1.18,e.Delta/120.0)));var after=WorldOf(p);CenterAt(new PointF(camera.X+before.X-after.X,camera.Y+before.Y-after.Y));Invalidate();}
+ void GroundSpace(Graphics g){var origin=ScreenOf(PointF.Empty);using(var m=new Matrix(Axis*zoom,Rise*zoom,-Axis*zoom,Rise*zoom,origin.X,origin.Y))g.MultiplyTransform(m);}
+ void Shroud(Graphics g){
+  using(var brush=new SolidBrush(C("#152323"))){for(int y=0;y<Campaign.FogRows;y++){
+   for(int x=0;x<Campaign.FogCols;){if(world.Seen(0,x,y)){x++;continue;}int left=x++;while(x<Campaign.FogCols&&!world.Seen(0,x,y))x++;
+    g.FillRectangle(brush,left*Campaign.FogSize,y*Campaign.FogSize,(x-left)*Campaign.FogSize+.45f,Campaign.FogSize+.45f);}
+  }}
+ }
+ void DrawBattle(Graphics g){
+  var view=g.Save();g.SetClip(new Rectangle(0,MapTop,MW,MH));Rect(g,0,MapTop,MW,MH,C("#132122"));
+  var land=g.Save();GroundSpace(g);g.DrawImage(ground,0,0,Campaign.Width,Campaign.Height);DrawTerrainPlan(g);
+  if(world.Hold>0){float bx=world.Sites[2].P.X-175*(1-world.Hold/world.HoldTime);Rect(g,bx,41,85,23,ink);Rect(g,bx+5,44,18,16,pale);for(int i=0;i<3;i++)Rect(g,bx+26+i*16,44,13,16,dim);}
+  var mode=g.SmoothingMode;g.SmoothingMode=SmoothingMode.None;Shroud(g);g.SmoothingMode=mode;g.Restore(land);
+  foreach(var site in world.Sites){var p=ScreenOf(site.P);bool seen=world.Explored(0,site.P);Color c=seen&&site.Owner>=0?Team(site.Owner):gold;
+   using(var pen=new Pen(c,1.5f)){pen.DashStyle=DashStyle.Dash;g.DrawEllipse(pen,p.X-41*zoom,p.Y-18*zoom,82*zoom,36*zoom);}
+   Rect(g,p.X-38,p.Y-32,77,21,Color.FromArgb(211,ink));Txt(g,site.Name,p.X-32,p.Y-32,14,c,true);
+   if(seen)Line(g,p.X,p.Y-9,p.X+site.Capture*5,p.Y-9,site.Capture>0?Team(0):Team(1),3);
+  }
+  var objectives=new Queue<Site>(world.Sites.Where(site=>world.Explored(0,Campaign.Middle(site.Body))).OrderBy(site=>site.P.X+site.P.Y));
+  foreach(var o in world.Units.Where(a=>a.Carrier==null&&world.Visible(a)).OrderBy(a=>a.P.X+a.P.Y)){
+   while(objectives.Count>0&&objectives.Peek().P.X+objectives.Peek().P.Y-82<=o.P.X+o.P.Y)DrawDepot(g,objectives.Dequeue());
+   var actual=o.P;if(o.Rollout>0)actual.Y-=o.Rollout*32;var p=ScreenOf(actual);float s=o.T.Size*zoom;
+   if(p.X< -s||p.X>MW+s||p.Y<MapTop-s||p.Y>MapTop+MH+s)continue;
+   if(selection.Contains(o)){using(var pen=new Pen(teal,2.2f))g.DrawEllipse(pen,p.X-s*.32f,p.Y-s*.13f,s*.64f,s*.31f);}
+   DrawFieldSprite(g,o,p,s);
+   if(o.Alive){float y=p.Y+s*.10f;Line(g,p.X-5,y,p.X+5,y,Team(o.Side),3);
+    if(selection.Contains(o)||o.Hp<o.T.Hp||o.Ready<1){Rect(g,p.X-20,y+4,40,4,ink);Rect(g,p.X-20,y+4,40*(o.Ready<1?o.Ready:o.Hp/o.T.Hp),4,o.Ready<1?gold:teal);}
+   }
+  }
+  while(objectives.Count>0)DrawDepot(g,objectives.Dequeue());
+  foreach(var shot in world.Shots){if(!world.Explored(0,shot.A)||!world.Explored(0,shot.B))continue;var a=ScreenOf(shot.A);var b=ScreenOf(shot.B);Line(g,a.X,a.Y-5,b.X,b.Y-5,shot.Shell?gold:Team(shot.Side),2);}
+  if(selection.Count==1&&selection[0].Path.Count>0){var u=selection[0];using(var pen=new Pen(teal)){pen.DashStyle=DashStyle.Dash;g.DrawLines(pen,new[]{u.P}.Concat(u.Path).Select(ScreenOf).ToArray());}}
+  if(selection.Count==1&&selection[0].Rally.HasValue){var a=ScreenOf(selection[0].P);var b=ScreenOf(selection[0].Rally.Value);
+   using(var pen=new Pen(teal,1.5f)){pen.DashStyle=DashStyle.Dot;g.DrawLine(pen,a,b);g.DrawEllipse(pen,b.X-8,b.Y-5,16,10);}}
+  if(place!=null&&mouse.X<MW&&mouse.Y>=MapTop&&mouse.Y<MapTop+MH){
+   var w=WorldOf(mouse);var r=Campaign.Footprint(place,w);var p=ScreenOf(Campaign.Middle(r));DrawLive(g,place,0,14,p,place.Size*zoom,1);
+   var state=g.Save();GroundSpace(g);DrawTiles(g,r,world.CanPlace(place,w,null)?teal:red,true);if(Campaign.HasGate(place))DrawTiles(g,Campaign.Gate(r),gold,false);g.Restore(state);
+  }
+  if(drag&&dragged){var r=DragRect();Rect(g,r.X,r.Y,r.Width,r.Height,Color.FromArgb(38,teal));using(var pen=new Pen(teal))g.DrawRectangle(pen,r.X,r.Y,r.Width,r.Height);}
+  DrawObjectiveMarker(g);Rect(g,12,MapTop+MH-28,344,22,Color.FromArgb(195,ink));Txt(g,"滚轮 "+zoom.ToString("0.0")+"×   ·   中键平移   ·   点击小地图跳转",20,MapTop+MH-26,13,pale);g.Restore(view);
+ }
+ PointF ApproachSite(PointF screen,PointF location){
+  foreach(var site in world.Sites){
+   var basePos=Campaign.Middle(site.Body);if(!world.Explored(0,basePos))continue;
+   var q=ScreenOf(basePos);if(site.Body.Contains(location)||(Math.Abs(q.X-screen.X)<30*zoom&&screen.Y>q.Y-50*zoom&&screen.Y<q.Y))return site.P;
+  }return location;
+ }
+ void DrawDepot(Graphics g,Site site){
+  var p=ScreenOf(Campaign.Middle(site.Body));var key=site==world.Sites[0]?"depot":site==world.Sites[1]?"freight":"harbormaster";
+  float s=85*zoom;g.DrawImage(painted[key],new RectangleF(p.X-s*.5f,p.Y-s*.78f,s,s),new RectangleF(0,site.Owner==1?256:0,256,256),GraphicsUnit.Pixel);
+ }
+ void DrawRadar(Graphics g,float x){
+  var state=g.Save();g.SmoothingMode=SmoothingMode.None;g.SetClip(new RectangleF(x,102,244,107));g.TranslateTransform(x,102);g.ScaleTransform(244f/Campaign.Width,107f/Campaign.Height);
+  g.DrawImage(ground,0,0,Campaign.Width,Campaign.Height);Shroud(g);
+  bool radar=world.Power(0)>=0&&world.Live(0).Any(o=>o.T.Key=="radar");
+  foreach(var o in world.Units.Where(a=>a.Alive&&a.Carrier==null&&(a.Side==0||radar&&world.Visible(a))))Rect(g,o.P.X-6,o.P.Y-6,o.T.Building?26:16,o.T.Building?26:16,Team(o.Side));
+  foreach(var site in world.Sites)using(var pen=new Pen(gold,5))g.DrawRectangle(pen,site.P.X-15,site.P.Y-15,30,30);
+  using(var pen=new Pen(pale,6))g.DrawPolygon(pen,new[]{new PointF(0,MapTop),new PointF(MW,MapTop),new PointF(MW,MapTop+MH),new PointF(0,MapTop+MH)}.Select(WorldOf).ToArray());g.Restore(state);
+  hits.Add(new HitBox{Box=new RectangleF(x,102,244,107),Run=()=>CenterAt(new PointF((mouse.X-x)*Campaign.Width/244,(mouse.Y-102)*Campaign.Height/107))});
+ }
+ Piece HitScreen(PointF screen){
+  var w=WorldOf(screen);return world.Units.Where(o=>o.Alive&&o.Carrier==null&&world.Visible(o)).OrderByDescending(o=>o.P.X+o.P.Y).FirstOrDefault(o=>{
+   var p=ScreenOf(o.P);float size=o.T.Size*zoom;return (o.T.Building&&Campaign.Footprint(o.T,o.P).Contains(w))||Math.Abs(p.X-screen.X)<size*.32f&&screen.Y>p.Y-size*(o.T.Building?.65f:.39f)&&screen.Y<p.Y+size*.1f;
+  });
+ }
+ Bitmap MakeGround(){
+  using(var materials=Raw("materials")){
+   var bmp=new Bitmap(Campaign.Width,Campaign.Height,PixelFormat.Format32bppPArgb);
+   using(var g=Graphics.FromImage(bmp)){
+    g.SmoothingMode=SmoothingMode.AntiAlias;int w=materials.Width/2,h=materials.Height/2;
+    var tiles=new TextureBrush[4];
+    try{for(int i=0;i<4;i++){using(var t=materials.Clone(new Rectangle(i%2*w+2,i/2*h+2,w-4,h-4),PixelFormat.Format32bppPArgb)){
+     tiles[i]=new TextureBrush(t,WrapMode.TileFlipXY);tiles[i].ScaleTransform(.38f,.38f);}}
+     g.FillRectangle(tiles[0],0,0,bmp.Width,bmp.Height);g.FillRectangle(tiles[2],0,0,bmp.Width,101);
+     foreach(var pad in new[]{new Rectangle(25,402,668,288),new Rectangle(800,100,880,610),new Rectangle(565,396,161,124),new Rectangle(115,160,119,110),new Rectangle(1230,710,290,210)})g.FillRectangle(tiles[1],pad);
+     using(var edge=new Pen(C("#bbb4a0"),8)){g.DrawLine(edge,0,100,bmp.Width,100);}
+     foreach(var r in Campaign.Roads){using(var p=new Pen(C("#a09981"),5))g.DrawRectangle(p,r.X,r.Y,r.Width,r.Height);g.FillRectangle(tiles[3],r);}
+     foreach(var r in Campaign.Roads){bool horiz=r.Width>r.Height;using(var pen=new Pen(C("#ccc3a6"),2)){pen.DashPattern=new[]{7f,10f};if(horiz)g.DrawLine(pen,r.Left,r.Top+r.Height/2,r.Right,r.Top+r.Height/2);else g.DrawLine(pen,r.Left+r.Width/2,r.Top,r.Left+r.Width/2,r.Bottom);}}
+     foreach(var pad in new[]{new Rectangle(26,402,664,284),new Rectangle(810,110,850,585),new Rectangle(1230,715,285,201)}){
+      using(var pen=new Pen(Color.FromArgb(100,pale),2))g.DrawRectangle(pen,pad);
+      for(int i=pad.Left+20;i<pad.Right-14;i+=34)Line(g,i,pad.Bottom-29,i,pad.Bottom-8,Color.FromArgb(128,pale),2);
+     }
+     foreach(int y in new[]{316,400,727,803})for(int i=0;i<7;i++)Rect(g,737+i*8,y,4,8,pale);
+     for(int x=80;x<bmp.Width;x+=144){using(var tire=new Pen(C("#454946"),4))g.DrawEllipse(tire,x,91,13,9);}
+     for(int i=12;i<bmp.Width;i+=48){Rect(g,i,97,7,5,ink);Rect(g,i,97,6,2,gold);}
+     foreach(var s in world.Sites){for(int i=0;i<7;i++)Line(g,s.P.X-42+i*13,s.P.Y+32,s.P.X-36+i*13,s.P.Y+20,gold,3);}
+    }finally{foreach(var t in tiles)if(t!=null)t.Dispose();}
+   }return bmp;
+  }
+ }
+ static Bitmap Raw(string name){using(var stream=typeof(CommandWindow).Assembly.GetManifestResourceStream("Greyhaven.Art."+name+".png"))using(var src=new Bitmap(stream))return new Bitmap(src);}
+}
+}
