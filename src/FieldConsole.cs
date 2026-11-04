@@ -66,20 +66,25 @@ partial class CommandWindow {
  }
  PointF SuggestSpot(TypeInfo t){
   var h=world.Live(0).FirstOrDefault(o=>o.T.Key=="hq");if(h==null)return PointF.Empty;
-  PointF ideal=new PointF(h.P.X+(t.Key=="power"?100:t.Key=="factory"?177:-25),h.P.Y+(t.Key=="barracks"?100:30));
+  PointF ideal=t.Key=="refinery"?new PointF(h.P.X-84,h.P.Y-66):new PointF(h.P.X+(t.Key=="power"?100:t.Key=="factory"?177:-25),h.P.Y+(t.Key=="barracks"?100:30));
   for(int n=0;n<10;n++)for(int y=-n;y<=n;y++)for(int x=-n;x<=n;x++){
    if(Math.Max(Math.Abs(x),Math.Abs(y))!=n)continue;var p=new PointF(ideal.X+x*24,ideal.Y+y*24);if(world.CanPlace(t,p,null))return Campaign.Middle(Campaign.Footprint(t,p));}
   return PointF.Empty;
  }
- bool BuildingLesson(){return world.Lesson==1||world.Lesson==2||world.Lesson==5;}
+ bool BuildingLesson(){var t=Campaign.Info(world.LessonKey);return t!=null&&t.Building&&t.Key!="hq";}
  PointF Marker(){
   if(!world.Tutorial)return PointF.Empty;
   if(BuildingLesson()){
    var t=Campaign.Info(world.LessonKey);var site=world.Units.FirstOrDefault(o=>o.Side==0&&o.Alive&&o.T==t);
    return site!=null?site.P:SuggestSpot(t);
   }
-  if(world.Lesson==0)return world.Units[0].P;
-  if(world.Lesson==4)return world.Sites[0].P;if(world.Lesson>=7)return world.Sites[2].P;
+  if(world.LessonKey=="hq")return world.Units[0].P;
+  if(world.LessonKey=="west")return world.Sites[0].P;
+  if(world.LessonKey=="port"||world.LessonKey=="hold")return world.Sites[2].P;
+  if(world.LessonKey=="ore"||world.LessonKey=="receipt"){
+   var truck=world.Live(0).FirstOrDefault(o=>o.T.Key=="miner");if(truck==null){var plant=world.Live(0).FirstOrDefault(o=>o.T.Key=="refinery");return plant==null?PointF.Empty:plant.P;}
+   return world.LessonKey=="ore"&&truck.Patch!=null?truck.Patch.P:truck.P;
+  }
   var src=world.Live(0).FirstOrDefault(o=>o.T.Key==Campaign.Info(world.LessonKey).Producer);return src==null?PointF.Empty:src.P;
  }
  void DrawObjectiveMarker(Graphics g){
@@ -91,7 +96,10 @@ partial class CommandWindow {
   var marker=Marker();if(!marker.IsEmpty)CenterAt(marker);string key=world.LessonKey;queueOpen=false;place=null;attack=false;
   if(BuildingLesson()){army=false;var t=Campaign.Info(key);if(world.Require(t,0)==null&&!world.Units.Any(o=>o.Side==0&&o.Alive&&o.T==t))place=t;return;}
   if(key=="squad"||key=="ifv"){army=true;return;}
-  var focus=world.Live(0).Where(o=>key=="hq"?o.T.Key=="mcv":world.Lesson==4?o.T.Foot:!o.T.Building&&o.T.Hit>0).ToList();
+  var own=world.Live(0);var focus=own.Where(o=>!o.T.Building&&o.T.Hit>0);
+  if(key=="hq")focus=own.Where(o=>o.T.Key=="mcv");
+  if(key=="ore"||key=="receipt")focus=own.Where(o=>o.T.Key=="miner").Take(1);
+  if(key=="west")focus=own.Where(o=>o.T.Foot);
   selection.Clear();selection.AddRange(focus);
  }
  string LessonHint(){
@@ -107,6 +115,13 @@ partial class CommandWindow {
    if(src!=null)return src.T.Name+" #"+src.Id+" 已接单。点「队列」查看进度，等部队出列。";
    return "点右侧「生产」，再点「"+t.Name+"」。军费立即扣除。";
   }
+  if(key=="ore"||key=="receipt"){
+   var truck=own.FirstOrDefault(o=>o.T.Key=="miner");
+   if(truck==null)return "精炼厂完工会派出首车，请留出厂门。矿车损失后可在车辆工厂补造。";
+   if(!truck.Mining)return "选中矿车，点右侧「恢复自动采矿」，或左键点已发现的金色矿石。";
+   if(key=="ore")return truck.Patch==null?"矿车会向未探索地带找矿。也可派步兵先探路，再选矿车左键点金色矿石。":"矿车已找到金色矿点，正在驶近。点「定位本步」查看矿点和车上的载量。";
+   return truck.Returning?"矿车正在返厂卸货。留出厂门，留意精炼厂上方显示的入账金额。":"采集进度 "+(int)truck.Cargo+" / "+Campaign.LoadValue+"。满载后自动返厂，也可选车点己方精炼厂提前卸矿。";
+  }
   if(key=="hold")return "保持泊位畅通。运输船靠岸还需 "+Math.Ceiling(Math.Max(0,world.HoldTime-world.Hold))+" 秒。";
   var siteGoal=world.Sites[key=="west"?0:2];
   if(own.Any(o=>o.T.Foot&&Campaign.Dist(o.P,siteGoal.P)<49))return "我方步兵已进入占领区。请保持驻留，并清除圈内的敌方步兵以继续占领。";
@@ -121,7 +136,7 @@ partial class CommandWindow {
   if(!world.Tutorial&&advice==null&&nearbyPointNeedsFoot())advice="车辆可以掩护占点。把一个步兵班带进据点圈内，已装载的步兵要先下车。";
   if(!world.Tutorial&&advice==null)return;
   Rect(g,18,MapTop+8,820,62,Color.FromArgb(226,ink));Rect(g,18,MapTop+8,4,62,gold);
-  Txt(g,world.Tutorial?"教官　"+(world.Lesson+1)+" / 9　"+Campaign.Lessons[world.Lesson]:"战术提醒",32,MapTop+11,15,gold,true);
+  Txt(g,world.Tutorial?"教官　"+world.LessonTitle:"战术提醒",32,MapTop+11,15,gold,true);
   Txt(g,advice??LessonHint(),32,MapTop+34,16,pale);
   if(world.Tutorial)Button(g,697,MapTop+20,126,37,"定位本步",FocusLesson);
  }

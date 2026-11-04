@@ -4,12 +4,16 @@ using System.Linq;
 namespace Greyhaven {
 public partial class Campaign {
  public float HoldTime {get{return Tutorial?12:45;}}
- public static readonly string[] Lessons={"展开指挥部","建立电站","建立兵营","生产一个步兵班","占领西岸仓库","建造车辆工厂","让步兵战车出厂","夺取港务中心","保护泊位"};
- public string LessonKey {get{return new[]{"hq","power","barracks","squad","west","factory","ifv","port","hold"}[Lesson];}}
+ static readonly string[] LessonKeys={"hq","power","refinery","ore","receipt","barracks","squad","west","factory","ifv","port","hold"};
+ public static readonly string[] Lessons={"展开指挥部","建立电站","建造矿石精炼厂","找到矿点并开始采集","运回第一车矿石","建立兵营","生产一个步兵班","占领西岸仓库","建造车辆工厂","让步兵战车出厂","夺取港务中心","保护泊位"};
+ public string LessonKey {get{return LessonKeys[Lesson];}}
+ public string LessonTitle {get{return (Lesson+1)+" / "+Lessons.Length+"　"+Lessons[Lesson];}}
  void AdvanceLesson(){
-  while(Lesson<8){
+  while(Lesson<LessonKeys.Length-1){
    string key=LessonKey;bool complete;
    switch(key){
+    case "ore":complete=FirstOreCollected;break;
+    case "receipt":complete=OreReceipts[0]>0;break;
     case "squad":complete=InfantryDelivered>0;break;
     case "ifv":complete=VehiclesDelivered>0;break;
     case "west":complete=Sites[0].Owner==0;break;

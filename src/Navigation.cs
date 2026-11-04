@@ -17,16 +17,16 @@ public partial class Campaign {
  public static bool HasGate(TypeInfo t){return t.Key=="barracks"||t.Key=="factory"||t.Key=="hq"||t.Key=="refinery";}
  public static RectangleF Gate(RectangleF body){return new RectangleF(body.Left,body.Bottom,body.Width,Tile);}
  public static readonly RectangleF[] YardWalls={new RectangleF(842,214,74,8),new RectangleF(962,214,77,8),new RectangleF(1094,214,70,8)};
- public bool CanPlace(TypeInfo t,PointF p,Piece skip){
+ public bool CanPlace(TypeInfo t,PointF p,Piece skip,int side=0){
   var r=Footprint(t,p);var mid=Middle(r);var reserve=ReservedLot(t,r);
-  if(skip==null&&!(Explored(0,new PointF(r.Left,r.Top))&&Explored(0,new PointF(r.Right,r.Top))&&Explored(0,new PointF(r.Left,r.Bottom))&&Explored(0,new PointF(r.Right,r.Bottom))))return false;
+  if(skip==null&&!(Explored(side,new PointF(r.Left,r.Top))&&Explored(side,new PointF(r.Right,r.Top))&&Explored(side,new PointF(r.Left,r.Bottom))&&Explored(side,new PointF(r.Right,r.Bottom))))return false;
   if(reserve.Left<0||reserve.Right>Width||reserve.Top<99||reserve.Bottom>Height||Roads.Concat(YardWalls).Any(b=>b.IntersectsWith(reserve)))return false;
   if(Ore.Any(patch=>patch.Stock>0&&Inflated(reserve,12).Contains(patch.P)))return false;
   if(Sites.Any(site=>site.Body.IntersectsWith(reserve)))return false;
   if(Units.Any(o=>o!=skip&&o.Alive&&o.T.Building&&(reserve.IntersectsWith(ReservedLot(o.T,Footprint(o.T,o.P))))))return false;
   if(Units.Any(o=>o!=skip&&o.Alive&&!o.T.Building&&o.Carrier==null&&Inflated(t.Key=="barracks"?reserve:r,Clearance(o)).Contains(o.P)))return false;
   if(t.Key=="barracks"&&Units.Any(o=>o.Alive&&o.Path.Count>0&&reserve.Contains(o.Path.Last())))return false;
-  return !Sites.Any(s=>Inflated(r,28).Contains(s.P))&&(skip!=null||Live(0).Any(o=>o.T.Key=="hq"&&Dist(o.P,mid)<265));
+  return !Sites.Any(s=>Inflated(r,28).Contains(s.P))&&(skip!=null||Live(side).Any(o=>o.T.Key=="hq"&&Dist(o.P,mid)<265));
  }
  static float Clearance(Piece o){return o.T.Foot?5:11;}
  IEnumerable<RectangleF> Obstacles(){

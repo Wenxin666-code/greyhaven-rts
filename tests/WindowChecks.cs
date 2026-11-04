@@ -26,6 +26,18 @@ class WindowChecks {
    var w=(Campaign)Field(f,"world");Press(f,1320,620);if(!w.Landing)throw new Exception("deploy button");
    for(int i=0;i<60;i++)w.Tick(.1f);Frame(f,null);
    Press(f,1265,292);MapClick(f,263,548);if(!w.Units.Any(o=>o.Side==0&&o.T.Key=="power"))throw new Exception("construction click");
+   for(int i=0;i<60;i++)w.Tick(.1f);Frame(f,null);
+   if(w.LessonKey!="refinery")throw new Exception("missing refinery stage");
+   Press(f,752,104);MapClick(f,66,450);
+   for(int i=0;i<100;i++)w.Tick(.1f);Frame(f,null);
+   if(w.LessonKey!="ore")throw new Exception("ore stage "+w.LessonKey);
+   Press(f,752,104);var miner=w.Live(0).First(o=>o.T.Key=="miner");
+   if(!((System.Collections.Generic.List<Piece>)Field(f,"selection")).Contains(miner))throw new Exception("focus truck");
+   for(int i=0;i<400&&w.LessonKey=="ore";i++)w.Tick(.1f);
+   if(w.LessonKey!="receipt"||w.OreReceipts[0]!=0)throw new Exception("deposit lesson before sale");
+   for(int i=0;i<400&&w.LessonKey=="receipt";i++)w.Tick(.1f);
+   if(w.LessonKey!="barracks"||w.OreReceipts[0]<=0)throw new Exception("first receipt");
+   typeof(CommandWindow).GetMethod("CenterAt",flags).Invoke(f,new object[]{new PointF(255,465)});Frame(f,null);
    for(int i=0;i<60;i++)w.Tick(.1f);Frame(f,null);Press(f,1394,292);MapClick(f,123,610);for(int i=0;i<65;i++)w.Tick(.1f);
    Press(f,1260,350);MapClick(f,339,548);for(int i=0;i<110;i++)w.Tick(.1f);
    Press(f,1330,237);Press(f,1270,290);if(!w.Live(0).Any(o=>o.Queue.Count>0))throw new Exception("training click");
@@ -33,10 +45,10 @@ class WindowChecks {
    if(!(bool)Field(f,"queueOpen"))throw new Exception("queue tab");
    var source=w.Live(0).Single(o=>o.Queue.Count>0);if(source.Queue.Count!=2)throw new Exception("second order");
    Frame(f,args.Length==0?null:args[0]);int funds=w.Funds[0];Press(f,1413,362);if(source.Queue.Count!=1||w.Funds[0]!=funds+85)throw new Exception("cancel waiting slot");
-   if(w.Lesson!=3||!w.Tutorial)throw new Exception("default tutorial step");
+   if(w.LessonKey!="squad"||!w.Tutorial)throw new Exception("default tutorial step");
    for(int i=0;i<60;i++)w.Tick(.1f);Frame(f,null);
-   if(w.Lesson!=4)throw new Exception("delivery milestone");Press(f,752,104);MapClick(f,172,214);
-   for(int i=0;i<400;i++)w.Tick(.1f);Frame(f,null);if(w.Lesson!=6)throw new Exception("capture plus prebuilt factory");
+   if(w.LessonKey!="west")throw new Exception("delivery milestone");Press(f,752,104);MapClick(f,172,214);
+   for(int i=0;i<400;i++)w.Tick(.1f);Frame(f,null);if(w.LessonKey!="ifv")throw new Exception("capture plus prebuilt factory");
    Press(f,752,104);Press(f,1394,350);for(int i=0;i<95;i++)w.Tick(.1f);Frame(f,null);
    if(args.Length>0){
     w.Upgrade();w.Train(Campaign.Info("tank"),0,null);for(int i=0;i<140;i++)w.Tick(.1f);
@@ -44,7 +56,7 @@ class WindowChecks {
     typeof(CommandWindow).GetMethod("OnKeyDown",flags).Invoke(f,new object[]{new KeyEventArgs(Keys.G)});
     Frame(f,Path.Combine(Path.GetDirectoryName(args[0]),"等距战场.png"));
    }
-   if(w.Lesson!=7)throw new Exception("ifv training");Press(f,752,104);
+   if(w.LessonKey!="port")throw new Exception("ifv training");Press(f,752,104);
    typeof(CommandWindow).GetMethod("OnKeyDown",flags).Invoke(f,new object[]{new KeyEventArgs(Keys.A)});MapClick(f,1330,292);
    for(int i=0;i<1100;i++)w.Tick(.1f);Frame(f,null);if(!w.Won)throw new Exception("tutorial victory through interface");
    Press(f,688,574);w=(Campaign)Field(f,"world");if(w.Tutorial||!w.Assisted)throw new Exception("handoff to assisted mission");var trooper=w.Live(0).First(o=>o.T.Foot);var nearby=w.Spawn("squad",1,351,421);for(int i=0;i<3;i++)w.Tick(.1f);Frame(f,null);
@@ -89,7 +101,7 @@ partial class CommandWindow {
   for(int i=0;i<5;i++)world.Tick(.1f);
   if(!world.LastEvent.HasValue)throw new Exception("incoming attack event");
   tap(Keys.Space);if(camera!=world.LastEvent.Value||paused)throw new Exception("jump to event");
-  var truck=world.Live(0).Single(u=>u.T.Key=="miner");world.Halt(truck);
+  var truck=world.Spawn("miner",0,80,595);world.Tick(.1f);world.Halt(truck);
   var ore=world.Ore.First();selection.Clear();selection.Add(truck);CenterAt(ore.P);mouse=ScreenOf(ore.P);ContextOrder(Keys.None);
   if(!truck.Mining||truck.Patch!=ore)throw new Exception("click visible ore");
   var hq=world.Units[0];if(!world.Deploy(hq))throw new Exception("deploy during focus test");
@@ -99,6 +111,12 @@ partial class CommandWindow {
  }
  internal void RecordOreTrip(string folder){
   Directory.CreateDirectory(folder);ClientSize=new Size(W,H);StartMission(false,true);
+  if(!world.Deploy(world.Units[0]))throw new Exception("deploy");
+  for(int n=0;n<60;n++)world.Tick(.1f);
+  if(!world.Build(Campaign.Info("power"),new PointF(260,550)))throw new Exception("build power");
+  for(int n=0;n<60;n++)world.Tick(.1f);
+  if(!world.Build(Campaign.Info("refinery"),new PointF(66,450)))throw new Exception("build refinery");
+  for(int n=0;n<92;n++)world.Tick(.1f);
   var plant=world.Live(0).First(u=>u.T.Key=="refinery");
   CenterAt(new PointF(70,534));zoom=1.75f;selection.Clear();
   using(var frame=new Bitmap(W,H))using(var g=Graphics.FromImage(frame)){

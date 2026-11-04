@@ -14,7 +14,7 @@ public class TypeInfo {
 }
 public enum ContactOrder { None, Directed, Automatic, ReturnFire }
 public class Piece {
- public int LastReceipt;public float ReceiptAt;public bool Mining,StarterDelivered,Returning;public float Cargo,Unload,Dispatch,MillPhase;public Piece Dock;public OrePatch Patch;
+ public int LastReceipt;public float ReceiptAt;public bool Mining,StarterDelivered,Returning,Surveying;public float Cargo,Unload,Dispatch,MillPhase;public Piece Dock;public OrePatch Patch;
  public ContactOrder Contact;public bool ResumeMarch;public PointF LastContact;public float ScanIn;
  public int RouteVersion,Id,Side,Dir,Group; public TypeInfo T; public PointF P; public float Hp,Ready=1,Cool,Dead,Replan,Turn,Door,Rollout;
  public bool Alive {get{return Hp>0;}} public bool Deployed {get{return Alive&&Ready>=1&&Carrier==null;}}
@@ -48,15 +48,15 @@ public partial class Campaign {
  public readonly List<Piece> Units=new List<Piece>();public readonly List<Shot> Shots=new List<Shot>();
  public readonly Site[] Sites={new Site("西岸仓库",172,214),new Site("中央货场",660,444),new Site("港务中心",1330,292)};
  public int[] Funds={1150,540};public bool[] Upgraded={false,true};public float Time,Hold,Scan; public bool Landing,Won,Lost;public string Radio="展开工程车，在西南建立登陆基地。";
- int seq,aiTurn,wave;float aiClock,nextWave=92;bool counter;
+ int seq,aiTurn,wave;float nextEnemyRefinery=3,aiClock,nextWave=92;bool counter;
  public readonly bool Tutorial,Assisted;
  public int Lesson,InfantryDelivered,VehiclesDelivered;public Piece LastOrder,LastReady;public float ReadyAt;
  public Campaign(bool tutorial=false,bool assisted=false){
   Tutorial=tutorial;Assisted=assisted||tutorial;if(Assisted){Funds[0]=1700;nextWave=175;}
   Spawn("mcv",0,152,514);Spawn("squad",0,214,418);Spawn("squad",0,258,410);
-  Spawn("refinery",0,66,450);
+
   if(tutorial){Spawn("squad",1,1390,287);Sites[2].Owner=1;Sites[2].Capture=-5;Reveal();return;}
-  Spawn("refinery",1,1560,746);Spawn("hq",1,1510,530);Spawn("factory",1,1320,619);Spawn("barracks",1,1198,547);Spawn("power",1,1530,638);Spawn("post",1,1335,399);
+  Spawn("hq",1,1510,530);Spawn("factory",1,1320,619);Spawn("barracks",1,1198,547);Spawn("power",1,1530,638);Spawn("post",1,1335,399);
   Spawn("squad",1,1258,340);Spawn("ifv",1,1418,437);Sites[2].Owner=1;Sites[2].Capture=-5;Reveal();
  }
  public static float Dist(PointF a,PointF b){return (float)Math.Sqrt((a.X-b.X)*(a.X-b.X)+(a.Y-b.Y)*(a.Y-b.Y));}
@@ -73,7 +73,7 @@ public partial class Campaign {
  public string Require(TypeInfo t,int side){
   if(!Live(side).Any(p=>p.T.Key==t.Producer))return "需要"+(t.Producer==""?"工程车":Info(t.Producer).Name);
   if((t.Key=="tank"||t.Key=="arty")&&!Upgraded[side])return "需要装甲升级";
-  if(t.Key=="factory"&&!Live(side).Any(p=>p.T.Key=="power"))return "先建电站";
+  if((t.Key=="factory"||t.Key=="refinery")&&!Live(side).Any(p=>p.T.Key=="power"))return "先建电站";
   if(Funds[side]<t.Price)return "军费不足";
   if(t.Key=="refinery"&&CommittedUnits(side)>=55)return "部队满编";
   if(!t.Building){
@@ -87,11 +87,17 @@ public partial class Campaign {
  public bool Deploy(Piece o){
   if(o==null||!o.Alive||o.Side!=0||o.T.Key!="mcv")return false;
   if(!CanPlace(Info("hq"),o.P,o)){Radio="此处空间不足。将工程车移到一块空地后再展开。";return false;}
-  Changed();o.T=Info("hq");o.P=Middle(Footprint(o.T,o.P));o.Turn=0;o.Dir=0;o.Hp=o.T.Hp;o.Ready=.01f;o.Path.Clear();o.Target=null;Landing=true;Radio="基地正在展开。矿车将自动采矿。接下来建电站和兵营，让步兵夺取据点。";return true;
+  Changed();o.T=Info("hq");o.P=Middle(Footprint(o.T,o.P));o.Turn=0;o.Dir=0;o.Hp=o.T.Hp;o.Ready=.01f;o.Path.Clear();o.Target=null;Landing=true;Radio="基地正在展开。先建电站，再建矿石精炼厂。完工后，首辆矿车会从厂门出发找矿。";return true;
  }
  public bool Build(TypeInfo t,PointF p){
-  var reason=Require(t,0);if(reason!=null||!CanPlace(t,p,null)){Radio=reason??"请选择指挥部周围的空地，避开单位、建筑和补给点。";return false;}
-  Funds[0]-=t.Price;Spawn(t.Key,0,p.X,p.Y).Ready=.01f;Radio=t.Name+"开始施工。";return true;
+  return BuildFor(t,p,0);
+ }
+ bool BuildFor(TypeInfo t,PointF p,int side){
+  var reason=Require(t,side);
+  if(!t.Building||reason!=null||!CanPlace(t,p,null,side)){
+   if(side==0)Radio=reason??"请选择指挥部附近的已探索空地，避开单位、道路和矿石。";return false;
+  }
+  Funds[side]-=t.Price;Spawn(t.Key,side,p.X,p.Y).Ready=.01f;if(side==0)Radio=t.Name+"开始施工。";return true;
  }
  public bool Train(TypeInfo t,int side,Piece preferred){
   string reason=Require(t,side);var src=Live(side).Where(o=>o.T.Key==t.Producer&&o.Queue.Count<4&&(t.Producer!="barracks"||FreeBerth(o).HasValue)).OrderBy(o=>o==preferred?-1:o.Queue.Count).FirstOrDefault();
@@ -205,6 +211,10 @@ public partial class Campaign {
     if(owner!=s.Owner){s.Owner=owner;if(owner==0||Explored(0,s.P))SetEvent(s.P,s.Name+"易手");Radio=s.Name+(owner==0?"已由我方控制。":"已被敌军夺取。");}}
   }
 
+  if(!Tutorial&&Time>=nextEnemyRefinery){
+   nextEnemyRefinery=Time+6;
+   if(!Units.Any(o=>o.Side==1&&o.Alive&&o.T.Key=="refinery"))BuildFor(Info("refinery"),new PointF(1560,746),1);
+  }
   if(!Tutorial&&Time>(Assisted?70:22)&&(aiClock-=dt)<=0){aiClock=(counter?8:14)*(Assisted?1.7f:1);string[] order={"squad","ifv","at","tank","squad","engineer"};
    var missingMiner=Live(1).Any(o=>o.T.Key=="refinery")&&!Live(1).Any(o=>o.T.Key=="miner"||o.Queue.Any(t=>t.Key=="miner"));
    Train(Info(missingMiner?"miner":order[aiTurn++%order.Length]),1,null);}
@@ -212,7 +222,7 @@ public partial class Campaign {
   if(Sites[2].Owner==0){
    if(!counter){counter=true;EnemyOrders(true);Radio="港务中心已接管！守住泊位 45 秒，等待运输船。";}
    bool contested=Live(1).Any(o=>!o.T.Building&&Dist(o.P,Sites[2].P)<72);
-   if(!contested&&(!Tutorial||Lesson>=7))Hold+=dt;if(Hold>=HoldTime)Won=true;
+   if(!contested&&(!Tutorial||LessonKey=="hold"))Hold+=dt;if(Hold>=HoldTime)Won=true;
   }else{Hold=0;counter=false;}
   if(Tutorial)AdvanceLesson();
   if(!Units.Any(o=>o.Side==0&&o.Alive&&(o.T.Key=="hq"||o.T.Key=="mcv")))Lost=true;

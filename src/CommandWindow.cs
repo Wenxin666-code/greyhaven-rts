@@ -140,7 +140,7 @@ partial class CommandWindow:Form {
   Rect(g,0,0,W,MapTop,ink);Rect(g,0,MapTop-3,W,3,C("#5c7464"));Rect(g,0,0,7,MapTop,gold);
   Txt(g,"断 线 前 沿",22,9,29,pale,true);Txt(g,"GREYHAVEN   /   LANDING FORCE",23,44,10,gold,true);
   Line(g,240,12,240,54,C("#4d655b"));Txt(g,world.Tutorial?"野外训练  /  DRILL":world.Assisted?"宽松战役  /  OP.01":"标准战役  /  OP.01",258,9,12,teal,true);
-  Txt(g,world.Tutorial?(world.Lesson+1)+" / 9　"+Campaign.Lessons[world.Lesson]:!world.Landing?"展开工程车并建立基地":world.Sites[2].Owner==0?"守住港务中心　"+(int)world.Hold+" / 45 秒":"派步兵夺取港务中心",258,27,20,pale,true);
+  Txt(g,world.Tutorial?world.LessonTitle:!world.Landing?"展开工程车并建立基地":world.Sites[2].Owner==0?"守住港务中心　"+(int)world.Hold+" / 45 秒":"派步兵夺取港务中心",258,27,20,pale,true);
   Metric(g,728,"军费  /  CR",world.Funds[0].ToString(),gold);Metric(g,930,"电力余量  /  PWR",world.Power(0).ToString("+#;-#;0"),world.Power(0)<0?red:teal);
   Metric(g,1085,"行动时钟",TimeSpan.FromSeconds(world.Time).ToString(@"mm\:ss"),pale);
   Button(g,1222,15,103,35,"速度 ×"+speed,()=>speed=speed==1?2:1);Button(g,1334,15,120,35,"暂停",()=>paused=true);
@@ -181,9 +181,9 @@ partial class CommandWindow:Form {
   Txt(g,"LANDING FORCE      //      OPERATIONS COMMAND      01—GH",324,203,14,gold,true);
   string title=world.Won?(world.Tutorial?"训练完成":"行动成功"):world.Lost?"行动终止":briefing?"灰港登陆":help?"战地手册":"指挥已暂停";
   Txt(g,title,323,245,49,pale,true);Line(g,329,325,1140,325,C("#5d7265"));
-  string[] lines=briefing?new[]{"新手训练　跟随九个小目标，亲手展开基地、出兵、占点并护送运输船。","登陆区配有精炼厂和采矿车。矿车满载回厂卸货后，军费才会到账。","宽松战役　更多起始军费，首波敌袭推迟到 175 秒。","标准战役　首波敌袭在 92 秒，适合熟悉编队和生产后的指挥官。"}:world.Won?new[]{"运输船已接岸。港区走廊重新开放。","作战用时 "+TimeSpan.FromSeconds(world.Time).ToString(@"mm\:ss")+"　｜　存活部队 "+world.Live(0).Count(o=>!o.T.Building)}:
+  string[] lines=briefing?new[]{"新手训练　跟随十二个小目标，亲手展开基地、出兵、占点并护送运输船。","自建电站和精炼厂，跟随首辆矿车找矿。回厂卸货后军费到账。","宽松战役　更多起始军费，首波敌袭推迟到 175 秒。","标准战役　首波敌袭在 92 秒，适合熟悉编队和生产后的指挥官。"}:world.Won?new[]{"运输船已接岸。港区走廊重新开放。","作战用时 "+TimeSpan.FromSeconds(world.Time).ToString(@"mm\:ss")+"　｜　存活部队 "+world.Live(0).Count(o=>!o.T.Building)}:
    world.Lost?new[]{"最后一座指挥部与工程车均已损失，登陆部队撤离。","先保护指挥部，再让步兵夺取仓库，扩大生产。"}:
-   new[]{"01    选择工程车按 D 展开。建电站、兵营和车辆工厂，升级后可生产坦克。","02    左键选中我方部队，点地面移动，点敌方单位集火。A 后点地边打边走；Ctrl 点地压制，S 停火。","03    矿车卸货换取军费，车辆工厂可补造矿车。夺下港务中心后清开近敌，守住 "+world.HoldTime+" 秒。","04    H 回基地，空格看事件，Ctrl+F1～F4 存镜头，F1～F4 返回。T 选同类，连按两次选全图。"};
+   new[]{"01    选择工程车按 D 展开。先建电站和精炼厂，再建兵营和车辆工厂，升级后可生产坦克。","02    左键选中我方部队，点地面移动，点敌方单位集火。A 后点地边打边走；Ctrl 点地压制，S 停火。","03    矿车卸货换取军费，车辆工厂可补造矿车。夺下港务中心后清开近敌，守住 "+world.HoldTime+" 秒。","04    H 回基地，空格看事件，Ctrl+F1～F4 存镜头，F1～F4 返回。T 选同类，连按两次选全图。"};
   for(int i=0;i<lines.Length;i++)Txt(g,lines[i],328,347+i*41,17,i==0?gold:pale);
   if(briefing){
    Button(g,328,553,235,49,"▶   新手训练   [Enter]",()=>StartMission(true,false),true);
