@@ -6,6 +6,7 @@ using System.Windows.Forms;
 
 namespace Greyhaven {
 partial class CommandWindow {
+ bool rulesOpen,unitRoster;
  bool missionPicker,combatMission,frontEnterHeld,relaxed=true;
  static readonly string[] portraitKeys={"squad","at","engineer","ifv","tank","miner"};
  void Portrait(Graphics g,TypeInfo t,RectangleF box){
@@ -39,6 +40,11 @@ partial class CommandWindow {
  }
  void LaunchMission(){StartMission(!combatMission,!combatMission||relaxed);hits.Clear();hudDirty=true;Invalidate();}
  void FrontKey(Keys key){
+  if(rulesOpen){
+   if(key==Keys.Escape){rulesOpen=false;hits.Clear();}
+   if(key==Keys.Left||key==Keys.Right)unitRoster=!unitRoster;
+   hudDirty=true;Invalidate();return;
+  }
   if(key==Keys.Escape&&missionPicker){missionPicker=false;hits.Clear();}
   else if(key==Keys.Enter){if(missionPicker)LaunchMission();else OpenMissions();}
   else if(missionPicker&&(key==Keys.Up||key==Keys.Down))combatMission=!combatMission;
@@ -52,14 +58,16 @@ partial class CommandWindow {
   Txt(g,"灰港战区司令部",96,14,20,pale,true);Txt(g,"GREYHAVEN   /   OPERATIONS COMMAND",285,20,12,dim,true);
   Txt(g,"●  单人行动",W-143,17,15,teal,true);
   Metal(g,0,H-45,W,45);Txt(g,"GH   /   港区联合行动群",48,H-32,13,dim,true);
-  Txt(g,missionPicker?"↑ ↓ 选择任务     ← → 难度     Enter 出击     Esc 返回":"PC   /   WINDOWS  x64     •     FIELD EDITION",W-430,H-32,13,dim,true);
+  Txt(g,rulesOpen?"← → 切换栏目     Esc 返回主界面":missionPicker?"↑ ↓ 选择任务     ← → 难度     Enter 出击     Esc 返回":"PC   /   WINDOWS  x64     •     FIELD EDITION",W-430,H-32,13,dim,true);
+  if(rulesOpen){DrawRules(g);return;}
   if(missionPicker){DrawPicker(g);return;}
   Rect(g,61,203,49,4,gold);Txt(g,"GH—01     /     GREYHAVEN FRONT",62,221,18,gold,true);
   Txt(g,"断线前沿",53,253,89,pale,true);Txt(g,"灰 港 登 陆",64,367,29,pale,true);
   Line(g,64,428,462,428,Color.FromArgb(150,dim));
   Txt(g,"建立滩头基地，打通通往港务中心的走廊。",64,450,19,pale);
   Button(g,64,545,335,61,"开始游戏",OpenMissions,true);Txt(g,"›",365,550,30,ink,true);
-  Button(g,64,624,190,43,"退出游戏",Close);
+  Button(g,64,620,335,46,"规则介绍",()=>{unitRoster=false;rulesOpen=true;hits.Clear();hudDirty=true;});
+  Button(g,64,682,190,40,"退出游戏",Close);
  }
  void DrawPicker(Graphics g){
   Txt(g,"行动选择",58,90,46,pale,true);Txt(g,"MISSION DIRECTORY   /   01",61,155,14,gold,true);

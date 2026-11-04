@@ -14,22 +14,37 @@ partial class CommandWindow {
  PointF WorldOf(PointF s){float a=(s.X-MW*.5f)/(Axis*zoom),b=(s.Y-MapTop-MH*.5f)/(Rise*zoom);return new PointF(camera.X+(b+a)/2,camera.Y+(b-a)/2);}
  void CenterAt(PointF p){camera=new PointF(Math.Max(0,Math.Min(Campaign.Width,p.X)),Math.Max(0,Math.Min(Campaign.Height,p.Y)));}
  void Pan(float x,float y){CenterAt(WorldOf(new PointF(MW/2+x,MapTop+MH/2+y)));}
- bool pointerInside;float edgeDwell;
- void ResetEdgeScroll(){pointerInside=false;edgeDwell=0;}
- protected override void OnMouseLeave(EventArgs e){base.OnMouseLeave(e);ResetEdgeScroll();}
- static float EdgeSpeed(float position,float extent){
-  const float band=22;
-  if(position<band)return -(1-position/band);
-  return position>extent-band?(position-extent+band)/band:0;
+ bool edgeArmed;float edgeDwell;
+ void ResetEdgeScroll(){edgeArmed=false;edgeDwell=0;}
+ // WM_MOUSEMOVE stops at the window border. Poll the desktop cursor while this game owns focus.
+ void PollEdgeScroll(float dt){
+  var screen=Cursor.Position;
+  EdgeAtClient(dt,PointToClient(screen),screen,Screen.FromHandle(Handle).Bounds);
  }
- void EdgeScroll(float dt){
-  if(!pointerInside||briefing||paused||world.Won||world.Lost||drag||panning||
-     mouse.X<0||mouse.X>=MW||mouse.Y<MapTop||mouse.Y>=MapTop+MH){edgeDwell=0;return;}
-  float x=EdgeSpeed(mouse.X,MW),y=EdgeSpeed(mouse.Y-MapTop,MH);
-  if((x==0&&y==0)||hits.Any(h=>h.Box.Contains(mouse))){edgeDwell=0;return;}
-  edgeDwell+=dt;if(edgeDwell<=.12f)return;
-  float ramp=Math.Min(1,(edgeDwell-.12f)/.16f);
-  float speed=660*dt*ramp/Math.Max(1,(float)Math.Sqrt(x*x+y*y));
+ void EdgeAtClient(float dt,Point client,Point screen,Rectangle display){
+  var pos=new PointF((client.X-ox)/Math.Max(.01f,scale),(client.Y-oy)/Math.Max(.01f,scale));
+  int outerX=client.X<0?-1:client.X>=ClientSize.Width?1:0;
+  int outerY=client.Y<0?-1:client.Y>=ClientSize.Height?1:0;
+  if(outerX==0&&outerY==0){
+   outerX=screen.X<=display.Left+2?-1:screen.X>=display.Right-3?1:0;
+   outerY=screen.Y<=display.Top+2?-1:screen.Y>=display.Bottom-3?1:0;
+  }
+  EdgeScroll(dt,pos,outerX,outerY);
+ }
+ static float EdgeSpeed(float position,float extent){
+  const float band=30;
+  if(position<band)return -Math.Min(1,1-position/band);
+  return position>extent-band?Math.Min(1,(position-extent+band)/band):0;
+ }
+ void EdgeScroll(float dt,PointF pos,int outerX,int outerY){
+  if(!edgeArmed||briefing||paused||world.Won||world.Lost||drag||panning){edgeDwell=0;return;}
+  bool outside=outerX!=0||outerY!=0;
+  if(!outside&&(pos.X<0||pos.X>=MW||pos.Y<MapTop||pos.Y>=MapTop+MH||hits.Any(h=>h.Box.Contains(pos)))){edgeDwell=0;return;}
+  float x=outside?outerX:EdgeSpeed(pos.X,MW),y=outside?outerY:EdgeSpeed(pos.Y-MapTop,MH);
+  if(x==0&&y==0){edgeDwell=0;return;}
+  edgeDwell+=dt;
+  float ramp=Math.Max(0,Math.Min(1,(edgeDwell-.035f)/.11f));
+  float speed=740*dt*ramp/Math.Max(1,(float)Math.Sqrt(x*x+y*y));
   Pan(x*speed,y*speed);
  }
  protected override void OnMouseWheel(MouseEventArgs e){base.OnMouseWheel(e);var p=ToScreenPoint(e);if(briefing||paused||p.X<0||p.X>=MW||p.Y<MapTop||p.Y>=MapTop+MH)return;

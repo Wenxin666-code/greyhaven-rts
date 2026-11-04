@@ -176,8 +176,43 @@ class CampaignChecks {
   foot.P=new PointF(260,580);w.Spawn("squad",1,site.P.X,site.P.Y);Wait(w,20);
   Check(site.Owner==1&&w.Funds.SequenceEqual(original),"holding and recapturing must not pay");
  }
+ static void MinerTraffic(){
+  var w=new Campaign(true);w.Ore.Clear();var patch=new OrePatch(450,810,6000);w.Ore.Add(patch);
+  var plant=w.Spawn("refinery",0,374,670);Wait(w,1);var first=w.Live(0).Single(o=>o.T.Key=="miner");
+  var gate=Campaign.DockPoint(plant);w.Spawn("mcv",0,gate.X,gate.Y);w.Spawn("mcv",0,patch.P.X,patch.P.Y);
+  var second=w.Spawn("miner",0,500,785);w.MineOrder(first,patch,null);w.MineOrder(second,patch,null);
+  int a=0,b=0;for(int i=0;i<1700;i++){
+   float ca=first.Cargo,cb=second.Cargo;w.Tick(.1f);
+   if(ca>0&&first.Cargo==0)a++;if(cb>0&&second.Cargo==0)b++;
+  }
+  Check(a>=2&&b>=2,"each miner keeps delivering despite blocked centers: "+a+" / "+b);
+  Console.WriteLine("Blocked-center traffic: two miners delivered "+a+" and "+b+" loads in 170s.");
+  float total=patch.Stock+first.Cargo+second.Cargo+w.OreReceipts[0];
+  Check(Math.Abs(total-patch.Initial)<2,"ore conservation with alternate berths");
+  Check(w.OreReceipts[0]>=Campaign.LoadValue*4,"blocked dock and ore center must still allow repeated shipments: "+w.OreReceipts[0]);
+ }
+ static void MinerMidRouteBlock(){
+  var w=new Campaign(true);var plant=w.Spawn("refinery",0,360,655);Wait(w,1);
+  var truck=w.Live(0).Single(u=>u.T.Key=="miner");truck.Cargo=Campaign.LoadValue;
+  truck.P=new PointF(550,738);w.MineOrder(truck,null,plant);w.Tick(.1f);
+  var destination=truck.WorkPoint;
+  w.Spawn("mcv",0,destination.X,destination.Y);Wait(w,35);
+  Check(w.OreReceipts[0]>=Campaign.LoadValue,"blocked destination after dispatch: release and reroute");
+ }
+ static void EnemySupplyChain(){
+  var w=new Campaign();Check(w.Live(1).Single().T.Key=="mcv"&&!w.Upgraded[1],"enemy starts with only a construction vehicle");
+  // Shut off mining to prove the first combat order depends on physical delivery.
+  for(int i=0;i<700&&!w.Live(1).Any(o=>o.T.Key=="miner");i++)w.Tick(.1f);
+  var truck=w.Live(1).Single(o=>o.T.Key=="miner");w.Halt(truck);int cash=w.Funds[1];
+  Check(cash==1150-Campaign.Info("power").Price-Campaign.Info("refinery").Price,"enemy pays for first structures");
+  Wait(w,90);Check(w.Funds[1]==cash&&w.OreReceipts[1]==0&&!w.Live(1).Any(o=>o.T.Hit>0||o.Queue.Count>0),"without ore no troops or orders");
+  w.MineOrder(truck,null,null);bool infantry=false,armor=false;
+  for(int i=0;i<3900;i++){w.Tick(.1f);infantry|=w.Live(1).Any(o=>o.T.Foot);armor|=w.Live(1).Any(o=>o.T.Key=="tank");if(infantry&&armor)break;}
+  Check(w.OreReceipts[1]>0&&infantry&&armor&&w.Upgraded[1],"supply chain: "+w.Funds[1]+" receipts "+w.OreReceipts[1]+" T "+w.Time+" cargo "+truck.Cargo+" path "+truck.Path.Count+" "+String.Join(" ",w.Live(1).Select(o=>o.T.Key+"@"+o.P)));
+  Console.WriteLine("Enemy bootstrap: interrupted income stopped recruitment; mining resumed and funded infantry and armor.");
+ }
  static int Main(){try{Run();return 0;}catch(Exception ex){Console.Error.WriteLine(ex.Message);return 1;}}
- static void Run(){WarehouseCapture();ProspectChecks();OreChecks();ContactChecks();StreetChecks();InfantryWaves();HeadingChecks();ReconAndMarch();Navigation();Training();Play(true);Play(false);var w=new Campaign();var h=Begin(w);var enemy=w.Spawn("tank",1,h.P.X+82,h.P.Y);w.Attack(enemy,h);Wait(w,190);Check(w.Lost,"base loss");
+ static void Run(){MinerMidRouteBlock();EnemySupplyChain();MinerTraffic();WarehouseCapture();ProspectChecks();OreChecks();ContactChecks();StreetChecks();InfantryWaves();HeadingChecks();ReconAndMarch();Navigation();Training();Play(true);Play(false);var w=new Campaign();var h=Begin(w);var enemy=w.Spawn("tank",1,h.P.X+82,h.P.Y);w.Attack(enemy,h);Wait(w,190);Check(w.Lost,"base loss");
   w=new Campaign();var car=w.Spawn("ifv",0,212,431);w.Load(car);Check(w.Units.Any(o=>o.Carrier==car),"embark");w.Load(car);Check(!w.Units.Any(o=>o.Carrier==car),"disembark");
   Console.WriteLine("All checks passed.");}
 }

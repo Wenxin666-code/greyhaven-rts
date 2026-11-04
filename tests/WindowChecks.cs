@@ -16,7 +16,10 @@ class WindowChecks {
  }
  [STAThread]static int Main(string[] args){try{Run(args);return 0;}catch(Exception e){Console.Error.WriteLine(e.Message);Console.Error.WriteLine(e.StackTrace);return 1;}}
  static void Run(string[] args){
-  using(var f=new CommandWindow()){if(args.Length==1&&args[0]=="--window"){f.ProfileWindow();return;}if(args.Length==1&&args[0]=="--profile"){f.ProfileBattle();return;}if(args.Length==2&&args[0]=="--mine"){f.RecordOreTrip(args[1]);return;}if(args.Length==2&&args[0]=="--drive"){f.RecordStreetTurn(args[1]);return;}if(args.Length>0)f.CheckWarehouseView(args[0]);f.CheckEdgeScroll();f.CheckFocusAndMining();if(args.Length>0)f.CheckScreenTravel(args[0]);f.CheckPlates(args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"角度校准.png"));Frame(f,args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"主界面.png"));Press(f,220,571);
+  using(var f=new CommandWindow()){if(args.Length==1&&args[0]=="--window"){f.ProfileWindow();return;}if(args.Length==1&&args[0]=="--profile"){f.ProfileBattle();return;}if(args.Length==2&&args[0]=="--mine"){f.RecordOreTrip(args[1]);return;}if(args.Length==2&&args[0]=="--drive"){f.RecordStreetTurn(args[1]);return;}if(args.Length>0)f.CheckWarehouseView(args[0]);f.CheckEdgeScroll();f.CheckFocusAndMining();if(args.Length>0)f.CheckScreenTravel(args[0]);f.CheckPlates(args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"角度校准.png"));Frame(f,args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"主界面.png"));Press(f,190,641);if(!(bool)Field(f,"rulesOpen"))throw new Exception("rules entry");
+   Press(f,157,290);if(!(bool)Field(f,"unitRoster"))throw new Exception("roster entry");
+   if(args.Length>0)Frame(f,Path.Combine(Path.GetDirectoryName(args[0]),"单位图鉴.png"));
+   Press(f,158,700);if((bool)Field(f,"rulesOpen"))throw new Exception("rules return");Press(f,220,571);
    if(!(bool)Field(f,"missionPicker")||!(bool)Field(f,"briefing"))throw new Exception("start must open mission selection");
    Press(f,190,348);Press(f,865,551);Frame(f,args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"关卡选择.png"));
    Press(f,1194,651);var standard=(Campaign)Field(f,"world");
@@ -113,15 +116,25 @@ partial class CommandWindow {
  internal void CheckEdgeScroll(){
   StartMission(true,true);camera=new PointF(800,500);scale=1;ox=oy=0;var home=camera;
   Action<int,int> point=(x,y)=>OnMouseMove(new MouseEventArgs(MouseButtons.None,0,x,y,0));
-  Action advance=()=>{for(int i=0;i<20;i++)EdgeScroll(.02f);};
+  Action advance=()=>{for(int i=0;i<20;i++)EdgeScroll(.02f,mouse,0,0);};
   for(int dx=-1;dx<=1;dx++)for(int dy=-1;dy<=1;dy++){
    camera=home;ResetEdgeScroll();point(dx==0?MW/2:dx<0?1:MW-1,MapTop+(dy==0?MH/2:dy<0?1:MH-1));
-   EdgeScroll(.02f);if(camera!=home)throw new Exception("passing edge should not pan");advance();
+   EdgeScroll(.02f,mouse,0,0);if(camera!=home)throw new Exception("passing edge should not pan");advance();
    var screen=ScreenOf(home);float x=MW*.5f-screen.X,y=MapTop+MH*.5f-screen.Y;
    if((dx==0?Math.Abs(x)>.01:Math.Sign(x)!=dx)||(dy==0?Math.Abs(y)>.01:Math.Sign(y)!=dy))throw new Exception("edge direction");
   }
   camera=home;point(MW+6,300);advance();if(camera!=home)throw new Exception("sidebar pan");
-  point(0,300);OnMouseLeave(EventArgs.Empty);advance();if(camera!=home)throw new Exception("pan outside window");
+  point(0,300);OnMouseLeave(EventArgs.Empty);
+  foreach(var direction in new[]{new Point(-1,0),new Point(1,0),new Point(0,-1),new Point(0,1),new Point(1,1)}){
+   camera=home;for(int i=0;i<15;i++)EdgeScroll(.02f,new PointF(-50,-50),direction.X,direction.Y);
+   var old=ScreenOf(home);if((direction.X!=0&&Math.Sign(MW*.5f-old.X)!=direction.X)||(direction.Y!=0&&Math.Sign(MapTop+MH*.5f-old.Y)!=direction.Y))throw new Exception("pan outside game");
+  }
+  var display=new Rectangle(-100,0,2500,1500);camera=home;
+  for(int i=0;i<16;i++)EdgeAtClient(.02f,new Point(ClientSize.Width+50,300),new Point(ClientSize.Width+130,400),display);
+  if(ScreenOf(home).X>=MW*.5f)throw new Exception("right overflow past sidebar did not scroll");
+  camera=home;for(int i=0;i<16;i++)EdgeAtClient(.02f,new Point(ClientSize.Width-1,300),new Point(display.Right-1,300),display);
+  if(ScreenOf(home).X>=MW*.5f)throw new Exception("physical monitor edge did not scroll");
+  camera=home;ResetEdgeScroll();for(int i=0;i<8;i++)EdgeScroll(.02f,mouse,1,0);if(camera!=home)throw new Exception("pan after deactivation");
   point(0,300);paused=true;advance();paused=false;drag=true;advance();drag=false;
   hits.Add(new HitBox{Box=new RectangleF(0,280,22,40)});advance();hits.Clear();if(camera!=home)throw new Exception("pan behind overlay or while dragging");
   camera=new PointF(Campaign.Width,0);point(MW-1,MapTop+MH/2);advance();
