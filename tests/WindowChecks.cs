@@ -16,7 +16,7 @@ class WindowChecks {
  }
  [STAThread]static int Main(string[] args){try{Run(args);return 0;}catch(Exception e){Console.Error.WriteLine(e.Message);Console.Error.WriteLine(e.StackTrace);return 1;}}
  static void Run(string[] args){
-  using(var f=new CommandWindow()){Frame(f,null);Press(f,410,575);if((bool)Field(f,"briefing"))throw new Exception("briefing");
+  using(var f=new CommandWindow()){f.CheckPlates(args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"角度校准.png"));Frame(f,null);Press(f,410,575);if((bool)Field(f,"briefing"))throw new Exception("briefing");
    var screen=new PointF(647,405);var inv=typeof(CommandWindow).GetMethod("WorldOf",flags);
    var before=(PointF)inv.Invoke(f,new object[]{screen});float ui=(float)Field(f,"scale");
    typeof(CommandWindow).GetMethod("OnMouseWheel",flags).Invoke(f,new object[]{new MouseEventArgs(MouseButtons.None,0,(int)(screen.X*ui+(float)Field(f,"ox")),(int)(screen.Y*ui+(float)Field(f,"oy")),120)});
@@ -41,6 +41,7 @@ class WindowChecks {
    if(args.Length>0){
     w.Upgrade();w.Train(Campaign.Info("tank"),0,null);for(int i=0;i<140;i++)w.Tick(.1f);
     Press(f,1330,237);typeof(CommandWindow).GetMethod("CenterAt",flags).Invoke(f,new object[]{new PointF(300,495)});
+    typeof(CommandWindow).GetMethod("OnKeyDown",flags).Invoke(f,new object[]{new KeyEventArgs(Keys.G)});
     Frame(f,Path.Combine(Path.GetDirectoryName(args[0]),"等距战场.png"));
    }
    if(w.Lesson!=7)throw new Exception("ifv training");Press(f,752,104);
@@ -48,4 +49,43 @@ class WindowChecks {
    for(int i=0;i<1100;i++)w.Tick(.1f);Frame(f,null);if(!w.Won)throw new Exception("tutorial victory through interface");
    Press(f,688,574);w=(Campaign)Field(f,"world");if(w.Tutorial||!w.Assisted)throw new Exception("handoff to assisted mission");Console.WriteLine("Native UI mission entry, deploy, placement, production and render passed.");}
  }
+}
+
+namespace Greyhaven {
+partial class CommandWindow {
+ internal void CheckPlates(string path){
+  var keys=new[]{"hq","power","barracks","factory","radar","post","depot","freight","harbormaster"};
+  using(var b=new Bitmap(1160,835))using(var g=Graphics.FromImage(b)){
+   g.Clear(C("#253431"));g.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+   Txt(g,"灰港登陆  /  地面投影验收",28,18,28,pale,true);
+   Txt(g,"青色角标为实际占地的四角；门前台阶与出厂坡道可延伸至预留区域。",29,60,16,dim);
+   for(int i=0;i<keys.Length;i++){
+    var k=keys[i];var t=Campaign.Info(k);string name=t==null?world.Sites[i-6].Name:t.Name;
+    var lot=t==null?new RectangleF(0,0,48,48):Campaign.Footprint(t,PointF.Empty);
+    var label=name+"   "+lot.Width/Campaign.Tile+" × "+lot.Height/Campaign.Tile;
+    var p=new PointF(128+i%5*226,269+i/5*229);
+    float z=180/((lot.Width+lot.Height)*Axis);var target=BuildingRect(lot,p,z);BuildingArt(g,k,0,target,1);
+    foreach(var corner in new[]{new PointF(lot.Left,lot.Top),new PointF(lot.Right,lot.Top),new PointF(lot.Right,lot.Bottom),new PointF(lot.Left,lot.Bottom)}){
+     float x=corner.X-lot.Left-lot.Width/2,y=corner.Y-lot.Top-lot.Height/2;
+     var screen=new PointF(p.X+z*Axis*(x-y),p.Y+z*Rise*(x+y));
+     int sx=(int)Math.Round((screen.X-target.X)*FrameSize/target.Width),sy=(int)Math.Round((screen.Y-target.Y)*FrameSize/target.Height);
+     if(!Enumerable.Range(-2,5).Any(dx=>Enumerable.Range(-2,5).Any(dy=>painted[k].GetPixel(sx+dx,sy+dy).A>100)))throw new Exception(k+" foundation contact");
+     foreach(float sign in new[]{-1f,1f}){var tx=screen.X+(x<0?1:-1)*sign*8;var ty=screen.Y+(sign>0?(x<0?1:-1):(y<0?1:-1))*4;
+      if(sign<0)tx=screen.X-(y<0?1:-1)*8;Line(g,screen.X,screen.Y,tx,ty,teal,2);}
+    }
+    Txt(g,label,p.X-84,p.Y+50,16,pale,true);
+   }
+   Line(g,24,584,1130,584,dim);Txt(g,"车辆接地方向  /  斜向与正侧面",28,596,20,gold,true);
+   int j=0;foreach(var k in new[]{"mcv","ifv","tank","arty"}){
+    var t=Campaign.Info(k);var sheet=painted[k];if(sheet.Width!=FrameSize*8||sheet.Height!=FrameSize*6)throw new Exception(k+" directional sheet");
+    var baseX=40+j++*285;Txt(g,t.Name,baseX,641,16,pale,true);
+    for(int n=0;n<2;n++){int dir=n==0?14:4;double yaw=dir*Math.PI/8;
+     var pt=new PointF(baseX+50+n*120,741);float dx=(float)Math.Sin(yaw)*60,dy=(float)Math.Cos(yaw)*30;
+     Line(g,pt.X-dx,pt.Y-dy,pt.X+dx,pt.Y+dy,teal,1);DrawLive(g,t,0,dir,pt,132,1);}
+   }
+   Txt(g,"图取自发布程序内嵌资源。车辆行进、施工预览和侧栏图标使用同套图集。",28,796,15,dim);
+   if(path!=null)b.Save(path,System.Drawing.Imaging.ImageFormat.Png);
+  }
+ }
+}
 }

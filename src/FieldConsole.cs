@@ -27,10 +27,10 @@ partial class CommandWindow {
    var p=s.P;Rect(g,p.X-42,p.Y-25,84,50,Color.FromArgb(110,ink));
    for(int i=0;i<8;i++)Line(g,p.X-39+i*10,p.Y+24,p.X-35+i*10,p.Y+18,gold,2);
   }
-  if(place!=null){using(var pen=new Pen(Color.FromArgb(65,pale))){
+  if(place!=null||showGrid){using(var pen=new Pen(Color.FromArgb(65,pale))){
    for(int x=0;x<Campaign.Width;x+=Campaign.Tile)g.DrawLine(pen,x,100,x,Campaign.Height);
    for(int y=120;y<Campaign.Height;y+=Campaign.Tile)g.DrawLine(pen,0,y,Campaign.Width,y);}}
-  foreach(var o in world.Units.Where(o=>o.Alive&&o.T.Building&&world.Visible(o)))DrawTiles(g,Campaign.Footprint(o.T,o.P),Team(o.Side),place!=null);
+  foreach(var o in world.Units.Where(o=>o.Alive&&o.T.Building&&world.Visible(o)))DrawTiles(g,Campaign.Footprint(o.T,o.P),Team(o.Side),place!=null||showGrid);
  }
  int Pending(){return world.Live(0).Sum(o=>o.Queue.Count);}
  List<Piece> Producers(){return world.Live(0).Where(o=>new[]{"hq","factory","barracks"}.Contains(o.T.Key)).OrderByDescending(o=>o.Queue.Count>0).ThenBy(o=>o.Id).ToList();}

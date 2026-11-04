@@ -72,8 +72,18 @@ class CampaignChecks {
   Check(min>=15&&v1.P.X>504&&v2.P.X<306,"head-on vehicles must pass, not overlap");
   Console.WriteLine("Permanent shroud, formation pacing, expanded flank and head-on passing checks passed.");
  }
+ static void HeadingChecks(){
+  foreach(string k in new[]{"tank","ifv","arty","mcv"})for(int dir=0;dir<16;dir++){
+   var w=new Campaign(true);var v=w.Spawn(k,0,700,730);double a=dir*Math.PI/8;var start=v.P;
+   var end=new PointF(start.X+50*(float)Math.Sin(a),start.Y+50*(float)Math.Cos(a));
+   Check(w.Move(v,end,false),"unobstructed movement");
+   int steps=0;for(int i=0;i<110;i++){var prev=v.P;w.Tick(.025f);if(Campaign.Dist(prev,v.P)<.005f)continue;steps++;
+    Check(v.Dir==dir,"direction must match actual displacement: "+k+" / "+dir);}
+   Check(steps>0,"turn and depart");
+  }Console.WriteLine("All 64 vehicle departure headings match motion.");
+ }
  static int Main(){try{Run();return 0;}catch(Exception ex){Console.Error.WriteLine(ex.Message);return 1;}}
- static void Run(){ReconAndMarch();Navigation();Training();Play(true);Play(false);var w=new Campaign();var h=Begin(w);var enemy=w.Spawn("tank",1,h.P.X+82,h.P.Y);w.Attack(enemy,h);Wait(w,190);Check(w.Lost,"base loss");
+ static void Run(){HeadingChecks();ReconAndMarch();Navigation();Training();Play(true);Play(false);var w=new Campaign();var h=Begin(w);var enemy=w.Spawn("tank",1,h.P.X+82,h.P.Y);w.Attack(enemy,h);Wait(w,190);Check(w.Lost,"base loss");
   w=new Campaign();var car=w.Spawn("ifv",0,212,431);w.Load(car);Check(w.Units.Any(o=>o.Carrier==car),"embark");w.Load(car);Check(!w.Units.Any(o=>o.Carrier==car),"disembark");
   Console.WriteLine("All checks passed.");}
 }

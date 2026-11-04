@@ -14,7 +14,7 @@ namespace Greyhaven {
 partial class CommandWindow:Form {
  const int MW=1200,MH=675,MapTop=67,W=1472,H=819;
  Campaign world; readonly Stopwatch watch=Stopwatch.StartNew(); readonly Timer pulse=new Timer(); double last; float scale,ox,oy;
- bool briefing=true,paused,help,attack,army,drag,dragged; int speed=1; PointF mouse,start;TypeInfo place;
+ bool showGrid;bool briefing=true,paused,help,attack,army,drag,dragged; int speed=1; PointF mouse,start;TypeInfo place;
  List<Piece> selection=new List<Piece>();List<HitBox> hits=new List<HitBox>();
  Bitmap ground;Dictionary<string,Bitmap> atlas=new Dictionary<string,Bitmap>();Dictionary<string,Font> fonts=new Dictionary<string,Font>();
  Color ink=C("#111d20"),panel=C("#1d2c2c"),pale=C("#e3e6d3"),dim=C("#9eafa1"),gold=C("#ebc17c"),teal=C("#82d0b4"),red=C("#ee8b72");
@@ -25,8 +25,8 @@ partial class CommandWindow:Form {
   DoubleBuffered=true;KeyPreview=true;SetStyle(ControlStyles.ResizeRedraw,true);
   Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);
   world=new Campaign();ground=MakeGround();
-  foreach(var key in new[]{"hq","power","factory","barracks","radar","post","squad","at","engineer","tank","ifv","mcv","arty","depot","freight","harbormaster"})painted[key]=Raw("hd-"+key);
-  foreach(var t in Campaign.Types)atlas[t.Key]=WreckSheet(t);
+  foreach(var key in new[]{"hq","power","factory","barracks","radar","post","squad","at","engineer","tank","ifv","mcv","arty","depot","freight","harbormaster"})painted[key]=Raw((key=="squad"||key=="at"||key=="engineer"?"hd-":"iso-")+key);
+  foreach(var t in Campaign.Types.Where(t=>t.Foot))atlas[t.Key]=WreckSheet(t);
   Restart();pulse.Interval=32;pulse.Tick+=(s,e)=>{double now=watch.Elapsed.TotalSeconds;float dt=(float)Math.Min(.12,now-last);last=now;
    if(!briefing&&!paused&&!world.Won&&!world.Lost){for(int i=0;i<speed;i++)world.Tick(dt);selection.RemoveAll(o=>!o.Alive||o.Carrier!=null);}
    Invalidate();};pulse.Start(); FormClosed+=(s,e)=>{pulse.Stop();pulse.Dispose();ground.Dispose();foreach(var b in painted.Values)b.Dispose();foreach(var i in atlas.Values)i.Dispose();foreach(var f in fonts.Values)f.Dispose();};
@@ -113,7 +113,7 @@ partial class CommandWindow:Form {
  void Card(Graphics g,TypeInfo t,float x,float y){
   string reason=world.Require(t,0);var r=new RectangleF(x,y,117,54);bool ready=reason==null;
   Plate(g,r,ready?C("#35473e"):C("#283632"),place==t||(world.Tutorial&&world.LessonKey==t.Key)?gold:ready?C("#647e68"):C("#48584e"));
-  PaintFrame(g,t,0,14,new RectangleF(x+1,y+2,48,48));Txt(g,t.Name,x+45,y+6,13,ready?pale:dim,true);Txt(g,"$"+t.Price,x+46,y+28,14,ready?gold:dim);
+  DrawCardArt(g,t,new RectangleF(x+2,y+3,42,46));Txt(g,t.Name,x+45,y+6,13,ready?pale:dim,true);Txt(g,"$"+t.Price,x+46,y+28,14,ready?gold:dim);
   if(!ready){Rect(g,x+1,y+1,115,52,Color.FromArgb(212,ink));Txt(g,t.Name,x+9,y+4,14,dim,true);Txt(g,"锁 · "+reason.Replace("需要","需"),x+8,y+27,12,gold);return;}
   var active=world.Live(0).FirstOrDefault(o=>o.Queue.Count>0&&o.Queue.Peek()==t);
   if(active!=null){Rect(g,x+5,y+48,104,3,ink);Rect(g,x+5,y+48,104*active.Work/t.Seconds,3,teal);}
@@ -172,6 +172,7 @@ partial class CommandWindow:Form {
   if(briefing){if(e.KeyCode==Keys.Enter)StartMission(true,false);return;}
   if(e.KeyCode==Keys.Escape&&(place!=null||attack||sweep)){place=null;attack=false;sweep=false;return;}
   if(e.KeyCode==Keys.Space||e.KeyCode==Keys.Escape){paused=!paused;help=false;return;}if(e.KeyCode==Keys.F1){paused=true;help=true;return;}if(paused)return;
+  if(e.KeyCode==Keys.G)showGrid=!showGrid;
   if(e.KeyCode==Keys.F)syncMarch=!syncMarch;
   if(e.KeyCode==Keys.Left)Pan(-95,0);if(e.KeyCode==Keys.Right)Pan(95,0);if(e.KeyCode==Keys.Up)Pan(0,-95);if(e.KeyCode==Keys.Down)Pan(0,95);
   if(e.KeyCode==Keys.A&&selection.Any(o=>o.Deployed&&!o.T.Building)){attack=true;place=null;}if(e.KeyCode==Keys.D){var o=selection.FirstOrDefault();if(o!=null){if(o.T.Key=="mcv")world.Deploy(o);else world.Load(o);}}

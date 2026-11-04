@@ -5,9 +5,11 @@ $root = Split-Path -Parent $PSScriptRoot
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
 $source = @(Get-ChildItem -LiteralPath (Join-Path $root 'src') -Filter '*.cs' | ForEach-Object FullName)
 $art = Join-Path $root 'art/source'
-$images = @(Get-ChildItem -LiteralPath (Join-Path $art 'isometric/packed') -Filter '*.png')
-foreach ($folder in @('v02/sprites','campaign/sprites')) {
-    $images += Get-ChildItem -LiteralPath (Join-Path $art $folder) -Filter '*.png' | Where-Object BaseName -ne 'scout'
+$images = @(Get-ChildItem -LiteralPath (Join-Path $art 'aligned/packed') -Filter 'iso-*.png')
+foreach ($key in @('squad','at','engineer')) {
+    $images += Get-Item -LiteralPath (Join-Path $art "isometric/packed/hd-$key.png")
+    $folder = if ($key -eq 'squad') { 'v02' } else { 'campaign' }
+    $images += Get-Item -LiteralPath (Join-Path $art "$folder/sprites/$key.png")
 }
 $resources = @($images | ForEach-Object { '/resource:' + $_.FullName + ',Greyhaven.Art.' + $_.Name })
 $resources += '/resource:' + (Join-Path $art 'isometric/ground.png') + ',Greyhaven.Art.materials.png'

@@ -147,7 +147,8 @@ public partial class Campaign {
    }
   }
   if(!stop&&o.Path.Count>0){if(o.RouteVersion!=topology&&!Route(o,o.Path.Last())){o.Path.Clear();return;}var p=o.Path.Peek();
-   Face(o,p,dt);float d=Dist(o.P,p),speed=(o.Formation==null?o.T.Speed:o.Formation.Speed(o))*dt;var next=d<=speed?p:new PointF(o.P.X+(p.X-o.P.X)*speed/d,o.P.Y+(p.Y-o.P.Y)*speed/d);o.P=Avoid(o,next);if(o.Path.Count>0&&(Dist(o.P,p)<.1f||(o.Path.Count==1&&Dist(o.P,p)<9&&Units.Any(u=>u!=o&&u.Deployed&&Dist(u.P,p)<15))))o.Path.Dequeue();}
+   float d=Dist(o.P,p),speed=(o.Formation==null?o.T.Speed:o.Formation.Speed(o))*dt;var next=d<=speed?p:new PointF(o.P.X+(p.X-o.P.X)*speed/d,o.P.Y+(p.Y-o.P.Y)*speed/d);var step=Avoid(o,next);if(Dist(o.P,step)>.001f){Face(o,step,dt);float target=(float)(Math.Atan2(step.X-o.P.X,step.Y-o.P.Y)*8/Math.PI+16)%16;
+    if(o.T.Foot||Math.Abs((target-o.Turn+24)%16-8)<=.5f){o.Dir=(int)Math.Round(target)%16;o.P=step;}}if(o.Path.Count>0&&(Dist(o.P,p)<.1f||(o.Path.Count==1&&Dist(o.P,p)<9&&Units.Any(u=>u!=o&&u.Deployed&&Dist(u.P,p)<15))))o.Path.Dequeue();}
  }
  bool VisibleTo(int side,Piece e){return Explored(side,e.P);}
  void EnemyOrders(bool urgent){

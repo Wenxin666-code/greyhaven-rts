@@ -53,18 +53,27 @@ partial class CommandWindow {
    var w=WorldOf(mouse);var r=Campaign.Footprint(place,w);var p=ScreenOf(Campaign.Middle(r));DrawLive(g,place,0,14,p,place.Size*zoom,1);
    var state=g.Save();GroundSpace(g);DrawTiles(g,r,world.CanPlace(place,w,null)?teal:red,true);if(Campaign.HasGate(place))DrawTiles(g,Campaign.Gate(r),gold,false);g.Restore(state);
   }
+  if(showGrid){
+   foreach(var o in world.Units.Where(u=>u.Alive&&u.T.Building&&world.Visible(u)))CornerPins(g,Campaign.Footprint(o.T,o.P),Team(o.Side));
+   foreach(var site in world.Sites.Where(s=>world.Explored(0,Campaign.Middle(s.Body))))CornerPins(g,site.Body,gold);
+  }
   if(drag&&dragged){var r=DragRect();Rect(g,r.X,r.Y,r.Width,r.Height,Color.FromArgb(38,teal));using(var pen=new Pen(teal))g.DrawRectangle(pen,r.X,r.Y,r.Width,r.Height);}
-  DrawObjectiveMarker(g);Rect(g,12,MapTop+MH-28,344,22,Color.FromArgb(195,ink));Txt(g,"滚轮 "+zoom.ToString("0.0")+"×   ·   中键平移   ·   点击小地图跳转",20,MapTop+MH-26,13,pale);g.Restore(view);
+  DrawObjectiveMarker(g);Rect(g,12,MapTop+MH-28,426,22,Color.FromArgb(195,ink));Txt(g,"滚轮 "+zoom.ToString("0.0")+"×   ·   中键平移   ·   小地图跳转   ·   G 地基格线",20,MapTop+MH-26,13,pale);g.Restore(view);
+ }
+ void CornerPins(Graphics g,RectangleF r,Color color){
+  var corners=new[]{new PointF(r.Left,r.Top),new PointF(r.Right,r.Top),new PointF(r.Right,r.Bottom),new PointF(r.Left,r.Bottom)}.Select(ScreenOf).ToArray();
+  using(var pen=new Pen(color,2)){for(int i=0;i<4;i++){var p=corners[i];foreach(int d in new[]{1,3}){var n=corners[(i+d)%4];g.DrawLine(pen,p,new PointF(p.X+(n.X-p.X)*.13f,p.Y+(n.Y-p.Y)*.13f));}}}
  }
  PointF ApproachSite(PointF screen,PointF location){
   foreach(var site in world.Sites){
    var basePos=Campaign.Middle(site.Body);if(!world.Explored(0,basePos))continue;
-   var q=ScreenOf(basePos);if(site.Body.Contains(location)||(Math.Abs(q.X-screen.X)<30*zoom&&screen.Y>q.Y-50*zoom&&screen.Y<q.Y))return site.P;
+   var q=ScreenOf(basePos);if(site.Body.Contains(location)||InkHit(SiteKey(site),site.Owner==1?1:0,BuildingRect(site.Body,q,zoom),screen))return site.P;
   }return location;
  }
+ string SiteKey(Site site){return site==world.Sites[0]?"depot":site==world.Sites[1]?"freight":"harbormaster";}
  void DrawDepot(Graphics g,Site site){
-  var p=ScreenOf(Campaign.Middle(site.Body));var key=site==world.Sites[0]?"depot":site==world.Sites[1]?"freight":"harbormaster";
-  float s=85*zoom;g.DrawImage(painted[key],new RectangleF(p.X-s*.5f,p.Y-s*.78f,s,s),new RectangleF(0,site.Owner==1?256:0,256,256),GraphicsUnit.Pixel);
+  var box=BuildingRect(site.Body,ScreenOf(Campaign.Middle(site.Body)),zoom);
+  BuildingArt(g,SiteKey(site),site.Owner==1?1:0,box,1);
  }
  void DrawRadar(Graphics g,float x){
   var state=g.Save();g.SmoothingMode=SmoothingMode.None;g.SetClip(new RectangleF(x,102,244,107));g.TranslateTransform(x,102);g.ScaleTransform(244f/Campaign.Width,107f/Campaign.Height);
@@ -77,7 +86,8 @@ partial class CommandWindow {
  }
  Piece HitScreen(PointF screen){
   var w=WorldOf(screen);return world.Units.Where(o=>o.Alive&&o.Carrier==null&&world.Visible(o)).OrderByDescending(o=>o.P.X+o.P.Y).FirstOrDefault(o=>{
-   var p=ScreenOf(o.P);float size=o.T.Size*zoom;return (o.T.Building&&Campaign.Footprint(o.T,o.P).Contains(w))||Math.Abs(p.X-screen.X)<size*.32f&&screen.Y>p.Y-size*(o.T.Building?.65f:.39f)&&screen.Y<p.Y+size*.1f;
+   var p=ScreenOf(o.P);float size=o.T.Size*zoom;if(o.T.Building){var lot=Campaign.Footprint(o.T,o.P);return lot.Contains(w)||InkHit(o.T.Key,o.Side,BuildingRect(lot,p,zoom),screen);}
+   return Math.Abs(p.X-screen.X)<size*.32f&&screen.Y>p.Y-size*.39f&&screen.Y<p.Y+size*.1f;
   });
  }
  Bitmap MakeGround(){
