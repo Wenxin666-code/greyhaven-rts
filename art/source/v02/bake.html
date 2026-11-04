@@ -1,0 +1,26 @@
+<!doctype html><meta charset="utf-8"><title>灰港模型 · 方向图集导出</title><p>选择母模导出 PNG。每行 8 个朝向，编号从正下方起，依次转向屏幕右侧，每两行是一组。</p><select id="type"></select> <button id="save">生成并下载</button><p id="info"></p><script src="vendor/three.min.js"></script><script src="models.js"></script><script>
+const T=THREE, cell=192,scene=new T.Scene(),render=new T.WebGLRenderer({alpha:true,antialias:true,preserveDrawingBuffer:true});
+render.setSize(cell,cell);render.setClearColor(0,0);render.shadowMap.enabled=true;render.shadowMap.type=T.PCFSoftShadowMap;
+const sky=new T.HemisphereLight(0xfff4d9,0x9aa6b3,1.7);scene.add(sky);
+const sun=new T.DirectionalLight(0xffe7c2,2.45);sun.position.set(-7,13,6);sun.castShadow=true;
+Object.assign(sun.shadow.camera,{left:-8,right:8,top:8,bottom:-8,near:.1,far:40});sun.shadow.mapSize.set(512,512);sun.shadow.bias=-.0007;scene.add(sun);
+const floor=new T.Mesh(new T.PlaneGeometry(30,30),new T.ShadowMaterial({opacity:.30}));floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor);
+const poses=['idle','action','wreck'],teams=[0x277cba,0xc94f43,0xc49b31];
+function bake(k){
+ const large=['hq','power','factory'].includes(k),span=large?12:k==='squad'?5.1:8.7,aim=large?1.3:k==='squad'?.75:.85;
+ const cam=new T.OrthographicCamera(-span/2,span/2,span/2,-span/2,.1,70);cam.position.set(0,15+aim,12);cam.lookAt(0,aim,0);
+ const action=k==='squad'||k==='factory';
+ const rows=action?['idle','action']:['idle'];
+ const sets=teams.flatMap(team=>rows.map(pose=>({team,pose}))).concat({team:0x555550,pose:'wreck'});
+ if(k==='factory'||k==='squad')for(const team of teams)sets.push({team,pose:k==='factory'?'opening':'falling'});
+ const out=document.createElement('canvas');out.width=cell*8;out.height=cell*2*sets.length;const ctx=out.getContext('2d');
+ for(const [group,{team,pose}] of sets.entries()){
+  const m=Greyhaven.build(k,team,pose);scene.add(m);
+  for(let i=0;i<16;i++){m.rotation.y=i*Math.PI/8;render.render(scene,cam);ctx.drawImage(render.domElement,(i%8)*cell,(group*2+Math.floor(i/8))*cell)}
+  scene.remove(m);m.traverse(o=>{if(o.geometry?.type==='BufferGeometry')o.geometry.dispose()});
+ }
+ return out.toDataURL('image/png');
+}
+for(const k of Greyhaven.types)type.add(new Option(k,k));
+save.onclick=()=>{const a=document.createElement('a');a.href=bake(type.value);a.download=type.value+'.png';a.click();info.textContent='已导出 '+a.download};
+</script>

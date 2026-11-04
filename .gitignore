@@ -1,0 +1,9 @@
+# Build outputs are distributed as release assets.
+/*.exe
+/*.pdb
+*.user
+.vs/
+.cache/
+node_modules/
+.DS_Store
+Thumbs.db
