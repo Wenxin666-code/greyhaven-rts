@@ -15,8 +15,11 @@ partial class CommandWindow {
  static Rectangle SourceCell(TypeInfo t,int row,int dir){
   if(t.Building)return new Rectangle(0,row*FrameSize,FrameSize,FrameSize);
   if(t.Foot)return new Rectangle(dir/4*256,row*256,256,256);
+  if(t.Key=="tank")return TankCell(row,dir*4);
   return new Rectangle(dir%8*FrameSize,(row*2+dir/8)*FrameSize,FrameSize,FrameSize);
  }
+ static int TankFrame(Piece o){return ((int)Math.Round(o.Turn*4)+56)%64;}
+ static Rectangle TankCell(int side,int angle){return new Rectangle(angle%8*192,(side*8+angle/8)*192,192,192);}
  void PaintFrame(Graphics g,TypeInfo t,int side,int dir,RectangleF r){
   var crop=SourceCell(t,side,dir);
   g.DrawImage(painted[t.Key],r,crop,GraphicsUnit.Pixel);
@@ -49,6 +52,10 @@ partial class CommandWindow {
  }
  void DrawFieldSprite(Graphics g,Piece o,PointF p,float size){
   int dir=(o.Dir+14)%16;
+  if(o.T.Key=="tank"){
+   int frame=TankFrame(o);
+   g.DrawImage(painted["tank"],VehicleRect(o.T,p,size),TankCell(o.Alive?o.Side:2,frame),GraphicsUnit.Pixel);return;
+  }
   if(!o.Alive){
    if(o.T.Building)BuildingArt(g,o.T.Key,2,BuildingRect(Campaign.Footprint(o.T,o.P),p,zoom),1);
    else if(!o.T.Foot)PaintFrame(g,o.T,2,dir,VehicleRect(o.T,p,size));
@@ -67,6 +74,22 @@ partial class CommandWindow {
    using(var brush=new SolidBrush(C("#49565b")))g.FillPolygon(brush,new[]{new PointF(82.43f,179.00f),new PointF(149.8f,209.47f),new PointF(149.8f,209.47f+h),new PointF(82.43f,179.00f+h)});
    for(int j=4;j<h;j+=6)Line(g,82.43f,179.00f+j,149.8f,209.47f+j,C("#77817e"),1);g.Restore(st);
   }
+ }
+ bool MobileHit(Piece o,PointF p,float size,PointF screen){
+  int dir=(o.Dir+14)%16;
+  if(o.T.Foot){
+   if(Math.Abs(p.X-screen.X)<size*.12f&&Math.Abs(p.Y-screen.Y)<size*.12f)return true;
+   for(int i=0;i<(o.T.Key=="squad"?4:2);i++){
+    var box=new RectangleF(p.X+((i%2)-.5f)*size*.26f-size*.22f,p.Y+(i/2-.5f)*size*.18f-size*.4f,size*.44f,size*.44f);
+    if(PixelHit(o.T.Key,SourceCell(o.T,o.Side,dir),box,screen))return true;
+   }return false;
+  }
+  var source=o.T.Key=="tank"?TankCell(o.Side,TankFrame(o)):SourceCell(o.T,o.Side,dir);
+  return PixelHit(o.T.Key,source,VehicleRect(o.T,p,size),screen);
+ }
+ bool PixelHit(string key,Rectangle src,RectangleF box,PointF screen){
+  if(!box.Contains(screen))return false;int x=(int)((screen.X-box.X)*src.Width/box.Width),y=(int)((screen.Y-box.Y)*src.Height/box.Height);
+  return painted[key].GetPixel(src.X+Math.Min(src.Width-1,x),src.Y+Math.Min(src.Height-1,y)).A>45;
  }
  bool InkHit(string key,int row,RectangleF box,PointF screen){
   if(!box.Contains(screen))return false;

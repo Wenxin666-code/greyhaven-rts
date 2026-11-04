@@ -36,7 +36,7 @@ partial class CommandWindow {
   var objectives=new Queue<Site>(world.Sites.Where(site=>world.Explored(0,Campaign.Middle(site.Body))).OrderBy(site=>site.P.X+site.P.Y));
   foreach(var o in world.Units.Where(a=>a.Carrier==null&&world.Visible(a)).OrderBy(a=>a.P.X+a.P.Y)){
    while(objectives.Count>0&&objectives.Peek().P.X+objectives.Peek().P.Y-82<=o.P.X+o.P.Y)DrawDepot(g,objectives.Dequeue());
-   var actual=o.P;if(o.Rollout>0)actual.Y-=o.Rollout*32;var p=ScreenOf(actual);float s=o.T.Size*zoom;
+   var p=ScreenOf(o.P);float s=o.T.Size*zoom;
    if(p.X< -s||p.X>MW+s||p.Y<MapTop-s||p.Y>MapTop+MH+s)continue;
    if(selection.Contains(o)){using(var pen=new Pen(teal,2.2f))g.DrawEllipse(pen,p.X-s*.32f,p.Y-s*.13f,s*.64f,s*.31f);}
    DrawFieldSprite(g,o,p,s);
@@ -46,12 +46,24 @@ partial class CommandWindow {
   }
   while(objectives.Count>0)DrawDepot(g,objectives.Dequeue());
   foreach(var shot in world.Shots){if(!world.Explored(0,shot.A)||!world.Explored(0,shot.B))continue;var a=ScreenOf(shot.A);var b=ScreenOf(shot.B);Line(g,a.X,a.Y-5,b.X,b.Y-5,shot.Shell?gold:Team(shot.Side),2);}
+  if(!briefing&&!paused&&!drag&&!panning&&place==null&&!sweep&&selection.Any(u=>u.Deployed&&u.T.Hit>0)&&mouse.X>=0&&mouse.X<MW&&mouse.Y>=MapTop&&mouse.Y<MapTop+MH){
+   var under=HitScreen(mouse);
+   if(under!=null&&under.Side==1){var q=ScreenOf(under.P);
+    using(var pen=new Pen(red,2))g.DrawEllipse(pen,q.X-19,q.Y-11,38,22);
+    Txt(g,"集火 "+under.T.Name+" #"+under.Id,mouse.X+12,mouse.Y-23,13,red,true);}
+  }
+  if(markedPoint.HasValue&&world.Time-markTime<2.5f){
+   var enemy=markedEnemy;if(enemy==null||enemy.Alive&&world.Visible(enemy)){
+    var q=ScreenOf(enemy==null?markedPoint.Value:enemy.P);var c=markHostile?red:teal;
+    using(var pen=new Pen(c,2)){g.DrawEllipse(pen,q.X-12,q.Y-7,24,14);g.DrawLine(pen,q.X-17,q.Y,q.X-8,q.Y);g.DrawLine(pen,q.X+8,q.Y,q.X+17,q.Y);}
+    Txt(g,enemy==null?(markHostile?"进攻点":"移动点"):enemy.T.Name+" #"+enemy.Id,q.X+15,q.Y-14,13,c,true);
+   }}
   if(selection.Count==1&&selection[0].Path.Count>0){var u=selection[0];using(var pen=new Pen(teal)){pen.DashStyle=DashStyle.Dash;g.DrawLines(pen,new[]{u.P}.Concat(u.Path).Select(ScreenOf).ToArray());}}
   if(selection.Count==1&&selection[0].Rally.HasValue){var a=ScreenOf(selection[0].P);var b=ScreenOf(selection[0].Rally.Value);
    using(var pen=new Pen(teal,1.5f)){pen.DashStyle=DashStyle.Dot;g.DrawLine(pen,a,b);g.DrawEllipse(pen,b.X-8,b.Y-5,16,10);}}
   if(place!=null&&mouse.X<MW&&mouse.Y>=MapTop&&mouse.Y<MapTop+MH){
    var w=WorldOf(mouse);var r=Campaign.Footprint(place,w);var p=ScreenOf(Campaign.Middle(r));DrawLive(g,place,0,14,p,place.Size*zoom,1);
-   var state=g.Save();GroundSpace(g);DrawTiles(g,r,world.CanPlace(place,w,null)?teal:red,true);if(Campaign.HasGate(place))DrawTiles(g,Campaign.Gate(r),gold,false);g.Restore(state);
+   var state=g.Save();GroundSpace(g);DrawTiles(g,r,world.CanPlace(place,w,null)?teal:red,true);if(Campaign.HasGate(place))DrawTiles(g,Campaign.Gate(r),gold,false);if(place.Key=="barracks")DrawTiles(g,Campaign.Muster(r),teal,true);g.Restore(state);
   }
   if(showGrid){
    foreach(var o in world.Units.Where(u=>u.Alive&&u.T.Building&&world.Visible(u)))CornerPins(g,Campaign.Footprint(o.T,o.P),Team(o.Side));
@@ -87,7 +99,7 @@ partial class CommandWindow {
  Piece HitScreen(PointF screen){
   var w=WorldOf(screen);return world.Units.Where(o=>o.Alive&&o.Carrier==null&&world.Visible(o)).OrderByDescending(o=>o.P.X+o.P.Y).FirstOrDefault(o=>{
    var p=ScreenOf(o.P);float size=o.T.Size*zoom;if(o.T.Building){var lot=Campaign.Footprint(o.T,o.P);return lot.Contains(w)||InkHit(o.T.Key,o.Side,BuildingRect(lot,p,zoom),screen);}
-   return Math.Abs(p.X-screen.X)<size*.32f&&screen.Y>p.Y-size*.39f&&screen.Y<p.Y+size*.1f;
+   return MobileHit(o,p,size,screen);
   });
  }
  Bitmap MakeGround(){

@@ -54,15 +54,17 @@ public partial class Campaign {
   }return assigned.Count;
  }
  public bool SetRally(Piece src,PointF dest){
-  if(src==null||!src.Deployed||src.Side!=0||!HasGate(src.T)||Blocked(dest,11,null))return false;
+  if(src==null||!src.Deployed||src.Side!=0||!HasGate(src.T)||Blocked(dest,11,null)||!ParkingAllowed(src.Side,dest))return false;
   src.Rally=dest;Radio=src.T.Name+"的集结点已设置。";return true;
  }
  void RallyNewUnit(Piece source,Piece unit){
-  var gate=Gate(Footprint(source.T,source.P));var center=source.Rally??new PointF(source.P.X,gate.Bottom+48);
-  for(int i=0;i<15;i++){int lateral=(i%5+1)/2*(i%2==1?-1:1);
-   var slot=new PointF(center.X+lateral*48,center.Y+(i/5)*40);
-   if(Units.Any(o=>o!=unit&&o.Deployed&&!o.T.Building&&(Dist(o.P,slot)<38||o.Path.Count>0&&Dist(o.Path.Last(),slot)<38)))continue;
-   if(Move(unit,slot,false))return;
+  var gate=Gate(Footprint(source.T,source.P));var yard=new PointF(source.P.X,gate.Bottom+(source.T.Key=="barracks"?76:48));
+  foreach(var center in source.Rally.HasValue?new[]{source.Rally.Value,yard}:new[]{yard}){
+   for(int i=0;i<65;i++){int col=i%7;int lateral=(col+1)/2*(col%2==1?-1:1);
+    var slot=new PointF(center.X+lateral*40,center.Y+(i/7)*32);
+    if(Units.Any(o=>o!=unit&&o.Deployed&&!o.T.Building&&(Dist(o.P,slot)<28||o.Path.Count>0&&Dist(o.Path.Last(),slot)<28)))continue;
+    if(Move(unit,slot,false))return;
+   }
   }
  }
  PointF Avoid(Piece o,PointF next){

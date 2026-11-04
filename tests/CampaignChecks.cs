@@ -52,11 +52,13 @@ class CampaignChecks {
   Check(!w.Move(mover,new PointF(39,30),false),"water blocked");
   var barracks=w.Spawn("barracks",0,480,564);var gate=Campaign.Gate(Campaign.Footprint(barracks.T,barracks.P));var block=new System.Collections.Generic.List<Piece>();
   foreach(float dx in new[]{0f,-.31f,.31f})block.Add(w.Spawn("squad",0,barracks.P.X+dx*gate.Width,gate.Bottom-6));
-  w.Train(Campaign.Info("squad"),0,barracks);w.Train(Campaign.Info("at"),0,barracks);Check(w.QueueState(barracks).Contains("缺电"),"low power estimate");Wait(w,13);float progress=barracks.Work;int cash=w.Funds[0];
-  Check(barracks.Queue.Count==2&&w.QueueState(barracks).Contains("出口"),"exit blockage is visible");
-  Check(w.CancelOrder(barracks,1)&&w.Funds[0]==cash+135&&barracks.Work==progress&&!w.CancelOrder(barracks,1),"refund once and preserve head progress");
-  w.Move(block[0],new PointF(600,637),false);Wait(w,4);Check(barracks.Queue.Count==0&&w.LastReady!=null,"unblocking gate releases finished order");
-  Console.WriteLine("Straight path, live obstacle rerouting, tile grid, exit blocking and refund checks passed.");
+  for(int i=0;i<4;i++)Check(w.Train(Campaign.Info(i%2==0?"squad":"at"),0,barracks),"reserve infantry slot");
+  Check(barracks.Berths.Distinct().Count()==4,"each paid order owns a distinct cell");
+  var reserved=barracks.Berths[1];int cash=w.Funds[0];Check(w.CancelOrder(barracks,1)&&w.Funds[0]==cash+135&&!barracks.Berths.Contains(reserved),"refund and release exact cell");
+  Check(w.QueueState(barracks).Contains("缺电"),"low power estimate");Wait(w,65);
+  Check(barracks.Queue.Count==0&&barracks.Berths.Count==0&&w.InfantryDelivered==2,"infantry complete even with the old gate blocked");
+  Check(!w.Move(block[0],Campaign.Middle(Campaign.Muster(Campaign.Footprint(barracks.T,barracks.P))),false),"paid assembly area is not a parking lot");
+  Console.WriteLine("Reservation, blocked doorway, refund and staging checks passed.");
  }
  static void ReconAndMarch(){
   var w=new Campaign(true);var enemy=w.Live(1).First();Check(!w.Visible(enemy)&&Campaign.Info("scout")==null,"unexplored enemy and retired scout");
@@ -72,18 +74,29 @@ class CampaignChecks {
   Check(min>=15&&v1.P.X>504&&v2.P.X<306,"head-on vehicles must pass, not overlap");
   Console.WriteLine("Permanent shroud, formation pacing, expanded flank and head-on passing checks passed.");
  }
+ static void InfantryWaves(){
+  var w=new Campaign(true);Begin(w);var b=Build(w,"barracks",120,610);var lot=Campaign.Footprint(b.T,b.P);var yard=Campaign.Muster(lot);
+  Check(!w.CanPlace(Campaign.Info("power"),Campaign.Middle(yard),null),"no adjacent building may occupy the mustering cells");
+  for(int wave=0;wave<3;wave++){
+   for(int i=0;i<4;i++)Check(w.Train(Campaign.Info("squad"),0,b),"four consecutive paid orders");
+   Check(b.Berths.Distinct().Count()==4&&b.Berths.All(p=>yard.Contains(p)),"four reserved land cells");Wait(w,32);
+   Check(b.Queue.Count==0&&b.Berths.Count==0&&w.InfantryDelivered==4*(wave+1),"batch must clear without player intervention");
+  }Console.WriteLine("12 infantry squads delivered and rallied without manual gate clearing.");
+ }
  static void HeadingChecks(){
   foreach(string k in new[]{"tank","ifv","arty","mcv"})for(int dir=0;dir<16;dir++){
    var w=new Campaign(true);var v=w.Spawn(k,0,700,730);double a=dir*Math.PI/8;var start=v.P;
    var end=new PointF(start.X+50*(float)Math.Sin(a),start.Y+50*(float)Math.Cos(a));
    Check(w.Move(v,end,false),"unobstructed movement");
    int steps=0;for(int i=0;i<110;i++){var prev=v.P;w.Tick(.025f);if(Campaign.Dist(prev,v.P)<.005f)continue;steps++;
-    Check(v.Dir==dir,"direction must match actual displacement: "+k+" / "+dir);}
-   Check(steps>0,"turn and depart");
-  }Console.WriteLine("All 64 vehicle departure headings match motion.");
+    if(k=="tank"){float dx=v.P.X-prev.X,dy=v.P.Y-prev.Y;bool axis=Math.Abs(dx)<.0002||Math.Abs(dy)<.0002||Math.Abs(Math.Abs(dx)-Math.Abs(dy))<.0002;
+     Check(axis&&v.Dir%2==0,"tank off axis "+dir+" d="+dx+","+dy+" at "+v.P+" path "+String.Join(" ",v.Path)+" frame "+v.Dir);double desired=(Math.Atan2(dx,dy)*8/Math.PI+16)%16;Check(Math.Abs((v.Dir-desired+24)%16-8)<.02,"tracks versus velocity");}
+    else Check(v.Dir==dir,"direction must match actual displacement: "+k+" / "+dir);}
+   Check(steps>0&&Campaign.Dist(v.P,end)<.3f,"depart and reach arbitrary point: "+k+" / "+dir);
+  }Console.WriteLine("16 destinations per vehicle verified, with eight legal tank travel bearings.");
  }
  static int Main(){try{Run();return 0;}catch(Exception ex){Console.Error.WriteLine(ex.Message);return 1;}}
- static void Run(){HeadingChecks();ReconAndMarch();Navigation();Training();Play(true);Play(false);var w=new Campaign();var h=Begin(w);var enemy=w.Spawn("tank",1,h.P.X+82,h.P.Y);w.Attack(enemy,h);Wait(w,190);Check(w.Lost,"base loss");
+ static void Run(){InfantryWaves();HeadingChecks();ReconAndMarch();Navigation();Training();Play(true);Play(false);var w=new Campaign();var h=Begin(w);var enemy=w.Spawn("tank",1,h.P.X+82,h.P.Y);w.Attack(enemy,h);Wait(w,190);Check(w.Lost,"base loss");
   w=new Campaign();var car=w.Spawn("ifv",0,212,431);w.Load(car);Check(w.Units.Any(o=>o.Carrier==car),"embark");w.Load(car);Check(!w.Units.Any(o=>o.Carrier==car),"disembark");
   Console.WriteLine("All checks passed.");}
 }

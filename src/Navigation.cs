@@ -18,12 +18,13 @@ public partial class Campaign {
  public static RectangleF Gate(RectangleF body){return new RectangleF(body.Left,body.Bottom,body.Width,Tile);}
  public static readonly RectangleF[] YardWalls={new RectangleF(842,214,74,8),new RectangleF(962,214,77,8),new RectangleF(1094,214,70,8)};
  public bool CanPlace(TypeInfo t,PointF p,Piece skip){
-  var r=Footprint(t,p);var mid=Middle(r);var reserve=r;if(HasGate(t))reserve.Height+=Tile;
+  var r=Footprint(t,p);var mid=Middle(r);var reserve=ReservedLot(t,r);
   if(skip==null&&!(Explored(0,new PointF(r.Left,r.Top))&&Explored(0,new PointF(r.Right,r.Top))&&Explored(0,new PointF(r.Left,r.Bottom))&&Explored(0,new PointF(r.Right,r.Bottom))))return false;
   if(reserve.Left<0||reserve.Right>Width||reserve.Top<99||reserve.Bottom>Height||Roads.Concat(YardWalls).Any(b=>b.IntersectsWith(reserve)))return false;
   if(Sites.Any(site=>site.Body.IntersectsWith(reserve)))return false;
-  if(Units.Any(o=>o!=skip&&o.Alive&&o.T.Building&&(reserve.IntersectsWith(Footprint(o.T,o.P))||HasGate(o.T)&&r.IntersectsWith(Gate(Footprint(o.T,o.P))))))return false;
-  if(Units.Any(o=>o!=skip&&o.Alive&&!o.T.Building&&o.Carrier==null&&Inflated(r,Clearance(o)).Contains(o.P)))return false;
+  if(Units.Any(o=>o!=skip&&o.Alive&&o.T.Building&&(reserve.IntersectsWith(ReservedLot(o.T,Footprint(o.T,o.P))))))return false;
+  if(Units.Any(o=>o!=skip&&o.Alive&&!o.T.Building&&o.Carrier==null&&Inflated(t.Key=="barracks"?reserve:r,Clearance(o)).Contains(o.P)))return false;
+  if(t.Key=="barracks"&&Units.Any(o=>o.Alive&&o.Path.Count>0&&reserve.Contains(o.Path.Last())))return false;
   return !Sites.Any(s=>Inflated(r,28).Contains(s.P))&&(skip!=null||Live(0).Any(o=>o.T.Key=="hq"&&Dist(o.P,mid)<265));
  }
  static float Clearance(Piece o){return o.T.Foot?5:11;}
@@ -46,10 +47,10 @@ public partial class Campaign {
  const int Step=15,N=Width/Step,M=Height/Step;
  static PointF Center(int i){return new PointF((i%N+.5f)*Step,(i/N+.5f)*Step);}
  static int Estimate(int a,int b){int dx=Math.Abs(a%N-b%N),dy=Math.Abs(a/N-b/N);return 10*Math.Max(dx,dy)+4*Math.Min(dx,dy);}
- int Anchor(PointF p,bool[] open,RectangleF[] blocks){
+ int Anchor(PointF p,bool[] open,RectangleF[] blocks,bool tracks){
   int cx=(int)p.X/Step,cy=(int)p.Y/Step,best=-1;float d=50;
   for(int y=Math.Max(0,cy-2);y<=Math.Min(M-1,cy+2);y++)for(int x=Math.Max(0,cx-2);x<=Math.Min(N-1,cx+2);x++){
-   int i=y*N+x;float gap=Dist(p,Center(i));if(open[i]&&gap<d&&Clear(p,Center(i),blocks)){best=i;d=gap;}
+   int i=y*N+x;float gap=Dist(p,Center(i));if(open[i]&&gap<d&&CanLink(tracks,p,Center(i),blocks)){best=i;d=gap;}
   }return best;
  }
  int topology;
@@ -60,13 +61,28 @@ public partial class Campaign {
   NavigationGrid grid;if(grids.TryGetValue(pad,out grid))return grid;
   grid=new NavigationGrid{Barriers=Obstacles().Select(r=>Inflated(r,pad)).ToArray()};grids[pad]=grid;return grid;
  }
- public bool Route(Piece o,PointF dest){
+ // A tracked chassis may translate only along map axes or their diagonals.
+ // Two legs suffice in open space; test both bend orders against swept obstacles.
+ static bool TrackLegs(PointF a,PointF b,RectangleF[] blocks,Queue<PointF> result){
+  float dx=b.X-a.X,dy=b.Y-a.Y,d=Math.Min(Math.Abs(dx),Math.Abs(dy));
+  var diag=new PointF(d*Math.Sign(dx),d*Math.Sign(dy));
+  var first=new PointF(a.X+diag.X,a.Y+diag.Y);var last=new PointF(b.X-diag.X,b.Y-diag.Y);
+  foreach(var bend in new[]{first,last}){
+   if(!Clear(a,bend,blocks)||!Clear(bend,b,blocks))continue;
+   if(result!=null){if(Dist(a,bend)>.001f&&Dist(bend,b)>.001f)result.Enqueue(bend);result.Enqueue(b);}
+   return true;
+  }return false;
+ }
+ static bool CanLink(bool tracks,PointF a,PointF b,RectangleF[] blocks){return tracks?TrackLegs(a,b,blocks,null):Clear(a,b,blocks);}
+ public bool Route(Piece o,PointF dest){return PlanRoute(o,dest,null);}
+ bool PlanRoute(Piece o,PointF dest,RectangleF[] temporary){
+  bool tracks=o.T.Key=="tank";
   float pad=Clearance(o);if(Blocked(dest,pad,null))return false;
-  var grid=Grid(pad);var blocks=grid.Barriers;var route=new Queue<PointF>();
-  if(!Clear(o.P,dest,blocks)){
+  var grid=Grid(pad);if(temporary!=null)grid=new NavigationGrid{Barriers=grid.Barriers.Concat(temporary).ToArray()};var blocks=grid.Barriers;var route=new Queue<PointF>();
+  if(!CanLink(tracks,o.P,dest,blocks)){
    if(grid.Open==null){grid.Open=new bool[N*M];for(int i=0;i<grid.Open.Length;i++){var c=Center(i);grid.Open[i]=c.X>=pad&&c.X<=Width-pad&&c.Y>=99+pad&&c.Y<=Height-pad&&!blocks.Any(r=>r.Contains(c));}}
    bool[] open=grid.Open;
-   int start=Anchor(o.P,open,blocks),end=Anchor(dest,open,blocks);if(start<0||end<0)return false;
+   int start=Anchor(o.P,open,blocks,tracks),end=Anchor(dest,open,blocks,tracks);if(start<0||end<0)return false;
    var previous=new int[N*M];var cost=Enumerable.Repeat(int.MaxValue,N*M).ToArray();var frontier=new SortedSet<long>();cost[start]=0;frontier.Add((long)Estimate(start,end)*(N*M)+start);
    while(frontier.Count!=0){
     long key=frontier.Min;frontier.Remove(key);int cur=(int)(key%(N*M));if(cur==end)break;
@@ -82,8 +98,8 @@ public partial class Campaign {
    if(cost[end]==int.MaxValue)return false;
    var points=new List<PointF>();for(int i=end;;i=previous[i]){points.Add(Center(i));if(i==start)break;}
    points.Reverse();points.Add(dest);PointF from=o.P;
-   for(int i=0;i<points.Count;){int far=i;while(far+1<points.Count&&Clear(from,points[far+1],blocks))far++;from=points[far];route.Enqueue(from);i=far+1;}
-  }else route.Enqueue(dest);
+   for(int i=0;i<points.Count;){int far=i;while(far+1<points.Count&&CanLink(tracks,from,points[far+1],blocks))far++;if(tracks){if(!TrackLegs(from,points[far],blocks,route))return false;}else route.Enqueue(points[far]);from=points[far];i=far+1;}
+  }else if(tracks)TrackLegs(o.P,dest,blocks,route);else route.Enqueue(dest);
   o.Path=route;o.RouteVersion=topology;return true;
  }
 }

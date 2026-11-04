@@ -16,7 +16,7 @@ class WindowChecks {
  }
  [STAThread]static int Main(string[] args){try{Run(args);return 0;}catch(Exception e){Console.Error.WriteLine(e.Message);Console.Error.WriteLine(e.StackTrace);return 1;}}
  static void Run(string[] args){
-  using(var f=new CommandWindow()){f.CheckPlates(args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"角度校准.png"));Frame(f,null);Press(f,410,575);if((bool)Field(f,"briefing"))throw new Exception("briefing");
+  using(var f=new CommandWindow()){if(args.Length>0)f.CheckScreenTravel(args[0]);f.CheckPlates(args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"角度校准.png"));Frame(f,null);Press(f,410,575);if((bool)Field(f,"briefing"))throw new Exception("briefing");
    var screen=new PointF(647,405);var inv=typeof(CommandWindow).GetMethod("WorldOf",flags);
    var before=(PointF)inv.Invoke(f,new object[]{screen});float ui=(float)Field(f,"scale");
    typeof(CommandWindow).GetMethod("OnMouseWheel",flags).Invoke(f,new object[]{new MouseEventArgs(MouseButtons.None,0,(int)(screen.X*ui+(float)Field(f,"ox")),(int)(screen.Y*ui+(float)Field(f,"oy")),120)});
@@ -35,7 +35,7 @@ class WindowChecks {
    Frame(f,args.Length==0?null:args[0]);int funds=w.Funds[0];Press(f,1413,362);if(source.Queue.Count!=1||w.Funds[0]!=funds+85)throw new Exception("cancel waiting slot");
    if(w.Lesson!=3||!w.Tutorial)throw new Exception("default tutorial step");
    for(int i=0;i<60;i++)w.Tick(.1f);Frame(f,null);
-   if(w.Lesson!=4)throw new Exception("delivery milestone");Press(f,752,104);MapClick(f,172,214,MouseButtons.Right);
+   if(w.Lesson!=4)throw new Exception("delivery milestone");Press(f,752,104);MapClick(f,172,214);
    for(int i=0;i<400;i++)w.Tick(.1f);Frame(f,null);if(w.Lesson!=6)throw new Exception("capture plus prebuilt factory");
    Press(f,752,104);Press(f,1394,350);for(int i=0;i<95;i++)w.Tick(.1f);Frame(f,null);
    if(args.Length>0){
@@ -47,12 +47,45 @@ class WindowChecks {
    if(w.Lesson!=7)throw new Exception("ifv training");Press(f,752,104);
    typeof(CommandWindow).GetMethod("OnKeyDown",flags).Invoke(f,new object[]{new KeyEventArgs(Keys.A)});MapClick(f,1330,292);
    for(int i=0;i<1100;i++)w.Tick(.1f);Frame(f,null);if(!w.Won)throw new Exception("tutorial victory through interface");
-   Press(f,688,574);w=(Campaign)Field(f,"world");if(w.Tutorial||!w.Assisted)throw new Exception("handoff to assisted mission");Console.WriteLine("Native UI mission entry, deploy, placement, production and render passed.");}
+   Press(f,688,574);w=(Campaign)Field(f,"world");if(w.Tutorial||!w.Assisted)throw new Exception("handoff to assisted mission");var trooper=w.Live(0).First(o=>o.T.Foot);var nearby=w.Spawn("squad",1,351,421);for(int i=0;i<3;i++)w.Tick(.1f);Frame(f,null);
+   MapClick(f,(int)trooper.P.X,(int)trooper.P.Y);var units=(System.Collections.Generic.List<Piece>)Field(f,"selection");
+   if(!units.Contains(trooper))throw new Exception("classic select");
+   MapClick(f,395,470);if(!units.Contains(trooper)||trooper.Path.Count==0)throw new Exception("classic ground movement");
+   MapClick(f,(int)nearby.P.X,(int)nearby.P.Y);if(trooper.Target!=nearby)throw new Exception("classic direct targeting");
+   MapClick(f,395,470,MouseButtons.Right);if(units.Count!=0||trooper.Target!=nearby)throw new Exception("right deselect must not issue a move");
+   MapClick(f,(int)trooper.P.X,(int)trooper.P.Y);
+   var targetScreen=(PointF)typeof(CommandWindow).GetMethod("ScreenOf",flags).Invoke(f,new object[]{new PointF(390,459)});
+   typeof(CommandWindow).GetField("mouse",flags).SetValue(f,targetScreen);
+   typeof(CommandWindow).GetMethod("ContextOrder",flags).Invoke(f,new object[]{Keys.Control|Keys.Shift});
+   if(!trooper.Advancing||trooper.Path.Count==0||trooper.FirePoint.HasValue)throw new Exception("classic attack move");
+   typeof(CommandWindow).GetMethod("ContextOrder",flags).Invoke(f,new object[]{Keys.Control});
+   if(!trooper.FirePoint.HasValue||trooper.Target!=null)throw new Exception("ground suppression");
+   var aim=trooper.FirePoint.Value;bool fired=false;for(int i=0;i<150;i++){w.Tick(.1f);if(w.Shots.Any(hit=>Campaign.Dist(hit.B,aim)<1))fired=true;}
+   if(!fired)throw new Exception("no shot at designated ground");
+   typeof(CommandWindow).GetMethod("OnKeyDown",flags).Invoke(f,new object[]{new KeyEventArgs(Keys.S)});
+   if(trooper.FirePoint.HasValue||trooper.Path.Count>0)throw new Exception("stop ground bombardment");
+   Console.WriteLine("Native UI mission entry, deploy, placement, production and render passed.");}
  }
 }
 
 namespace Greyhaven {
 partial class CommandWindow {
+ internal void CheckScreenTravel(string shot){
+  var measurements=File.ReadAllLines(Path.Combine(Path.GetDirectoryName(shot),"../art/source/aligned/tank-bearing-check.csv")).Skip(1)
+   .Select(line=>line.Split(',').Select(s=>double.Parse(s,System.Globalization.CultureInfo.InvariantCulture)).ToArray()).ToArray();
+  double worst=0;int headings=0;
+  for(int j=0;j<16;j++){
+   var sim=new Campaign(true);var tank=sim.Spawn("tank",0,700,730);double a=(j+.31)*Math.PI/8;
+   var goal=new PointF(tank.P.X+52*(float)Math.Sin(a),tank.P.Y+52*(float)Math.Cos(a));sim.Move(tank,goal,false);
+   for(int i=0;i<220;i++){var old=tank.P;sim.Tick(.025f);if(Campaign.Dist(old,tank.P)<.015f)continue;
+    var p=ScreenOf(old);var q=ScreenOf(tank.P);double x=q.X-p.X,y=q.Y-p.Y;
+    int frame=TankFrame(tank);var m=measurements[frame];double error=Math.Abs(Math.Atan2(x*m[2]-y*m[1],x*m[1]+y*m[2]))*180/Math.PI;
+    worst=Math.Max(worst,error);headings|=1<<(tank.Dir/2);}
+   if(Campaign.Dist(tank.P,goal)>.02f)throw new Exception("lost arbitrary destination");
+  }
+  if(worst>2||headings!=255)throw new Exception("visible chassis / route disagreement "+worst);
+  Console.WriteLine("Measured gun axis vs actual screen travel: all eight headings; max "+worst.ToString("0.00")+" degrees.");
+ }
  internal void CheckPlates(string path){
   var keys=new[]{"hq","power","barracks","factory","radar","post","depot","freight","harbormaster"};
   using(var b=new Bitmap(1160,835))using(var g=Graphics.FromImage(b)){
@@ -77,7 +110,7 @@ partial class CommandWindow {
    }
    Line(g,24,584,1130,584,dim);Txt(g,"车辆接地方向  /  斜向与正侧面",28,596,20,gold,true);
    int j=0;foreach(var k in new[]{"mcv","ifv","tank","arty"}){
-    var t=Campaign.Info(k);var sheet=painted[k];if(sheet.Width!=FrameSize*8||sheet.Height!=FrameSize*6)throw new Exception(k+" directional sheet");
+    var t=Campaign.Info(k);var sheet=painted[k];if(k=="tank"?sheet.Width!=8*192||sheet.Height!=24*192:sheet.Width!=FrameSize*8||sheet.Height!=FrameSize*6)throw new Exception(k+" directional sheet");
     var baseX=40+j++*285;Txt(g,t.Name,baseX,641,16,pale,true);
     for(int n=0;n<2;n++){int dir=n==0?14:4;double yaw=dir*Math.PI/8;
      var pt=new PointF(baseX+50+n*120,741);float dx=(float)Math.Sin(yaw)*60,dy=(float)Math.Cos(yaw)*30;

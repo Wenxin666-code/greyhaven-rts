@@ -77,6 +77,7 @@ async function vehicle(key,tex){
  return sheet;
 }
 async function bake(key){
+ if(key==='tank')return driveAtlas();
  const tex=await loadArt(key);
  try{return (await (relief[key]?building(key,tex):vehicle(key,tex))).toDataURL('image/png')}finally{tex.dispose()}
 }

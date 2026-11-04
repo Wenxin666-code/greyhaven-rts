@@ -20,7 +20,8 @@ partial class CommandWindow {
  void DrawTerrainPlan(Graphics g){
   foreach(var r in Campaign.YardWalls){Rect(g,r.X+3,r.Y+3,r.Width,r.Height,Color.FromArgb(80,ink));Rect(g,r.X,r.Y,r.Width,r.Height,C("#928c78"));Line(g,r.Left,r.Top,r.Right,r.Top,pale,2);for(float x=r.Left+4;x<r.Right-4;x+=15)Line(g,x,r.Bottom,x+5,r.Top,gold,2);}
   foreach(var o in world.Live(0).Where(u=>Campaign.HasGate(u.T))){
-   var gate=Campaign.Gate(Campaign.Footprint(o.T,o.P));
+   var lot=Campaign.Footprint(o.T,o.P);var gate=Campaign.Gate(lot);
+   if(o.T.Key=="barracks"){DrawTiles(g,Campaign.Muster(lot),teal,true);foreach(var seat in o.Berths)Rect(g,seat.X-3,seat.Y-3,6,6,gold);}
    for(int i=-1;i<=1;i++){float x=o.P.X+i*12,y=gate.Top+8;Line(g,x-4,y,x,y+4,gold);Line(g,x,y+4,x+4,y,gold);}
   }
   foreach(var s in world.Sites.Take(2)){
@@ -109,8 +110,8 @@ partial class CommandWindow {
   if(key=="hold")return "保持泊位畅通。运输船靠岸还需 "+Math.Ceiling(Math.Max(0,world.HoldTime-world.Hold))+" 秒。";
   var siteGoal=world.Sites[key=="west"?0:2];
   if(own.Any(o=>o.T.Foot&&Campaign.Dist(o.P,siteGoal.P)<49))return "步兵已进圈。保持驻留；圈内还有红军时，占领会暂停。";
-  if(!selection.Any(o=>o.T.Foot))return "点「定位本步」选中步兵，再右键金圈内的空地。只有步兵能占点。";
-  return key=="west"?"右键金圈内的空地，让步兵驻留到仓库变蓝。":"带上步兵和战车。按 A 后左键港务中心，清除守军并占领。";
+  if(!selection.Any(o=>o.T.Foot))return "点「定位本步」选中步兵，再左键金圈内的空地。只有步兵能占点。";
+  return key=="west"?"左键金圈内的空地，让步兵驻留到仓库变蓝。":"带上步兵和战车。按 A 后左键港务中心，清除守军并占领。";
  }
  bool nearbyPointNeedsFoot(){
   return selection.Any(o=>!o.T.Building&&!o.T.Foot&&world.Sites.Any(s=>s.Owner!=0&&Campaign.Dist(s.P,o.P)<60&&!world.Live(0).Any(f=>f.T.Foot&&Campaign.Dist(f.P,s.P)<49)));
