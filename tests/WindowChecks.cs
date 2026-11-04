@@ -16,49 +16,63 @@ class WindowChecks {
  }
  [STAThread]static int Main(string[] args){try{Run(args);return 0;}catch(Exception e){Console.Error.WriteLine(e.Message);Console.Error.WriteLine(e.StackTrace);return 1;}}
  static void Run(string[] args){
-  using(var f=new CommandWindow()){if(args.Length==1&&args[0]=="--window"){f.ProfileWindow();return;}if(args.Length==1&&args[0]=="--profile"){f.ProfileBattle();return;}if(args.Length==2&&args[0]=="--mine"){f.RecordOreTrip(args[1]);return;}if(args.Length==2&&args[0]=="--drive"){f.RecordStreetTurn(args[1]);return;}f.CheckFocusAndMining();if(args.Length>0)f.CheckScreenTravel(args[0]);f.CheckPlates(args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"角度校准.png"));Frame(f,null);Press(f,410,575);if((bool)Field(f,"briefing"))throw new Exception("briefing");
+  using(var f=new CommandWindow()){if(args.Length==1&&args[0]=="--window"){f.ProfileWindow();return;}if(args.Length==1&&args[0]=="--profile"){f.ProfileBattle();return;}if(args.Length==2&&args[0]=="--mine"){f.RecordOreTrip(args[1]);return;}if(args.Length==2&&args[0]=="--drive"){f.RecordStreetTurn(args[1]);return;}f.CheckFocusAndMining();if(args.Length>0)f.CheckScreenTravel(args[0]);f.CheckPlates(args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"角度校准.png"));Frame(f,args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"主界面.png"));Press(f,220,571);
+   if(!(bool)Field(f,"missionPicker")||!(bool)Field(f,"briefing"))throw new Exception("start must open mission selection");
+   Press(f,190,348);Press(f,865,551);Frame(f,args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"关卡选择.png"));
+   Press(f,1194,651);var standard=(Campaign)Field(f,"world");
+   if(standard.Tutorial||standard.Assisted)throw new Exception("standard campaign");
+   typeof(CommandWindow).GetMethod("OnKeyDown",flags).Invoke(f,new object[]{new KeyEventArgs(Keys.Escape)});Frame(f,null);Press(f,860,575);
+   Press(f,701,550);Press(f,1194,651);var easy=(Campaign)Field(f,"world");
+   if(easy.Tutorial||!easy.Assisted)throw new Exception("assisted campaign");
+   typeof(CommandWindow).GetMethod("OnKeyDown",flags).Invoke(f,new object[]{new KeyEventArgs(Keys.Escape)});Frame(f,null);Press(f,860,575);
+   Press(f,140,694);if((bool)Field(f,"missionPicker"))throw new Exception("back to title");
+   Press(f,220,571);Press(f,180,255);Press(f,1194,651);if((bool)Field(f,"briefing"))throw new Exception("tutorial launch");
    var screen=new PointF(647,405);var inv=typeof(CommandWindow).GetMethod("WorldOf",flags);
    var before=(PointF)inv.Invoke(f,new object[]{screen});float ui=(float)Field(f,"scale");
    typeof(CommandWindow).GetMethod("OnMouseWheel",flags).Invoke(f,new object[]{new MouseEventArgs(MouseButtons.None,0,(int)(screen.X*ui+(float)Field(f,"ox")),(int)(screen.Y*ui+(float)Field(f,"oy")),120)});
    var after=(PointF)inv.Invoke(f,new object[]{screen});if(Campaign.Dist(before,after)>2||(float)Field(f,"zoom")<=1.7f)throw new Exception("cursor anchored zoom");Frame(f,null);
-   Press(f,1330,237);Press(f,1260,290);if(((Campaign)Field(f,"world")).LastOrder!=null)throw new Exception("locked card accepted");
-   Press(f,1250,237);
-   var w=(Campaign)Field(f,"world");Press(f,1320,620);if(!w.Landing)throw new Exception("deploy button");
+   Press(f,1276,298);Press(f,1170,346);if(((Campaign)Field(f,"world")).LastOrder!=null)throw new Exception("locked card accepted");
+   Press(f,1150,298);
+   var w=(Campaign)Field(f,"world");Press(f,399,738);if(!w.Landing)throw new Exception("deploy button");
    for(int i=0;i<60;i++)w.Tick(.1f);Frame(f,null);
-   Press(f,1265,292);MapClick(f,263,548);if(!w.Units.Any(o=>o.Side==0&&o.T.Key=="power"))throw new Exception("construction click");
+   Press(f,1170,346);MapClick(f,263,548);if(!w.Units.Any(o=>o.Side==0&&o.T.Key=="power"))throw new Exception("construction click");
    for(int i=0;i<60;i++)w.Tick(.1f);Frame(f,null);
    if(w.LessonKey!="refinery")throw new Exception("missing refinery stage");
-   Press(f,752,104);MapClick(f,66,450);
+   Press(f,767,90);MapClick(f,66,450);
    for(int i=0;i<100;i++)w.Tick(.1f);Frame(f,null);
    if(w.LessonKey!="ore")throw new Exception("ore stage "+w.LessonKey);
-   Press(f,752,104);var miner=w.Live(0).First(o=>o.T.Key=="miner");
+   Press(f,767,90);var miner=w.Live(0).First(o=>o.T.Key=="miner");
    if(!((System.Collections.Generic.List<Piece>)Field(f,"selection")).Contains(miner))throw new Exception("focus truck");
    for(int i=0;i<400&&w.LessonKey=="ore";i++)w.Tick(.1f);
    if(w.LessonKey!="receipt"||w.OreReceipts[0]!=0)throw new Exception("deposit lesson before sale");
    for(int i=0;i<400&&w.LessonKey=="receipt";i++)w.Tick(.1f);
    if(w.LessonKey!="barracks"||w.OreReceipts[0]<=0)throw new Exception("first receipt");
    typeof(CommandWindow).GetMethod("CenterAt",flags).Invoke(f,new object[]{new PointF(255,465)});Frame(f,null);
-   for(int i=0;i<60;i++)w.Tick(.1f);Frame(f,null);Press(f,1394,292);MapClick(f,123,610);for(int i=0;i<65;i++)w.Tick(.1f);
-   Press(f,1260,350);MapClick(f,339,548);for(int i=0;i<110;i++)w.Tick(.1f);
-   Press(f,1330,237);Press(f,1270,290);if(!w.Live(0).Any(o=>o.Queue.Count>0))throw new Exception("training click");
-   Press(f,1270,290);Press(f,1412,237);
+   for(int i=0;i<60;i++)w.Tick(.1f);Frame(f,null);Press(f,1350,346);MapClick(f,123,610);for(int i=0;i<65;i++)w.Tick(.1f);
+   Press(f,1170,404);MapClick(f,339,548);for(int i=0;i<110;i++)w.Tick(.1f);
+   Press(f,1276,298);Press(f,1170,346);if(!w.Live(0).Any(o=>o.Queue.Count>0))throw new Exception("training click");
+   Press(f,1170,346);Press(f,1400,298);
    if(!(bool)Field(f,"queueOpen"))throw new Exception("queue tab");
    var source=w.Live(0).Single(o=>o.Queue.Count>0);if(source.Queue.Count!=2)throw new Exception("second order");
-   Frame(f,args.Length==0?null:args[0]);int funds=w.Funds[0];Press(f,1413,362);if(source.Queue.Count!=1||w.Funds[0]!=funds+85)throw new Exception("cancel waiting slot");
+   Frame(f,args.Length==0?null:args[0]);int funds=w.Funds[0];Press(f,1400,429);if(source.Queue.Count!=1||w.Funds[0]!=funds+85)throw new Exception("cancel waiting slot");
    if(w.LessonKey!="squad"||!w.Tutorial)throw new Exception("default tutorial step");
    for(int i=0;i<60;i++)w.Tick(.1f);Frame(f,null);
-   if(w.LessonKey!="west")throw new Exception("delivery milestone");Press(f,752,104);MapClick(f,172,214);
+   if(w.LessonKey!="west")throw new Exception("delivery milestone");Press(f,767,90);MapClick(f,172,214);
    for(int i=0;i<400;i++)w.Tick(.1f);Frame(f,null);if(w.LessonKey!="ifv")throw new Exception("capture plus prebuilt factory");
-   Press(f,752,104);Press(f,1394,350);for(int i=0;i<95;i++)w.Tick(.1f);Frame(f,null);
+   Press(f,767,90);Press(f,1350,404);for(int i=0;i<95;i++)w.Tick(.1f);Frame(f,null);
    if(args.Length>0){
     w.Upgrade();w.Train(Campaign.Info("tank"),0,null);for(int i=0;i<140;i++)w.Tick(.1f);
-    Press(f,1330,237);typeof(CommandWindow).GetMethod("CenterAt",flags).Invoke(f,new object[]{new PointF(300,495)});
+    Press(f,1276,298);typeof(CommandWindow).GetMethod("CenterAt",flags).Invoke(f,new object[]{new PointF(300,495)});
     typeof(CommandWindow).GetMethod("OnKeyDown",flags).Invoke(f,new object[]{new KeyEventArgs(Keys.G)});
-    Frame(f,Path.Combine(Path.GetDirectoryName(args[0]),"等距战场.png"));
+    var armor=w.Live(0).FirstOrDefault(u=>u.T.Key=="tank");if(armor!=null){
+     var picked=(System.Collections.Generic.List<Piece>)Field(f,"selection");picked.Clear();picked.Add(armor);
+    }
+    var factory=w.Live(0).First(u=>u.T.Key=="factory");w.Train(Campaign.Info("tank"),0,factory);w.Train(Campaign.Info("ifv"),0,factory);for(int t=0;t<28;t++)w.Tick(.1f);
+    Frame(f,Path.Combine(Path.GetDirectoryName(args[0]),"等距战场.png"));while(factory.Queue.Count>0)w.CancelOrder(factory,0);
    }
-   if(w.LessonKey!="port")throw new Exception("ifv training");Press(f,752,104);
+   if(w.LessonKey!="port")throw new Exception("ifv training");Press(f,767,90);
    typeof(CommandWindow).GetMethod("OnKeyDown",flags).Invoke(f,new object[]{new KeyEventArgs(Keys.A)});MapClick(f,1330,292);
-   for(int i=0;i<1100;i++)w.Tick(.1f);Frame(f,null);if(!w.Won)throw new Exception("tutorial victory through interface");
+   for(int i=0;i<1100;i++)w.Tick(.1f);Frame(f,null);if(!w.Won)throw new Exception("tutorial victory through interface: "+w.LessonKey+" "+w.Hold+" "+w.Radio+" / "+String.Join(" ",w.Live(0).Where(u=>u.T.Foot).Select(u=>u.P+" to "+u.Goal)));
    Press(f,688,574);w=(Campaign)Field(f,"world");if(w.Tutorial||!w.Assisted)throw new Exception("handoff to assisted mission");var trooper=w.Live(0).First(o=>o.T.Foot);var nearby=w.Spawn("squad",1,351,421);for(int i=0;i<3;i++)w.Tick(.1f);Frame(f,null);
    MapClick(f,(int)trooper.P.X,(int)trooper.P.Y);var units=(System.Collections.Generic.List<Piece>)Field(f,"selection");
    if(!units.Contains(trooper))throw new Exception("classic select");

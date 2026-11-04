@@ -133,7 +133,7 @@ partial class CommandWindow {
    foreach(var site in world.Sites.Where(s=>world.Explored(0,Campaign.Middle(s.Body))))CornerPins(g,site.Body,gold);
   }
   if(drag&&dragged){var r=DragRect();Rect(g,r.X,r.Y,r.Width,r.Height,Color.FromArgb(38,teal));using(var pen=new Pen(teal))g.DrawRectangle(pen,r.X,r.Y,r.Width,r.Height);}
-  DrawObjectiveMarker(g);Rect(g,12,MapTop+MH-28,426,22,Color.FromArgb(195,ink));Txt(g,"滚轮 "+zoom.ToString("0.0")+"×   ·   中键平移   ·   小地图跳转   ·   G 地基格线",20,MapTop+MH-26,13,pale);g.Restore(view);
+  DrawObjectiveMarker(g);g.Restore(view);
  }
  void CornerPins(Graphics g,RectangleF r,Color color){
   var corners=new[]{new PointF(r.Left,r.Top),new PointF(r.Right,r.Top),new PointF(r.Right,r.Bottom),new PointF(r.Left,r.Bottom)}.Select(ScreenOf).ToArray();
@@ -151,7 +151,7 @@ partial class CommandWindow {
   BuildingArt(g,SiteKey(site),site.Owner==1?1:0,box,1);
  }
  void DrawRadar(Graphics g,float x){
-  var state=g.Save();g.SmoothingMode=SmoothingMode.None;g.SetClip(new RectangleF(x,102,244,107));g.TranslateTransform(x,102);g.ScaleTransform(244f/Campaign.Width,107f/Campaign.Height);
+  var state=g.Save();g.SmoothingMode=SmoothingMode.None;g.SetClip(new RectangleF(x,93,354,132));g.TranslateTransform(x,93);g.ScaleTransform(354f/Campaign.Width,132f/Campaign.Height);
   g.DrawImage(radarGround,0,0,Campaign.Width,Campaign.Height);Shroud(g);
   foreach(var patch in world.Ore)if(patch.Stock>0&&world.Explored(0,patch.P))Rect(g,patch.P.X-5,patch.P.Y-5,14,14,gold);
   bool radar=world.Power(0)>=0&&world.Live(0).Any(o=>o.T.Key=="radar");
@@ -162,7 +162,7 @@ partial class CommandWindow {
    using(var pen=new Pen(red,6))g.DrawEllipse(pen,p.X-r,p.Y-r,r*2,r*2);
   }
   using(var pen=new Pen(pale,6))g.DrawPolygon(pen,new[]{new PointF(0,MapTop),new PointF(MW,MapTop),new PointF(MW,MapTop+MH),new PointF(0,MapTop+MH)}.Select(WorldOf).ToArray());g.Restore(state);
-  hits.Add(new HitBox{Box=new RectangleF(x,102,244,107),Run=()=>CenterAt(new PointF((mouse.X-x)*Campaign.Width/244,(mouse.Y-102)*Campaign.Height/107))});
+  hits.Add(new HitBox{Box=new RectangleF(x,93,354,132),Run=()=>CenterAt(new PointF((mouse.X-x)*Campaign.Width/354,(mouse.Y-93)*Campaign.Height/132))});
  }
  Piece HitScreen(PointF screen){
   var w=WorldOf(screen);return world.Units.Where(o=>o.Alive&&o.Carrier==null&&world.Visible(o)).OrderByDescending(o=>o.P.X+o.P.Y).FirstOrDefault(o=>{

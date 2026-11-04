@@ -11,6 +11,7 @@ foreach ($key in @('squad','at','engineer')) {
     $folder = if ($key -eq 'squad') { 'v02' } else { 'campaign' }
     $images += Get-Item -LiteralPath (Join-Path $art "$folder/sprites/$key.png")
 }
+$images += @(Get-ChildItem -LiteralPath (Join-Path $art 'console') -Filter '*.png')
 $resources = @($images | ForEach-Object { '/resource:' + $_.FullName + ',Greyhaven.Art.' + $_.Name })
 $resources += '/resource:' + (Join-Path $art 'isometric/ground.png') + ',Greyhaven.Art.materials.png'
 $options = @('/nologo','/optimize+','/platform:x64','/codepage:65001',('/win32manifest:' + (Join-Path $root 'src/game.manifest')),'/r:System.Windows.Forms.dll','/r:System.Drawing.dll',('/win32icon:' + (Join-Path $root 'art/command.ico')))

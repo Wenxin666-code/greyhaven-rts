@@ -7,7 +7,7 @@ namespace Greyhaven {
 partial class CommandWindow {
  readonly PointF?[] bookmarks=new PointF?[4];readonly float[] savedZoom=new float[4];
  TypeInfo selectType;double lastTypeTap;bool tHeld;
- protected override void OnKeyUp(KeyEventArgs e){base.OnKeyUp(e);if(e.KeyCode==Keys.T)tHeld=false;}
+ protected override void OnKeyUp(KeyEventArgs e){base.OnKeyUp(e);if(e.KeyCode==Keys.Enter)frontEnterHeld=false;if(e.KeyCode==Keys.T)tHeld=false;}
  void GoHome(){
   var home=world.Units.Where(u=>u.Side==0&&u.Alive&&(u.T.Key=="hq"||u.T.Key=="mcv")).OrderBy(u=>u.T.Key=="hq"?0:1).FirstOrDefault();
   if(home!=null)CenterAt(home.P);

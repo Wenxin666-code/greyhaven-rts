@@ -41,28 +41,38 @@ partial class CommandWindow {
   int i=list.IndexOf(producer);queueIndex=Math.Max(0,i);queueId=list.Count==0?0:list[queueIndex].Id;
  }
  void DrawQueue(Graphics g,float x){
-  var list=Producers();if(list.Count==0){Txt(g,"展开指挥部后可查看排产。",x,284,15,dim);return;}
+  var list=Producers();if(list.Count==0){Txt(g,"展开指挥部后可查看排产。",x+6,357,16,dim);return;}
   queueIndex=list.FindIndex(o=>o.Id==queueId);if(queueIndex<0)queueIndex=0;var src=list[queueIndex];queueId=src.Id;
-  Txt(g,src.T.Name+" #"+src.Id+"　"+src.Queue.Count+" / 4",x,270,17,pale,true);
-  Button(g,x+157,263,39,33,"‹",()=>queueId=list[(queueIndex+list.Count-1)%list.Count].Id);
-  Button(g,x+201,263,39,33,"›",()=>queueId=list[(queueIndex+1)%list.Count].Id);
-  var jobs=src.Queue.ToArray();float remaining=-src.Work;bool blocked=jobs.Length>0&&src.Work>=jobs[0].Seconds;float rate=world.Power(0)<0?.45f:1f;for(int i=0;i<4;i++){
-   float y=303+i*42;Rect(g,x,y,242,38,i==0?C("#34483c"):C("#253633"));
-   Txt(g,"0"+(i+1),x+5,y+9,13,dim);if(i>=jobs.Length){Txt(g,"空位",x+34,y+9,14,dim);continue;}
-   remaining+=jobs[i].Seconds;Txt(g,jobs[i].Name,x+31,y+2,15,pale,true);Txt(g,i==0?world.QueueState(src):blocked?"等待门口清空":"预计 "+Math.Ceiling(remaining/rate)+" 秒后出列",x+31,y+20,12,gold);
-   if(i==0){Rect(g,x+2,y+36,162,2,ink);Rect(g,x+2,y+36,162*src.Work/jobs[0].Seconds,2,teal);}
-   int slot=i;float work=src.Work;Button(g,x+170,y+4,68,29,"取消",()=>{
-    if(src.Work>=work&&src.Queue.SequenceEqual(jobs))world.CancelOrder(src,slot);
-    else world.Radio="队列刚刚变化，请核对后再取消。";
-   });
+  Txt(g,src.T.Name+" #"+src.Id+"    "+src.Queue.Count+" / 4",x+6,330,18,pale,true);
+  Button(g,x+267,324,39,32,"‹",()=>queueId=list[(queueIndex+list.Count-1)%list.Count].Id);
+  Button(g,x+315,324,39,32,"›",()=>queueId=list[(queueIndex+1)%list.Count].Id);
+  var jobs=src.Queue.ToArray();float seconds=-src.Work;
+  for(int i=0;i<4;i++){
+   float y=365+i*46;Plate(g,new RectangleF(x,y,362,41),panel,C("#526267"));
+   Txt(g,"0"+(i+1),x+7,y+9,14,dim);if(i>=jobs.Length){Txt(g,"空位",x+45,y+9,15,dim);continue;}
+   seconds+=jobs[i].Seconds;Portrait(g,jobs[i],new RectangleF(x+38,y+2,54,36));Txt(g,jobs[i].Name,x+102,y+2,15,pale,true);
+   Txt(g,i==0?world.QueueState(src):"预计 "+Math.Ceiling(seconds/(world.Power(0)<0?.45:1))+" 秒",x+102,y+21,12,gold);
+   int slot=i;Button(g,x+278,y+5,76,31,"取消",()=>{if(src.Queue.SequenceEqual(jobs))world.CancelOrder(src,slot);});
   }
-  Txt(g,"取消退回全额军费。",x,478,14,dim);
  }
  void DrawQueueStrip(Graphics g){
-  int count=Pending();var src=world.Live(0).FirstOrDefault(o=>o.Queue.Count>0);
-  string s=src==null?"生产总览　空闲":"排产 "+count+"　"+src.Queue.Peek().Name+" · "+world.QueueState(src);
-  Button(g,925,759,322,39,s,OpenQueue);
-  var ready=world.LastReady;Button(g,1261,759,192,39,ready!=null&&ready.Alive?"选中最新 "+ready.T.Name:"暂无新兵",ready!=null&&ready.Deployed?(Action)(()=>{selection.Clear();selection.Add(ready);CenterAt(ready.P);queueOpen=false;}):null);
+  float x=MW+15;var src=world.Live(0).Where(o=>o.Queue.Count>0).OrderByDescending(o=>selection.Contains(o)).ThenByDescending(o=>o==world.LastOrder).FirstOrDefault();
+  Line(g,x,569,W-16,569,C("#56686e"));Txt(g,"//  生产队列",x,577,18,pale,true);
+  Button(g,x+253,574,109,27,"总览  "+Pending(),OpenQueue);
+  Plate(g,new RectangleF(x,608,362,54),panel,C("#637277"));
+  if(src==null)Txt(g,"生产线空闲",x+14,624,16,dim);
+  else{
+   var job=src.Queue.Peek();Portrait(g,job,new RectangleF(x+5,611,69,47));Txt(g,job.Name,x+85,611,16,pale,true);
+   Rect(g,x+85,642,148,6,ink);Rect(g,x+85,642,148*Math.Min(1,src.Work/job.Seconds),6,gold);
+   string state=world.QueueState(src);Txt(g,state.Length>8?state.Substring(0,8):state,x+234,626,13,gold);
+   var snapshot=src.Queue.ToArray();
+   Button(g,x+325,618,30,30,"×",()=>{if(src.Queue.SequenceEqual(snapshot))world.CancelOrder(src,0);});
+  }
+  var next=src==null?null:src.Queue.Skip(1).FirstOrDefault();
+  Txt(g,next==null?"02   等待排产":"02   "+next.Name+"  ·  等待",x+10,675,14,dim,true);
+  var ready=world.LastReady;
+  Button(g,x+200,667,162,34,"定位最新单位",ready!=null&&ready.Deployed?(Action)(()=>{selection.Clear();selection.Add(ready);CenterAt(ready.P);}):null);
+  Txt(g,world.Radio.Length>25?world.Radio.Substring(0,24)+"…":world.Radio,x+4,708,12,teal);
  }
  PointF SuggestSpot(TypeInfo t){
   var h=world.Live(0).FirstOrDefault(o=>o.T.Key=="hq");if(h==null)return PointF.Empty;
@@ -135,10 +145,12 @@ partial class CommandWindow {
   string advice=world.Coach();
   if(!world.Tutorial&&advice==null&&nearbyPointNeedsFoot())advice="车辆可以掩护占点。把一个步兵班带进据点圈内，已装载的步兵要先下车。";
   if(!world.Tutorial&&advice==null)return;
-  Rect(g,18,MapTop+8,820,62,Color.FromArgb(226,ink));Rect(g,18,MapTop+8,4,62,gold);
-  Txt(g,world.Tutorial?"教官　"+world.LessonTitle:"战术提醒",32,MapTop+11,15,gold,true);
-  Txt(g,advice??LessonHint(),32,MapTop+34,16,pale);
-  if(world.Tutorial)Button(g,697,MapTop+20,126,37,"定位本步",FocusLesson);
+  Plate(g,new RectangleF(16,MapTop+9,810,65),panel,C("#b49457"));
+  Rect(g,24,MapTop+16,5,24,gold);Rect(g,33,MapTop+16,115,24,gold);
+  Txt(g,world.Tutorial?"训练  "+(world.Lesson+1)+" / "+Campaign.Lessons.Length:"战术提醒",40,MapTop+16,16,ink,true);
+  if(world.Tutorial)Txt(g,Campaign.Lessons[world.Lesson],165,MapTop+14,19,pale,true);
+  Txt(g,advice??LessonHint(),38,MapTop+43,15,pale);
+  if(world.Tutorial)Button(g,715,MapTop+20,101,36,"定位本步",FocusLesson);
  }
 }
 }
