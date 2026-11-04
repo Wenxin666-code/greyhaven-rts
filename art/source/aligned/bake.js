@@ -4,7 +4,7 @@ const T=THREE, cell=320, span=224, origin={x:160,y:220};
 const renderer=new T.WebGLRenderer({alpha:true,antialias:true,preserveDrawingBuffer:true});
 renderer.setSize(cell,cell);renderer.setClearColor(0,0);
 const paper=new T.OrthographicCamera(0,cell,0,-cell,.1,10);paper.position.z=2;
-const vehicles=['tank','ifv','mcv','arty'], keys=Object.keys(relief).concat(vehicles,["refinery","refining","miner","miner-full"]);
+const vehicles=['tank','ifv','mcv','arty'], keys=Object.keys(relief).filter(k=>k!=="depot"&&k!=="freight").concat(vehicles,["refinery","refining","miner","miner-full"]);
 const angle=i=>Math.PI*i/8;
 function canvas(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return c}
 async function loadArt(k){

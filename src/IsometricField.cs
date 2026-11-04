@@ -110,7 +110,6 @@ partial class CommandWindow {
  void DrawBattle(Graphics g){
   var view=g.Save();g.SetClip(new Rectangle(0,MapTop,MW,MH));
   DrawGroundView(g);var land=g.Save();GroundSpace(g);DrawTerrainPlan(g);
-  if(world.Hold>0){float bx=world.Sites[2].P.X-175*(1-world.Hold/world.HoldTime);Rect(g,bx,41,85,23,ink);Rect(g,bx+5,44,18,16,pale);for(int i=0;i<3;i++)Rect(g,bx+26+i*16,44,13,16,dim);}
   var mode=g.SmoothingMode;g.SmoothingMode=SmoothingMode.None;Shroud(g);g.SmoothingMode=mode;g.Restore(land);
   DrawOre(g);
   if(selection.Count==1){
@@ -122,16 +121,12 @@ partial class CommandWindow {
     }
    }
   }
-  foreach(var site in world.Sites){
-   var p=ScreenOf(site.P);float rx=Axis*zoom*1.414214f*Greyhaven.Site.CaptureRadius,ry=rx*Rise/Axis;
-   using(var pen=new Pen(Color.FromArgb(163,SiteColor(site)),1.3f)){pen.DashStyle=DashStyle.Dash;g.DrawEllipse(pen,p.X-rx,p.Y-ry,2*rx,2*ry);}
-  }
-  var objectives=new Queue<Site>(world.Sites.Where(site=>world.Explored(0,Campaign.Middle(site.Body))).OrderBy(SiteDepth));
+  bool drawHarbor=world.Explored(0,Campaign.Middle(world.Harbor.Body));
   foreach(var o in world.Units.Where(a=>a.Carrier==null&&world.Visible(a)).OrderBy(a=>a.P.X+a.P.Y)){
-   while(objectives.Count>0&&SiteDepth(objectives.Peek())<=o.P.X+o.P.Y)DrawDepot(g,objectives.Dequeue());
+   if(drawHarbor&&SiteDepth(world.Harbor)<=o.P.X+o.P.Y){DrawHarbor(g,world.Harbor);drawHarbor=false;}
    var p=ScreenOf(o.P);float s=o.T.Size*zoom;
    if(p.X< -s||p.X>MW+s||p.Y<MapTop-s||p.Y>MapTop+MH+s)continue;
-   if(selection.Contains(o)){using(var pen=new Pen(teal,2.2f))g.DrawEllipse(pen,p.X-s*.32f,p.Y-s*.13f,s*.64f,s*.31f);}
+   if(selection.Contains(o)){float ring=o.T.Foot?s*.54f:s;using(var pen=new Pen(teal,2.2f))g.DrawEllipse(pen,p.X-ring*.32f,p.Y-ring*.13f,ring*.64f,ring*.31f);}
    DrawFieldSprite(g,o,p,s);
    float age=world.Time-o.ReceiptAt;
    if(o.Side==0&&o.Alive&&o.LastReceipt>0&&age<2.3f)Txt(g,"+"+o.LastReceipt,p.X-14,p.Y-s*.33f-age*8,15,gold,true);
@@ -139,13 +134,12 @@ partial class CommandWindow {
     if(selection.Contains(o)||o.Hp<o.T.Hp||o.Ready<1){Rect(g,p.X-20,y+4,40,4,ink);Rect(g,p.X-20,y+4,40*(o.Ready<1?o.Ready:o.Hp/o.T.Hp),4,o.Ready<1?gold:teal);}
    }
   }
-  while(objectives.Count>0)DrawDepot(g,objectives.Dequeue());
+  if(drawHarbor)DrawHarbor(g,world.Harbor);
   foreach(var site in world.Sites){
-   var p=ScreenOf(site.P);float y=p.Y+Greyhaven.Site.CaptureRadius*Rise*1.414214f*zoom+3;
+   var p=ScreenOf(site.P);float y=p.Y+7;
    if(p.X< -60||p.X>MW+60||y<MapTop-25||y>MapTop+MH)continue;
-   var c=SiteColor(site);Rect(g,p.X-37,y,74,22,Color.FromArgb(208,ink));Rect(g,p.X-37,y,3,22,c);
+   var c=dim;Rect(g,p.X-37,y,74,22,Color.FromArgb(208,ink));Rect(g,p.X-37,y,3,22,c);
    Txt(g,site.Name,p.X-29,y+1,14,pale,true);
-   if(world.Explored(0,site.P))Line(g,p.X-31,y+20,p.X-31+62*Math.Abs(site.Capture)/5,y+20,site.Capture>=0?Team(0):Team(1),2);
   }
   foreach(var shot in world.Shots){if(!world.Explored(0,shot.A)||!world.Explored(0,shot.B))continue;var a=ScreenOf(shot.A);var b=ScreenOf(shot.B);Line(g,a.X,a.Y-5,b.X,b.Y-5,shot.Shell?gold:Team(shot.Side),2);}
   if(!briefing&&!paused&&!drag&&!panning&&place==null&&!sweep&&selection.Any(u=>u.Deployed&&u.T.Hit>0)&&mouse.X>=0&&mouse.X<MW&&mouse.Y>=MapTop&&mouse.Y<MapTop+MH){
@@ -181,15 +175,14 @@ partial class CommandWindow {
  PointF ApproachSite(PointF screen,PointF location){
   foreach(var site in world.Sites){
    var basePos=Campaign.Middle(site.Body);if(!world.Explored(0,basePos))continue;
-   var q=ScreenOf(basePos);if(site.Body.Contains(location)||InkHit(SiteKey(site),site.Owner==1?1:0,BuildingRect(site.Body,q,zoom),screen))return site.P;
+   var q=ScreenOf(basePos);if(site.Body.Contains(location)||InkHit("harbormaster",0,BuildingRect(site.Body,q,zoom),screen))return site.P;
   }return location;
  }
  float SiteDepth(Site s){var p=Campaign.Middle(s.Body);return p.X+p.Y;}
- Color SiteColor(Site s){return s.Owner>=0&&world.Explored(0,s.P)?Team(s.Owner):gold;}
- string SiteKey(Site site){return site==world.Sites[0]?"depot":site==world.Sites[1]?"freight":"harbormaster";}
- void DrawDepot(Graphics g,Site site){
+
+ void DrawHarbor(Graphics g,Site site){
   var box=BuildingRect(site.Body,ScreenOf(Campaign.Middle(site.Body)),zoom);
-  BuildingArt(g,SiteKey(site),site.Owner==1?1:0,box,1);
+  BuildingArt(g,"harbormaster",0,box,1);
  }
  void DrawRadar(Graphics g,float x){
   var state=g.Save();g.SmoothingMode=SmoothingMode.None;g.SetClip(new RectangleF(x,93,354,132));g.TranslateTransform(x,93);g.ScaleTransform(354f/Campaign.Width,132f/Campaign.Height);
@@ -211,46 +204,6 @@ partial class CommandWindow {
    return MobileHit(o,p,size,screen);
   });
  }
- // Bake the apron using the map's own concrete brush in world coordinates.
- // The driveway terminates in the nearest road; neither the yard nor its shadow is a sprite backdrop.
- void DrawDepotYard(Graphics g,Site site,TextureBrush concrete){
-  var lot=site.Body;var p=site.P;float left=lot.Left-7,top=lot.Top-7,right=p.X+36,bottom=Math.Max(lot.Bottom+8,p.Y+30);
-  var road=Campaign.Roads[0];float roadEdge=p.Y<road.Top?road.Top:road.Bottom;
-  float laneX=p.X+4,laneW=29;
-  var drive=RectangleF.FromLTRB(laneX-laneW/2,Math.Min(roadEdge-2,p.Y),laneX+laneW/2,Math.Max(roadEdge+2,p.Y));
-  using(var shoulder=new Pen(Color.FromArgb(71,105,95,72),4))g.DrawRectangle(shoulder,drive.X,drive.Y,drive.Width,drive.Height);
-  g.FillRectangle(concrete,drive);
-  float trackEnd=p.Y<road.Top?bottom:top;
-  for(int side=-1;side<=1;side+=2)Line(g,laneX+side*8,trackEnd,laneX+side*8,roadEdge,Color.FromArgb(36,58,55,48),2);
-  var yard=new[]{new PointF(left+5,top),new PointF(right-11,top),new PointF(right,top+11),new PointF(right,bottom-9),
-   new PointF(right-9,bottom),new PointF(left+9,bottom),new PointF(left,bottom-9),new PointF(left,top+5)};
-  for(int border=6;border>=2;border-=2)using(var gravel=new Pen(Color.FromArgb(37,121,111,90),border))g.DrawPolygon(gravel,yard);
-  // A worn gravel shoulder breaks the hard cut between concrete and turf.
-  var noise=new Random((int)lot.X);
-  for(int n=0;n<yard.Length;n++){
-   var a=yard[n];var b=yard[(n+1)%yard.Length];int count=(int)Campaign.Dist(a,b);
-   for(int j=0;j<count;j++){
-    float t=(float)noise.NextDouble(),gx=a.X+(b.X-a.X)*t+noise.Next(-3,4),gy=a.Y+(b.Y-a.Y)*t+noise.Next(-3,4);
-    Rect(g,gx,gy,1.5f,1,Color.FromArgb(75,134,125,103));
-   }
-  }
-  g.FillPolygon(concrete,yard);
-  // Keep the entrance flush instead of drawing a curb across the driveway.
-  float lip=p.Y<road.Top?bottom:top;g.FillRectangle(concrete,laneX-laneW/2,lip-2,laneW,4);
-  using(var joint=new Pen(Color.FromArgb(56,66,65,55),.7f)){
-   for(float x=lot.Right+7;x<right-7;x+=22)g.DrawLine(joint,x,top+6,x,bottom-6);
-   g.DrawLine(joint,left+5,lot.Bottom+4,right-5,lot.Bottom+4);
-  }
-  float drainY=lot.Bottom+12;
-  Rect(g,lot.Left+7,drainY,lot.Width-14,2.8f,C("#67655c"));
-  for(float x=lot.Left+8;x<lot.Right-7;x+=3)Line(g,x,drainY+.3f,x,drainY+2,C("#403f3a"),.85f);
-  for(int i=0;i<5;i++)Line(g,lot.Left+4+i*8,lot.Bottom+7,lot.Left+7+i*8,lot.Bottom+10,C("#b9a16a"),1.4f);
-  // A cast shadow and a tighter contact shadow use the same footprint as navigation.
-  for(int n=4;n>=1;n--){
-   var shadow=lot;shadow.Inflate(n*.6f,n*.6f);shadow.Offset(n*1.05f,n*.45f);
-   Rect(g,shadow.X,shadow.Y,shadow.Width,shadow.Height,Color.FromArgb(16,29,30,27));
-  }
- }
  Bitmap MakeGround(){
   using(var materials=Raw("materials")){
    var bmp=new Bitmap(Campaign.Width,Campaign.Height,PixelFormat.Format32bppPArgb);
@@ -268,11 +221,10 @@ partial class CommandWindow {
       using(var pen=new Pen(Color.FromArgb(100,pale),2))g.DrawRectangle(pen,pad);
       for(int i=pad.Left+20;i<pad.Right-14;i+=34)Line(g,i,pad.Bottom-29,i,pad.Bottom-8,Color.FromArgb(128,pale),2);
      }
-     foreach(var site in world.Sites.Take(2))DrawDepotYard(g,site,tiles[1]);
      foreach(int y in new[]{316,400,727,803})for(int i=0;i<7;i++)Rect(g,737+i*8,y,4,8,pale);
      for(int x=80;x<bmp.Width;x+=144){using(var tire=new Pen(C("#454946"),4))g.DrawEllipse(tire,x,91,13,9);}
      for(int i=12;i<bmp.Width;i+=48){Rect(g,i,97,7,5,ink);Rect(g,i,97,6,2,gold);}
-     foreach(var s in world.Sites.Skip(2)){for(int i=0;i<7;i++)Line(g,s.P.X-42+i*13,s.P.Y+32,s.P.X-36+i*13,s.P.Y+20,gold,3);}
+     foreach(var s in world.Sites){for(int i=0;i<7;i++)Line(g,s.P.X-42+i*13,s.P.Y+32,s.P.X-36+i*13,s.P.Y+20,gold,3);}
     }finally{foreach(var t in tiles)if(t!=null)t.Dispose();}
    }return bmp;
   }

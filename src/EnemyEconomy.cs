@@ -34,7 +34,7 @@ public partial class Campaign {
   string[] order={"ifv","at","tank","squad","engineer","arty"};
   var next=Info(order[(aiTurn-1)%order.Length]);
   if((next.Key=="tank"||next.Key=="arty")&&!Upgraded[1]&&!UpgradeArmor(1))return;
-  if(Train(next,1,null)){aiTurn++;aiClock=Time+(counter?8:14)*(Assisted?1.7f:1);}
+  if(Train(next,1,null)){aiTurn++;aiClock=Time+14*(Assisted?1.7f:1);}
  }
 }
 }

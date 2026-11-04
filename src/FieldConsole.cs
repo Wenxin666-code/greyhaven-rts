@@ -85,8 +85,7 @@ partial class CommandWindow {
    return site!=null?site.P:SuggestSpot(t);
   }
   if(world.LessonKey=="hq")return world.Units[0].P;
-  if(world.LessonKey=="west")return world.Sites[0].P;
-  if(world.LessonKey=="port"||world.LessonKey=="hold")return world.Sites[2].P;
+  if(world.LessonKey=="eliminate")return world.Live(1).Where(world.Visible).Select(o=>o.P).DefaultIfEmpty(world.Harbor.P).First();
   if(world.LessonKey=="ore"||world.LessonKey=="receipt"){
    var truck=world.Live(0).FirstOrDefault(o=>o.T.Key=="miner");if(truck==null){var plant=world.Live(0).FirstOrDefault(o=>o.T.Key=="refinery");return plant==null?PointF.Empty:plant.P;}
    return world.LessonKey=="ore"&&truck.Patch!=null?truck.Patch.P:truck.P;
@@ -105,7 +104,6 @@ partial class CommandWindow {
   var own=world.Live(0);var focus=own.Where(o=>!o.T.Building&&o.T.Hit>0);
   if(key=="hq")focus=own.Where(o=>o.T.Key=="mcv");
   if(key=="ore"||key=="receipt")focus=own.Where(o=>o.T.Key=="miner").Take(1);
-  if(key=="west")focus=own.Where(o=>o.T.Foot);
   selection.Clear();selection.AddRange(focus);
  }
  string LessonHint(){
@@ -128,18 +126,10 @@ partial class CommandWindow {
    if(key=="ore")return truck.Patch==null?"矿车会向未探索地带找矿。也可派步兵先探路，再选矿车左键点金色矿石。":"矿车已找到金色矿点，正在驶近。点「定位本步」查看矿点和车上的载量。";
    return truck.Returning?"矿车正在返厂卸货。留出厂门，留意精炼厂上方显示的入账金额。":"采集进度 "+(int)truck.Cargo+" / "+Campaign.LoadValue+"。满载后自动返厂，也可选车点己方精炼厂提前卸矿。";
   }
-  if(key=="hold")return "保持泊位畅通。运输船靠岸还需 "+Math.Ceiling(Math.Max(0,world.HoldTime-world.Hold))+" 秒。";
-  var siteGoal=world.Sites[key=="west"?0:2];
-  if(own.Any(o=>o.T.Foot&&Campaign.Dist(o.P,siteGoal.P)<Greyhaven.Site.CaptureRadius))return "我方步兵已进入占领区。请保持驻留，并清除圈内的敌方步兵以继续占领。";
-  if(!selection.Any(o=>o.T.Foot))return "点「定位本步」选中步兵，再左键金圈内的空地。只有步兵能占点。";
-  return key=="west"?"左键金圈内的空地，让步兵驻留到仓库变蓝。":"带上步兵和战车。按 A 后左键港务中心，清除守军并占领。";
- }
- bool nearbyPointNeedsFoot(){
-  return selection.Any(o=>!o.T.Building&&!o.T.Foot&&world.Sites.Any(s=>s.Owner!=0&&Campaign.Dist(s.P,o.P)<60&&!world.Live(0).Any(f=>f.T.Foot&&Campaign.Dist(f.P,s.P)<Greyhaven.Site.CaptureRadius)));
+  return "点「定位本步」选中战斗部队，按 A 向港务中心附近搜索，消灭最后的敌方守军。";
  }
  void DrawCoach(Graphics g){
   string advice=world.Coach();
-  if(!world.Tutorial&&advice==null&&nearbyPointNeedsFoot())advice="车辆可以掩护占点。把一个步兵班带进据点圈内，已装载的步兵要先下车。";
   if(!world.Tutorial&&advice==null)return;
   hits.Add(new HitBox{Box=new RectangleF(16,MapTop+9,810,65),Run=()=>{}});
   Plate(g,new RectangleF(16,MapTop+9,810,65),panel,C("#b49457"));

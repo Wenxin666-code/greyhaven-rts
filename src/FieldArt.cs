@@ -66,11 +66,29 @@ partial class CommandWindow {
   if(built<1){float reveal=.16f+.84f*built*built*(3-2*built);g.IntersectClip(new RectangleF(box.X,box.Bottom-box.Height*reveal,box.Width,box.Height*reveal));}
   DrawStamp(g,key,new Rectangle(0,row*FrameSize,FrameSize,FrameSize),box);g.Restore(state);
  }
+ static RectangleF SoldierBox(PointF p,float size){
+  float w=size*.54f;return new RectangleF(p.X-w/2,p.Y-w*.91f,w,w);
+ }
+ static PointF SoldierFeet(Piece o,PointF p,float zoom,float time){
+  if(o.Path.Count>0)p.Y-=(float)Math.Abs(Math.Sin(time*10+o.Id))*zoom;
+  return p;
+ }
+ // Project the same soldier onto the ground as it falls. Six cached poses per view.
+ const int FallCell=144,FallPoses=6;
+ static Bitmap FallenSheet(Bitmap standing){
+  var result=new Bitmap(4*FallCell,2*FallPoses*FallCell,System.Drawing.Imaging.PixelFormat.Format32bppPArgb);
+  using(var g=Graphics.FromImage(result)){
+   for(int team=0;team<2;team++)for(int d=0;d<4;d++)for(int i=0;i<FallPoses;i++){
+    float fall=i/(float)(FallPoses-1);int row=team*FallPoses+i;var state=g.Save();
+    g.TranslateTransform(d*FallCell+72,row*FallCell+82);g.ScaleTransform(1,1-.55f*fall);
+    g.RotateTransform((d<2?1:-1)*83*fall);
+    g.DrawImage(standing,new RectangleF(-30,-60*.91f,60,60),new RectangleF(d*256,team*256,256,256),GraphicsUnit.Pixel);
+    g.Restore(state);
+   }
+  }return result;
+ }
  void DrawLive(Graphics g,TypeInfo t,int side,int dir,PointF p,float s,float built){
-  if(t.Foot){
-   int n=t.Key=="squad"?4:2;
-   for(int j=0;j<n;j++){float x=p.X+((j%2)-.5f)*s*.26f,y=p.Y+(j/2-.5f)*s*.18f;
-    PaintFrame(g,t,side,dir,new RectangleF(x-s*.22f,y-s*.40f,s*.44f,s*.44f));}
+  if(t.Foot){PaintFrame(g,t,side,dir,SoldierBox(p,s));
   }else if(t.Building)BuildingArt(g,t.Key,side,BuildingRect(Campaign.Footprint(t,PointF.Empty),p,s/t.Size),built);
   else PaintFrame(g,t,side,dir,VehicleRect(t,p,s));
  }
@@ -83,7 +101,11 @@ partial class CommandWindow {
   if(!o.Alive){
    if(o.T.Building)BuildingArt(g,o.T.Key,2,BuildingRect(Campaign.Footprint(o.T,o.P),p,zoom),1);
    else if(!o.T.Foot)PaintFrame(g,o.T,2,dir,VehicleRect(o.T,p,size));
-   else Sprite(g,o.T,o.Side,dir,o.Dead<.4f?1+o.Side:0,new RectangleF(p.X-size/2,p.Y-size*.59f,size,size));
+   else{
+    int pose=Math.Min(FallPoses-1,(int)(o.Dead*14)),row=o.Side*FallPoses+pose;
+    float k=size*.54f/60;
+    DrawStamp(g,"fallen-"+o.T.Key,new Rectangle(dir/4*FallCell,row*FallCell,FallCell,FallCell),new RectangleF(p.X-72*k,p.Y-82*k,FallCell*k,FallCell*k));
+   }
    return;
   }
   if(o.T.Key=="refinery"&&o.Ready>=1){
@@ -93,7 +115,7 @@ partial class CommandWindow {
   if(o.T.Key=="miner"&&o.Cargo>10){
    DrawStamp(g,"miner-full",SourceCell(o.T,o.Side,dir),VehicleRect(o.T,p,size));return;
   }
-  if(o.T.Foot&&o.Path.Count>0)p.Y-=(float)Math.Abs(Math.Sin(world.Time*10+o.Id))*zoom;
+  if(o.T.Foot)p=SoldierFeet(o,p,zoom,world.Time);
   DrawLive(g,o.T,o.Side,dir,p,size,o.Ready);
   if(o.T.Building&&o.Ready<1){
    var box=BuildingRect(Campaign.Footprint(o.T,o.P),p,zoom);
@@ -124,11 +146,9 @@ partial class CommandWindow {
  bool MobileHit(Piece o,PointF p,float size,PointF screen){
   int dir=(o.Dir+14)%16;
   if(o.T.Foot){
-   if(Math.Abs(p.X-screen.X)<size*.12f&&Math.Abs(p.Y-screen.Y)<size*.12f)return true;
-   for(int i=0;i<(o.T.Key=="squad"?4:2);i++){
-    var box=new RectangleF(p.X+((i%2)-.5f)*size*.26f-size*.22f,p.Y+(i/2-.5f)*size*.18f-size*.4f,size*.44f,size*.44f);
-    if(PixelHit(o.T.Key,SourceCell(o.T,o.Side,dir),box,screen))return true;
-   }return false;
+   var feet=SoldierFeet(o,p,zoom,world.Time);var box=SoldierBox(feet,size);
+   if(Math.Abs(p.X-screen.X)<size*.09f&&Math.Abs(p.Y-screen.Y)<size*.07f)return true;
+   return PixelHit(o.T.Key,SourceCell(o.T,o.Side,dir),box,screen);
   }
   var source=o.T.Key=="tank"?TankCell(o.Side,TankFrame(o)):SourceCell(o.T,o.Side,dir);
   return PixelHit(o.T.Key,source,VehicleRect(o.T,p,size),screen);

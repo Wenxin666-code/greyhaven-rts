@@ -8,8 +8,6 @@ $art = Join-Path $root 'art/source'
 $images = @(Get-ChildItem -LiteralPath (Join-Path $art 'aligned/packed') -Filter 'iso-*.png')
 foreach ($key in @('squad','at','engineer')) {
     $images += Get-Item -LiteralPath (Join-Path $art "isometric/packed/hd-$key.png")
-    $folder = if ($key -eq 'squad') { 'v02' } else { 'campaign' }
-    $images += Get-Item -LiteralPath (Join-Path $art "$folder/sprites/$key.png")
 }
 $images += @(Get-ChildItem -LiteralPath (Join-Path $art 'console') -Filter '*.png')
 $resources = @($images | ForEach-Object { '/resource:' + $_.FullName + ',Greyhaven.Art.' + $_.Name })

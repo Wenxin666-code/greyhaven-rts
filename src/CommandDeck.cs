@@ -11,7 +11,7 @@ partial class CommandWindow {
  static readonly string[] portraitKeys={"squad","at","engineer","ifv","tank","miner"};
  void Portrait(Graphics g,TypeInfo t,RectangleF box){
   int index=Array.IndexOf(portraitKeys,t.Key);
-  if(index<0){DrawCardArt(g,t,box);return;}
+  if(index<0||t.Key=="squad"){DrawCardArt(g,t,box);return;}
   DrawStamp(g,"portraits",new Rectangle(index*98,0,98,72),box);
  }
  void Metal(Graphics g,float x,float y,float w,float h){
@@ -64,7 +64,7 @@ partial class CommandWindow {
   Rect(g,61,203,49,4,gold);Txt(g,"GH—01     /     GREYHAVEN FRONT",62,221,18,gold,true);
   Txt(g,"断线前沿",53,253,89,pale,true);Txt(g,"灰 港 登 陆",64,367,29,pale,true);
   Line(g,64,428,462,428,Color.FromArgb(150,dim));
-  Txt(g,"建立滩头基地，打通通往港务中心的走廊。",64,450,19,pale);
+  Txt(g,"建立滩头基地，消灭港区的敌方部队与建筑。",64,450,19,pale);
   Button(g,64,545,335,61,"开始游戏",OpenMissions,true);Txt(g,"›",365,550,30,ink,true);
   Button(g,64,620,335,46,"规则介绍",()=>{unitRoster=false;rulesOpen=true;hits.Clear();hudDirty=true;});
   Button(g,64,682,190,40,"退出游戏",Close);
@@ -88,7 +88,7 @@ partial class CommandWindow {
   }
   Txt(g,"港区地形   /   GH–01",540,478,13,pale,true);
   Txt(g,"行动简报",1051,224,21,pale,true);
-  string[] notes=combatMission?new[]{"从西南滩头建立基地。","采矿供给部队，用步兵","夺取东侧港务中心，","守住泊位 45 秒。"}:new[]{"教官引导完成 12 个目标。","学习自建矿厂、生产排队、","步战协同与据点占领。","可以随时定位当前步骤。"};
+  string[] notes=combatMission?new[]{"从西南滩头建立基地。","采矿扩军，搜索东侧敌军。","摧毁全部敌方单位和建筑，","包括矿车及施工中的设施。"}:new[]{"教官引导完成 10 个目标。","学习自建矿厂、生产排队、","步战协同并消灭敌方守军。","可以随时定位当前步骤。"};
   for(int i=0;i<notes.Length;i++)Txt(g,notes[i],1052,274+i*31,17,dim);
   Txt(g,combatMission?"战役难度":"训练设置",528,542,17,pale,true);
   if(combatMission){

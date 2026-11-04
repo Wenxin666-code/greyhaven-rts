@@ -22,8 +22,8 @@ public class Piece {
  public readonly List<PointF> Berths=new List<PointF>();public PointF? FirePoint;public PointF? Rally;public March Formation;public Piece Target,Carrier; public PointF Goal; public bool Advancing;
 }
 public class Site {
- public string Name;public PointF P;public int Owner=-1;public float Capture;
- public const float CaptureRadius=49;
+ public string Name;public PointF P;
+
  public readonly RectangleF Body;
  public Site(string name,int x,int y,int bodyX,int bodyY){
   Name=name;P=new PointF(x,y);Body=new RectangleF(bodyX,bodyY,2*Campaign.Tile,2*Campaign.Tile);
@@ -38,9 +38,9 @@ public partial class Campaign {
   new TypeInfo("factory","车辆工厂","hq",380,980,0,0,155,0,10,0),
   new TypeInfo("radar","雷达站","hq",240,510,0,0,113,0,8,0),
   new TypeInfo("post","防御阵地","hq",235,610,17,118,102,0,7,1.2f),
-  new TypeInfo("squad","步兵班","barracks",85,110,10,73,58,32,5,1.25f),
-  new TypeInfo("at","反装甲组","barracks",135,85,30,115,61,29,8,2.5f),
-  new TypeInfo("engineer","工程组","barracks",95,90,0,0,58,34,6,1),
+  new TypeInfo("squad","步枪兵","barracks",85,110,10,73,58,32,5,1.25f),
+  new TypeInfo("at","反装甲兵","barracks",135,85,30,115,61,29,8,2.5f),
+  new TypeInfo("engineer","工兵","barracks",95,90,0,0,58,34,6,1),
   new TypeInfo("ifv","步兵战车","factory",185,210,16,96,82,45,8,1.3f),
   new TypeInfo("tank","主战坦克","factory",290,355,38,115,94,36,12,2),
   new TypeInfo("arty","自行火炮","factory",315,150,54,222,87,31,13,3.5f),
@@ -49,17 +49,18 @@ public partial class Campaign {
   new TypeInfo("miner","采矿车","factory",195,310,0,0,89,38,9,0)};
  public static TypeInfo Info(string k){return Array.Find(Types,t=>t.Key==k);}
  public readonly List<Piece> Units=new List<Piece>();public readonly List<Shot> Shots=new List<Shot>();
- public readonly Site[] Sites={new Site("西岸仓库",172,214,96,144),new Site("中央货场",660,444,576,408),new Site("港务中心",1330,292,1265,227)};
- public int[] Funds={1150,1150};public bool[] Upgraded={false,false};public float Time,Hold,Scan; public bool Landing,Won,Lost;public string Radio="展开工程车，在西南建立登陆基地。";
- int seq,aiTurn,wave;float nextEnemyDecision=1,aiClock,nextWave=92;bool counter;
+ public readonly Site[] Sites={new Site("港务中心",1330,292,1265,227)};
+ public Site Harbor {get{return Sites[0];}}
+ public int[] Funds={1150,1150};public bool[] Upgraded={false,false};public float Time,Scan; public bool Landing,Won,Lost;public string Radio="展开工程车，在西南建立登陆基地。";
+ int seq,aiTurn;float nextEnemyDecision=1,aiClock,nextWave=92;
  public readonly bool Tutorial,Assisted;
  public int Lesson,InfantryDelivered,VehiclesDelivered;public Piece LastOrder,LastReady;public float ReadyAt;
  public Campaign(bool tutorial=false,bool assisted=false){
   Tutorial=tutorial;Assisted=assisted||tutorial;if(Assisted){Funds[0]=1700;nextWave=175;}
   Spawn("mcv",0,152,514);Spawn("squad",0,214,418);Spawn("squad",0,258,410);
 
-  if(tutorial){Spawn("squad",1,1390,287);Sites[2].Owner=1;Sites[2].Capture=-5;Reveal();return;}
-  Spawn("mcv",1,1548,500);Sites[2].Owner=1;Sites[2].Capture=-5;Reveal();
+  if(tutorial){Spawn("squad",1,1390,287);Reveal();return;}
+  Spawn("mcv",1,1548,500);Reveal();
  }
  public static float Dist(PointF a,PointF b){return (float)Math.Sqrt((a.X-b.X)*(a.X-b.X)+(a.Y-b.Y)*(a.Y-b.Y));}
  public Piece Spawn(string k,int side,float x,float y){
@@ -127,7 +128,7 @@ public partial class Campaign {
   if(car==null||car.T.Key!="ifv"||!car.Alive)return;var cargo=Units.FirstOrDefault(o=>o.Alive&&o.Carrier==car);
   if(cargo!=null){PointF drop;if(Exit(car,out drop)){cargo.Carrier=null;cargo.P=drop;Radio="步兵已下车。";}else Radio="周围缺少下车空间。";return;}
   var foot=Live(car.Side).Where(o=>o.T.Foot&&Dist(o.P,car.P)<70).OrderBy(o=>Dist(o.P,car.P)).FirstOrDefault();
-  if(foot==null){Radio="先把一个步兵班组移到战车旁。";return;}Halt(foot);foot.Carrier=car;Radio=foot.T.Name+"已登车。";
+  if(foot==null){Radio="先把一名步兵移到战车旁。";return;}Halt(foot);foot.Carrier=car;Radio=foot.T.Name+"已登车。";
  }
  bool Exit(Piece o,out PointF p){
   if(o.T.Key=="barracks"&&o.Berths.Count>0){
@@ -203,34 +204,30 @@ public partial class Campaign {
    if(o.Path.Count>0&&(Dist(o.P,p)<(o.T.Foot?.1f:.001f)||(o.Path.Count==1&&Dist(o.P,p)<9&&Units.Any(u=>u!=o&&u.Deployed&&Dist(u.P,p)<15))))o.Path.Dequeue();}
  }
  bool VisibleTo(int side,Piece e){return Explored(side,e.P);}
- void EnemyOrders(bool urgent){
-  var army=Live(1).Where(o=>!o.T.Building&&o.T.Hit>0).ToArray();
-  var target=urgent?Sites[2].P:wave%3==1?Sites[1].P:wave%3==2?Sites[0].P:Live(0).Where(o=>o.T.Key=="hq"&&Explored(1,o.P)).Select(o=>o.P).DefaultIfEmpty(Sites[1].P).First();
-  int i=0;foreach(var o in army.Skip(urgent?0:1)){float a=i++*2.4f;for(int j=0;j<7;j++){float r=45+j*8;if(Move(o,new PointF(target.X+(float)Math.Cos(a+j)*r,target.Y+(float)Math.Sin(a+j)*r),true))break;}}
+ public int Remaining(int side){return Units.Count(o=>o.Alive&&o.Side==side);}
+ void EnemyOrders(){
+  var known=Units.Where(o=>o.Side==0&&o.Alive&&o.Carrier==null&&Explored(1,o.P)).ToArray();
+  var beach=new PointF(152,514);
+  foreach(var unit in Live(1).Where(o=>!o.T.Building&&o.T.Hit>0)){
+   if(unit.Target!=null&&unit.Target.Alive)continue;
+   var target=known.OrderBy(o=>Dist(unit.P,o.P)).FirstOrDefault();
+   if(target!=null){Attack(unit,target);continue;}
+   if(!Explored(1,beach)){Move(unit,beach,true);continue;}
+   if(ExploreGround(unit))unit.Advancing=true;
+  }
  }
  public void Tick(float dt){
   if(Won||Lost)return;Time+=dt;visionTimer-=dt;if(visionTimer<=0){visionTimer=.20f;Reveal();}Scan=Math.Max(0,Scan-dt);
   Shots.ForEach(s=>s.Life-=dt);Shots.RemoveAll(s=>s.Life<=0);bool[] power={Power(0)>=0,Power(1)>=0};
   foreach(var o in Units.ToArray())UnitTick(o,dt,power[o.Side]);
   Units.RemoveAll(o=>!o.Alive&&o.Dead>24);
-  foreach(var s in Sites){
-   bool blue=Live(0).Any(o=>o.T.Foot&&Dist(o.P,s.P)<Site.CaptureRadius),red=Live(1).Any(o=>o.T.Foot&&Dist(o.P,s.P)<Site.CaptureRadius);
-   if(blue!=red){s.Capture=Math.Max(-5,Math.Min(5,s.Capture+(blue?1:-1)*dt));
-    int owner=s.Capture>=5?0:s.Capture<=-5?1:s.Owner;
-    if(owner!=s.Owner){s.Owner=owner;if(owner==0||Explored(0,s.P))SetEvent(s.P,s.Name+"易手");Radio=s.Name+(owner==0?"已由我方控制。":"已被敌军夺取。");}}
-  }
-
+  Lost=Remaining(0)==0;Won=!Lost&&Remaining(1)==0;
+  if(Won||Lost)return;
   if(!Tutorial&&Time>=nextEnemyDecision){
    nextEnemyDecision=Time+2;EnemyEconomy();
   }
-  if(!Tutorial&&Time>=nextWave){wave++;EnemyOrders(counter);nextWave=Time+(counter?18:54)*(Assisted?1.5f:1);}
-  if(Sites[2].Owner==0){
-   if(!counter){counter=true;EnemyOrders(true);Radio="港务中心已接管！守住泊位 45 秒，等待运输船。";}
-   bool contested=Live(1).Any(o=>!o.T.Building&&Dist(o.P,Sites[2].P)<72);
-   if(!contested&&(!Tutorial||LessonKey=="hold"))Hold+=dt;if(Hold>=HoldTime)Won=true;
-  }else{Hold=0;counter=false;}
+  if(!Tutorial&&Time>=nextWave){EnemyOrders();nextWave=Time+54*(Assisted?1.5f:1);}
   if(Tutorial)AdvanceLesson();
-  if(!Units.Any(o=>o.Side==0&&o.Alive&&(o.T.Key=="hq"||o.T.Key=="mcv")))Lost=true;
  }
 }
 }

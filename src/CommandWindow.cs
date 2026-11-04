@@ -16,7 +16,7 @@ partial class CommandWindow:Form {
  Campaign world; readonly Stopwatch watch=Stopwatch.StartNew(); readonly Timer pulse=new Timer(); double last; float scale,ox,oy;
  bool showGrid;bool briefing=true,paused,help,attack,army,drag,dragged; int speed=1; PointF mouse,start;TypeInfo place;
  List<Piece> selection=new List<Piece>();List<HitBox> hits=new List<HitBox>();
- Bitmap ground;Dictionary<string,Bitmap> atlas=new Dictionary<string,Bitmap>();Dictionary<string,Font> fonts=new Dictionary<string,Font>();
+ Bitmap ground;Dictionary<string,Font> fonts=new Dictionary<string,Font>();
  Color ink=C("#101b20"),panel=C("#202c32"),pale=C("#f3eee0"),dim=C("#abb8b5"),gold=C("#ecb54e"),teal=C("#82d0b4"),red=C("#ee8b72");
  class HitBox {public RectangleF Box;public Action Run;}
  static readonly Dictionary<string,Color> palette=new Dictionary<string,Color>();
@@ -30,21 +30,14 @@ partial class CommandWindow:Form {
   KeyPreview=true;SetStyle(ControlStyles.ResizeRedraw|ControlStyles.Opaque|ControlStyles.AllPaintingInWmPaint,true);
   Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);
   world=new Campaign();ground=MakeGround();projectedGround=ProjectTerrain();radarGround=new Bitmap(488,214,System.Drawing.Imaging.PixelFormat.Format32bppPArgb);using(var rg=Graphics.FromImage(radarGround))rg.DrawImage(ground,0,0,488,214);
-  foreach(var key in new[]{"hq","power","factory","barracks","radar","post","squad","at","engineer","tank","ifv","mcv","arty","depot","freight","harbormaster","refinery","miner","miner-full","refining"})painted[key]=Raw((key=="squad"||key=="at"||key=="engineer"?"hd-":"iso-")+key);
+  foreach(var key in new[]{"hq","power","factory","barracks","radar","post","squad","at","engineer","tank","ifv","mcv","arty","harbormaster","refinery","miner","miner-full","refining"})painted[key]=Raw((key=="squad"||key=="at"||key=="engineer"?"hd-":"iso-")+key);
   foreach(var key in new[]{"portraits","plate","harbor"})painted[key]=Raw(key);
   painted["ore"]=OreSprites();
-  foreach(var t in Campaign.Types.Where(t=>t.Foot))atlas[t.Key]=WreckSheet(t);
+  foreach(var t in Campaign.Types.Where(t=>t.Foot))painted["fallen-"+t.Key]=FallenSheet(painted[t.Key]);
   Restart();pulse.Interval=15;pulse.Tick+=(s,e)=>{double now=watch.Elapsed.TotalSeconds;float dt=(float)Math.Min(.12,now-last);last=now;
    if(!briefing&&!paused&&!world.Won&&!world.Lost){if(ContainsFocus&&Control.MouseButtons==MouseButtons.None)PollEdgeScroll(dt);else edgeDwell=0;for(int i=0;i<speed;i++)world.Tick(dt);selection.RemoveAll(o=>!o.Alive||o.Carrier!=null);}
-   if(!briefing||hudDirty)Invalidate();};pulse.Start(); FormClosed+=(s,e)=>{pulse.Stop();pulse.Dispose();if(timerPrecision)timeEndPeriod(1);ground.Dispose();projectedGround.Dispose();radarGround.Dispose();if(terrainView!=null)terrainView.Dispose();ReleaseFrame();ClearLabelCache();ClearStampCache();foreach(var b in painted.Values)b.Dispose();foreach(var i in atlas.Values)i.Dispose();foreach(var f in fonts.Values)f.Dispose();};
+   if(!briefing||hudDirty)Invalidate();};pulse.Start(); FormClosed+=(s,e)=>{pulse.Stop();pulse.Dispose();if(timerPrecision)timeEndPeriod(1);ground.Dispose();projectedGround.Dispose();radarGround.Dispose();if(terrainView!=null)terrainView.Dispose();ReleaseFrame();ClearLabelCache();ClearStampCache();foreach(var b in painted.Values)b.Dispose();foreach(var f in fonts.Values)f.Dispose();};
   Deactivate+=(s,e)=>{ResetEdgeScroll();frontEnterHeld=false;tHeld=false;selectType=null;if(!briefing&&!world.Won&&!world.Lost)paused=true;drag=false;panning=false;Capture=false;};
- }
- static Bitmap WreckSheet(TypeInfo t){
-  using(var stream=typeof(CommandWindow).Assembly.GetManifestResourceStream("Greyhaven.Art."+t.Key+".png"))
-  using(var image=new Bitmap(stream)){
-   int cell=image.Width/8,start=(t.Foot||t.Key=="factory"?6:3)*2*cell;
-   return image.Clone(new Rectangle(0,start,image.Width,image.Height-start),PixelFormat.Format32bppPArgb);
-  }
  }
  [DllImport("dwmapi.dll")]static extern int DwmSetWindowAttribute(IntPtr window,int attr,ref int value,int length);
  protected override void OnHandleCreated(EventArgs e){base.OnHandleCreated(e);
@@ -88,7 +81,7 @@ partial class CommandWindow:Form {
    else{g.DrawRectangle(p,x-7,y-4,14,9);g.DrawLine(p,x,y-8,x,y-1);g.DrawLine(p,x-4,y-2,x,y+1);g.DrawLine(p,x,y+1,x+4,y-2);}
   }
  }
- void Sprite(Graphics g,TypeInfo t,int side,int dir,int group,RectangleF box){var bmp=atlas[t.Key];g.DrawImage(bmp,box,new RectangleF((dir%8)*192,(group*2+dir/8)*192,192,192),GraphicsUnit.Pixel);}
+
  [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
  struct DibHeader {
   public uint Size;public int Width,Height;public ushort Planes,BitCount;
@@ -148,7 +141,7 @@ partial class CommandWindow:Form {
  void DrawHud(Graphics g){
   Metal(g,0,0,W,MapTop);Emblem(g,31,26,14);Rect(g,64,1,7,49,gold);
   Txt(g,"断线前沿",87,8,28,pale,true);Txt(g," /  灰港登陆",216,14,20,dim,true);
-  Txt(g,world.Tutorial?"野外训练":world.Assisted?"宽松战役":"标准战役",450,18,14,dim,true);
+  Txt(g,world.Tutorial?"野外训练":"歼灭敌方   ·   剩余 "+world.Remaining(1),450,18,14,dim,true);
   Txt(g,"军费",700,17,15,dim,true);Txt(g,world.Funds[0].ToString(),753,9,24,gold,true);
   Txt(g,"电力",887,17,15,dim,true);Txt(g,world.Power(0).ToString("+#;-#;0"),939,9,24,world.Power(0)<0?red:teal,true);
   Txt(g,TimeSpan.FromSeconds(world.Time).ToString(@"mm\:ss"),1070,10,23,pale,true);
@@ -188,9 +181,9 @@ partial class CommandWindow:Form {
   Txt(g,"LANDING FORCE      //      OPERATIONS COMMAND      01—GH",324,203,14,gold,true);
   string title=world.Won?(world.Tutorial?"训练完成":"行动成功"):world.Lost?"行动终止":help?"战地手册":"指挥已暂停";
   Txt(g,title,323,245,49,pale,true);Line(g,329,325,1140,325,C("#5d7265"));
-  string[] lines=world.Won?new[]{"运输船已接岸。港区走廊重新开放。","作战用时 "+TimeSpan.FromSeconds(world.Time).ToString(@"mm\:ss")+"　｜　存活部队 "+world.Live(0).Count(o=>!o.T.Building)}:
-   world.Lost?new[]{"最后一座指挥部与工程车均已损失，登陆部队撤离。","先保护指挥部，再让步兵夺取仓库，扩大生产。"}:
-   new[]{"01    选择工程车按 D 展开。先建电站和精炼厂，再建兵营和车辆工厂，升级后可生产坦克。","02    左键选中我方部队，点地面移动，点敌方单位集火。A 后点地边打边走；Ctrl 点地压制，S 停火。","03    矿车卸货换取军费，车辆工厂可补造矿车。夺下港务中心后清开近敌，守住 "+world.HoldTime+" 秒。","04    H 回基地，空格看事件，Ctrl+F1～F4 存镜头，F1～F4 返回。T 选同类，连按两次选全图。"};
+  string[] lines=world.Won?new[]{"敌方单位与建筑已全部清除。","作战用时 "+TimeSpan.FromSeconds(world.Time).ToString(@"mm\:ss")+"　｜　存活部队 "+world.Live(0).Count(o=>!o.T.Building)}:
+   world.Lost?new[]{"我方单位与建筑已全部损失，本次行动结束。","先保护指挥部，再恢复采矿和生产，再消灭敌方部队和基地。"}:
+   new[]{"01    选择工程车按 D 展开。先建电站和精炼厂，再建兵营和车辆工厂，升级后可生产坦克。","02    左键选中我方部队，点地面移动，点敌方单位集火。A 后点地边打边走；Ctrl 点地压制，S 停火。","03    矿车卸货换取军费，车辆工厂可补造矿车。摧毁敌方全部单位与建筑即可获胜。","04    H 回基地，空格看事件，Ctrl+F1～F4 存镜头，F1～F4 返回。T 选同类，连按两次选全图。"};
   for(int i=0;i<lines.Length;i++)Txt(g,lines[i],328,347+i*41,17,i==0?gold:pale);
   Button(g,328,553,241,49,world.Won||world.Lost?"返回选关":"返回战场",()=>{if(world.Won||world.Lost)OpenMissions();else{paused=false;help=false;}},true);
   if(world.Tutorial&&world.Won)Button(g,594,553,205,49,"进入宽松战役",()=>StartMission(false,true));

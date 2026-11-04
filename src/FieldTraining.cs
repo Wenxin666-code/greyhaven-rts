@@ -3,9 +3,8 @@ using System.Drawing;
 using System.Linq;
 namespace Greyhaven {
 public partial class Campaign {
- public float HoldTime {get{return Tutorial?12:45;}}
- static readonly string[] LessonKeys={"hq","power","refinery","ore","receipt","barracks","squad","west","factory","ifv","port","hold"};
- public static readonly string[] Lessons={"展开指挥部","建立电站","建造矿石精炼厂","找到矿点并开始采集","运回第一车矿石","建立兵营","生产一个步兵班","占领西岸仓库","建造车辆工厂","让步兵战车出厂","夺取港务中心","保护泊位"};
+ static readonly string[] LessonKeys={"hq","power","refinery","ore","receipt","barracks","squad","factory","ifv","eliminate"};
+ public static readonly string[] Lessons={"展开指挥部","建立电站","建造矿石精炼厂","找到矿点并开始采集","运回第一车矿石","建立兵营","训练一名步枪兵","建造车辆工厂","让步兵战车出厂","消灭敌方守军"};
  public string LessonKey {get{return LessonKeys[Lesson];}}
  public string LessonTitle {get{return (Lesson+1)+" / "+Lessons.Length+"　"+Lessons[Lesson];}}
  void AdvanceLesson(){
@@ -16,8 +15,6 @@ public partial class Campaign {
     case "receipt":complete=OreReceipts[0]>0;break;
     case "squad":complete=InfantryDelivered>0;break;
     case "ifv":complete=VehiclesDelivered>0;break;
-    case "west":complete=Sites[0].Owner==0;break;
-    case "port":complete=Sites[2].Owner==0;break;
     default:complete=Live(0).Any(o=>o.T.Key==key);break;
    }
    if(!complete)break;Lesson++;
@@ -38,7 +35,6 @@ public partial class Campaign {
   if(stuck!=null)return stuck.T.Name+" #"+stuck.Id+" 已完工但出口堵塞，请移开门口的部队。";
   if(Landing&&Funds[0]<195&&!Live(0).Any(o=>o.T.Key=="miner"&&o.Mining))return "矿车停工或已损失。选中现有矿车恢复采矿；车辆工厂可以补造矿车。";
   if(Power(0)<0)return "供电不足，生产以 45% 速度运行。增建电站可恢复速度。";
-  if(Sites[2].Owner==0&&Live(1).Any(e=>!e.T.Building&&Dist(e.P,Sites[2].P)<72))return "敌方部队正在争夺泊位，靠岸计时暂停。优先清除港务中心附近的敌方部队。";
   return null;
  }
  public bool CancelOrder(Piece o,int slot){

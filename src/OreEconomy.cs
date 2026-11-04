@@ -115,15 +115,18 @@ public partial class Campaign {
  }
  void SurveyForOre(Piece truck){
   // Choose unexplored ground using the side's map, independently of ore locations.
+  truck.Surveying=ExploreGround(truck);
+  if(!truck.Surveying)truck.Dispatch=4;
+ }
+ bool ExploreGround(Piece unit){
   const int spacing=4*Tile;var candidates=new List<PointF>();
   for(int y=144;y<Height;y+=spacing)for(int x=48;x<Width;x+=spacing){
-   var point=new PointF(x,y);if(!Explored(truck.Side,point))candidates.Add(point);
+   var point=new PointF(x,y);if(!Explored(unit.Side,point))candidates.Add(point);
   }
-  truck.Surveying=false;
-  foreach(var point in candidates.OrderBy(p=>Dist(truck.P,p))){
-   if(Route(truck,point)){truck.Surveying=true;return;}
+  foreach(var point in candidates.OrderBy(p=>Dist(unit.P,p))){
+   if(Route(unit,point))return true;
   }
-  truck.Dispatch=4;
+  return false;
  }
 }
 }
