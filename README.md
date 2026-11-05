@@ -1,6 +1,8 @@
 # 断线前沿 · 灰港登陆
 现代战争单人即时战略游戏，Windows x64 桌面版 v0.14.0。
 
+新增独立的 [动画美术验收 v01](art/review/animation-v01/README.md)，含七组动作样片、动图、视频和可暂停逐帧查看的预览页。此批素材待验收，尚未接入游戏。
+
 **开始游戏**　从 [v0.14.0 发布页](https://github.com/Wenxin666-code/greyhaven-rts/releases/tag/v0.14.0) 下载可执行文件，或在本机项目根目录双击 `断线前沿.exe`。程序在独立窗口中运行，使用 Windows 自带的 .NET Framework 4.x。地图和全部方向图集已嵌入程序，可单独复制 exe，离线游玩。
 
 [查看主界面](docs/主界面.png) · [查看选关页](docs/关卡选择.png)
