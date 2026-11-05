@@ -5,7 +5,8 @@ using System.Linq;
 
 namespace Greyhaven {
 public partial class Campaign {
- public const int Tile=24, Width=1680, Height=960;
+ public const int Tile=24, Width=2520, Height=1440;
+ public static readonly PointF EnemyHome=new PointF(Width-132,Height-460);
  public static RectangleF Footprint(TypeInfo t,PointF pointer){
   int w=(t.Key=="factory"?4:t.Key=="hq"||t.Key=="barracks"||t.Key=="refinery"?3:2)*Tile;
   int h=(t.Key=="hq"||t.Key=="factory"?3:2)*Tile;
@@ -13,7 +14,11 @@ public partial class Campaign {
  }
  public static PointF Middle(RectangleF r){return new PointF(r.Left+r.Width/2,r.Top+r.Height/2);}
  static RectangleF Inflated(RectangleF r,float pad){r.Inflate(pad,pad);return r;}
- public static readonly RectangleF[] Roads={new RectangleF(0,330,Width,63),new RectangleF(735,98,61,Height-98),new RectangleF(735,743,755,50),new RectangleF(1435,295,55,498)};
+ public static readonly RectangleF[] Roads={
+  new RectangleF(0,330,Width,63),new RectangleF(735,98,61,Height-98),
+  new RectangleF(735,743,1595,50),new RectangleF(1435,295,55,978),
+  new RectangleF(2275,295,55,978),new RectangleF(735,1223,1595,50),
+  new RectangleF(200,1007,596,50)};
  public static bool HasGate(TypeInfo t){return t.Key=="barracks"||t.Key=="factory"||t.Key=="hq"||t.Key=="refinery";}
  public static RectangleF Gate(RectangleF body){return new RectangleF(body.Left,body.Bottom,body.Width,Tile);}
  public static readonly RectangleF[] YardWalls={new RectangleF(842,214,74,8),new RectangleF(962,214,77,8),new RectangleF(1094,214,70,8)};

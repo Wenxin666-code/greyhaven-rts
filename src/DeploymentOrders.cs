@@ -24,7 +24,8 @@ public partial class Campaign {
   }return o.P;
  }
  public static RectangleF Muster(RectangleF lot){var gate=Gate(lot);return new RectangleF(gate.X,gate.Bottom,gate.Width,2*Tile);}
- static RectangleF ReservedLot(TypeInfo t,RectangleF r){if(HasGate(t))r.Height+=Tile;if(t.Key=="barracks")r.Height+=2*Tile;return r;}
+ public static RectangleF UnloadingLane(RectangleF lot){return new RectangleF(lot.Left,lot.Bottom,lot.Width,2*Tile);}
+ static RectangleF ReservedLot(TypeInfo t,RectangleF r){if(HasGate(t))r.Height+=Tile;if(t.Key=="barracks")r.Height+=2*Tile;if(t.Key=="refinery")r.Height+=Tile;return r;}
  bool ParkingAllowed(int side,PointF p){
   return !Units.Any(o=>o.Alive&&o.Side==side&&o.T.Key=="barracks"&&Muster(Footprint(o.T,o.P)).Contains(p));
  }

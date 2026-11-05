@@ -21,6 +21,7 @@ partial class CommandWindow {
   foreach(var r in Campaign.YardWalls){Rect(g,r.X+3,r.Y+3,r.Width,r.Height,Color.FromArgb(80,ink));Rect(g,r.X,r.Y,r.Width,r.Height,C("#928c78"));Line(g,r.Left,r.Top,r.Right,r.Top,pale,2);for(float x=r.Left+4;x<r.Right-4;x+=15)Line(g,x,r.Bottom,x+5,r.Top,gold,2);}
   foreach(var o in world.Live(0).Where(u=>Campaign.HasGate(u.T))){
    var lot=Campaign.Footprint(o.T,o.P);var gate=Campaign.Gate(lot);
+   if(o.T.Key=="refinery"&&(showGrid||place!=null||selection.Contains(o)))DrawTiles(g,Campaign.UnloadingLane(lot),gold,true);
    if(o.T.Key=="barracks"){DrawTiles(g,Campaign.Muster(lot),teal,true);foreach(var seat in o.Berths)Rect(g,seat.X-3,seat.Y-3,6,6,gold);}
    for(int i=-1;i<=1;i++){float x=o.P.X+i*12,y=gate.Top+8;Line(g,x-4,y,x,y+4,gold);Line(g,x,y+4,x+4,y,gold);}
   }

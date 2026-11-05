@@ -31,9 +31,9 @@ class WindowChecks {
    Press(f,140,694);if((bool)Field(f,"missionPicker"))throw new Exception("back to title");
    Press(f,220,571);Press(f,180,255);Press(f,1194,651);if((bool)Field(f,"briefing"))throw new Exception("tutorial launch");
    var screen=new PointF(647,405);var inv=typeof(CommandWindow).GetMethod("WorldOf",flags);
-   var before=(PointF)inv.Invoke(f,new object[]{screen});float ui=(float)Field(f,"scale");
+   var before=(PointF)inv.Invoke(f,new object[]{screen});float ui=(float)Field(f,"scale"),oldZoom=(float)Field(f,"zoom");
    typeof(CommandWindow).GetMethod("OnMouseWheel",flags).Invoke(f,new object[]{new MouseEventArgs(MouseButtons.None,0,(int)(screen.X*ui+(float)Field(f,"ox")),(int)(screen.Y*ui+(float)Field(f,"oy")),120)});
-   var after=(PointF)inv.Invoke(f,new object[]{screen});if(Campaign.Dist(before,after)>2||(float)Field(f,"zoom")<=1.7f)throw new Exception("cursor anchored zoom");Frame(f,null);
+   var after=(PointF)inv.Invoke(f,new object[]{screen});if(Campaign.Dist(before,after)>2||(float)Field(f,"zoom")<=oldZoom)throw new Exception("cursor anchored zoom");Frame(f,null);
    Press(f,1276,298);Press(f,1170,346);if(((Campaign)Field(f,"world")).LastOrder!=null)throw new Exception("locked card accepted");
    Press(f,1150,298);
    var w=(Campaign)Field(f,"world");Press(f,399,738);if(!w.Landing)throw new Exception("deploy button");
@@ -70,7 +70,7 @@ class WindowChecks {
      var picked=(System.Collections.Generic.List<Piece>)Field(f,"selection");picked.Clear();picked.Add(armor);
     }
     var factory=w.Live(0).First(u=>u.T.Key=="factory");w.Train(Campaign.Info("tank"),0,factory);w.Train(Campaign.Info("ifv"),0,factory);for(int t=0;t<28;t++)w.Tick(.1f);
-    Frame(f,Path.Combine(Path.GetDirectoryName(args[0]),"等距战场.png"));while(factory.Queue.Count>0)w.CancelOrder(factory,0);
+    Frame(f,Path.Combine(Path.GetDirectoryName(args[0]),"等距战场.png"));f.CaptureDefaultScale(Path.Combine(Path.GetDirectoryName(args[0]),"战场比例.png"));while(factory.Queue.Count>0)w.CancelOrder(factory,0);
    }
    if(w.LessonKey!="eliminate")throw new Exception("ifv training");Press(f,767,90);
    typeof(CommandWindow).GetMethod("OnKeyDown",flags).Invoke(f,new object[]{new KeyEventArgs(Keys.A)});MapClick(f,1330,292);
@@ -100,6 +100,12 @@ class WindowChecks {
 
 namespace Greyhaven {
 partial class CommandWindow {
+ internal void CaptureDefaultScale(string path){
+  var oldSize=ClientSize;float oldZoom=zoom;ClientSize=new Size(1920,1080);zoom=DefaultZoom;
+  try{using(var frame=new Bitmap(1920,1080))using(var g=Graphics.FromImage(frame)){
+   OnPaint(new PaintEventArgs(g,ClientRectangle));frame.Save(path,System.Drawing.Imaging.ImageFormat.Png);
+  }}finally{ClientSize=oldSize;zoom=oldZoom;}
+ }
  internal void CheckInfantry(){
   var feet=new PointF(96,120);const float size=100;var box=SoldierBox(feet,size);
   foreach(var key in new[]{"squad","at","engineer"})foreach(var side in new[]{0,1}){

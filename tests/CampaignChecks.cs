@@ -22,13 +22,19 @@ class CampaignChecks {
     int i=0;foreach(var o in w.Live(0).Where(o=>!o.T.Building&&o.T.Key!="miner").ToArray()){
      var enemy=w.Units.Where(e=>e.Side==1&&e.Alive&&e.Carrier==null&&w.Visible(e)).OrderBy(e=>Campaign.Dist(o.P,e.P)).FirstOrDefault();
      if(o.T.Hit>0&&enemy!=null){if(o.Target==null)w.Attack(o,enemy);}
-     else if(o.Path.Count==0)w.Move(o,new PointF(1515+i%4*15,600+i/4%4*16),true);
+     else if(o.Path.Count==0){
+      // Sweep the expanded base approach, then its southern ore route for survivors.
+      var p=w.Time<260?new PointF(Campaign.EnemyHome.X-170+i%4*15,Campaign.EnemyHome.Y+100+i/4%4*16)
+       :new PointF(Campaign.EnemyHome.X-90+i%4*20,Campaign.EnemyHome.Y+350+i/4%4*16);
+      w.Move(o,p,true);
+     }
      i++;
     }
    }
    Wait(w,2);
   }
   Console.WriteLine((armor?"Armour":"Infantry/artillery")+" win="+w.Won+" at "+(int)w.Time+"s, recruited="+order+" remaining="+w.Remaining(1));
+  if(!w.Won)Console.WriteLine(String.Join("\n",w.Live(0).Where(u=>!u.T.Building&&u.T.Key!="miner").Take(18).Select(u=>u.T.Key+" "+u.P+" path="+u.Path.Count+" target="+(u.Target==null?"-":u.Target.T.Key+"@"+u.Target.P)))+"\nEnemy "+String.Join(" ",w.Live(1).GroupBy(u=>u.T.Key).Select(g=>g.Key+"="+g.Count())));
   Check(w.Won,"mission needs to be winnable");
  }
  static void Training(){
@@ -240,7 +246,19 @@ class CampaignChecks {
   Check(!w.Move(tank,new PointF(plant.P.X,lot.Top-6.5f),false),"tank must still respect its wider hull");
   Wait(w,12);Check(Campaign.Dist(miner.P,goal)<.1f,"miner completed tight passage");
  }
- static int Main(){try{Run();return 0;}catch(Exception ex){Console.Error.WriteLine(ex.Message);return 1;}}
+ static void ExpandedMap(){
+  foreach(var key in new[]{"squad","tank","miner","ifv"}){
+   var w=new Campaign(true);var unit=w.Spawn(key,0,1640,920);w.Halt(unit);
+   var goal=new PointF(2420,1320);
+   Check(w.Move(unit,goal,false),"expanded region route "+key);Wait(w,42);
+   Check(Campaign.Dist(unit.P,goal)<.02f&&unit.Path.Count==0,"expanded route arrival "+key);
+   Check(w.Explored(0,goal),"fog extends to new region");
+   Check(!w.Move(unit,new PointF(Campaign.Width+10,1320),false),"east map boundary");
+   Check(!w.Move(unit,new PointF(2420,Campaign.Height+10),false),"south map boundary");
+  }
+  Console.WriteLine("Infantry and three vehicle classes crossed the old map bounds, arrived without overshoot and revealed the new terrain.");
+ }
+ static int Main(){try{ExpandedMap();Run();return 0;}catch(Exception ex){Console.Error.WriteLine(ex.Message);return 1;}}
  static void Run(){NarrowGate();CrowdedOreRun(.05f);CrowdedOreRun(1f/60);MinerMidRouteBlock();EnemySupplyChain();MinerTraffic();ExhaustedFields();ProspectChecks();OreChecks();ContactChecks();StreetChecks();InfantryWaves();HeadingChecks();ReconAndMarch();Navigation();Training();Play(true);Play(false);EliminationChecks();
   var w=new Campaign();var car=w.Spawn("ifv",0,212,431);w.Load(car);Check(w.Units.Any(o=>o.Carrier==car),"embark");w.Load(car);Check(!w.Units.Any(o=>o.Carrier==car),"disembark");
   Console.WriteLine("All checks passed.");}

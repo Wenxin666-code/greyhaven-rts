@@ -39,15 +39,15 @@ public partial class Campaign {
   new TypeInfo("factory","车辆工厂","hq",380,980,0,0,155,0,10,0),
   new TypeInfo("radar","雷达站","hq",240,510,0,0,113,0,8,0),
   new TypeInfo("post","防御阵地","hq",235,610,17,118,102,0,7,1.2f),
-  new TypeInfo("squad","步枪兵","barracks",85,110,10,73,58,32,5,1.25f),
-  new TypeInfo("at","反装甲兵","barracks",135,85,30,115,61,29,8,2.5f),
-  new TypeInfo("engineer","工兵","barracks",95,90,0,0,58,34,6,1),
-  new TypeInfo("ifv","步兵战车","factory",185,210,16,96,66,45,8,1.3f),
-  new TypeInfo("tank","主战坦克","factory",290,355,38,115,75,36,12,2),
-  new TypeInfo("arty","自行火炮","factory",315,150,54,222,70,31,13,3.5f),
-  new TypeInfo("mcv","工程车","hq",340,290,0,0,73,31,13,0),
+  new TypeInfo("squad","步枪兵","barracks",85,110,10,73,48,48,5,1.25f),
+  new TypeInfo("at","反装甲兵","barracks",135,85,30,115,50,43.2f,8,2.5f),
+  new TypeInfo("engineer","工兵","barracks",95,90,0,0,48,48,6,1),
+  new TypeInfo("ifv","步兵战车","factory",185,210,16,96,50,96,8,1.3f),
+  new TypeInfo("tank","主战坦克","factory",290,355,38,115,57,72,12,2),
+  new TypeInfo("arty","自行火炮","factory",315,150,54,222,53,57.6f,13,3.5f),
+  new TypeInfo("mcv","工程车","hq",340,290,0,0,55,60,13,0),
   new TypeInfo("refinery","矿石精炼厂","hq",390,720,0,0,136,0,9,0),
-  new TypeInfo("miner","采矿车","factory",195,310,0,0,44,38,9,0)};
+  new TypeInfo("miner","采矿车","factory",195,310,0,0,44,72,9,0)};
  public static TypeInfo Info(string k){return Array.Find(Types,t=>t.Key==k);}
  public readonly List<Piece> Units=new List<Piece>();public readonly List<Shot> Shots=new List<Shot>();
  public readonly Site[] Sites={new Site("港务中心",1330,292,1265,227)};
@@ -61,7 +61,7 @@ public partial class Campaign {
   Spawn("mcv",0,152,514);Spawn("squad",0,214,418);Spawn("squad",0,258,410);
 
   if(tutorial){Spawn("squad",1,1390,287);Reveal();return;}
-  Spawn("mcv",1,1548,500);Reveal();
+  Spawn("mcv",1,EnemyHome.X,EnemyHome.Y);Reveal();
  }
  public static float Dist(PointF a,PointF b){return (float)Math.Sqrt((a.X-b.X)*(a.X-b.X)+(a.Y-b.Y)*(a.Y-b.Y));}
  public Piece Spawn(string k,int side,float x,float y){

@@ -8,7 +8,8 @@ using System.Collections.Generic;
 
 namespace Greyhaven {
 partial class CommandWindow {
- float zoom=1.7f;PointF camera=new PointF(255,465),panPoint;bool panning,sweep,syncMarch=true;
+ internal const float DefaultZoom=1.05f;
+ float zoom=DefaultZoom;PointF camera=new PointF(255,465),panPoint;bool panning,sweep,syncMarch=true;
  const float Axis=.87f, Rise=.435f;
  PointF ScreenOf(PointF w){return new PointF(MW*.5f+zoom*Axis*(w.X-camera.X-w.Y+camera.Y),MapTop+MH*.5f+zoom*Rise*(w.X-camera.X+w.Y-camera.Y));}
  PointF WorldOf(PointF s){float a=(s.X-MW*.5f)/(Axis*zoom),b=(s.Y-MapTop-MH*.5f)/(Rise*zoom);return new PointF(camera.X+(b+a)/2,camera.Y+(b-a)/2);}
@@ -159,7 +160,7 @@ partial class CommandWindow {
    using(var pen=new Pen(teal,1.5f)){pen.DashStyle=DashStyle.Dot;g.DrawLine(pen,a,b);g.DrawEllipse(pen,b.X-8,b.Y-5,16,10);}}
   if(place!=null&&mouse.X<MW&&mouse.Y>=MapTop&&mouse.Y<MapTop+MH){
    var w=WorldOf(mouse);var r=Campaign.Footprint(place,w);var p=ScreenOf(Campaign.Middle(r));DrawLive(g,place,0,14,p,place.Size*zoom,1);
-   var state=g.Save();GroundSpace(g);DrawTiles(g,r,world.CanPlace(place,w,null)?teal:red,true);if(Campaign.HasGate(place))DrawTiles(g,Campaign.Gate(r),gold,false);if(place.Key=="barracks")DrawTiles(g,Campaign.Muster(r),teal,true);g.Restore(state);
+   var state=g.Save();GroundSpace(g);DrawTiles(g,r,world.CanPlace(place,w,null)?teal:red,true);if(Campaign.HasGate(place))DrawTiles(g,place.Key=="refinery"?Campaign.UnloadingLane(r):Campaign.Gate(r),gold,place.Key=="refinery");if(place.Key=="barracks")DrawTiles(g,Campaign.Muster(r),teal,true);g.Restore(state);
   }
   if(showGrid){
    foreach(var o in world.Units.Where(u=>u.Alive&&u.T.Building&&world.Visible(u)))CornerPins(g,Campaign.Footprint(o.T,o.P),Team(o.Side));
@@ -213,11 +214,13 @@ partial class CommandWindow {
     try{for(int i=0;i<4;i++){using(var t=materials.Clone(new Rectangle(i%2*w+2,i/2*h+2,w-4,h-4),PixelFormat.Format32bppPArgb)){
      tiles[i]=new TextureBrush(t,WrapMode.TileFlipXY);tiles[i].ScaleTransform(.38f,.38f);}}
      g.FillRectangle(tiles[0],0,0,bmp.Width,bmp.Height);g.FillRectangle(tiles[2],0,0,bmp.Width,101);
-     foreach(var pad in new[]{new Rectangle(25,402,668,288),new Rectangle(800,100,880,610),new Rectangle(1230,710,290,210)})g.FillRectangle(tiles[1],pad);
+     foreach(var pad in new[]{new Rectangle(25,402,668,288),new Rectangle(800,100,880,610),new Rectangle(1230,710,290,210),
+      new Rectangle(1740,410,755,300),new Rectangle(2328,804,176,398),new Rectangle(825,835,565,350),new Rectangle(225,1090,435,282)})g.FillRectangle(tiles[1],pad);
      using(var edge=new Pen(C("#bbb4a0"),8)){g.DrawLine(edge,0,100,bmp.Width,100);}
      foreach(var r in Campaign.Roads){using(var p=new Pen(C("#a09981"),5))g.DrawRectangle(p,r.X,r.Y,r.Width,r.Height);g.FillRectangle(tiles[3],r);}
      foreach(var r in Campaign.Roads){bool horiz=r.Width>r.Height;using(var pen=new Pen(C("#ccc3a6"),2)){pen.DashPattern=new[]{7f,10f};if(horiz)g.DrawLine(pen,r.Left,r.Top+r.Height/2,r.Right,r.Top+r.Height/2);else g.DrawLine(pen,r.Left+r.Width/2,r.Top,r.Left+r.Width/2,r.Bottom);}}
-     foreach(var pad in new[]{new Rectangle(26,402,664,284),new Rectangle(810,110,850,585),new Rectangle(1230,715,285,201)}){
+     foreach(var pad in new[]{new Rectangle(26,402,664,284),new Rectangle(810,110,850,585),new Rectangle(1230,715,285,201),
+      new Rectangle(1745,415,745,290),new Rectangle(2333,809,166,388),new Rectangle(830,840,555,340),new Rectangle(230,1095,425,272)}){
       using(var pen=new Pen(Color.FromArgb(100,pale),2))g.DrawRectangle(pen,pad);
       for(int i=pad.Left+20;i<pad.Right-14;i+=34)Line(g,i,pad.Bottom-29,i,pad.Bottom-8,Color.FromArgb(128,pale),2);
      }

@@ -5,8 +5,10 @@ using System.Collections.Generic;
 
 namespace Greyhaven {
 public class OrePatch {
- public PointF P;public float Stock;public readonly float Initial;
+ public PointF P;double stock;public readonly float Initial;
+ public float Stock {get{return (float)stock;}set{stock=value;}}
  public OrePatch(float x,float y,float stock){P=new PointF(x,y);Stock=Initial=stock;}
+ public float Extract(float request){float take=(float)Math.Min(stock,request);stock-=take;return take;}
 }
 public partial class Campaign {
  public const int LoadValue=180;
@@ -21,7 +23,9 @@ public partial class Campaign {
  }
  static List<OrePatch> CreateFields(){
   var ore=new List<OrePatch>();
-  foreach(var center in new[]{new PointF(53,626),new PointF(1590,867),new PointF(449,221),new PointF(896,629),new PointF(1020,140)}){
+  foreach(var center in new[]{new PointF(53,626),new PointF(EnemyHome.X+42,EnemyHome.Y+367),
+   new PointF(449,221),new PointF(896,629),new PointF(1020,140),
+   new PointF(550,1170),new PointF(1280,1310),new PointF(2060,470)}){
    foreach(var offset in new[]{new PointF(0,0),new PointF(29,14),new PointF(-24,19),new PointF(6,38)})
     ore.Add(new OrePatch(center.X+offset.X,center.Y+offset.Y,4200));
   }return ore;
@@ -108,8 +112,8 @@ public partial class Campaign {
   }
   var patch=truck.Patch;
   if(patch!=null&&patch.Stock>.01f&&Dist(truck.P,truck.WorkPoint)<5&&Dist(truck.WorkPoint,patch.P)<=30){
-   truck.Path.Clear();float take=Math.Min(Math.Min(patch.Stock,LoadValue-truck.Cargo),dt*36);
-   truck.Cargo+=take;patch.Stock-=take;if(truck.Side==0&&take>0)FirstOreCollected=true;
+   truck.Path.Clear();float take=patch.Extract(Math.Min(LoadValue-truck.Cargo,dt*36));
+   truck.Cargo+=take;if(truck.Side==0&&take>0)FirstOreCollected=true;
    if(patch.Stock<=.01f){truck.Patch=null;truck.Returning=truck.Cargo>.01f;}
    return;
   }

@@ -44,7 +44,7 @@ partial class CommandWindow:Form {
   int dark=1,caption=ColorTranslator.ToWin32(ink),text=ColorTranslator.ToWin32(pale);
   DwmSetWindowAttribute(Handle,20,ref dark,4);DwmSetWindowAttribute(Handle,35,ref caption,4);DwmSetWindowAttribute(Handle,36,ref text,4);
  }
- void Restart(){ResetEdgeScroll();rulesOpen=false;missionPicker=false;hudDirty=true;drag=false;Capture=false;Array.Clear(bookmarks,0,bookmarks.Length);selectType=null;tHeld=false;markedPoint=null;markedEnemy=null;camera=new PointF(255,465);zoom=1.7f;sweep=false;panning=false;syncMarch=true;queueOpen=false;queueIndex=0;world=new Campaign();selection.Clear();selection.Add(world.Units[0]);briefing=true;paused=false;help=false;army=false;place=null;attack=false;speed=1;}
+ void Restart(){ResetEdgeScroll();rulesOpen=false;missionPicker=false;hudDirty=true;drag=false;Capture=false;Array.Clear(bookmarks,0,bookmarks.Length);selectType=null;tHeld=false;markedPoint=null;markedEnemy=null;camera=new PointF(255,465);zoom=DefaultZoom;sweep=false;panning=false;syncMarch=true;queueOpen=false;queueIndex=0;world=new Campaign();selection.Clear();selection.Add(world.Units[0]);briefing=true;paused=false;help=false;army=false;place=null;attack=false;speed=1;}
  Font F(float size,bool bold){string key=size.ToString()+bold;Font f;if(!fonts.TryGetValue(key,out f))fonts[key]=f=new Font("Microsoft YaHei UI",size,bold?FontStyle.Bold:FontStyle.Regular,GraphicsUnit.Pixel);return f;}
  void Txt(Graphics g,string s,float x,float y,float size,Color c,bool bold=false){var font=F(size,bold);
   if(!drawingClient){using(var b=new SolidBrush(c))g.DrawString(s,font,b,x,y,StringFormat.GenericTypographic);return;}
