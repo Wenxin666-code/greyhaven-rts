@@ -7,20 +7,20 @@ public partial class Campaign {
   double target=Math.Atan2(p.X-o.P.X,p.Y-o.P.Y)*8/Math.PI;
   return Math.Abs((target-o.Turn+40)%16-8)<.04;
  }
- PointF TrackStep(Piece o,PointF waypoint,PointF next){
+ PointF TrackStep(Piece o,PointF waypoint,PointF next,float dt){
   if(Dist(o.P,waypoint)<.001f)return waypoint;
   var obstacle=Units.FirstOrDefault(u=>u!=o&&u.Deployed&&!u.T.Building&&Dist(u.P,next)<(Clearance(u)+Clearance(o))*.78f&&Dist(u.P,next)<Dist(u.P,o.P));
-  if(obstacle==null)return next;
+  if(obstacle==null){o.TrafficBlocked=0;return next;}
+  o.TrafficBlocked+=dt;
+  if(obstacle.Path.Count>0&&o.TrafficBlocked<.8f){
+   var ahead=obstacle.Path.Peek();float dot=(ahead.X-obstacle.P.X)*(next.X-o.P.X)+(ahead.Y-obstacle.P.Y)*(next.Y-o.P.Y);
+   if(dot>0)return o.P;
+  }
   if(o.TrafficWait<=0){
-   o.TrafficWait=.65f;
-   if(o.Mining){
-    var destination=o.Path.Last();PlanRoute(o,destination,MineTraffic(o,destination));return o.P;
+   o.TrafficWait=.45f+(o.Id%4)*.07f;
+   if(!TrafficDetour(o,obstacle,waypoint)&&o.Mining&&o.TrafficBlocked>1.6f){
+    var destination=o.Path.Last();PlanRoute(o,destination,MineTraffic(o,destination));o.TrafficBlocked=0;
    }
-   // Reserve the blocking vehicle's immediate envelope. Keep the starting
-   // contact outside the temporary rectangle so a tank can reverse out.
-   float gap=Math.Max(Math.Abs(o.P.X-obstacle.P.X),Math.Abs(o.P.Y-obstacle.P.Y));
-   float pad=Math.Min(gap-.25f,Clearance(obstacle)+Clearance(o)+3);
-   if(pad>1)PlanRoute(o,o.Path.Last(),new[]{new RectangleF(obstacle.P.X-pad,obstacle.P.Y-pad,2*pad,2*pad)});
   }return o.P;
  }
  public static RectangleF Muster(RectangleF lot){var gate=Gate(lot);return new RectangleF(gate.X,gate.Bottom,gate.Width,2*Tile);}
@@ -37,7 +37,7 @@ public partial class Campaign {
    if(!src.Berths.Contains(p)&&BerthClear(src,p))return p;
   }return null;
  }
- public void Halt(Piece o){o.Mining=false;o.Dock=null;o.Unload=0;o.Path.Clear();o.FirePoint=null;o.Target=null;o.Contact=ContactOrder.None;o.ResumeMarch=false;o.Formation=null;o.Advancing=false;}
+ public void Halt(Piece o){o.Mining=false;o.Dock=null;o.DockReserved=false;o.DockTicket=0;o.DockRetryAfter=0;o.Unload=0;o.Path.Clear();o.FirePoint=null;o.Target=null;o.Contact=ContactOrder.None;o.ResumeMarch=false;o.Formation=null;o.Advancing=false;}
  public bool Suppress(Piece o,PointF p){
   if(!o.Deployed||o.T.Hit==0||p.X<0||p.Y<0||p.X>=Width||p.Y>=Height)return false;
   Halt(o);o.FirePoint=p;o.Replan=0;return true;

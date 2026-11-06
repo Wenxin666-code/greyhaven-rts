@@ -14,12 +14,15 @@ class WindowChecks {
  static void MapClick(CommandWindow f,int x,int y,MouseButtons button=MouseButtons.Left){
   var p=(PointF)typeof(CommandWindow).GetMethod("ScreenOf",flags).Invoke(f,new object[]{new PointF(x,y)});Press(f,(int)p.X,(int)p.Y,button);
  }
+ static void Tap(CommandWindow f,string id){var r=f.TestControlBox(id);Press(f,(int)(r.X+r.Width/2),(int)(r.Y+r.Height/2));}
+ static void CardClick(CommandWindow f,int index){var p=f.CardLocation(index);Press(f,p.X,p.Y);}
  [STAThread]static int Main(string[] args){try{Run(args);return 0;}catch(Exception e){Console.Error.WriteLine(e.Message);Console.Error.WriteLine(e.StackTrace);return 1;}}
  static void Run(string[] args){
   if(args.Length==1&&args[0]=="--scroll"){using(var f=new CommandWindow())f.ProfileScroll();return;}
   if(args.Length==1&&args[0]=="--scroll-window"){using(var f=new CommandWindow())f.ProfileScrollWindow();return;}
   if(args.Length>0&&args[0]!="--profile"&&args[0]!="--window"&&args[0]!="--mine"&&args[0]!="--drive")using(var f=new CommandWindow())f.CheckTerrainCache();
-  using(var f=new CommandWindow()){if(args.Length==1&&args[0]=="--window"){f.ProfileWindow();return;}if(args.Length==1&&args[0]=="--profile"){f.ProfileBattle();return;}if(args.Length==2&&args[0]=="--mine"){f.RecordOreTrip(args[1]);return;}if(args.Length==2&&args[0]=="--drive"){f.RecordStreetTurn(args[1]);return;}f.CheckInfantry();f.CheckEdgeScroll();f.CheckFocusAndMining();if(args.Length>0)f.CheckScreenTravel(args[0]);f.CheckPlates(args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"角度校准.png"));Frame(f,args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"主界面.png"));Press(f,190,641);if(!(bool)Field(f,"rulesOpen"))throw new Exception("rules entry");
+  if(args.Length>0&&args[0].EndsWith(".png"))using(var f=new CommandWindow())f.CheckCommandFeedback(Path.GetDirectoryName(args[0]));
+  using(var f=new CommandWindow()){if(args.Length==1&&args[0]=="--window"){f.ProfileWindow();return;}if(args.Length==1&&args[0]=="--profile"){f.ProfileBattle();return;}if(args.Length==2&&args[0]=="--mine"){f.RecordOreTrip(args[1]);return;}if(args.Length==2&&args[0]=="--drive"){f.RecordStreetTurn(args[1]);return;}f.CheckInfantry();f.CheckRadarGate();f.CheckEdgeScroll();f.CheckFocusAndMining();if(args.Length>0)f.CheckScreenTravel(args[0]);f.CheckPlates(args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"角度校准.png"));Frame(f,args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"主界面.png"));Press(f,190,641);if(!(bool)Field(f,"rulesOpen"))throw new Exception("rules entry");
    Press(f,157,290);if(!(bool)Field(f,"unitRoster"))throw new Exception("roster entry");
    if(args.Length>0)Frame(f,Path.Combine(Path.GetDirectoryName(args[0]),"单位图鉴.png"));
    Press(f,158,700);if((bool)Field(f,"rulesOpen"))throw new Exception("rules return");Press(f,220,571);
@@ -37,11 +40,11 @@ class WindowChecks {
    var before=(PointF)inv.Invoke(f,new object[]{screen});float ui=(float)Field(f,"scale"),oldZoom=(float)Field(f,"zoom");
    typeof(CommandWindow).GetMethod("OnMouseWheel",flags).Invoke(f,new object[]{new MouseEventArgs(MouseButtons.None,0,(int)(screen.X*ui+(float)Field(f,"ox")),(int)(screen.Y*ui+(float)Field(f,"oy")),120)});
    var after=(PointF)inv.Invoke(f,new object[]{screen});if(Campaign.Dist(before,after)>2||(float)Field(f,"zoom")<=oldZoom)throw new Exception("cursor anchored zoom");Frame(f,null);
-   Press(f,1276,298);Press(f,1170,346);if(((Campaign)Field(f,"world")).LastOrder!=null)throw new Exception("locked card accepted");
-   Press(f,1150,298);
+   Tap(f,"生产");CardClick(f,0);if(((Campaign)Field(f,"world")).LastOrder!=null)throw new Exception("locked card accepted");
+   Tap(f,"建设");
    var w=(Campaign)Field(f,"world");Press(f,399,738);if(!w.Landing)throw new Exception("deploy button");
    for(int i=0;i<60;i++)w.Tick(.1f);Frame(f,null);
-   Press(f,1170,346);MapClick(f,263,548);if(!w.Units.Any(o=>o.Side==0&&o.T.Key=="power"))throw new Exception("construction click");
+   CardClick(f,0);MapClick(f,263,548);if(!w.Units.Any(o=>o.Side==0&&o.T.Key=="power"))throw new Exception("construction click");
    for(int i=0;i<60;i++)w.Tick(.1f);Frame(f,null);
    if(w.LessonKey!="refinery")throw new Exception("missing refinery stage");
    Press(f,767,90);MapClick(f,66,450);
@@ -54,20 +57,20 @@ class WindowChecks {
    for(int i=0;i<400&&w.LessonKey=="receipt";i++)w.Tick(.1f);
    if(w.LessonKey!="barracks"||w.OreReceipts[0]<=0)throw new Exception("first receipt");
    typeof(CommandWindow).GetMethod("CenterAt",flags).Invoke(f,new object[]{new PointF(255,465)});Frame(f,null);
-   for(int i=0;i<60;i++)w.Tick(.1f);Frame(f,null);Press(f,1350,346);MapClick(f,123,610);for(int i=0;i<65;i++)w.Tick(.1f);
-   Press(f,1170,404);MapClick(f,339,548);for(int i=0;i<110;i++)w.Tick(.1f);
-   Press(f,1276,298);Press(f,1170,346);if(!w.Live(0).Any(o=>o.Queue.Count>0))throw new Exception("training click");
-   Press(f,1170,346);Press(f,1400,298);
+   for(int i=0;i<60;i++)w.Tick(.1f);Frame(f,null);CardClick(f,1);MapClick(f,123,610);for(int i=0;i<65;i++)w.Tick(.1f);
+   CardClick(f,2);MapClick(f,339,548);for(int i=0;i<110;i++)w.Tick(.1f);
+   Tap(f,"生产");CardClick(f,0);if(!w.Live(0).Any(o=>o.Queue.Count>0))throw new Exception("training click");
+   CardClick(f,0);Tap(f,"队列");
    if(!(bool)Field(f,"queueOpen"))throw new Exception("queue tab");
    var source=w.Live(0).Single(o=>o.Queue.Count>0);if(source.Queue.Count!=2)throw new Exception("second order");
-   Frame(f,args.Length==0?null:args[0]);int funds=w.Funds[0];Press(f,1400,429);if(source.Queue.Count!=1||w.Funds[0]!=funds+85)throw new Exception("cancel waiting slot");
+   Frame(f,args.Length==0?null:args[0]);int funds=w.Funds[0];Tap(f,"cancel-1");if(source.Queue.Count!=1||w.Funds[0]!=funds+85)throw new Exception("cancel waiting slot");
    if(w.LessonKey!="squad"||!w.Tutorial)throw new Exception("default tutorial step");
    for(int i=0;i<60;i++)w.Tick(.1f);Frame(f,null);
    if(w.LessonKey!="ifv")throw new Exception("soldier delivery plus prebuilt factory");
-   Press(f,767,90);Press(f,1350,404);for(int i=0;i<95;i++)w.Tick(.1f);Frame(f,null);
+   Press(f,767,90);CardClick(f,3);for(int i=0;i<95;i++)w.Tick(.1f);Frame(f,null);
    if(args.Length>0){
     w.Upgrade();w.Train(Campaign.Info("tank"),0,null);for(int i=0;i<140;i++)w.Tick(.1f);
-    Press(f,1276,298);typeof(CommandWindow).GetMethod("CenterAt",flags).Invoke(f,new object[]{new PointF(300,495)});
+    Tap(f,"生产");typeof(CommandWindow).GetMethod("CenterAt",flags).Invoke(f,new object[]{new PointF(300,495)});
     typeof(CommandWindow).GetMethod("OnKeyDown",flags).Invoke(f,new object[]{new KeyEventArgs(Keys.G)});
     var armor=w.Live(0).FirstOrDefault(u=>u.T.Key=="tank");if(armor!=null){
      var picked=(System.Collections.Generic.List<Piece>)Field(f,"selection");picked.Clear();picked.Add(armor);
@@ -103,6 +106,46 @@ class WindowChecks {
 
 namespace Greyhaven {
 partial class CommandWindow {
+ internal void CheckCommandFeedback(string folder){
+  ClientSize=new Size(1920,1080);StartMission(false,true);CenterAt(new PointF(690,715));showGrid=true;
+  var troops=Enumerable.Range(0,8).Select(i=>world.Spawn(i%2==0?"tank":"ifv",0,510+i%4*32,700+i/4*32)).ToArray();
+  selection.Clear();selection.AddRange(troops);world.MarchTo(troops,new PointF(820,855),false,false);world.Tick(.01f);
+  if(troops.Any(t=>t.Path.Count==0))throw new Exception("missing group member route");
+  using(var picture=new Bitmap(1920,1080))using(var g=Graphics.FromImage(picture)){
+   OnPaint(new PaintEventArgs(g,ClientRectangle));picture.Save(Path.Combine(folder,"编队路线.png"),System.Drawing.Imaging.ImageFormat.Png);
+   var enemy=world.Spawn("tank",1,850,700);world.Spawn("engineer",0,780,650);world.Tick(.22f);
+   foreach(var t in troops)world.Attack(t,enemy);
+   Mark(enemy.P,enemy,true);flashAt=watch.Elapsed.TotalSeconds-.1375;
+   if(TargetFlash(enemy)<.7f)throw new Exception("target flash absent");
+   using(var flash=new Bitmap(160,160))using(var clear=Graphics.FromImage(flash)){
+    DrawTargetFlash(clear,enemy,new PointF(80,100),100);
+    int white=0;for(int y=0;y<160;y++)for(int x=0;x<160;x++){var c=flash.GetPixel(x,y);if(c.A>20&&c.R>230&&c.G>230&&c.B>230)white++;}
+    if(white<100||flash.GetPixel(0,0).A!=0)throw new Exception("flash must follow opaque unit pixels");
+   }
+   flashAt=watch.Elapsed.TotalSeconds-.1375;OnPaint(new PaintEventArgs(g,ClientRectangle));picture.Save(Path.Combine(folder,"集火反馈.png"),System.Drawing.Imaging.ImageFormat.Png);
+   flashAt=watch.Elapsed.TotalSeconds-1;if(TargetFlash(enemy)!=0)throw new Exception("target flash did not expire");
+  }
+  if((W-MW)/(float)W>.12f)throw new Exception("sidebar exceeds target width");
+  Console.WriteLine("Compact sidebar, eight independent routes, transparent silhouette flash and timed expiry passed.");
+ }
+ internal void CheckRadarGate(){
+  StartMission(true,true);using(var image=new Bitmap(ClientSize.Width,ClientSize.Height))using(var g=Graphics.FromImage(image)){
+   Action render=()=>{hudDirty=true;OnPaint(new PaintEventArgs(g,ClientRectangle));};
+   render();if(RadarOnline()||hits.Any(h=>h.Id=="radar-map"))throw new Exception("minimap visible at start");
+   var radar=world.Spawn("radar",0,220,550);radar.Ready=.5f;render();
+   if(RadarOnline())throw new Exception("unfinished radar enabled minimap");
+   radar.Ready=1;render();if(RadarOnline())throw new Exception("unpowered radar enabled minimap");
+   var power=world.Spawn("power",0,310,550);render();
+   if(!RadarOnline()||!hits.Any(h=>h.Id=="radar-map"))throw new Exception("completed powered radar did not enable minimap");
+   if(world.Explored(0,new PointF(2100,1000)))throw new Exception("radar reveals remote terrain");
+   if(hits.Any(h=>h.Id!=null&&h.Id.Contains("扫描")))throw new Exception("obsolete scan action remains");
+   power.Hp=0;render();if(RadarOnline()||hits.Any(h=>h.Id=="radar-map"))throw new Exception("radar survives loss of power");
+   power.Hp=power.T.Hp;radar.Hp=0;render();if(RadarOnline()||hits.Any(h=>h.Id=="radar-map"))throw new Exception("radar survives destruction");
+  }
+  Restart();Console.WriteLine("Minimap stays unavailable until radar completion and power; offline input and removed scan action passed.");
+ }
+ internal RectangleF TestControlBox(string id){return hits.Last(h=>h.Id==id).Box;}
+ internal Point CardLocation(int index){return new Point(MW+SideInset+index%2*80+36,274+index/2*75+35);}
  internal void CheckTerrainCache(){
   ClientSize=new Size(1920,1080);scale=1920f/W;ox=0;oy=(1080-H*scale)/2;zoom=1.05f;camera=new PointF(800,650);
   using(var cached=new Bitmap(1920,1080))using(var rebuilt=new Bitmap(1920,1080)){

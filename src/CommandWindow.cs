@@ -12,13 +12,13 @@ using System.Windows.Forms;
 
 namespace Greyhaven {
 partial class CommandWindow:Form {
- const int MW=1080,MH=766,MapTop=53,W=1472,H=819;
+ const int MW=1304,MH=766,MapTop=53,W=1472,H=819;
  Campaign world; readonly Stopwatch watch=Stopwatch.StartNew(); readonly Timer pulse=new Timer(); double last; float scale,ox,oy;
  bool showGrid;bool briefing=true,paused,help,attack,army,drag,dragged; int speed=1; PointF mouse,start;TypeInfo place;
  List<Piece> selection=new List<Piece>();List<HitBox> hits=new List<HitBox>();
  Bitmap ground;Dictionary<string,Font> fonts=new Dictionary<string,Font>();
  Color ink=C("#101b20"),panel=C("#202c32"),pale=C("#f3eee0"),dim=C("#abb8b5"),gold=C("#ecb54e"),teal=C("#82d0b4"),red=C("#ee8b72");
- class HitBox {public RectangleF Box;public Action Run;}
+ class HitBox {public RectangleF Box;public Action Run;public string Id;}
  static readonly Dictionary<string,Color> palette=new Dictionary<string,Color>();
  static Color C(string s){Color c;if(!palette.TryGetValue(s,out c))palette[s]=c=ColorTranslator.FromHtml(s);return c;}
  [System.Runtime.InteropServices.DllImport("winmm.dll")]static extern uint timeBeginPeriod(uint ms);
@@ -49,7 +49,7 @@ partial class CommandWindow:Form {
   int dark=1,caption=ColorTranslator.ToWin32(ink),text=ColorTranslator.ToWin32(pale);
   DwmSetWindowAttribute(Handle,20,ref dark,4);DwmSetWindowAttribute(Handle,35,ref caption,4);DwmSetWindowAttribute(Handle,36,ref text,4);
  }
- void Restart(){ResetEdgeScroll();rulesOpen=false;missionPicker=false;hudDirty=true;drag=false;Capture=false;Array.Clear(bookmarks,0,bookmarks.Length);selectType=null;tHeld=false;markedPoint=null;markedEnemy=null;camera=new PointF(255,465);zoom=DefaultZoom;sweep=false;panning=false;syncMarch=true;queueOpen=false;queueIndex=0;world=new Campaign();selection.Clear();selection.Add(world.Units[0]);briefing=true;paused=false;help=false;army=false;place=null;attack=false;speed=1;}
+ void Restart(){ResetEdgeScroll();rulesOpen=false;missionPicker=false;hudDirty=true;drag=false;Capture=false;Array.Clear(bookmarks,0,bookmarks.Length);selectType=null;tHeld=false;markedPoint=null;markedEnemy=null;camera=new PointF(255,465);zoom=DefaultZoom;panning=false;syncMarch=false;queueOpen=false;queueIndex=0;world=new Campaign();selection.Clear();selection.Add(world.Units[0]);briefing=true;paused=false;help=false;army=false;place=null;attack=false;speed=1;}
  Font F(float size,bool bold){string key=size.ToString()+bold;Font f;if(!fonts.TryGetValue(key,out f))fonts[key]=f=new Font("Microsoft YaHei UI",size,bold?FontStyle.Bold:FontStyle.Regular,GraphicsUnit.Pixel);return f;}
  void Txt(Graphics g,string s,float x,float y,float size,Color c,bool bold=false){var font=F(size,bold);
   if(!drawingClient){using(var b=new SolidBrush(c))g.DrawString(s,font,b,x,y,StringFormat.GenericTypographic);return;}
@@ -67,9 +67,9 @@ partial class CommandWindow:Form {
   Plate(g,r,action==null?C("#1b2428"):lit?(r.Contains(mouse)?C("#ffd077"):gold):r.Contains(mouse)?C("#425259"):C("#29383e"),edge);
   Rect(g,x+3,y+10,2,h-20,edge);string symbol=Symbol(text);float inset=11;
   if(symbol!=null){DrawSymbol(g,symbol,x+17,y+h/2,lit?ink:teal);inset=33;}
-  float fontSize=h>=56?23:15;
+  float fontSize=h>=56?23:w<100?12:15;
   Txt(g,text,x+inset,y+(h-fontSize-3)/2,fontSize,action==null?dim:lit?ink:pale,true);
-  if(action!=null)hits.Add(new HitBox{Box=r,Run=action});
+  if(action!=null)hits.Add(new HitBox{Box=r,Run=action,Id=text});
  }
  static string Symbol(string text){
   if(text.StartsWith("展开")||text.StartsWith("装载"))return "deploy";
@@ -132,7 +132,7 @@ partial class CommandWindow:Form {
   if(refresh){
    hits.Clear();DrawHud(g);hudHitCount=hits.Count;hudTime=world.Time;hudWorld=world;hudDirty=false;
   }else if(hits.Count>hudHitCount)hits.RemoveRange(hudHitCount,hits.Count-hudHitCount);
-  DrawInspector(g);DrawCoach(g);if(overlay)Overlay(g);
+  DrawInspector(g);DrawCoach(g);DrawCardHint(g);if(overlay)Overlay(g);
   }
   drawingClient=false;previousOverlay=overlay;
   g.Flush(FlushIntention.Sync);
@@ -143,44 +143,6 @@ partial class CommandWindow:Form {
   if(!copied)e.Graphics.DrawImageUnscaled(frameBuffer,0,0);
  }
  Color Team(int s){return s==0?C("#6dcced"):red;}
- void DrawHud(Graphics g){
-  Metal(g,0,0,W,MapTop);Emblem(g,31,26,14);Rect(g,64,1,7,49,gold);
-  Txt(g,"断线前沿",87,8,28,pale,true);Txt(g," /  灰港登陆",216,14,20,dim,true);
-  Txt(g,world.Tutorial?"野外训练":"歼灭敌方   ·   剩余 "+world.Remaining(1),450,18,14,dim,true);
-  Txt(g,"军费",700,17,15,dim,true);Txt(g,world.Funds[0].ToString(),753,9,24,gold,true);
-  Txt(g,"电力",887,17,15,dim,true);Txt(g,world.Power(0).ToString("+#;-#;0"),939,9,24,world.Power(0)<0?red:teal,true);
-  Txt(g,TimeSpan.FromSeconds(world.Time).ToString(@"mm\:ss"),1070,10,23,pale,true);
-  Button(g,1205,8,105,36,"速度 ×"+speed,()=>speed=speed==1?2:1);Button(g,1323,8,130,36,"暂停",()=>paused=true);
-  float x=MW+15;Metal(g,MW,MapTop,W-MW,H-MapTop);Line(g,MW,MapTop,MW,H,gold,2);
-  Txt(g,"//  战区雷达",x,62,18,pale,true);Txt(g,"GREYHAVEN  /  TAC",x+200,66,12,dim,true);
-  Rect(g,x,89,362,140,ink);DrawRadar(g,x+4);
-  Button(g,x,235,178,32,"基地  H",GoHome);Button(g,x+185,235,177,32,"最近事件",world.LastEvent.HasValue?(Action)GoEvent:null);
-  Button(g,x,278,115,37,"建设",()=>{army=false;queueOpen=false;place=null;},!army&&!queueOpen);
-  Button(g,x+123,278,115,37,"生产",()=>{army=true;queueOpen=false;place=null;},army&&!queueOpen);
-  Button(g,x+247,278,115,37,"队列 "+Pending(),OpenQueue,queueOpen);
-  if(queueOpen)DrawQueue(g,x);
-  else{var cards=Campaign.Types.Where(t=>army?!t.Building:t.Building&&t.Key!="hq").ToArray();
-   for(int i=0;i<cards.Length;i++)Card(g,cards[i],x+i%2*184,324+i/2*59);}
-  DrawQueueStrip(g);
-  Button(g,x,730,178,31,world.Upgraded[0]?"装甲已升级":!world.Live(0).Any(o=>o.T.Key=="factory")?"需车辆工厂":"升级  $260",(world.Upgraded[0]||world.Funds[0]<260||!world.Live(0).Any(o=>o.T.Key=="factory"))?(Action)null:()=>world.Upgrade());
-  bool scanReady=world.Power(0)>=0&&world.Live(0).Any(o=>o.T.Key=="radar")&&world.Funds[0]>=80&&world.Scan<=0;
-  Button(g,x+185,730,177,31,scanReady?"扫描 $80":!world.Live(0).Any(o=>o.T.Key=="radar")?"需雷达站":world.Power(0)<0?"缺电":world.Scan>0?"扫描冷却":"需 $80",scanReady?(Action)(()=>{sweep=true;place=null;attack=false;world.Radio="左键选择揭图中心，右键取消。";}):null);
-  Button(g,x,771,178,31,"手册 F5",()=>{paused=true;help=true;});Button(g,x+185,771,177,31,syncMarch?"队形开 F":"队形关 F",()=>syncMarch=!syncMarch,syncMarch);
- }
- void Card(Graphics g,TypeInfo t,float x,float y){
-  string reason=world.Require(t,0);var r=new RectangleF(x,y,178,55);bool ready=reason==null;
-  bool hot=place==t||(world.Tutorial&&world.LessonKey==t.Key)||r.Contains(mouse);
-  Plate(g,r,ready?C("#2c383c"):C("#1c282d"),hot?gold:C("#536367"));
-  Portrait(g,t,new RectangleF(x+4,y+4,67,47));
-  if(!ready)Rect(g,x+4,y+4,67,47,Color.FromArgb(148,ink));
-  Txt(g,t.Name,x+77,y+5,15,ready?pale:dim,true);
-  Txt(g,ready?"$ "+t.Price:"锁 · "+reason.Replace("需要","需"),x+77,y+30,ready?15:12,ready?gold:dim,true);
-  if(!ready)return;
-  var active=world.Live(0).FirstOrDefault(o=>o.Queue.Count>0&&o.Queue.Peek()==t);
-  if(active!=null){Rect(g,x+74,y+51,98,2,ink);Rect(g,x+74,y+51,98*active.Work/t.Seconds,3,teal);}
-  hits.Add(new HitBox{Box=r,Run=()=>{string why=world.Require(t,0);if(why!=null){world.Radio=why;return;}if(t.Building){place=t;attack=false;world.Radio="部署"+t.Name+"：左键确认绿色位置，右键取消。";}
-    else world.Train(t,0,selection.FirstOrDefault());}});
- }
  void Overlay(Graphics g){
   hits.Clear();Rect(g,0,0,W,H,Color.FromArgb(177,ink));var r=new RectangleF(285,172,900,468);Plate(g,r,C("#1f302f"),C("#a2b398"));Rect(g,286,205,6,112,gold);
   Txt(g,"LANDING FORCE      //      OPERATIONS COMMAND      01—GH",324,203,14,gold,true);
@@ -217,7 +179,7 @@ partial class CommandWindow:Form {
   if(selection.Count==0)return;attack|=shortcut;Issue(ApproachSite(mouse,p),hit);
  }
  Piece markedEnemy;PointF? markedPoint;float markTime;bool markHostile;
- void Mark(PointF p,Piece enemy,bool hostile){markedPoint=p;markedEnemy=enemy;markTime=world.Time;markHostile=hostile;}
+ void Mark(PointF p,Piece enemy,bool hostile){markedPoint=p;markedEnemy=enemy;markTime=world.Time;markHostile=hostile;if(hostile&&enemy!=null){flashTarget=enemy;flashAt=watch.Elapsed.TotalSeconds;}}
  void Issue(PointF p,Piece enemy){
   var troops=selection.Where(o=>o.Deployed&&!o.T.Building).ToArray();
   if(enemy!=null&&enemy.Side==1){
@@ -238,7 +200,7 @@ partial class CommandWindow:Form {
   if(briefing||paused||world.Won||world.Lost||mouse.X<0||mouse.X>=MW||mouse.Y<MapTop||mouse.Y>MapTop+MH)return;
   var p=WorldOf(mouse);
   if(e.Button==MouseButtons.Middle){panning=true;panPoint=mouse;Capture=true;return;}
-  if(sweep){sweep=false;if(e.Button==MouseButtons.Left)world.Sweep(p);return;}
+
   if(e.Button==MouseButtons.Right){
    if(place!=null||attack){place=null;attack=false;world.Radio="已取消待确认命令。";}
    else{selection.Clear();markedPoint=null;markedEnemy=null;world.Radio="已取消选择。";}Invalidate();return;
@@ -256,7 +218,7 @@ partial class CommandWindow:Form {
  }
  protected override void OnKeyDown(KeyEventArgs e){base.OnKeyDown(e);hudDirty=true;if(briefing){if(e.KeyCode==Keys.Enter){if(frontEnterHeld)return;frontEnterHeld=true;}FrontKey(e.KeyCode);return;}
   if(world.Won||world.Lost)return;
-  if(e.KeyCode==Keys.Escape&&(place!=null||attack||sweep)){place=null;attack=false;sweep=false;return;}
+  if(e.KeyCode==Keys.Escape&&(place!=null||attack)){place=null;attack=false;return;}
   if(e.KeyCode==Keys.Pause||e.KeyCode==Keys.Escape){paused=!paused;edgeDwell=0;help=false;return;}if(e.KeyCode==Keys.F5){paused=true;help=true;return;}if(paused)return;
   if(FieldKey(e))return;
   if(e.KeyCode==Keys.S){foreach(var unit in selection)world.Halt(unit);markedPoint=null;markedEnemy=null;attack=false;world.Radio="所选部队已停止。";}

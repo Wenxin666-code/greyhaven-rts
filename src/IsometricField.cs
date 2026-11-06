@@ -9,7 +9,7 @@ using System.Collections.Generic;
 namespace Greyhaven {
 partial class CommandWindow {
  internal const float DefaultZoom=1.05f;
- float zoom=DefaultZoom;PointF camera=new PointF(255,465),panPoint;bool panning,sweep,syncMarch=true;
+ float zoom=DefaultZoom;PointF camera=new PointF(255,465),panPoint;bool panning,syncMarch=false;
  const float Axis=.87f, Rise=.435f;
  PointF ScreenOf(PointF w){return new PointF(MW*.5f+zoom*Axis*(w.X-camera.X-w.Y+camera.Y),MapTop+MH*.5f+zoom*Rise*(w.X-camera.X+w.Y-camera.Y));}
  PointF WorldOf(PointF s){float a=(s.X-MW*.5f)/(Axis*zoom),b=(s.Y-MapTop-MH*.5f)/(Rise*zoom);return new PointF(camera.X+(b+a)/2,camera.Y+(b-a)/2);}
@@ -82,6 +82,10 @@ partial class CommandWindow {
     using(var ring=new Pen(Color.FromArgb(118,teal),1)){
      ring.DashStyle=DashStyle.Dash;g.DrawEllipse(ring,p.X-Axis*r,p.Y-Rise*r,2*Axis*r,2*Rise*r);
     }
+    float reach=u.T.Range*zoom*(float)Math.Sqrt(2);
+    using(var ring=new Pen(Color.FromArgb(145,gold),1))g.DrawEllipse(ring,p.X-Axis*reach,p.Y-Rise*reach,2*Axis*reach,2*Rise*reach);
+    Txt(g,"射程",p.X+Axis*reach+3,p.Y-16,10,gold);
+    if(u.T.LockRange>u.T.Range)Txt(g,"警戒",p.X+Axis*r+3,p.Y+2,10,teal);
    }
   }
   bool drawHarbor=world.Explored(0,Campaign.Middle(world.Harbor.Body));
@@ -91,6 +95,7 @@ partial class CommandWindow {
    if(p.X< -s||p.X>MW+s||p.Y<MapTop-s||p.Y>MapTop+MH+s)continue;
    if(selection.Contains(o)){float ring=o.T.Foot?s*.54f:s;using(var pen=new Pen(teal,2.2f))g.DrawEllipse(pen,p.X-ring*.32f,p.Y-ring*.13f,ring*.64f,ring*.31f);}
    DrawFieldSprite(g,o,p,s);
+   DrawTargetFlash(g,o,p,s);
    float age=world.Time-o.ReceiptAt;
    if(o.Side==0&&o.Alive&&o.LastReceipt>0&&age<2.3f)Txt(g,"+"+o.LastReceipt,p.X-14,p.Y-s*.33f-age*8,15,gold,true);
    if(o.Alive){float y=p.Y+s*.10f;Line(g,p.X-5,y,p.X+5,y,Team(o.Side),3);
@@ -105,7 +110,7 @@ partial class CommandWindow {
    Txt(g,site.Name,p.X-29,y+1,14,pale,true);
   }
   foreach(var shot in world.Shots){if(!world.Explored(0,shot.A)||!world.Explored(0,shot.B))continue;var a=ScreenOf(shot.A);var b=ScreenOf(shot.B);Line(g,a.X,a.Y-5,b.X,b.Y-5,shot.Shell?gold:Team(shot.Side),2);}
-  if(!briefing&&!paused&&!drag&&!panning&&place==null&&!sweep&&selection.Any(u=>u.Deployed&&u.T.Hit>0)&&mouse.X>=0&&mouse.X<MW&&mouse.Y>=MapTop&&mouse.Y<MapTop+MH){
+  if(!briefing&&!paused&&!drag&&!panning&&place==null&&selection.Any(u=>u.Deployed&&u.T.Hit>0)&&mouse.X>=0&&mouse.X<MW&&mouse.Y>=MapTop&&mouse.Y<MapTop+MH){
    var under=HitScreen(mouse);
    if(under!=null&&under.Side==1){var q=ScreenOf(under.P);
     using(var pen=new Pen(red,2))g.DrawEllipse(pen,q.X-19,q.Y-11,38,22);
@@ -117,7 +122,10 @@ partial class CommandWindow {
     using(var pen=new Pen(c,2)){g.DrawEllipse(pen,q.X-12,q.Y-7,24,14);g.DrawLine(pen,q.X-17,q.Y,q.X-8,q.Y);g.DrawLine(pen,q.X+8,q.Y,q.X+17,q.Y);}
     Txt(g,enemy==null?(markHostile?"进攻点":"移动点"):enemy.T.Name+" #"+enemy.Id,q.X+15,q.Y-14,13,c,true);
    }}
-  if(selection.Count==1&&selection[0].Path.Count>0){var u=selection[0];using(var pen=new Pen(teal)){pen.DashStyle=DashStyle.Dash;g.DrawLines(pen,new[]{u.P}.Concat(u.Path).Select(ScreenOf).ToArray());}}
+  foreach(var u in selection.Where(u=>u.Deployed&&u.Path.Count>0)){
+   using(var pen=new Pen(Color.FromArgb(selection.Count==1?230:155,teal),1)){pen.DashStyle=DashStyle.Dash;g.DrawLines(pen,new[]{u.P}.Concat(u.Path).Select(ScreenOf).ToArray());}
+   var finish=ScreenOf(u.Path.Last());using(var pen=new Pen(teal,1))g.DrawEllipse(pen,finish.X-3,finish.Y-2,6,4);
+  }
   if(selection.Count==1&&selection[0].Rally.HasValue){var a=ScreenOf(selection[0].P);var b=ScreenOf(selection[0].Rally.Value);
    using(var pen=new Pen(teal,1.5f)){pen.DashStyle=DashStyle.Dot;g.DrawLine(pen,a,b);g.DrawEllipse(pen,b.X-8,b.Y-5,16,10);}}
   if(place!=null&&mouse.X<MW&&mouse.Y>=MapTop&&mouse.Y<MapTop+MH){
@@ -147,19 +155,21 @@ partial class CommandWindow {
   var box=BuildingRect(site.Body,ScreenOf(Campaign.Middle(site.Body)),zoom);
   BuildingArt(g,"harbormaster",0,box,1);
  }
+ bool RadarOnline(){return world.Power(0)>=0&&world.Live(0).Any(o=>o.T.Key=="radar");}
  void DrawRadar(Graphics g,float x){
-  var state=g.Save();g.SmoothingMode=SmoothingMode.None;g.SetClip(new RectangleF(x,93,354,132));g.TranslateTransform(x,93);g.ScaleTransform(354f/Campaign.Width,132f/Campaign.Height);
+  if(!RadarOnline()){Txt(g,"雷达离线",x+32,119,15,dim,true);Txt(g,world.Live(0).Any(o=>o.T.Key=="radar")?"恢复供电后启用":"建造雷达站后启用",x+13,148,10,dim);return;}
+  var state=g.Save();g.SmoothingMode=SmoothingMode.None;g.SetClip(new RectangleF(x,88,148,100));g.TranslateTransform(x,88);g.ScaleTransform(148f/Campaign.Width,100f/Campaign.Height);
   g.DrawImage(radarGround,0,0,Campaign.Width,Campaign.Height);Shroud(g);
   foreach(var patch in world.Ore)if(patch.Stock>0&&world.Explored(0,patch.P))Rect(g,patch.P.X-5,patch.P.Y-5,14,14,gold);
-  bool radar=world.Power(0)>=0&&world.Live(0).Any(o=>o.T.Key=="radar");
-  foreach(var o in world.Units.Where(a=>a.Alive&&a.Carrier==null&&(a.Side==0||radar&&world.Visible(a))))Rect(g,o.P.X-6,o.P.Y-6,o.T.Building?26:16,o.T.Building?26:16,Team(o.Side));
-  foreach(var site in world.Sites)using(var pen=new Pen(gold,5))g.DrawRectangle(pen,site.P.X-15,site.P.Y-15,30,30);
+
+  foreach(var o in world.Units.Where(a=>a.Alive&&a.Carrier==null&&world.Visible(a)))Rect(g,o.P.X-6,o.P.Y-6,o.T.Building?26:16,o.T.Building?26:16,Team(o.Side));
+  foreach(var site in world.Sites.Where(s=>world.Explored(0,Campaign.Middle(s.Body))))using(var pen=new Pen(gold,5))g.DrawRectangle(pen,site.P.X-15,site.P.Y-15,30,30);
   if(world.LastEvent.HasValue&&world.Time-world.EventTime<4){
    var p=world.LastEvent.Value;float r=17+(world.Time-world.EventTime)%1*32;
    using(var pen=new Pen(red,6))g.DrawEllipse(pen,p.X-r,p.Y-r,r*2,r*2);
   }
   using(var pen=new Pen(pale,6))g.DrawPolygon(pen,new[]{new PointF(0,MapTop),new PointF(MW,MapTop),new PointF(MW,MapTop+MH),new PointF(0,MapTop+MH)}.Select(WorldOf).ToArray());g.Restore(state);
-  hits.Add(new HitBox{Box=new RectangleF(x,93,354,132),Run=()=>CenterAt(new PointF((mouse.X-x)*Campaign.Width/354,(mouse.Y-93)*Campaign.Height/132))});
+  hits.Add(new HitBox{Id="radar-map",Box=new RectangleF(x,88,148,100),Run=()=>CenterAt(new PointF((mouse.X-x)*Campaign.Width/148,(mouse.Y-88)*Campaign.Height/100))});
  }
  Piece HitScreen(PointF screen){
   var w=WorldOf(screen);return world.Units.Where(o=>o.Alive&&o.Carrier==null&&world.Visible(o)).OrderByDescending(o=>o.P.X+o.P.Y).FirstOrDefault(o=>{

@@ -78,7 +78,7 @@ class CampaignChecks {
   var outpost=new PointF(1580,870);Check(w.Move(a,outpost,false),"extended southern flank navigable");Wait(w,55);Check(Campaign.Dist(a.P,outpost)<2,"expanded area reachable");
   var v1=w.Spawn("tank",0,300,810);var v2=w.Spawn("ifv",0,510,810);w.Move(v1,new PointF(510,810),false);w.Move(v2,new PointF(300,810),false);
   float min=999;for(int i=0;i<400;i++){w.Tick(.05f);min=Math.Min(min,Campaign.Dist(v1.P,v2.P));}
-  Check(min>=(v1.T.Clearance+v2.T.Clearance)*.78f-.01f&&v1.P.X>504&&v2.P.X<306,"head-on vehicles must pass, not overlap");
+  Check(min>=(v1.T.Clearance+v2.T.Clearance)*.78f-.01f&&v1.P.X>504&&v2.P.X<306,"head-on vehicles must pass, not overlap: "+min+" / "+v1.P+" path "+String.Join(";",v1.Path)+" / "+v2.P+" path "+String.Join(";",v2.Path));
   Console.WriteLine("Permanent shroud, formation pacing, expanded flank and head-on passing checks passed.");
  }
  static void InfantryWaves(){
@@ -258,7 +258,46 @@ class CampaignChecks {
   }
   Console.WriteLine("Infantry and three vehicle classes crossed the old map bounds, arrived without overshoot and revealed the new terrain.");
  }
- static int Main(){try{ExpandedMap();Run();return 0;}catch(Exception ex){Console.Error.WriteLine(ex.Message);return 1;}}
+ static void ConvoyStress(){
+  foreach(float dt in new[]{.05f,1f/60}){
+   var w=new Campaign(true);var group=Enumerable.Range(0,20).Select(i=>w.Spawn(i%3==0?"ifv":"tank",0,380+i%5*32,940+i/5*32)).ToArray();
+   w.Spawn("factory",0,780,1056);
+   Check(w.MarchTo(group,new PointF(1120,1110),false,false)==group.Length,"all convoy routes assigned");
+   double slowest=0;
+   for(int frame=0;frame<(int)(70/dt);frame++){
+    var timer=System.Diagnostics.Stopwatch.StartNew();w.Tick(dt);slowest=Math.Max(slowest,timer.Elapsed.TotalMilliseconds);
+   }
+   Check(group.All(u=>Campaign.Dist(u.P,u.Goal)<12),"convoy stuck: "+String.Join(";",group.Where(u=>Campaign.Dist(u.P,u.Goal)>=12).Select(u=>u.Id+" "+u.P+" -> "+u.Goal+" path="+u.Path.Count)));
+   Console.WriteLine("20-vehicle convoy around factory arrived at {0} updates/s; max simulation step {1:F2}ms.",1/dt,slowest);
+  }
+ }
+ static void DockQueueStress(){
+  var w=new Campaign(true);w.Ore.Clear();w.Ore.Add(new OrePatch(480,790,25000));
+  var plant=w.Spawn("refinery",0,360,660);plant.StarterDelivered=true;
+  var trucks=Enumerable.Range(0,6).Select(i=>w.Spawn("miner",0,280+i%3*32,780+i/3*32)).ToArray();
+  foreach(var t in trucks){t.Cargo=180;w.MineOrder(t,null,plant);}
+  var deliveries=new int[6];
+  for(int frame=0;frame<3600;frame++){
+   var cargo=trucks.Select(t=>t.Cargo).ToArray();w.Tick(.05f);
+   Check(trucks.Count(t=>t.DockReserved&&t.Dock==plant)<=1,"one actual dock reservation per refinery");
+   for(int i=0;i<6;i++)if(cargo[i]>0&&trucks[i].Cargo==0)deliveries[i]++;
+  }
+  Check(deliveries.All(n=>n>=3),"six miners starved in unloading queue: "+String.Join(",",deliveries));
+  plant.Hp=0;var replacement=w.Spawn("refinery",0,640,660);replacement.StarterDelivered=true;
+  foreach(var t in trucks){t.Cargo=180;w.MineOrder(t,null,plant);}
+  int before=w.OreReceipts[0];Wait(w,65);Check(w.OreReceipts[0]>=before+6*180,"queued trucks recover after refinery destruction");
+  Console.WriteLine("Six miners shared one refinery without starvation: "+String.Join(",",deliveries)+" loads; replacement refinery recovery passed.");
+ }
+ static void FiringBoundary(){
+  var w=new Campaign(true);var unit=w.Spawn("ifv",0,500,900);var near=w.Spawn("factory",1,620,900);var far=w.Spawn("squad",1,650,900);far.Cool=100;
+  var start=unit.P;Check(w.Move(unit,new PointF(900,900),true),"attack move");Wait(w,.2f);
+  Check(unit.Target==near&&near.Hp<near.T.Hp&&unit.P==start,"fire at reachable building edge before chasing distant armed unit");
+  w=new Campaign(true);unit=w.Spawn("ifv",0,500,900);near=w.Spawn("mcv",1,620,900);w.Attack(unit,near);
+  bool shot=false;for(int i=0;i<50;i++){w.Tick(.02f);if(near.Hp<near.T.Hp){shot=true;break;}}
+  Check(shot&&Campaign.Dist(unit.P,near.P)>=unit.T.Range-3,"stop and fire at range instead of advancing to 78 percent range");
+  Console.WriteLine("Immediate in-range acquisition, building-edge range, and stopping at the firing boundary passed.");
+ }
+ static int Main(){try{ConvoyStress();DockQueueStress();FiringBoundary();ExpandedMap();Run();return 0;}catch(Exception ex){Console.Error.WriteLine(ex.Message);return 1;}}
  static void Run(){NarrowGate();CrowdedOreRun(.05f);CrowdedOreRun(1f/60);MinerMidRouteBlock();EnemySupplyChain();MinerTraffic();ExhaustedFields();ProspectChecks();OreChecks();ContactChecks();StreetChecks();InfantryWaves();HeadingChecks();ReconAndMarch();Navigation();Training();Play(true);Play(false);EliminationChecks();
   var w=new Campaign();var car=w.Spawn("ifv",0,212,431);w.Load(car);Check(w.Units.Any(o=>o.Carrier==car),"embark");w.Load(car);Check(!w.Units.Any(o=>o.Carrier==car),"disembark");
   Console.WriteLine("All checks passed.");}

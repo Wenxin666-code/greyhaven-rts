@@ -104,8 +104,12 @@ partial class CommandWindow {
   Plate(g,box,C("#19282e"),C("#849195"));hits.Add(new HitBox{Box=box,Run=()=>{}});
   Portrait(g,unit.T,new RectangleF(x+6,y+7,96,72));
   Txt(g,selection.Count==1?unit.T.Name:"编队 × "+selection.Count,x+114,y+9,20,pale,true);
-  Txt(g,unit.T.Key=="miner"?world.MiningStatus(unit):"HP   "+(int)Math.Ceiling(Math.Max(0,unit.Hp))+" / "+unit.T.Hp,x+114,y+40,13,dim,true);
-  Rect(g,x+114,y+66,147,7,ink);Rect(g,x+114,y+66,147*Math.Max(0,Math.Min(1,unit.Hp/unit.T.Hp)),7,teal);
+  if(unit.T.Key=="miner"){
+   var status=world.MiningStatus(unit).Split('·');Txt(g,status[0].Trim(),x+114,y+35,12,gold,true);
+   if(status.Length>1)Txt(g,status[1].Trim(),x+114,y+54,11,dim);
+  }else Txt(g,"HP   "+(int)Math.Ceiling(Math.Max(0,unit.Hp))+" / "+unit.T.Hp,x+114,y+40,13,dim,true);
+  float barY=y+(unit.T.Key=="miner"?76:66);
+  Rect(g,x+114,barY,147,5,ink);Rect(g,x+114,barY,147*Math.Max(0,Math.Min(1,unit.Hp/unit.T.Hp)),5,teal);
   float bx=x+284;if(unit.T.Key=="mcv")Button(g,bx,y+7,207,34,"展开指挥部   [D]",()=>world.Deploy(unit),true);
   else if(unit.T.Key=="ifv")Button(g,bx,y+7,207,34,"装载 / 卸载   [D]",()=>world.Load(unit));
   else if(unit.T.Key=="miner")Button(g,bx,y+7,207,34,"恢复自动采矿",()=>world.MineOrder(unit,null,null));

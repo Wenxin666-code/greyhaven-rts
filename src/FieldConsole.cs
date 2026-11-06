@@ -37,40 +37,6 @@ partial class CommandWindow {
   queueOpen=true;place=null;var list=Producers();var producer=selection.FirstOrDefault(o=>o.Queue.Count>0)??world.LastOrder;
   int i=list.IndexOf(producer);queueIndex=Math.Max(0,i);queueId=list.Count==0?0:list[queueIndex].Id;
  }
- void DrawQueue(Graphics g,float x){
-  var list=Producers();if(list.Count==0){Txt(g,"展开指挥部后可查看排产。",x+6,357,16,dim);return;}
-  queueIndex=list.FindIndex(o=>o.Id==queueId);if(queueIndex<0)queueIndex=0;var src=list[queueIndex];queueId=src.Id;
-  Txt(g,src.T.Name+" #"+src.Id+"    "+src.Queue.Count+" / 4",x+6,330,18,pale,true);
-  Button(g,x+267,324,39,32,"‹",()=>queueId=list[(queueIndex+list.Count-1)%list.Count].Id);
-  Button(g,x+315,324,39,32,"›",()=>queueId=list[(queueIndex+1)%list.Count].Id);
-  var jobs=src.Queue.ToArray();float seconds=-src.Work;
-  for(int i=0;i<4;i++){
-   float y=365+i*46;Plate(g,new RectangleF(x,y,362,41),panel,C("#526267"));
-   Txt(g,"0"+(i+1),x+7,y+9,14,dim);if(i>=jobs.Length){Txt(g,"空位",x+45,y+9,15,dim);continue;}
-   seconds+=jobs[i].Seconds;Portrait(g,jobs[i],new RectangleF(x+38,y+2,54,36));Txt(g,jobs[i].Name,x+102,y+2,15,pale,true);
-   Txt(g,i==0?world.QueueState(src):"预计 "+Math.Ceiling(seconds/(world.Power(0)<0?.45:1))+" 秒",x+102,y+21,12,gold);
-   int slot=i;Button(g,x+278,y+5,76,31,"取消",()=>{if(src.Queue.SequenceEqual(jobs))world.CancelOrder(src,slot);});
-  }
- }
- void DrawQueueStrip(Graphics g){
-  float x=MW+15;var src=world.Live(0).Where(o=>o.Queue.Count>0).OrderByDescending(o=>selection.Contains(o)).ThenByDescending(o=>o==world.LastOrder).FirstOrDefault();
-  Line(g,x,569,W-16,569,C("#56686e"));Txt(g,"//  生产队列",x,577,18,pale,true);
-  Button(g,x+253,574,109,27,"总览  "+Pending(),OpenQueue);
-  Plate(g,new RectangleF(x,608,362,54),panel,C("#637277"));
-  if(src==null)Txt(g,"生产线空闲",x+14,624,16,dim);
-  else{
-   var job=src.Queue.Peek();Portrait(g,job,new RectangleF(x+5,611,69,47));Txt(g,job.Name,x+85,611,16,pale,true);
-   Rect(g,x+85,642,148,6,ink);Rect(g,x+85,642,148*Math.Min(1,src.Work/job.Seconds),6,gold);
-   string state=world.QueueState(src);Txt(g,state.Length>8?state.Substring(0,8):state,x+234,626,13,gold);
-   var snapshot=src.Queue.ToArray();
-   Button(g,x+325,618,30,30,"×",()=>{if(src.Queue.SequenceEqual(snapshot))world.CancelOrder(src,0);});
-  }
-  var next=src==null?null:src.Queue.Skip(1).FirstOrDefault();
-  Txt(g,next==null?"02   等待排产":"02   "+next.Name+"  ·  等待",x+10,675,14,dim,true);
-  var ready=world.LastReady;
-  Button(g,x+200,667,162,34,"定位最新单位",ready!=null&&ready.Deployed?(Action)(()=>{selection.Clear();selection.Add(ready);CenterAt(ready.P);}):null);
-  Txt(g,world.Radio.Length>25?world.Radio.Substring(0,24)+"…":world.Radio,x+4,708,12,teal);
- }
  PointF SuggestSpot(TypeInfo t){
   var h=world.Live(0).FirstOrDefault(o=>o.T.Key=="hq");if(h==null)return PointF.Empty;
   PointF ideal=t.Key=="refinery"?new PointF(h.P.X-84,h.P.Y-66):new PointF(h.P.X+(t.Key=="power"?100:t.Key=="factory"?177:-25),h.P.Y+(t.Key=="barracks"?100:30));

@@ -44,17 +44,18 @@ public partial class Campaign {
   if(!truck.Deployed||truck.T.Key!="miner")return;
   Halt(truck);truck.Mining=true;truck.Patch=patch;truck.Surveying=false;truck.Dispatch=0;truck.TrafficSampleTime=0;
   truck.Returning=truck.Cargo>=LoadValue-.01f||(plant!=null&&truck.Cargo>.01f);
-  if(plant!=null&&truck.Returning&&DockFree(truck,plant))truck.Dock=plant;
+  if(plant!=null&&truck.Returning)truck.Dock=plant;
  }
  public string MiningStatus(Piece truck){
-  string mode=!truck.Mining?"待命":truck.Unload>0?"卸矿":truck.Returning?(truck.Dock==null?"等待泊位":"返厂"):truck.Surveying?"探查新地形":truck.Path.Count>0?"前往矿区":truck.Patch==null?"寻找矿点":"采集";
+  string mode=!truck.Mining?"待命":truck.Unload>0?"卸矿":truck.Returning?DockStatus(truck):truck.Surveying?"探查新地形":truck.Path.Count>0?"前往矿区":truck.Patch==null?"寻找矿点":"采集";
   return mode+"  ·  载矿 "+(int)truck.Cargo+" / "+LoadValue;
  }
  bool WorkingPatch(Piece truck,OrePatch patch){
   return !Units.Any(o=>o!=truck&&o.Deployed&&o.Mining&&!o.Returning&&o.Patch==patch);
  }
  bool DockFree(Piece truck,Piece plant){
-  return !Units.Any(o=>o!=truck&&o.Deployed&&o.Mining&&o.Returning&&o.Dock==plant);
+  return !Units.Any(o=>o!=truck&&o.Deployed&&o.Mining&&o.Returning&&o.Dock==plant&&
+   (o.DockReserved||o.DockRetryAfter<=Time&&Dist(o.P,DockPoint(plant))<140&&EarlierDock(o,truck)));
  }
  // A stopped vehicle may occupy the vein center or one side of a loading gate.
  // Reserve the actual service position, not just a nominal map coordinate.
@@ -91,25 +92,9 @@ public partial class Campaign {
  }
  void RunMiner(Piece truck,float dt){
   truck.Dispatch-=dt;
-  if(TrafficStalled(truck,dt)){truck.Path.Clear();truck.Dock=null;truck.Dispatch=0;}
+  if(TrafficStalled(truck,dt)){truck.Path.Clear();if(truck.DockReserved)truck.DockRetryAfter=Time+2;truck.DockReserved=false;truck.Unload=0;truck.Dispatch=0;}
   if(truck.Cargo>=LoadValue-.01f){truck.Cargo=LoadValue;truck.Returning=true;}
-  if(truck.Returning){
-   var plant=truck.Dock;
-   if(plant!=null&&(!plant.Deployed||plant.Side!=truck.Side)){truck.Dock=null;truck.Path.Clear();truck.Unload=0;plant=null;}
-   if(plant!=null&&Dist(truck.P,truck.WorkPoint)<5&&Dist(truck.WorkPoint,DockPoint(plant))<=24){
-    truck.Path.Clear();plant.Door=1;truck.Unload+=dt;
-    if(truck.Unload>=1.6f){
-     int receipt=(int)Math.Round(truck.Cargo);Funds[truck.Side]+=receipt;OreReceipts[truck.Side]+=receipt;plant.LastReceipt=receipt;plant.ReceiptAt=Time;
-     truck.Cargo=0;truck.Unload=0;truck.Dock=null;truck.Returning=false;truck.Dispatch=0;
-    }return;
-   }
-   if(truck.Path.Count>0||truck.Dispatch>0)return;
-   truck.Dispatch=1;
-   foreach(var dest in Live(truck.Side).Where(o=>o.T.Key=="refinery"&&DockFree(truck,o)).OrderBy(o=>o==plant?0:Dist(truck.P,o.P))){
-    if(RouteToWork(truck,DockPoint(dest),true)){truck.Dock=dest;return;}
-   }
-   truck.Dock=null;return;
-  }
+  if(truck.Returning){ReturnOre(truck,dt);return;}
   var patch=truck.Patch;
   if(patch!=null&&patch.Stock>.01f&&Dist(truck.P,truck.WorkPoint)<5&&Dist(truck.WorkPoint,patch.P)<=30){
    truck.Path.Clear();float take=patch.Extract(Math.Min(LoadValue-truck.Cargo,dt*36));

@@ -15,6 +15,8 @@ public class TypeInfo {
 }
 public enum ContactOrder { None, Directed, Automatic, ReturnFire }
 public class Piece {
+ public float TrafficBlocked;
+ public bool DockReserved;public float DockTicket,DockRetryAfter;
  public int LastReceipt;public float ReceiptAt;public PointF WorkPoint,TravelSample;public float TrafficSampleTime;public bool Mining,StarterDelivered,Returning,Surveying;public float Cargo,Unload,Dispatch,MillPhase;public Piece Dock;public OrePatch Patch;
  public ContactOrder Contact;public bool ResumeMarch;public PointF LastContact;public float ScanIn;
  public int RouteVersion,Id,Side,Dir,Group; public TypeInfo T; public PointF P; public float Hp,Ready=1,Cool,Dead,Replan,Turn,Door,Rollout;
@@ -52,7 +54,7 @@ public partial class Campaign {
  public readonly List<Piece> Units=new List<Piece>();public readonly List<Shot> Shots=new List<Shot>();
  public readonly Site[] Sites={new Site("港务中心",1330,292,1265,227)};
  public Site Harbor {get{return Sites[0];}}
- public int[] Funds={1150,1150};public bool[] Upgraded={false,false};public float Time,Scan; public bool Landing,Won,Lost;public string Radio="展开工程车，在西南建立登陆基地。";
+ public int[] Funds={1150,1150};public bool[] Upgraded={false,false};public float Time; public bool Landing,Won,Lost;public string Radio="展开工程车，在西南建立登陆基地。";
  int seq,aiTurn;float nextEnemyDecision=1,aiClock,nextWave=92;
  public readonly bool Tutorial,Assisted;
  public int Lesson,InfantryDelivered,VehiclesDelivered;public Piece LastOrder,LastReady;public float ReadyAt;
@@ -117,11 +119,11 @@ public partial class Campaign {
   Funds[side]-=260;Upgraded[side]=true;return true;
  }
  public bool Move(Piece o,PointF p,bool attack){
-  if(!o.Deployed||o.T.Building)return false;if(!ParkingAllowed(o.Side,p)||!Route(o,p))return false;o.Mining=false;o.Dock=null;o.Unload=0;o.FirePoint=null;o.Formation=null;o.Target=null;o.Contact=ContactOrder.None;o.ResumeMarch=false;o.Advancing=attack;o.Goal=p;return true;
+  if(!o.Deployed||o.T.Building)return false;if(!ParkingAllowed(o.Side,p)||!Route(o,p))return false;o.Mining=false;o.Dock=null;o.DockReserved=false;o.DockTicket=0;o.DockRetryAfter=0;o.Unload=0;o.FirePoint=null;o.Formation=null;o.Target=null;o.Contact=ContactOrder.None;o.ResumeMarch=false;o.Advancing=attack;o.Goal=p;return true;
  }
  public void Attack(Piece o,Piece target){if(!o.Deployed||o.T.Hit==0)return;o.FirePoint=null;o.Formation=null;o.Target=target;o.Contact=ContactOrder.Directed;o.ResumeMarch=false;o.Advancing=true;o.Path.Clear();o.Replan=0;o.Goal=target.P;}
  void ApproachPoint(Piece o,PointF target){
-  float length=Dist(o.P,target);if(length<1)return;float range=Math.Max(43,o.T.Range*.78f);
+  float length=Dist(o.P,target);if(length<1)return;float range=Math.Max(20,o.T.Range-2);
   double angle=Math.Atan2(o.P.Y-target.Y,o.P.X-target.X);
   for(int j=0;j<8;j++){double a=angle+(j%2==0?1:-1)*((j+1)/2)*.5;var dest=new PointF(target.X+(float)Math.Cos(a)*range,target.Y+(float)Math.Sin(a)*range);if(Route(o,dest))return;}
  }
@@ -158,7 +160,7 @@ public partial class Campaign {
   if(o.T.Key=="at")factor=e.T.Foot?.32f:e.T.Building?.72f:1.85f;
   if(o.T.Key=="ifv"&&e.T.Foot)factor=1.55f;if(o.T.Key=="squad"&&e.T.Key=="tank")factor=.29f;
   if(o.T.Foot&&o.P.X<735&&o.P.Y<324)factor*=1.12f;
-  Shots.Add(new Shot{A=o.P,B=e.P,Side=o.Side,Life=.23f,Shell=o.T.Key=="arty"});
+  Shots.Add(new Shot{A=o.P,B=TargetPoint(o.P,e),Side=o.Side,Life=.23f,Shell=o.T.Key=="arty"});
   if(e.Side==0)ReportStrike(e);
   e.Hp-=o.T.Hit*factor;if(e.Hp<=0)Kill(e);else OnIncomingFire(e,o);
  }
@@ -179,7 +181,7 @@ public partial class Campaign {
   float travel=speed*remaining*(alongX&&alongY?.70710678f:1);
   float left=Math.Max(0,span-travel);
   var next=new PointF(end.X-(alongX?Math.Sign(dx)*left:0),end.Y-(alongY?Math.Sign(dy)*left:0));
-  o.P=TrackStep(o,end,next);
+  o.P=TrackStep(o,end,next,dt);
  }
  void UnitTick(Piece o,float dt,bool powered){
   if(!o.Alive){o.Dead+=dt;return;}if(o.Carrier!=null){o.P=o.Carrier.P;return;}
@@ -205,7 +207,7 @@ public partial class Campaign {
     var step=Avoid(o,next);
     if(Dist(o.P,step)>.001f){o.Turn=Bearing(o.P,step);o.Dir=(int)Math.Round(o.Turn)%16;o.P=step;}
    }
-   if(o.Path.Count>0&&(Dist(o.P,p)<(o.T.Foot?.1f:.001f)||(!o.Mining&&o.Path.Count==1&&Dist(o.P,p)<9&&Units.Any(u=>u!=o&&u.Deployed&&Dist(u.P,p)<15))))o.Path.Dequeue();}
+   if(o.Path.Count>0&&(Dist(o.P,o.Path.Peek())<(o.T.Foot?.1f:.001f)||(!o.Mining&&o.Path.Count==1&&Dist(o.P,o.Path.Peek())<9&&Units.Any(u=>u!=o&&u.Deployed&&Dist(u.P,o.Path.Peek())<15))))o.Path.Dequeue();}
  }
  bool VisibleTo(int side,Piece e){return Explored(side,e.P);}
  public int Remaining(int side){return Units.Count(o=>o.Alive&&o.Side==side);}
@@ -221,7 +223,7 @@ public partial class Campaign {
   }
  }
  public void Tick(float dt){
-  if(Won||Lost)return;Time+=dt;visionTimer-=dt;if(visionTimer<=0){visionTimer=.20f;Reveal();}Scan=Math.Max(0,Scan-dt);
+  if(Won||Lost)return;Time+=dt;visionTimer-=dt;if(visionTimer<=0){visionTimer=.20f;Reveal();}
   Shots.ForEach(s=>s.Life-=dt);Shots.RemoveAll(s=>s.Life<=0);bool[] power={Power(0)>=0,Power(1)>=0};
   foreach(var o in Units.ToArray())UnitTick(o,dt,power[o.Side]);
   Units.RemoveAll(o=>!o.Alive&&o.Dead>24);

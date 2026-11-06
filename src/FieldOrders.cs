@@ -7,12 +7,12 @@ namespace Greyhaven {
 public class March {
  public readonly List<Piece> Members=new List<Piece>();
  public float Speed(Piece unit){
-  float slow=unit.T.Speed,behind=0,remaining=Campaign.Dist(unit.P,unit.Goal);
+  float slow=unit.T.Speed;
   foreach(var m in Members){
    if(m.Formation!=this||!m.Deployed||m.Path.Count==0)continue;
-   slow=Math.Min(slow,m.T.Speed);behind=Math.Max(behind,Campaign.Dist(m.P,m.Goal)-remaining);
+   slow=Math.Min(slow,m.T.Speed);
   }
-  return slow*(behind>72?.65f:1f);
+  return slow;
  }
 }
 public partial class Campaign {
@@ -32,22 +32,22 @@ public partial class Campaign {
     }
   }
  }
- public bool Sweep(PointF p){
-  if(Power(0)<0||!Live(0).Any(o=>o.T.Key=="radar")||Funds[0]<80||Scan>0)return false;
-  Funds[0]-=80;Scan=10;
-  for(int x=0;x<FogCols;x++)for(int y=0;y<FogRows;y++)if(Dist(new PointF((x+.5f)*FogSize,(y+.5f)*FogSize),p)<215)Discover(0,x,y);
-  Radio="雷达已揭示目标区域，可继续派部队向外探索。";return true;
- }
- // Match frontage to direction of travel. Fighting vehicles lead; artillery and repair crews follow.
+ // Match nearby destinations to the current layout instead of forcing units
+ // through one another to put a particular class in the front row.
  public int MarchTo(Piece[] troops,PointF p,bool advance,bool together){
   if(troops.Length==0)return 0;
   var center=new PointF(troops.Average(o=>o.P.X),troops.Average(o=>o.P.Y));
   float d=Math.Max(1,Dist(center,p)),fx=(p.X-center.X)/d,fy=(p.Y-center.Y)/d;
-  var sorted=troops.OrderBy(o=>o.T.Key=="arty"||o.T.Key=="engineer"?2:o.T.Foot?1:0).ThenBy(o=>-o.P.X*fy+o.P.Y*fx).ToArray();
+  var sorted=troops.OrderBy(o=>o.Id).ToArray();
   int cols=(int)Math.Ceiling(Math.Sqrt(sorted.Length)),rows=(sorted.Length+cols-1)/cols;var group=new March();var assigned=new List<PointF>();
+  var slots=new PointF[sorted.Length];
+  for(int i=0;i<slots.Length;i++){
+   float depth=((rows-1)*.5f-i/cols)*32,across=(i%cols-(Math.Min(cols,sorted.Length-i/cols*cols)-1)*.5f)*32;
+   slots[i]=new PointF(p.X+fx*depth-fy*across,p.Y+fy*depth+fx*across);
+  }
+  var match=MatchSlots(sorted,slots);
   for(int i=0;i<sorted.Length;i++){
-   var o=sorted[i];float depth=((rows-1)*.5f-i/cols)*28,across=(i%cols-(Math.Min(cols,sorted.Length-i/cols*cols)-1)*.5f)*28;
-   var goal=new PointF(p.X+fx*depth-fy*across,p.Y+fy*depth+fx*across);
+   var o=sorted[i];var goal=slots[match[i]];
    for(int attempt=0;attempt<(sorted.Length==1?1:17);attempt++){
     float radius=attempt==0?0:attempt>8?42:23;double a=attempt*Math.PI/4;var slot=new PointF(goal.X+radius*(float)Math.Cos(a),goal.Y+radius*(float)Math.Sin(a));
     if(assigned.Any(s=>Dist(s,slot)<19)||!Move(o,slot,advance))continue;
