@@ -70,44 +70,6 @@ partial class CommandWindow {
   }
   if(fogRuns.Length>0)using(var brush=new SolidBrush(C("#152323")))g.FillRectangles(brush,fogRuns);
  }
- // Cache only immutable terrain, at physical display resolution. The extra
- // border lets small pans reuse the same pixels without rerasterizing the map.
- const int TerrainMargin=144;
- Bitmap terrainView,radarGround;
- PointF terrainCamera;float terrainZoom,terrainScale;
- const float TerrainDensity=2;
- Bitmap projectedGround;
- Bitmap ProjectTerrain(){
-  var map=new Bitmap((int)Math.Ceiling((Campaign.Width+Campaign.Height)*Axis*TerrainDensity)+2,
-   (int)Math.Ceiling((Campaign.Width+Campaign.Height)*Rise*TerrainDensity)+2,PixelFormat.Format32bppPArgb);
-  using(var g=Graphics.FromImage(map))
-  using(var m=new Matrix(Axis*TerrainDensity,Rise*TerrainDensity,-Axis*TerrainDensity,Rise*TerrainDensity,Campaign.Height*Axis*TerrainDensity,0)){
-   g.Clear(C("#132122"));g.Transform=m;g.InterpolationMode=InterpolationMode.Bilinear;g.DrawImage(ground,0,0,ground.Width,ground.Height);
-  }
-  return map;
- }
- void DrawGroundView(Graphics g){
-  int w=(int)Math.Ceiling(MW*scale)+2*TerrainMargin,h=(int)Math.Ceiling(MH*scale)+2*TerrainMargin;
-  var anchor=ScreenOf(terrainCamera);
-  int dx=(int)Math.Round((anchor.X-MW*.5f)*scale),dy=(int)Math.Round((anchor.Y-MapTop-MH*.5f)*scale);
-  if(terrainView==null||terrainView.Width!=w||terrainView.Height!=h||zoom!=terrainZoom||scale!=terrainScale||Math.Abs(dx)>=TerrainMargin||Math.Abs(dy)>=TerrainMargin){
-   if(terrainView==null||terrainView.Width!=w||terrainView.Height!=h){
-    if(terrainView!=null)terrainView.Dispose();terrainView=new Bitmap(w,h,PixelFormat.Format32bppPArgb);
-   }
-   terrainCamera=camera;terrainScale=scale;terrainZoom=zoom;dx=dy=0;
-   using(var bg=Graphics.FromImage(terrainView)){
-    bg.Clear(C("#132122"));bg.InterpolationMode=InterpolationMode.Bilinear;
-    var origin=ScreenOf(new PointF(0,Campaign.Height));
-    var top=ScreenOf(PointF.Empty);
-    float k=zoom*scale/TerrainDensity;
-    var dst=new RectangleF(TerrainMargin+origin.X*scale,TerrainMargin+(top.Y-MapTop)*scale,projectedGround.Width*k,projectedGround.Height*k);
-    var draw=RectangleF.Intersect(dst,new RectangleF(0,0,w,h));
-    if(!draw.IsEmpty)bg.DrawImage(projectedGround,draw,new RectangleF((draw.X-dst.X)/k,(draw.Y-dst.Y)/k,draw.Width/k,draw.Height/k),GraphicsUnit.Pixel);
-   }
-  }
-  var state=g.Save();g.ResetTransform();
-  g.DrawImageUnscaled(terrainView,(int)Math.Round(ox)+dx-TerrainMargin,(int)Math.Round(oy+MapTop*scale)+dy-TerrainMargin);g.Restore(state);
- }
  void DrawBattle(Graphics g){
   var view=g.Save();g.SetClip(new Rectangle(0,MapTop,MW,MH));
   DrawGroundView(g);var land=g.Save();GroundSpace(g);DrawTerrainPlan(g);

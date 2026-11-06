@@ -29,15 +29,20 @@ partial class CommandWindow:Form {
   Text="断线前沿  /  灰港登陆";StartPosition=FormStartPosition.CenterScreen;MinimumSize=new Size(900,575);var area=Screen.FromPoint(Cursor.Position).WorkingArea;float fit=Math.Min(1f,Math.Min((area.Width-32f)/W,(area.Height-64f)/H));ClientSize=new Size((int)(W*fit),(int)(H*fit));BackColor=Color.FromArgb(17,29,32);
   KeyPreview=true;SetStyle(ControlStyles.ResizeRedraw|ControlStyles.Opaque|ControlStyles.AllPaintingInWmPaint,true);
   Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);
-  world=new Campaign();ground=MakeGround();projectedGround=ProjectTerrain();radarGround=new Bitmap(488,214,System.Drawing.Imaging.PixelFormat.Format32bppPArgb);using(var rg=Graphics.FromImage(radarGround))rg.DrawImage(ground,0,0,488,214);
+  world=new Campaign();ground=MakeGround();ProjectTerrain();radarGround=new Bitmap(488,214,System.Drawing.Imaging.PixelFormat.Format32bppPArgb);using(var rg=Graphics.FromImage(radarGround))rg.DrawImage(ground,0,0,488,214);
   foreach(var key in new[]{"hq","power","factory","barracks","radar","post","squad","at","engineer","tank","ifv","mcv","arty","harbormaster","refinery","miner","miner-full","refining"})painted[key]=Raw((key=="squad"||key=="at"||key=="engineer"?"hd-":"iso-")+key);
   foreach(var key in new[]{"portraits","plate","harbor"})painted[key]=Raw(key);
   painted["ore"]=OreSprites();
   foreach(var t in Campaign.Types.Where(t=>t.Foot))painted["fallen-"+t.Key]=FallenSheet(painted[t.Key]);
   Restart();pulse.Interval=15;pulse.Tick+=(s,e)=>{double now=watch.Elapsed.TotalSeconds;float dt=(float)Math.Min(.12,now-last);last=now;
    if(!briefing&&!paused&&!world.Won&&!world.Lost){if(ContainsFocus&&Control.MouseButtons==MouseButtons.None)PollEdgeScroll(dt);else edgeDwell=0;for(int i=0;i<speed;i++)world.Tick(dt);selection.RemoveAll(o=>!o.Alive||o.Carrier!=null);}
-   if(!briefing||hudDirty)Invalidate();};pulse.Start(); FormClosed+=(s,e)=>{pulse.Stop();pulse.Dispose();if(timerPrecision)timeEndPeriod(1);ground.Dispose();projectedGround.Dispose();radarGround.Dispose();if(terrainView!=null)terrainView.Dispose();ReleaseFrame();ClearLabelCache();ClearStampCache();foreach(var b in painted.Values)b.Dispose();foreach(var f in fonts.Values)f.Dispose();};
+   if(!briefing||hudDirty)Invalidate();};pulse.Start();
   Deactivate+=(s,e)=>{ResetEdgeScroll();frontEnterHeld=false;tHeld=false;selectType=null;if(!briefing&&!world.Won&&!world.Lost)paused=true;drag=false;panning=false;Capture=false;};
+ }
+ bool resourcesReleased;
+ protected override void Dispose(bool disposing){
+  if(disposing&&!resourcesReleased){resourcesReleased=true;pulse.Stop();pulse.Dispose();if(timerPrecision)timeEndPeriod(1);ground.Dispose();ClearTerrainRasters();foreach(var patch in terrainPatches)patch.Image.Dispose();radarGround.Dispose();if(terrainView!=null)terrainView.Dispose();ReleaseFrame();ClearLabelCache();ClearStampCache();foreach(var b in painted.Values)b.Dispose();foreach(var f in fonts.Values)f.Dispose();}
+  base.Dispose(disposing);
  }
  [DllImport("dwmapi.dll")]static extern int DwmSetWindowAttribute(IntPtr window,int attr,ref int value,int length);
  protected override void OnHandleCreated(EventArgs e){base.OnHandleCreated(e);

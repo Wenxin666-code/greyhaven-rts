@@ -16,6 +16,9 @@ class WindowChecks {
  }
  [STAThread]static int Main(string[] args){try{Run(args);return 0;}catch(Exception e){Console.Error.WriteLine(e.Message);Console.Error.WriteLine(e.StackTrace);return 1;}}
  static void Run(string[] args){
+  if(args.Length==1&&args[0]=="--scroll"){using(var f=new CommandWindow())f.ProfileScroll();return;}
+  if(args.Length==1&&args[0]=="--scroll-window"){using(var f=new CommandWindow())f.ProfileScrollWindow();return;}
+  if(args.Length>0&&args[0]!="--profile"&&args[0]!="--window"&&args[0]!="--mine"&&args[0]!="--drive")using(var f=new CommandWindow())f.CheckTerrainCache();
   using(var f=new CommandWindow()){if(args.Length==1&&args[0]=="--window"){f.ProfileWindow();return;}if(args.Length==1&&args[0]=="--profile"){f.ProfileBattle();return;}if(args.Length==2&&args[0]=="--mine"){f.RecordOreTrip(args[1]);return;}if(args.Length==2&&args[0]=="--drive"){f.RecordStreetTurn(args[1]);return;}f.CheckInfantry();f.CheckEdgeScroll();f.CheckFocusAndMining();if(args.Length>0)f.CheckScreenTravel(args[0]);f.CheckPlates(args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"角度校准.png"));Frame(f,args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"主界面.png"));Press(f,190,641);if(!(bool)Field(f,"rulesOpen"))throw new Exception("rules entry");
    Press(f,157,290);if(!(bool)Field(f,"unitRoster"))throw new Exception("roster entry");
    if(args.Length>0)Frame(f,Path.Combine(Path.GetDirectoryName(args[0]),"单位图鉴.png"));
@@ -100,6 +103,64 @@ class WindowChecks {
 
 namespace Greyhaven {
 partial class CommandWindow {
+ internal void CheckTerrainCache(){
+  ClientSize=new Size(1920,1080);scale=1920f/W;ox=0;oy=(1080-H*scale)/2;zoom=1.05f;camera=new PointF(800,650);
+  using(var cached=new Bitmap(1920,1080))using(var rebuilt=new Bitmap(1920,1080)){
+   Action<Bitmap> render=b=>{using(var g=Graphics.FromImage(b)){g.Clear(ink);g.TranslateTransform(ox,oy);g.ScaleTransform(scale,scale);g.SetClip(new Rectangle(0,MapTop,MW,MH));DrawGroundView(g);}};
+   render(cached);Pan(100/scale,50/scale);render(cached);terrainZoom=-1;render(rebuilt);
+   for(int y=80;y<1050;y+=3)for(int x=3;x<1380;x+=3)
+    if(cached.GetPixel(x,y)!=rebuilt.GetPixel(x,y))throw new Exception("terrain shifts at cache boundary");
+   zoom=3.1f;
+   for(int i=0;i<18;i++){
+    camera=new PointF(200+i%6*420,220+i/6*480);render(cached);
+    if(terrainRasterBytes>TerrainBudget)throw new Exception("terrain raster cache exceeds memory budget");
+   }
+   // A cached bitmap must cover every edge without transparent tile seams.
+   foreach(var p in terrainPatches.Where(p=>p.Raster!=null)){
+    var b=p.Raster;
+    foreach(var point in new[]{new Point(0,0),new Point(b.Width-1,0),new Point(0,b.Height-1),new Point(b.Width-1,b.Height-1)})
+     if(b.GetPixel(point.X,point.Y).A!=255)throw new Exception("transparent terrain tile border");
+   }
+  }
+  Console.WriteLine("Terrain overlap is pixel-identical across viewport refresh; opaque tile edges and the 64 MiB raster budget passed.");
+ }
+ internal void ProfileScrollWindow(){
+  ClientSize=new Size(1260,706);StartMission(true,true);CenterAt(new PointF(850,650));Show();paused=false;
+  var probe=new PaintTimes();probe.AssignHandle(Handle);int frames=0,run=0;float[] levels={1.05f,2.4f,.62f};
+  try{using(var loop=new ApplicationContext())using(var motion=new Timer{Interval=16})using(var deadline=new Timer{Interval=4000}){
+   motion.Tick+=(s,e)=>{Pan(frames++%160<80?12:-12,frames%160<80?6:-6);};
+   deadline.Tick+=(s,e)=>{
+    var times=probe.Intervals.Skip(12).OrderBy(v=>v).ToArray();
+    if(times.Length==0)throw new Exception("no scrolling window frames");
+    Console.WriteLine("Live scroll zoom {0}: {1:F1} paints/s, p95 {2:F1}ms, max {3:F1}ms",levels[run],1000/times.Average(),times[(int)(times.Length*.95)],times.Last());
+    probe.Intervals.Clear();if(++run==levels.Length){motion.Stop();deadline.Stop();loop.ExitThread();}else zoom=levels[run];
+   };
+   motion.Start();deadline.Start();Application.Run(loop);
+  }}finally{probe.ReleaseHandle();Close();}
+ }
+ internal void ProfileScroll(){
+  ClientSize=new Size(1920,1080);StartMission(true,true);selection.Clear();
+  foreach(var pos in new[]{new PointF(450,520),new PointF(1120,800),new PointF(2050,1030)}){
+   world.Spawn("hq",0,pos.X,pos.Y);world.Spawn("power",0,pos.X+110,pos.Y);
+   world.Spawn("factory",0,pos.X,pos.Y+145);
+   for(int n=0;n<12;n++)world.Spawn(n%3==0?"squad":"tank",0,pos.X-120+n%4*35,pos.Y+50+n/4*32);
+  }
+  using(var surface=new Bitmap(1920,1080))using(var g=Graphics.FromImage(surface)){
+   foreach(float level in new[]{1.05f,2.4f,.62f}){
+    zoom=level;camera=new PointF(800,650);var normal=new System.Collections.Generic.List<double>();var rebuild=new System.Collections.Generic.List<double>();var ticks=new System.Collections.Generic.List<double>();
+    for(int i=0;i<420;i++){
+     var timer=System.Diagnostics.Stopwatch.StartNew();world.Tick(1f/60);ticks.Add(timer.Elapsed.TotalMilliseconds);
+     Pan(i%210<105?12:-12,i%210<105?6:-6);var previous=terrainCamera;
+     timer.Restart();OnPaint(new PaintEventArgs(g,ClientRectangle));g.Flush(System.Drawing.Drawing2D.FlushIntention.Sync);
+     if(i>=12)(previous==terrainCamera?normal:rebuild).Add(timer.Elapsed.TotalMilliseconds);
+    }
+    Action<string,System.Collections.Generic.List<double>> report=(label,values)=>{
+     values.Sort();if(values.Count==0)return;Console.WriteLine("Scroll zoom {0}: {1} n={2}, median={3:F2}ms p95={4:F2}ms p99={5:F2}ms max={6:F2}ms >33ms={7}",level,label,values.Count,values[values.Count/2],values[(int)(values.Count*.95)],values[(int)(values.Count*.99)],values.Last(),values.Count(v=>v>33));
+    };
+    report("cached",normal);report("terrain refresh",rebuild);report("simulation",ticks);
+   }
+  }
+ }
  internal void CaptureDefaultScale(string path){
   var oldSize=ClientSize;float oldZoom=zoom;ClientSize=new Size(1920,1080);zoom=DefaultZoom;
   try{using(var frame=new Bitmap(1920,1080))using(var g=Graphics.FromImage(frame)){
