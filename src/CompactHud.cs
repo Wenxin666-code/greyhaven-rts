@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Linq;
 namespace Greyhaven {
@@ -15,17 +15,17 @@ partial class CommandWindow {
   float x=MW+SideInset;Metal(g,MW,MapTop,W-MW,H-MapTop);Line(g,MW,MapTop,MW,H,gold,2);
   Txt(g,"// 战区雷达",x,62,15,pale,true);Rect(g,x,86,SideWidth,104,ink);DrawRadar(g,x+2);
   Button(g,x,197,72,29,"基地 H",GoHome);Button(g,x+80,197,72,29,"事件",world.LastEvent.HasValue?(Action)GoEvent:null);
-  Button(g,x,234,48,31,"建设",()=>{army=false;queueOpen=false;place=null;},!army&&!queueOpen);
-  Button(g,x+52,234,48,31,"生产",()=>{army=true;queueOpen=false;place=null;},army&&!queueOpen);
+  Button(g,x,234,48,31,"建设",()=>{army=false;productionFilter=0;queueOpen=false;place=null;},!army&&!queueOpen);
+  Button(g,x+52,234,48,31,"生产",()=>{army=true;productionFilter=0;queueOpen=false;place=null;},army&&!queueOpen);
   Button(g,x+104,234,48,31,"队列",OpenQueue,queueOpen);
   if(queueOpen)DrawQueue(g,x);
-  else{var cards=Campaign.Types.Where(t=>army?!t.Building:t.Building&&t.Key!="hq").ToArray();
+  else{var cards=ProductionCards();
    for(int i=0;i<cards.Length;i++)Card(g,cards[i],x+i%2*80,274+i/2*75);}
   DrawQueueStrip(g);
   Button(g,x,730,SideWidth,31,world.Upgraded[0]?"装甲已升级":!world.Live(0).Any(o=>o.T.Key=="factory")?"升级需车辆工厂":"装甲升级 $260",
    world.Upgraded[0]||world.Funds[0]<260||!world.Live(0).Any(o=>o.T.Key=="factory")?(Action)null:()=>world.Upgrade());
   Button(g,x,771,72,31,"手册 F5",()=>{paused=true;help=true;});
-  Button(g,x+80,771,72,31,syncMarch?"同速开 F":"同速关 F",()=>syncMarch=!syncMarch,syncMarch);
+  Button(g,x+80,771,72,31,"辅助范围",()=>{showRanges=!showRanges;showGrid=showRanges;},showRanges);
  }
  void Card(Graphics g,TypeInfo t,float x,float y){
   string reason=world.Require(t,0);var r=new RectangleF(x,y,72,71);bool ready=reason==null;
@@ -45,7 +45,7 @@ partial class CommandWindow {
  void DrawCardHint(Graphics g){
   if(briefing||paused||queueOpen||mouse.X<MW+SideInset||mouse.Y<274||mouse.Y>=570)return;
   int col=(int)(mouse.X-MW-SideInset)/80,row=(int)(mouse.Y-274)/75;
-  var cards=Campaign.Types.Where(type=>army?!type.Building:type.Building&&type.Key!="hq").ToArray();int index=row*2+col;
+  var cards=ProductionCards();int index=row*2+col;
   if(col<0||col>1||index>=cards.Length)return;
   var t=cards[index];string reason=world.Require(t,0);float x=MW-250,y=Math.Min(H-82,mouse.Y+12);
   Plate(g,new RectangleF(x,y,238,64),panel,gold);Txt(g,t.Name+"  $"+t.Price,x+12,y+8,16,pale,true);

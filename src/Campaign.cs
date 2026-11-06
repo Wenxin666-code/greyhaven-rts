@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -6,7 +6,7 @@ using System.Linq;
 namespace Greyhaven {
 public class TypeInfo {
  public string Key,Name,Producer; public int Price,Hp,Hit,Range,Size; public float Speed,Seconds,Reload;
- public float LockRange {get{return Hit==0?0:Building?Range:Range+3*Campaign.Tile;}}
+ public float LockRange {get{return Hit==0?0:Building?Range:Math.Min(Range*2,16*Campaign.Tile);}}
  public float Clearance {get{return Foot?5:Key=="miner"?5.25f:8.8f;}}
  public bool Building {get{return Speed==0;}} public bool Foot {get{return Key=="squad"||Key=="at"||Key=="engineer";}}
  public TypeInfo(string key,string name,string from,int price,int hp,int hit,int range,int size,float speed,float time,float reload){
@@ -16,6 +16,8 @@ public class TypeInfo {
 public enum ContactOrder { None, Directed, Automatic, ReturnFire }
 public class Piece {
  public float TrafficBlocked;
+ public PointF? GuardHome;public Piece Escort;public PointF EscortOffset;public bool GuardTravelling,GuardReturning,ForceMoving;
+ public readonly List<PointF> Waypoints=new List<PointF>();public int WaypointIndex;public bool Patrol;
  public bool DockReserved;public float DockTicket,DockRetryAfter;
  public int LastReceipt;public float ReceiptAt;public PointF WorkPoint,TravelSample;public float TrafficSampleTime;public bool Mining,StarterDelivered,Returning,Surveying;public float Cargo,Unload,Dispatch,MillPhase;public Piece Dock;public OrePatch Patch;
  public ContactOrder Contact;public bool ResumeMarch;public PointF LastContact;public float ScanIn;
@@ -119,9 +121,9 @@ public partial class Campaign {
   Funds[side]-=260;Upgraded[side]=true;return true;
  }
  public bool Move(Piece o,PointF p,bool attack){
-  if(!o.Deployed||o.T.Building)return false;if(!ParkingAllowed(o.Side,p)||!Route(o,p))return false;o.Mining=false;o.Dock=null;o.DockReserved=false;o.DockTicket=0;o.DockRetryAfter=0;o.Unload=0;o.FirePoint=null;o.Formation=null;o.Target=null;o.Contact=ContactOrder.None;o.ResumeMarch=false;o.Advancing=attack;o.Goal=p;return true;
+  if(!o.Deployed||o.T.Building)return false;if(!ParkingAllowed(o.Side,p)||!Route(o,p))return false;ClearMission(o);o.Mining=false;o.Dock=null;o.DockReserved=false;o.DockTicket=0;o.DockRetryAfter=0;o.Unload=0;o.FirePoint=null;o.Formation=null;o.Target=null;o.Contact=ContactOrder.None;o.ResumeMarch=false;o.Advancing=attack;o.Goal=p;return true;
  }
- public void Attack(Piece o,Piece target){if(!o.Deployed||o.T.Hit==0)return;o.FirePoint=null;o.Formation=null;o.Target=target;o.Contact=ContactOrder.Directed;o.ResumeMarch=false;o.Advancing=true;o.Path.Clear();o.Replan=0;o.Goal=target.P;}
+ public void Attack(Piece o,Piece target){if(!o.Deployed||o.T.Hit==0||target==o)return;ClearMission(o);o.FirePoint=null;o.Formation=null;o.Target=target;o.Contact=ContactOrder.Directed;o.ResumeMarch=false;o.Advancing=true;o.Path.Clear();o.Replan=0;o.Goal=target.P;}
  void ApproachPoint(Piece o,PointF target){
   float length=Dist(o.P,target);if(length<1)return;float range=Math.Max(20,o.T.Range-2);
   double angle=Math.Atan2(o.P.Y-target.Y,o.P.X-target.X);
@@ -195,6 +197,7 @@ public partial class Campaign {
    var wounded=Live(o.Side).FirstOrDefault(f=>!f.T.Foot&&f.Hp<f.T.Hp&&Dist(o.P,f.P)<67);
    if(wounded!=null){wounded.Hp=Math.Min(wounded.T.Hp,wounded.Hp+13);o.Cool=1;}
   }
+  MissionTick(o);
   bool stop=false;
   if(o.FirePoint.HasValue)stop=GroundFireTick(o,dt);
   else if(o.T.Hit>0)stop=FightContact(o,dt);
@@ -204,7 +207,7 @@ public partial class Campaign {
    else{
     float d=Dist(o.P,p),travel=speed*dt;
     var next=d<=travel?p:new PointF(o.P.X+(p.X-o.P.X)*travel/d,o.P.Y+(p.Y-o.P.Y)*travel/d);
-    var step=Avoid(o,next);
+    var step=Avoid(o,next);o.TrafficBlocked=Dist(o.P,step)<.001f?o.TrafficBlocked+dt:0;
     if(Dist(o.P,step)>.001f){o.Turn=Bearing(o.P,step);o.Dir=(int)Math.Round(o.Turn)%16;o.P=step;}
    }
    if(o.Path.Count>0&&(Dist(o.P,o.Path.Peek())<(o.T.Foot?.1f:.001f)||(!o.Mining&&o.Path.Count==1&&Dist(o.P,o.Path.Peek())<9&&Units.Any(u=>u!=o&&u.Deployed&&Dist(u.P,o.Path.Peek())<15))))o.Path.Dequeue();}

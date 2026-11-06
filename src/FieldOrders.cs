@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Drawing;
@@ -6,13 +6,20 @@ using System.Drawing;
 namespace Greyhaven {
 public class March {
  public readonly List<Piece> Members=new List<Piece>();
+ public readonly Dictionary<Piece,PointF> Starts=new Dictionary<Piece,PointF>();
+ public PointF Forward;
+ float Progress(Piece o){PointF start;if(!Starts.TryGetValue(o,out start))return 0;return (o.P.X-start.X)*Forward.X+(o.P.Y-start.Y)*Forward.Y;}
  public float Speed(Piece unit){
-  float slow=unit.T.Speed;
+  float slow=unit.T.Speed,least=Progress(unit),most=least;
   foreach(var m in Members){
-   if(m.Formation!=this||!m.Deployed||m.Path.Count==0)continue;
-   slow=Math.Min(slow,m.T.Speed);
+   if(m.Formation!=this||!m.Deployed||m.Path.Count==0||m.Target!=null||m.TrafficBlocked>2.5f)continue;
+   slow=Math.Min(slow,m.T.Speed);float progress=Progress(m);least=Math.Min(least,progress);most=Math.Max(most,progress);
   }
-  return slow;
+  float own=Progress(unit),ahead=own-least;
+  if(most-own>24)return unit.T.Speed;
+  // Gradual braking avoids the old all-stop / all-go pulses. A blocked member
+  // leaves pacing after 2.5 s, so the whole group cannot deadlock behind it.
+  return slow*Math.Max(.25f,Math.Min(1,1-(ahead-24)/80));
  }
 }
 public partial class Campaign {
@@ -39,7 +46,7 @@ public partial class Campaign {
   var center=new PointF(troops.Average(o=>o.P.X),troops.Average(o=>o.P.Y));
   float d=Math.Max(1,Dist(center,p)),fx=(p.X-center.X)/d,fy=(p.Y-center.Y)/d;
   var sorted=troops.OrderBy(o=>o.Id).ToArray();
-  int cols=(int)Math.Ceiling(Math.Sqrt(sorted.Length)),rows=(sorted.Length+cols-1)/cols;var group=new March();var assigned=new List<PointF>();
+  int cols=(int)Math.Ceiling(Math.Sqrt(sorted.Length)),rows=(sorted.Length+cols-1)/cols;var group=new March{Forward=new PointF(fx,fy)};var assigned=new List<PointF>();
   var slots=new PointF[sorted.Length];
   for(int i=0;i<slots.Length;i++){
    float depth=((rows-1)*.5f-i/cols)*32,across=(i%cols-(Math.Min(cols,sorted.Length-i/cols*cols)-1)*.5f)*32;
@@ -51,7 +58,7 @@ public partial class Campaign {
    for(int attempt=0;attempt<(sorted.Length==1?1:17);attempt++){
     float radius=attempt==0?0:attempt>8?42:23;double a=attempt*Math.PI/4;var slot=new PointF(goal.X+radius*(float)Math.Cos(a),goal.Y+radius*(float)Math.Sin(a));
     if(assigned.Any(s=>Dist(s,slot)<19)||!Move(o,slot,advance))continue;
-    assigned.Add(slot);if(together&&sorted.Length>1){o.Formation=group;group.Members.Add(o);}break;
+    assigned.Add(slot);if(together&&sorted.Length>1){o.Formation=group;group.Members.Add(o);group.Starts[o]=o.P;}break;
    }
   }return assigned.Count;
  }

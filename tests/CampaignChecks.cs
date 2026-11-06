@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Drawing;
 using Greyhaven;
@@ -120,8 +120,8 @@ class CampaignChecks {
  static void ContactChecks(){
   var w=new Campaign(true);var unit=w.Spawn("tank",0,380,770);
   var building=w.Spawn("power",1,504,768);var goal=new PointF(680,855);
-  Check(w.Move(unit,goal,false),"ordinary march accepted");Wait(w,.4f);
-  Check(unit.Target==building&&unit.ResumeMarch,"march locks enemy structure outside firing range");
+  Check(w.Move(unit,goal,true),"attack march accepted");Wait(w,.4f);
+  Check(unit.Target==building&&unit.ResumeMarch,"attack march locks enemy structure outside firing range");
   Wait(w,3);Check(building.Hp<building.T.Hp,"advance into range and fire at structure");
   building.Hp=0;Wait(w,18);Check(Campaign.Dist(unit.P,goal)<1,"resume interrupted order");
   w=new Campaign(true);var foot=w.Spawn("squad",0,400,750);var gun=w.Spawn("arty",1,612,750);
@@ -297,7 +297,38 @@ class CampaignChecks {
   Check(shot&&Campaign.Dist(unit.P,near.P)>=unit.T.Range-3,"stop and fire at range instead of advancing to 78 percent range");
   Console.WriteLine("Immediate in-range acquisition, building-edge range, and stopping at the firing boundary passed.");
  }
- static int Main(){try{ConvoyStress();DockQueueStress();FiringBoundary();ExpandedMap();Run();return 0;}catch(Exception ex){Console.Error.WriteLine(ex.Message);return 1;}}
+
+ static Campaign EmptyBattle(){var w=new Campaign(true);w.Units.Clear();w.Spawn("mcv",0,120,200);w.Spawn("mcv",1,2400,1300);return w;}
+ static void ClassicCombatChecks(){
+  var w=EmptyBattle();var u=w.Spawn("squad",0,500,1000);var enemy=w.Spawn("mcv",1,550,990);enemy.Hp=10000;
+  var goal=new PointF(900,1000);w.Move(u,goal,false);Wait(w,1);
+  Check(u.Target==null&&u.Goal==goal&&enemy.Hp==10000&&u.P.X>540,"ordinary infantry move must not stop and chase");
+  w.Move(u,goal,true);Wait(w,.3f);Check(u.Target==enemy&&enemy.Hp<10000,"attack move stops and shoots encountered target");
+  enemy.Hp=0;Wait(w,12);Check(Campaign.Dist(u.P,goal)<1,"attack move resumes original destination");
+  w=EmptyBattle();u=w.Spawn("tank",0,500,1000);enemy=w.Spawn("mcv",1,550,960);enemy.Hp=10000;
+  w.Move(u,goal,false);Wait(w,1);Check(u.Target==null&&enemy.Hp<10000&&u.P.X>500,"tank opportunity fire preserves route");
+  w=EmptyBattle();u=w.Spawn("ifv",0,500,1000);enemy=w.Spawn("mcv",1,650,1000);enemy.Hp=10000;
+  var home=u.P;w.Guard(u);Wait(w,2);Check(u.Target==enemy&&Campaign.Dist(u.P,home)>20,"guard approaches within guard radius");
+  enemy.P=new PointF(900,1000);Wait(w,8);Check(Campaign.Dist(u.P,home)<12&&u.Target==null,"guard must return when target leaves guarded area");
+  Check(w.GuardAt(u,new PointF(550,1100)),"guard destination accepted");Wait(w,5);Check(!u.GuardTravelling&&u.GuardHome==new PointF(550,1100),"guard arrives and arms");
+  enemy.Hp=0;var friend=w.Spawn("miner",0,600,1100);w.Halt(friend);Check(w.EscortUnit(u,friend),"escort accepted");w.Move(friend,new PointF(950,1100),false);Wait(w,12);
+  Check(u.Escort==friend&&Campaign.Dist(u.P,friend.P)<95,"escort follows moving friendly: "+u.P+" vs "+friend.P);friend.Hp=0;Wait(w,2);Check(u.Escort==null,"escort handles destroyed target");
+  w=EmptyBattle();u=w.Spawn("squad",0,500,1000);var points=new[]{new PointF(600,1000),new PointF(600,1100)};
+  Check(w.SetWaypoints(u,points,false),"waypoints accepted");Wait(w,7);Check(Campaign.Dist(u.P,points[1])<1&&u.Waypoints.Count==0,"sequential waypoints finish");
+  w.SetWaypoints(u,points,true);Wait(w,7);Check(u.Patrol&&u.Waypoints.Count==2,"patrol persists");w.Halt(u);Wait(w,.5f);Check(u.Waypoints.Count==0&&!u.Patrol&&u.Path.Count==0,"stop cancels patrol");
+  w=EmptyBattle();u=w.Spawn("tank",0,500,1000);enemy=w.Spawn("squad",1,600,1000);enemy.Cool=100;w.ForceMove(u,new PointF(700,1000));Wait(w,6);Check(!enemy.Alive,"force-move tank crushes infantry");
+  Console.WriteLine("Classic move/attack-move, opportunity fire, guard return, escort, patrol, stop and force-move passed.");
+ }
+ static void MixedCohesion(){
+  foreach(float dt in new[]{.05f,1f/60}){
+   var w=EmptyBattle();var troops=Enumerable.Range(0,12).Select(i=>w.Spawn(i%3==0?"squad":i%3==1?"tank":"ifv",0,450+i%4*32,950+i/4*32)).ToArray();
+   var starts=troops.Select(u=>u.P).ToArray();Check(w.MarchTo(troops,new PointF(1050,1030),false,true)==12,"mixed routes");float spread=0;
+   for(int n=0;n<(int)(9/dt);n++){w.Tick(dt);var progress=troops.Select((u,i)=>u.P.X-starts[i].X).ToArray();spread=Math.Max(spread,progress.Max()-progress.Min());}
+   Check(spread<110,"mixed convoy progress spread: "+spread);Wait(w,30);Check(troops.All(u=>Campaign.Dist(u.P,u.Goal)<12),"mixed convoy arrival");
+   Console.WriteLine("Mixed infantry/tank/IFV cohesion at {0} Hz: progress spread {1:F1} world units.",1/dt,spread);
+  }
+ }
+ static int Main(){try{ClassicCombatChecks();MixedCohesion();ConvoyStress();DockQueueStress();FiringBoundary();ExpandedMap();Run();return 0;}catch(Exception ex){Console.Error.WriteLine(ex.Message);return 1;}}
  static void Run(){NarrowGate();CrowdedOreRun(.05f);CrowdedOreRun(1f/60);MinerMidRouteBlock();EnemySupplyChain();MinerTraffic();ExhaustedFields();ProspectChecks();OreChecks();ContactChecks();StreetChecks();InfantryWaves();HeadingChecks();ReconAndMarch();Navigation();Training();Play(true);Play(false);EliminationChecks();
   var w=new Campaign();var car=w.Spawn("ifv",0,212,431);w.Load(car);Check(w.Units.Any(o=>o.Carrier==car),"embark");w.Load(car);Check(!w.Units.Any(o=>o.Carrier==car),"disembark");
   Console.WriteLine("All checks passed.");}

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 
 namespace Greyhaven {
@@ -9,11 +9,11 @@ public partial class Campaign {
  }
  public static float TargetDistance(Piece unit,Piece target){return Dist(unit.P,TargetPoint(unit.P,target));}
  static bool Targetable(Piece e){return e.Alive&&e.Carrier==null&&(e.Ready>=1||e.T.Building);}
- Piece FindContact(Piece o){
+ Piece FindContact(Piece o,float range){
   Piece best=null;float bestDistance=float.MaxValue;
   foreach(var e in Units){
    if(e.Side==o.Side||!Targetable(e)||!VisibleTo(o.Side,e))continue;
-   float d=TargetDistance(o,e);if(d>o.T.LockRange)continue;
+   float d=TargetDistance(o,e);if(d>range||!GuardAllows(o,e))continue;
    bool armed=e.Deployed&&e.T.Hit>0;
    bool bestArmed=best!=null&&best.Deployed&&best.T.Hit>0;
    bool inRange=d<=o.T.Range,bestInRange=bestDistance<=o.T.Range;
@@ -27,10 +27,12 @@ public partial class Campaign {
  }
  void EndContact(Piece o){
   o.Target=null;o.Contact=ContactOrder.None;o.Path.Clear();
-  if(o.ResumeMarch)Route(o,o.Goal);
+  ReturnToMission(o);
   o.ResumeMarch=false;
  }
  void OnIncomingFire(Piece defender,Piece attacker){
+  if(defender.Path.Count>0&&!defender.Advancing&&!defender.GuardHome.HasValue)return;
+  if(defender.GuardReturning||defender.GuardTravelling||!GuardAllows(defender,attacker))return;
   if(!defender.Deployed||defender.T.Hit==0||defender.FirePoint.HasValue||defender.Contact==ContactOrder.Directed)return;
   if(defender.T.Building&&TargetDistance(defender,attacker)>defender.T.Range)return;
   if(defender.Target==attacker){defender.LastContact=attacker.P;defender.Contact=ContactOrder.ReturnFire;return;}
@@ -38,14 +40,25 @@ public partial class Campaign {
   TakeContact(defender,attacker,ContactOrder.ReturnFire);
  }
  bool FightContact(Piece o,float dt){
-  o.ScanIn-=dt;var e=o.Target;
+  o.ScanIn-=dt;
+  bool travelling=o.Target==null&&o.Path.Count>0&&!o.Advancing;
+  if(travelling||o.GuardReturning){
+   // Grizzly's OpportunityFire permits a shot without cancelling movement.
+   // Infantry and artillery keep walking; an explicit attack-move stops to fight.
+   if(o.T.Key=="tank"&&!o.GuardReturning&&o.ScanIn<=0){
+    o.ScanIn=.18f;var opportunity=FindContact(o,o.T.Range);
+    if(opportunity!=null&&o.Cool<=0)Fire(o,opportunity);
+   }
+   return false;
+  }
+  var e=o.Target;
   if(e!=null){
    bool visible=VisibleTo(o.Side,e);
    if(!Targetable(e)||(!visible&&o.Contact!=ContactOrder.ReturnFire)||
-      (o.Contact==ContactOrder.Automatic&&TargetDistance(o,e)>o.T.LockRange)){EndContact(o);e=null;}
+      (o.Contact!=ContactOrder.Directed&&(!GuardAllows(o,e)||o.Contact==ContactOrder.Automatic&&TargetDistance(o,e)>ScanRange(o)))){EndContact(o);e=null;}
   }
-  if(o.ScanIn<=0&&(e==null||o.Contact==ContactOrder.Automatic&&TargetDistance(o,e)>o.T.Range)){
-   o.ScanIn=.08f;var found=FindContact(o);
+  if(!o.GuardReturning&&o.ScanIn<=0&&(e==null||o.Contact==ContactOrder.Automatic&&TargetDistance(o,e)>o.T.Range)){
+   o.ScanIn=.18f;var found=FindContact(o,ScanRange(o));
    if(found!=null&&(e==null||TargetDistance(o,found)<=o.T.Range)){e=found;TakeContact(o,e,ContactOrder.Automatic);}
   }
   if(e==null)return false;

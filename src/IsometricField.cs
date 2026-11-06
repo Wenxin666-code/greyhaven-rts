@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -9,12 +9,12 @@ using System.Collections.Generic;
 namespace Greyhaven {
 partial class CommandWindow {
  internal const float DefaultZoom=1.05f;
- float zoom=DefaultZoom;PointF camera=new PointF(255,465),panPoint;bool panning,syncMarch=false;
+ float zoom=DefaultZoom;PointF camera=new PointF(255,465),panPoint;bool panning,syncMarch=true;
  const float Axis=.87f, Rise=.435f;
  PointF ScreenOf(PointF w){return new PointF(MW*.5f+zoom*Axis*(w.X-camera.X-w.Y+camera.Y),MapTop+MH*.5f+zoom*Rise*(w.X-camera.X+w.Y-camera.Y));}
  PointF WorldOf(PointF s){float a=(s.X-MW*.5f)/(Axis*zoom),b=(s.Y-MapTop-MH*.5f)/(Rise*zoom);return new PointF(camera.X+(b+a)/2,camera.Y+(b-a)/2);}
  void CenterAt(PointF p){camera=new PointF(Math.Max(0,Math.Min(Campaign.Width,p.X)),Math.Max(0,Math.Min(Campaign.Height,p.Y)));}
- void Pan(float x,float y){CenterAt(WorldOf(new PointF(MW/2+x,MapTop+MH/2+y)));}
+ void Pan(float x,float y){followUnit=null;CenterAt(WorldOf(new PointF(MW/2+x,MapTop+MH/2+y)));}
  bool edgeArmed;float edgeDwell;
  void ResetEdgeScroll(){edgeArmed=false;edgeDwell=0;}
  // WM_MOUSEMOVE stops at the window border. Poll the desktop cursor while this game owns focus.
@@ -75,17 +75,17 @@ partial class CommandWindow {
   DrawGroundView(g);var land=g.Save();GroundSpace(g);DrawTerrainPlan(g);
   var mode=g.SmoothingMode;g.SmoothingMode=SmoothingMode.None;Shroud(g);g.SmoothingMode=mode;g.Restore(land);
   DrawOre(g);
-  if(selection.Count==1){
+  if(showRanges&&selection.Count==1){
    var u=selection[0];
    if(u.Deployed&&u.T.Hit>0){
-    var p=ScreenOf(u.P);float r=u.T.LockRange*zoom*(float)Math.Sqrt(2);
+    var p=ScreenOf(u.P);var anchor=ScreenOf(u.GuardHome??u.P);float r=Campaign.ScanRange(u)*zoom*(float)Math.Sqrt(2);
     using(var ring=new Pen(Color.FromArgb(118,teal),1)){
-     ring.DashStyle=DashStyle.Dash;g.DrawEllipse(ring,p.X-Axis*r,p.Y-Rise*r,2*Axis*r,2*Rise*r);
+     ring.DashStyle=DashStyle.Dash;g.DrawEllipse(ring,anchor.X-Axis*r,anchor.Y-Rise*r,2*Axis*r,2*Rise*r);
     }
     float reach=u.T.Range*zoom*(float)Math.Sqrt(2);
     using(var ring=new Pen(Color.FromArgb(145,gold),1))g.DrawEllipse(ring,p.X-Axis*reach,p.Y-Rise*reach,2*Axis*reach,2*Rise*reach);
     Txt(g,"射程",p.X+Axis*reach+3,p.Y-16,10,gold);
-    if(u.T.LockRange>u.T.Range)Txt(g,"警戒",p.X+Axis*r+3,p.Y+2,10,teal);
+    if(Campaign.ScanRange(u)>u.T.Range)Txt(g,u.GuardHome.HasValue?"警戒":"搜索",anchor.X+Axis*r+3,anchor.Y+2,10,teal);
    }
   }
   bool drawHarbor=world.Explored(0,Campaign.Middle(world.Harbor.Body));
@@ -110,12 +110,7 @@ partial class CommandWindow {
    Txt(g,site.Name,p.X-29,y+1,14,pale,true);
   }
   foreach(var shot in world.Shots){if(!world.Explored(0,shot.A)||!world.Explored(0,shot.B))continue;var a=ScreenOf(shot.A);var b=ScreenOf(shot.B);Line(g,a.X,a.Y-5,b.X,b.Y-5,shot.Shell?gold:Team(shot.Side),2);}
-  if(!briefing&&!paused&&!drag&&!panning&&place==null&&selection.Any(u=>u.Deployed&&u.T.Hit>0)&&mouse.X>=0&&mouse.X<MW&&mouse.Y>=MapTop&&mouse.Y<MapTop+MH){
-   var under=HitScreen(mouse);
-   if(under!=null&&under.Side==1){var q=ScreenOf(under.P);
-    using(var pen=new Pen(red,2))g.DrawEllipse(pen,q.X-19,q.Y-11,38,22);
-    Txt(g,"集火 "+under.T.Name+" #"+under.Id,mouse.X+12,mouse.Y-23,13,red,true);}
-  }
+  DrawPreselection(g);DrawPlannedPaths(g);
   if(markedPoint.HasValue&&world.Time-markTime<2.5f){
    var enemy=markedEnemy;if(enemy==null||enemy.Alive&&world.Visible(enemy)){
     var q=ScreenOf(enemy==null?markedPoint.Value:enemy.P);var c=markHostile?red:teal;
@@ -171,12 +166,7 @@ partial class CommandWindow {
   using(var pen=new Pen(pale,6))g.DrawPolygon(pen,new[]{new PointF(0,MapTop),new PointF(MW,MapTop),new PointF(MW,MapTop+MH),new PointF(0,MapTop+MH)}.Select(WorldOf).ToArray());g.Restore(state);
   hits.Add(new HitBox{Id="radar-map",Box=new RectangleF(x,88,148,100),Run=()=>CenterAt(new PointF((mouse.X-x)*Campaign.Width/148,(mouse.Y-88)*Campaign.Height/100))});
  }
- Piece HitScreen(PointF screen){
-  var w=WorldOf(screen);return world.Units.Where(o=>o.Alive&&o.Carrier==null&&world.Visible(o)).OrderByDescending(o=>o.P.X+o.P.Y).FirstOrDefault(o=>{
-   var p=ScreenOf(o.P);float size=o.T.Size*zoom;if(o.T.Building){var lot=Campaign.Footprint(o.T,o.P);return lot.Contains(w)||InkHit(o.T.Key,o.Side,BuildingRect(lot,p,zoom),screen);}
-   return MobileHit(o,p,size,screen);
-  });
- }
+ Piece HitScreen(PointF screen){return PickUnit(screen);}
  Bitmap MakeGround(){
   using(var materials=Raw("materials")){
    var bmp=new Bitmap(Campaign.Width,Campaign.Height,PixelFormat.Format32bppPArgb);

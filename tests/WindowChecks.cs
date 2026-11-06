@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -22,9 +22,9 @@ class WindowChecks {
   if(args.Length==1&&args[0]=="--scroll-window"){using(var f=new CommandWindow())f.ProfileScrollWindow();return;}
   if(args.Length>0&&args[0]!="--profile"&&args[0]!="--window"&&args[0]!="--mine"&&args[0]!="--drive")using(var f=new CommandWindow())f.CheckTerrainCache();
   if(args.Length>0&&args[0].EndsWith(".png"))using(var f=new CommandWindow())f.CheckCommandFeedback(Path.GetDirectoryName(args[0]));
-  using(var f=new CommandWindow()){if(args.Length==1&&args[0]=="--window"){f.ProfileWindow();return;}if(args.Length==1&&args[0]=="--profile"){f.ProfileBattle();return;}if(args.Length==2&&args[0]=="--mine"){f.RecordOreTrip(args[1]);return;}if(args.Length==2&&args[0]=="--drive"){f.RecordStreetTurn(args[1]);return;}f.CheckInfantry();f.CheckRadarGate();f.CheckEdgeScroll();f.CheckFocusAndMining();if(args.Length>0)f.CheckScreenTravel(args[0]);f.CheckPlates(args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"角度校准.png"));Frame(f,args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"主界面.png"));Press(f,190,641);if(!(bool)Field(f,"rulesOpen"))throw new Exception("rules entry");
+  using(var f=new CommandWindow()){if(args.Length==1&&args[0]=="--window"){f.ProfileWindow();return;}if(args.Length==1&&args[0]=="--profile"){f.ProfileBattle();return;}if(args.Length==2&&args[0]=="--mine"){f.RecordOreTrip(args[1]);return;}if(args.Length==2&&args[0]=="--drive"){f.RecordStreetTurn(args[1]);return;}f.CheckClassicOrders();f.CheckInfantry();f.CheckRadarGate();f.CheckEdgeScroll();f.CheckFocusAndMining();if(args.Length>0)f.CheckScreenTravel(args[0]);f.CheckPlates(args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"角度校准.png"));Frame(f,args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"主界面.png"));Press(f,190,641);if(!(bool)Field(f,"rulesOpen"))throw new Exception("rules entry");
    Press(f,157,290);if(!(bool)Field(f,"unitRoster"))throw new Exception("roster entry");
-   if(args.Length>0)Frame(f,Path.Combine(Path.GetDirectoryName(args[0]),"单位图鉴.png"));
+   if(args.Length>0){Frame(f,Path.Combine(Path.GetDirectoryName(args[0]),"单位图鉴.png"));Press(f,170,350);Frame(f,Path.Combine(Path.GetDirectoryName(args[0]),"经典指令.png"));}
    Press(f,158,700);if((bool)Field(f,"rulesOpen"))throw new Exception("rules return");Press(f,220,571);
    if(!(bool)Field(f,"missionPicker")||!(bool)Field(f,"briefing"))throw new Exception("start must open mission selection");
    Press(f,190,348);Press(f,865,551);Frame(f,args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"关卡选择.png"));
@@ -71,7 +71,7 @@ class WindowChecks {
    if(args.Length>0){
     w.Upgrade();w.Train(Campaign.Info("tank"),0,null);for(int i=0;i<140;i++)w.Tick(.1f);
     Tap(f,"生产");typeof(CommandWindow).GetMethod("CenterAt",flags).Invoke(f,new object[]{new PointF(300,495)});
-    typeof(CommandWindow).GetMethod("OnKeyDown",flags).Invoke(f,new object[]{new KeyEventArgs(Keys.G)});
+
     var armor=w.Live(0).FirstOrDefault(u=>u.T.Key=="tank");if(armor!=null){
      var picked=(System.Collections.Generic.List<Piece>)Field(f,"selection");picked.Clear();picked.Add(armor);
     }
@@ -79,12 +79,12 @@ class WindowChecks {
     Frame(f,Path.Combine(Path.GetDirectoryName(args[0]),"等距战场.png"));f.CaptureDefaultScale(Path.Combine(Path.GetDirectoryName(args[0]),"战场比例.png"));while(factory.Queue.Count>0)w.CancelOrder(factory,0);
    }
    if(w.LessonKey!="eliminate")throw new Exception("ifv training");Press(f,767,90);
-   typeof(CommandWindow).GetMethod("OnKeyDown",flags).Invoke(f,new object[]{new KeyEventArgs(Keys.A)});MapClick(f,1330,292);
+   typeof(CommandWindow).GetField("mouse",flags).SetValue(f,(PointF)typeof(CommandWindow).GetMethod("ScreenOf",flags).Invoke(f,new object[]{new PointF(1330,292)}));typeof(CommandWindow).GetMethod("ContextOrder",flags).Invoke(f,new object[]{Keys.Control|Keys.Shift});
    for(int i=0;i<1100;i++)w.Tick(.1f);Frame(f,null);if(!w.Won)throw new Exception("tutorial victory through interface: "+w.LessonKey+" "+w.Radio+" / "+String.Join(" ",w.Live(0).Where(u=>u.T.Foot).Select(u=>u.P+" to "+u.Goal)));
    Press(f,688,574);w=(Campaign)Field(f,"world");if(w.Tutorial||!w.Assisted)throw new Exception("handoff to assisted mission");var trooper=w.Live(0).First(o=>o.T.Foot);var nearby=w.Spawn("squad",1,351,421);for(int i=0;i<3;i++)w.Tick(.1f);Frame(f,null);
    MapClick(f,(int)trooper.P.X,(int)trooper.P.Y);var units=(System.Collections.Generic.List<Piece>)Field(f,"selection");
    if(!units.Contains(trooper))throw new Exception("classic select");
-   MapClick(f,(int)trooper.P.X,(int)trooper.P.Y);if(units.Count!=0)throw new Exception("second click should deselect");
+   MapClick(f,(int)trooper.P.X,(int)trooper.P.Y);if(units.Count!=1||units[0]!=trooper)throw new Exception("repeat click must keep selection");
    MapClick(f,(int)trooper.P.X,(int)trooper.P.Y);if(!units.Contains(trooper))throw new Exception("third click selects again");
    MapClick(f,395,470);if(!units.Contains(trooper)||trooper.Path.Count==0)throw new Exception("classic ground movement");
    MapClick(f,(int)nearby.P.X,(int)nearby.P.Y);if(trooper.Target!=nearby)throw new Exception("classic direct targeting");
@@ -106,6 +106,37 @@ class WindowChecks {
 
 namespace Greyhaven {
 partial class CommandWindow {
+ internal void CheckClassicOrders(){
+  ClientSize=new Size(1472,819);StartMission(false,true);CenterAt(new PointF(600,1000));
+  using(var frame=new Bitmap(1472,819))using(var g=Graphics.FromImage(frame))OnPaint(new PaintEventArgs(g,ClientRectangle));
+  var old=world.Spawn("tank",0,500,1000);var moving=world.Spawn("squad",0,600,1000);world.Tick(.01f);
+  selection.Clear();selection.Add(old);
+  Action<Keys> tap=k=>{OnKeyDown(new KeyEventArgs(k));OnKeyUp(new KeyEventArgs(k));};
+  foreach(float level in new[]{.62f,1.05f,2.4f}){
+   zoom=level;var p=ScreenOf(moving.P);if(HitScreen(new PointF(p.X+4,p.Y-9))!=moving)throw new Exception("small infantry pick margin at "+level);
+  }
+  zoom=1.05f;mouse=ScreenOf(moving.P);var click=mouse;
+  OnMouseDown(new MouseEventArgs(MouseButtons.Left,1,(int)click.X,(int)click.Y,0));
+  moving.P=new PointF(moving.P.X+32,moving.P.Y); // Moves between mouse down and up.
+  OnMouseUp(new MouseEventArgs(MouseButtons.Left,1,(int)click.X,(int)click.Y,0));
+  if(selection.Count!=1||selection[0]!=moving||old.Path.Count!=0)throw new Exception("moving click must switch selection, not order old group");
+  mouse=ScreenOf(moving.P);ContextOrder(Keys.None);if(selection.Count!=1)throw new Exception("repeat select toggled off");
+  mouse=ScreenOf(old.P);ContextOrder(Keys.Shift);if(selection.Count!=2)throw new Exception("shift add");ContextOrder(Keys.Shift);if(selection.Count!=1)throw new Exception("shift remove");
+  tap(Keys.Control|Keys.D9);selection.Clear();tap(Keys.D9);if(selection.Count!=1||selection[0]!=moving)throw new Exception("team 9 recall");
+  tap(Keys.G);if(!moving.GuardHome.HasValue||showGrid)throw new Exception("G should guard, not show grid");tap(Keys.S);if(moving.GuardHome.HasValue)throw new Exception("S cancels guard");
+  tap(Keys.A);if(attack)throw new Exception("A is not attack move in classic controls");
+  mouse=ScreenOf(new PointF(800,1100));ContextOrder(Keys.Control|Keys.Alt);if(moving.GuardHome!=new PointF(800,1100))throw new Exception("guard destination modifiers");
+  mouse=ScreenOf(old.P);ContextOrder(Keys.Control|Keys.Alt);if(moving.Escort!=old)throw new Exception("escort modifiers");
+  tap(Keys.F);if(followUnit!=moving)throw new Exception("F follows");Pan(20,0);if(followUnit!=null)throw new Exception("manual pan releases follow");
+  tap(Keys.X);if(moving.Path.Count==0||moving.GuardHome.HasValue)throw new Exception("scatter cancels escort");
+  OnKeyDown(new KeyEventArgs(Keys.Z));mouse=ScreenOf(new PointF(700,1100));ContextOrder(Keys.None);mouse=ScreenOf(new PointF(800,1100));ContextOrder(Keys.None);
+  if(moving.Path.Count!=0)throw new Exception("waypoints must wait for release");OnKeyUp(new KeyEventArgs(Keys.Z));
+  if(moving.Waypoints.Count!=2||moving.Path.Count==0)throw new Exception("Z release commits route");
+  tap(Keys.E);if(ProductionCards().Any(t=>!t.Foot))throw new Exception("E infantry tab");tap(Keys.R);if(ProductionCards().Any(t=>t.Foot||t.Building))throw new Exception("R vehicle tab");
+  var enemy=world.Spawn("tank",1,650,1000);world.Tick(.01f);Mark(enemy.P,enemy,true);flashAt=watch.Elapsed.TotalSeconds-.051;
+  if(TargetFlash(enemy)<.7f)throw new Exception("fast highlight peak");flashAt=watch.Elapsed.TotalSeconds-.21;if(TargetFlash(enemy)!=0)throw new Exception("fast highlight expiry");
+  Restart();Console.WriteLine("Classic keys, small-target preselection at three zoom levels, moving click capture, team 9 and fast highlight passed.");
+ }
  internal void CheckCommandFeedback(string folder){
   ClientSize=new Size(1920,1080);StartMission(false,true);CenterAt(new PointF(690,715));showGrid=true;
   var troops=Enumerable.Range(0,8).Select(i=>world.Spawn(i%2==0?"tank":"ifv",0,510+i%4*32,700+i/4*32)).ToArray();
@@ -113,16 +144,17 @@ partial class CommandWindow {
   if(troops.Any(t=>t.Path.Count==0))throw new Exception("missing group member route");
   using(var picture=new Bitmap(1920,1080))using(var g=Graphics.FromImage(picture)){
    OnPaint(new PaintEventArgs(g,ClientRectangle));picture.Save(Path.Combine(folder,"编队路线.png"),System.Drawing.Imaging.ImageFormat.Png);
+   mouse=ScreenOf(troops[3].P);OnPaint(new PaintEventArgs(g,ClientRectangle));picture.Save(Path.Combine(folder,"单位预选.png"),System.Drawing.Imaging.ImageFormat.Png);
    var enemy=world.Spawn("tank",1,850,700);world.Spawn("engineer",0,780,650);world.Tick(.22f);
    foreach(var t in troops)world.Attack(t,enemy);
-   Mark(enemy.P,enemy,true);flashAt=watch.Elapsed.TotalSeconds-.1375;
+   Mark(enemy.P,enemy,true);flashAt=watch.Elapsed.TotalSeconds-.05;
    if(TargetFlash(enemy)<.7f)throw new Exception("target flash absent");
    using(var flash=new Bitmap(160,160))using(var clear=Graphics.FromImage(flash)){
     DrawTargetFlash(clear,enemy,new PointF(80,100),100);
     int white=0;for(int y=0;y<160;y++)for(int x=0;x<160;x++){var c=flash.GetPixel(x,y);if(c.A>20&&c.R>230&&c.G>230&&c.B>230)white++;}
     if(white<100||flash.GetPixel(0,0).A!=0)throw new Exception("flash must follow opaque unit pixels");
    }
-   flashAt=watch.Elapsed.TotalSeconds-.1375;OnPaint(new PaintEventArgs(g,ClientRectangle));picture.Save(Path.Combine(folder,"集火反馈.png"),System.Drawing.Imaging.ImageFormat.Png);
+   flashAt=watch.Elapsed.TotalSeconds-.05;OnPaint(new PaintEventArgs(g,ClientRectangle));picture.Save(Path.Combine(folder,"集火反馈.png"),System.Drawing.Imaging.ImageFormat.Png);
    flashAt=watch.Elapsed.TotalSeconds-1;if(TargetFlash(enemy)!=0)throw new Exception("target flash did not expire");
   }
   if((W-MW)/(float)W>.12f)throw new Exception("sidebar exceeds target width");

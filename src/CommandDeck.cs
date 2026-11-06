@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
@@ -42,7 +42,7 @@ partial class CommandWindow {
  void FrontKey(Keys key){
   if(rulesOpen){
    if(key==Keys.Escape){rulesOpen=false;hits.Clear();}
-   if(key==Keys.Left||key==Keys.Right)unitRoster=!unitRoster;
+   if(key==Keys.Left||key==Keys.Right){int page=commandRules?2:unitRoster?1:0;page=(page+(key==Keys.Right?1:2))%3;unitRoster=page==1;commandRules=page==2;}
    hudDirty=true;Invalidate();return;
   }
   if(key==Keys.Escape&&missionPicker){missionPicker=false;hits.Clear();}
@@ -113,8 +113,9 @@ partial class CommandWindow {
   float bx=x+284;if(unit.T.Key=="mcv")Button(g,bx,y+7,207,34,"展开指挥部   [D]",()=>world.Deploy(unit),true);
   else if(unit.T.Key=="ifv")Button(g,bx,y+7,207,34,"装载 / 卸载   [D]",()=>world.Load(unit));
   else if(unit.T.Key=="miner")Button(g,bx,y+7,207,34,"恢复自动采矿",()=>world.MineOrder(unit,null,null));
-  else Button(g,bx,y+7,207,34,"攻击移动   [A]",selection.Any(o=>o.Deployed&&!o.T.Building&&o.T.Hit>0)?(Action)(()=>{place=null;attack=true;}):null,attack);
-  Button(g,bx,y+47,207,33,"停止   [S]",unit.T.Building?(Action)null:()=>{foreach(var o in selection)world.Halt(o);attack=false;markedPoint=null;markedEnemy=null;});
+  else Button(g,bx,y+7,207,34,"攻击移动",selection.Any(o=>o.Deployed&&!o.T.Building&&o.T.Hit>0)?(Action)(()=>{place=null;attack=true;}):null,attack);
+  Button(g,bx,y+47,100,33,"停止 [S]",unit.T.Building?(Action)null:()=>{foreach(var o in selection)world.Halt(o);attack=false;markedPoint=null;markedEnemy=null;});
+  Button(g,bx+107,y+47,100,33,"警戒 [G]",unit.Deployed?(System.Action)GuardSelection:null);
  }
 }
 }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
@@ -93,7 +93,7 @@ partial class CommandWindow {
    if(key=="ore")return truck.Patch==null?"矿车会向未探索地带找矿。也可派步兵先探路，再选矿车左键点金色矿石。":"矿车已找到金色矿点，正在驶近。点「定位本步」查看矿点和车上的载量。";
    return truck.Returning?"矿车正在返厂卸货。留出厂门，留意精炼厂上方显示的入账金额。":"采集进度 "+(int)truck.Cargo+" / "+Campaign.LoadValue+"。满载后自动返厂，也可选车点己方精炼厂提前卸矿。";
   }
-  return "点「定位本步」选中战斗部队，按 A 向港务中心附近搜索，消灭最后的敌方守军。";
+  return "点「定位本步」选中战斗部队，按住 Ctrl+Shift 点击港务中心附近搜索，消灭最后的敌方守军。";
  }
  void DrawCoach(Graphics g){
   string advice=world.Coach();
