@@ -1,0 +1,5300 @@
+{
+  "squad": [
+    {
+      "team": 0,
+      "frame": 0,
+      "teamPanelFraction": 0.407,
+      "bounds": [
+        31,
+        23,
+        64,
+        92
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 1,
+      "teamPanelFraction": 0.337,
+      "bounds": [
+        33,
+        23,
+        78,
+        93
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 2,
+      "teamPanelFraction": 0.325,
+      "bounds": [
+        34,
+        23,
+        86,
+        91
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 3,
+      "teamPanelFraction": 0.298,
+      "bounds": [
+        33,
+        23,
+        73,
+        91
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 4,
+      "teamPanelFraction": 0.32,
+      "bounds": [
+        31,
+        23,
+        64,
+        88
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 5,
+      "teamPanelFraction": 0.298,
+      "bounds": [
+        17,
+        23,
+        62,
+        91
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 6,
+      "teamPanelFraction": 0.324,
+      "bounds": [
+        9,
+        23,
+        61,
+        91
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 7,
+      "teamPanelFraction": 0.319,
+      "bounds": [
+        22,
+        23,
+        62,
+        93
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 0,
+      "teamPanelFraction": 0.407,
+      "bounds": [
+        31,
+        23,
+        64,
+        92
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 1,
+      "teamPanelFraction": 0.337,
+      "bounds": [
+        33,
+        23,
+        78,
+        93
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 2,
+      "teamPanelFraction": 0.325,
+      "bounds": [
+        34,
+        23,
+        86,
+        91
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 3,
+      "teamPanelFraction": 0.298,
+      "bounds": [
+        33,
+        23,
+        73,
+        91
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 4,
+      "teamPanelFraction": 0.32,
+      "bounds": [
+        31,
+        23,
+        64,
+        88
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 5,
+      "teamPanelFraction": 0.298,
+      "bounds": [
+        17,
+        23,
+        62,
+        91
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 6,
+      "teamPanelFraction": 0.324,
+      "bounds": [
+        9,
+        23,
+        61,
+        91
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 7,
+      "teamPanelFraction": 0.319,
+      "bounds": [
+        22,
+        23,
+        62,
+        93
+      ]
+    }
+  ],
+  "at": [
+    {
+      "team": 0,
+      "frame": 0,
+      "teamPanelFraction": 0.291,
+      "bounds": [
+        30,
+        21,
+        66,
+        92
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 1,
+      "teamPanelFraction": 0.271,
+      "bounds": [
+        29,
+        20,
+        84,
+        93
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 2,
+      "teamPanelFraction": 0.266,
+      "bounds": [
+        24,
+        23,
+        81,
+        91
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 3,
+      "teamPanelFraction": 0.195,
+      "bounds": [
+        18,
+        17,
+        69,
+        91
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 4,
+      "teamPanelFraction": 0.153,
+      "bounds": [
+        29,
+        17,
+        65,
+        88
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 5,
+      "teamPanelFraction": 0.187,
+      "bounds": [
+        11,
+        23,
+        66,
+        91
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 6,
+      "teamPanelFraction": 0.232,
+      "bounds": [
+        14,
+        23,
+        71,
+        91
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 7,
+      "teamPanelFraction": 0.224,
+      "bounds": [
+        27,
+        23,
+        77,
+        93
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 0,
+      "teamPanelFraction": 0.291,
+      "bounds": [
+        30,
+        21,
+        66,
+        92
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 1,
+      "teamPanelFraction": 0.271,
+      "bounds": [
+        29,
+        20,
+        84,
+        93
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 2,
+      "teamPanelFraction": 0.266,
+      "bounds": [
+        24,
+        23,
+        81,
+        91
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 3,
+      "teamPanelFraction": 0.195,
+      "bounds": [
+        18,
+        17,
+        69,
+        91
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 4,
+      "teamPanelFraction": 0.153,
+      "bounds": [
+        29,
+        17,
+        65,
+        88
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 5,
+      "teamPanelFraction": 0.187,
+      "bounds": [
+        11,
+        23,
+        66,
+        91
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 6,
+      "teamPanelFraction": 0.232,
+      "bounds": [
+        14,
+        23,
+        71,
+        91
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 7,
+      "teamPanelFraction": 0.224,
+      "bounds": [
+        27,
+        23,
+        77,
+        93
+      ]
+    }
+  ],
+  "engineer": [
+    {
+      "team": 0,
+      "frame": 0,
+      "teamPanelFraction": 0.361,
+      "bounds": [
+        27,
+        23,
+        66,
+        92
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 1,
+      "teamPanelFraction": 0.357,
+      "bounds": [
+        30,
+        23,
+        68,
+        93
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 2,
+      "teamPanelFraction": 0.395,
+      "bounds": [
+        34,
+        23,
+        65,
+        91
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 3,
+      "teamPanelFraction": 0.409,
+      "bounds": [
+        33,
+        23,
+        66,
+        91
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 4,
+      "teamPanelFraction": 0.419,
+      "bounds": [
+        29,
+        23,
+        68,
+        88
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 5,
+      "teamPanelFraction": 0.433,
+      "bounds": [
+        27,
+        23,
+        65,
+        91
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 6,
+      "teamPanelFraction": 0.403,
+      "bounds": [
+        30,
+        23,
+        61,
+        91
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 7,
+      "teamPanelFraction": 0.365,
+      "bounds": [
+        29,
+        23,
+        62,
+        93
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 0,
+      "teamPanelFraction": 0.361,
+      "bounds": [
+        27,
+        23,
+        66,
+        92
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 1,
+      "teamPanelFraction": 0.357,
+      "bounds": [
+        30,
+        23,
+        68,
+        93
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 2,
+      "teamPanelFraction": 0.395,
+      "bounds": [
+        34,
+        23,
+        65,
+        91
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 3,
+      "teamPanelFraction": 0.409,
+      "bounds": [
+        33,
+        23,
+        66,
+        91
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 4,
+      "teamPanelFraction": 0.419,
+      "bounds": [
+        29,
+        23,
+        68,
+        88
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 5,
+      "teamPanelFraction": 0.433,
+      "bounds": [
+        27,
+        23,
+        65,
+        91
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 6,
+      "teamPanelFraction": 0.403,
+      "bounds": [
+        30,
+        23,
+        61,
+        91
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 7,
+      "teamPanelFraction": 0.365,
+      "bounds": [
+        29,
+        23,
+        62,
+        93
+      ]
+    }
+  ],
+  "ifv": [
+    {
+      "team": 0,
+      "frame": 0,
+      "teamPanelFraction": 0.496,
+      "bounds": [
+        45,
+        35,
+        98,
+        100
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 1,
+      "teamPanelFraction": 0.463,
+      "bounds": [
+        33,
+        33,
+        110,
+        103
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 2,
+      "teamPanelFraction": 0.453,
+      "bounds": [
+        26,
+        34,
+        117,
+        104
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 3,
+      "teamPanelFraction": 0.458,
+      "bounds": [
+        26,
+        37,
+        117,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 4,
+      "teamPanelFraction": 0.462,
+      "bounds": [
+        31,
+        42,
+        112,
+        96
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 5,
+      "teamPanelFraction": 0.434,
+      "bounds": [
+        26,
+        39,
+        117,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 6,
+      "teamPanelFraction": 0.417,
+      "bounds": [
+        26,
+        35,
+        117,
+        104
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 7,
+      "teamPanelFraction": 0.431,
+      "bounds": [
+        33,
+        33,
+        110,
+        103
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 8,
+      "teamPanelFraction": 0.472,
+      "bounds": [
+        45,
+        32,
+        98,
+        100
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 9,
+      "teamPanelFraction": 0.43,
+      "bounds": [
+        33,
+        33,
+        110,
+        103
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 10,
+      "teamPanelFraction": 0.417,
+      "bounds": [
+        26,
+        35,
+        117,
+        104
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 11,
+      "teamPanelFraction": 0.435,
+      "bounds": [
+        26,
+        39,
+        117,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 12,
+      "teamPanelFraction": 0.463,
+      "bounds": [
+        31,
+        42,
+        112,
+        96
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 13,
+      "teamPanelFraction": 0.458,
+      "bounds": [
+        26,
+        37,
+        117,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 14,
+      "teamPanelFraction": 0.456,
+      "bounds": [
+        26,
+        34,
+        117,
+        104
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 15,
+      "teamPanelFraction": 0.466,
+      "bounds": [
+        33,
+        33,
+        110,
+        103
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 0,
+      "teamPanelFraction": 0.496,
+      "bounds": [
+        45,
+        35,
+        98,
+        100
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 1,
+      "teamPanelFraction": 0.463,
+      "bounds": [
+        33,
+        33,
+        110,
+        103
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 2,
+      "teamPanelFraction": 0.453,
+      "bounds": [
+        26,
+        34,
+        117,
+        104
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 3,
+      "teamPanelFraction": 0.458,
+      "bounds": [
+        26,
+        37,
+        117,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 4,
+      "teamPanelFraction": 0.462,
+      "bounds": [
+        31,
+        42,
+        112,
+        96
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 5,
+      "teamPanelFraction": 0.434,
+      "bounds": [
+        26,
+        39,
+        117,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 6,
+      "teamPanelFraction": 0.417,
+      "bounds": [
+        26,
+        35,
+        117,
+        104
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 7,
+      "teamPanelFraction": 0.431,
+      "bounds": [
+        33,
+        33,
+        110,
+        103
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 8,
+      "teamPanelFraction": 0.472,
+      "bounds": [
+        45,
+        32,
+        98,
+        100
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 9,
+      "teamPanelFraction": 0.43,
+      "bounds": [
+        33,
+        33,
+        110,
+        103
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 10,
+      "teamPanelFraction": 0.417,
+      "bounds": [
+        26,
+        35,
+        117,
+        104
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 11,
+      "teamPanelFraction": 0.435,
+      "bounds": [
+        26,
+        39,
+        117,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 12,
+      "teamPanelFraction": 0.463,
+      "bounds": [
+        31,
+        42,
+        112,
+        96
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 13,
+      "teamPanelFraction": 0.458,
+      "bounds": [
+        26,
+        37,
+        117,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 14,
+      "teamPanelFraction": 0.456,
+      "bounds": [
+        26,
+        34,
+        117,
+        104
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 15,
+      "teamPanelFraction": 0.466,
+      "bounds": [
+        33,
+        33,
+        110,
+        103
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 0,
+      "teamPanelFraction": null,
+      "bounds": [
+        45,
+        50,
+        97,
+        102
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 1,
+      "teamPanelFraction": null,
+      "bounds": [
+        32,
+        49,
+        110,
+        106
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 2,
+      "teamPanelFraction": null,
+      "bounds": [
+        26,
+        50,
+        117,
+        106
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 3,
+      "teamPanelFraction": null,
+      "bounds": [
+        26,
+        54,
+        117,
+        103
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 4,
+      "teamPanelFraction": null,
+      "bounds": [
+        31,
+        58,
+        112,
+        98
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 5,
+      "teamPanelFraction": null,
+      "bounds": [
+        26,
+        56,
+        117,
+        104
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 6,
+      "teamPanelFraction": null,
+      "bounds": [
+        26,
+        53,
+        117,
+        106
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 7,
+      "teamPanelFraction": null,
+      "bounds": [
+        33,
+        51,
+        110,
+        106
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 8,
+      "teamPanelFraction": null,
+      "bounds": [
+        46,
+        51,
+        98,
+        102
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 9,
+      "teamPanelFraction": null,
+      "bounds": [
+        33,
+        52,
+        110,
+        103
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 10,
+      "teamPanelFraction": null,
+      "bounds": [
+        26,
+        54,
+        117,
+        103
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 11,
+      "teamPanelFraction": null,
+      "bounds": [
+        26,
+        57,
+        117,
+        100
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 12,
+      "teamPanelFraction": null,
+      "bounds": [
+        31,
+        59,
+        112,
+        95
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 13,
+      "teamPanelFraction": null,
+      "bounds": [
+        26,
+        54,
+        117,
+        100
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 14,
+      "teamPanelFraction": null,
+      "bounds": [
+        26,
+        51,
+        117,
+        103
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 15,
+      "teamPanelFraction": null,
+      "bounds": [
+        33,
+        50,
+        110,
+        103
+      ]
+    }
+  ],
+  "tank": [
+    {
+      "team": 0,
+      "frame": 0,
+      "teamPanelFraction": 0.248,
+      "bounds": [
+        44,
+        47,
+        99,
+        99
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 1,
+      "teamPanelFraction": 0.258,
+      "bounds": [
+        42,
+        46,
+        101,
+        100
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 2,
+      "teamPanelFraction": 0.261,
+      "bounds": [
+        39,
+        46,
+        104,
+        101
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 3,
+      "teamPanelFraction": 0.257,
+      "bounds": [
+        37,
+        45,
+        106,
+        101
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 4,
+      "teamPanelFraction": 0.263,
+      "bounds": [
+        35,
+        45,
+        108,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 5,
+      "teamPanelFraction": 0.271,
+      "bounds": [
+        33,
+        45,
+        110,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 6,
+      "teamPanelFraction": 0.279,
+      "bounds": [
+        31,
+        44,
+        112,
+        103
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 7,
+      "teamPanelFraction": 0.282,
+      "bounds": [
+        30,
+        44,
+        113,
+        103
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 8,
+      "teamPanelFraction": 0.286,
+      "bounds": [
+        29,
+        45,
+        117,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 9,
+      "teamPanelFraction": 0.284,
+      "bounds": [
+        28,
+        45,
+        121,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 10,
+      "teamPanelFraction": 0.284,
+      "bounds": [
+        28,
+        45,
+        124,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 11,
+      "teamPanelFraction": 0.284,
+      "bounds": [
+        29,
+        45,
+        127,
+        101
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 12,
+      "teamPanelFraction": 0.285,
+      "bounds": [
+        29,
+        46,
+        129,
+        100
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 13,
+      "teamPanelFraction": 0.289,
+      "bounds": [
+        30,
+        46,
+        131,
+        99
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 14,
+      "teamPanelFraction": 0.299,
+      "bounds": [
+        32,
+        47,
+        132,
+        98
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 15,
+      "teamPanelFraction": 0.303,
+      "bounds": [
+        34,
+        47,
+        133,
+        96
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 16,
+      "teamPanelFraction": 0.298,
+      "bounds": [
+        36,
+        48,
+        133,
+        95
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 17,
+      "teamPanelFraction": 0.306,
+      "bounds": [
+        33,
+        47,
+        133,
+        96
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 18,
+      "teamPanelFraction": 0.3,
+      "bounds": [
+        32,
+        47,
+        132,
+        98
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 19,
+      "teamPanelFraction": 0.298,
+      "bounds": [
+        30,
+        47,
+        131,
+        99
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 20,
+      "teamPanelFraction": 0.299,
+      "bounds": [
+        29,
+        46,
+        129,
+        100
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 21,
+      "teamPanelFraction": 0.296,
+      "bounds": [
+        28,
+        43,
+        127,
+        101
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 22,
+      "teamPanelFraction": 0.299,
+      "bounds": [
+        28,
+        41,
+        124,
+        101
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 23,
+      "teamPanelFraction": 0.298,
+      "bounds": [
+        28,
+        38,
+        121,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 24,
+      "teamPanelFraction": 0.293,
+      "bounds": [
+        29,
+        36,
+        117,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 25,
+      "teamPanelFraction": 0.295,
+      "bounds": [
+        30,
+        34,
+        113,
+        103
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 26,
+      "teamPanelFraction": 0.296,
+      "bounds": [
+        31,
+        32,
+        112,
+        103
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 27,
+      "teamPanelFraction": 0.29,
+      "bounds": [
+        33,
+        31,
+        110,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 28,
+      "teamPanelFraction": 0.291,
+      "bounds": [
+        35,
+        29,
+        108,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 29,
+      "teamPanelFraction": 0.287,
+      "bounds": [
+        37,
+        28,
+        106,
+        101
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 30,
+      "teamPanelFraction": 0.287,
+      "bounds": [
+        39,
+        28,
+        104,
+        101
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 31,
+      "teamPanelFraction": 0.284,
+      "bounds": [
+        42,
+        27,
+        101,
+        100
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 32,
+      "teamPanelFraction": 0.266,
+      "bounds": [
+        44,
+        27,
+        99,
+        99
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 33,
+      "teamPanelFraction": 0.284,
+      "bounds": [
+        42,
+        27,
+        101,
+        100
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 34,
+      "teamPanelFraction": 0.285,
+      "bounds": [
+        39,
+        28,
+        104,
+        101
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 35,
+      "teamPanelFraction": 0.284,
+      "bounds": [
+        37,
+        28,
+        106,
+        101
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 36,
+      "teamPanelFraction": 0.288,
+      "bounds": [
+        35,
+        29,
+        108,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 37,
+      "teamPanelFraction": 0.291,
+      "bounds": [
+        33,
+        31,
+        110,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 38,
+      "teamPanelFraction": 0.297,
+      "bounds": [
+        31,
+        32,
+        112,
+        103
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 39,
+      "teamPanelFraction": 0.298,
+      "bounds": [
+        30,
+        34,
+        113,
+        103
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 40,
+      "teamPanelFraction": 0.3,
+      "bounds": [
+        26,
+        36,
+        114,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 41,
+      "teamPanelFraction": 0.301,
+      "bounds": [
+        22,
+        38,
+        115,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 42,
+      "teamPanelFraction": 0.299,
+      "bounds": [
+        19,
+        41,
+        115,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 43,
+      "teamPanelFraction": 0.299,
+      "bounds": [
+        16,
+        43,
+        114,
+        101
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 44,
+      "teamPanelFraction": 0.302,
+      "bounds": [
+        14,
+        46,
+        114,
+        100
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 45,
+      "teamPanelFraction": 0.303,
+      "bounds": [
+        12,
+        47,
+        113,
+        99
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 46,
+      "teamPanelFraction": 0.305,
+      "bounds": [
+        11,
+        47,
+        111,
+        98
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 47,
+      "teamPanelFraction": 0.307,
+      "bounds": [
+        10,
+        47,
+        109,
+        96
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 48,
+      "teamPanelFraction": 0.297,
+      "bounds": [
+        10,
+        47,
+        107,
+        95
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 49,
+      "teamPanelFraction": 0.302,
+      "bounds": [
+        10,
+        46,
+        110,
+        96
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 50,
+      "teamPanelFraction": 0.294,
+      "bounds": [
+        11,
+        46,
+        111,
+        98
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 51,
+      "teamPanelFraction": 0.283,
+      "bounds": [
+        12,
+        46,
+        113,
+        99
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 52,
+      "teamPanelFraction": 0.281,
+      "bounds": [
+        14,
+        46,
+        114,
+        100
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 53,
+      "teamPanelFraction": 0.28,
+      "bounds": [
+        16,
+        45,
+        115,
+        101
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 54,
+      "teamPanelFraction": 0.284,
+      "bounds": [
+        19,
+        45,
+        115,
+        101
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 55,
+      "teamPanelFraction": 0.281,
+      "bounds": [
+        22,
+        45,
+        115,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 56,
+      "teamPanelFraction": 0.275,
+      "bounds": [
+        26,
+        44,
+        114,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 57,
+      "teamPanelFraction": 0.279,
+      "bounds": [
+        30,
+        44,
+        113,
+        103
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 58,
+      "teamPanelFraction": 0.275,
+      "bounds": [
+        31,
+        44,
+        112,
+        103
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 59,
+      "teamPanelFraction": 0.27,
+      "bounds": [
+        33,
+        45,
+        110,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 60,
+      "teamPanelFraction": 0.266,
+      "bounds": [
+        35,
+        45,
+        108,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 61,
+      "teamPanelFraction": 0.262,
+      "bounds": [
+        37,
+        45,
+        106,
+        101
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 62,
+      "teamPanelFraction": 0.264,
+      "bounds": [
+        39,
+        46,
+        104,
+        101
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 63,
+      "teamPanelFraction": 0.258,
+      "bounds": [
+        42,
+        46,
+        101,
+        100
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 0,
+      "teamPanelFraction": 0.248,
+      "bounds": [
+        44,
+        47,
+        99,
+        99
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 1,
+      "teamPanelFraction": 0.258,
+      "bounds": [
+        42,
+        46,
+        101,
+        100
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 2,
+      "teamPanelFraction": 0.261,
+      "bounds": [
+        39,
+        46,
+        104,
+        101
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 3,
+      "teamPanelFraction": 0.257,
+      "bounds": [
+        37,
+        45,
+        106,
+        101
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 4,
+      "teamPanelFraction": 0.263,
+      "bounds": [
+        35,
+        45,
+        108,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 5,
+      "teamPanelFraction": 0.271,
+      "bounds": [
+        33,
+        45,
+        110,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 6,
+      "teamPanelFraction": 0.279,
+      "bounds": [
+        31,
+        44,
+        112,
+        103
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 7,
+      "teamPanelFraction": 0.282,
+      "bounds": [
+        30,
+        44,
+        113,
+        103
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 8,
+      "teamPanelFraction": 0.286,
+      "bounds": [
+        29,
+        45,
+        117,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 9,
+      "teamPanelFraction": 0.284,
+      "bounds": [
+        28,
+        45,
+        121,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 10,
+      "teamPanelFraction": 0.284,
+      "bounds": [
+        28,
+        45,
+        124,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 11,
+      "teamPanelFraction": 0.284,
+      "bounds": [
+        29,
+        45,
+        127,
+        101
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 12,
+      "teamPanelFraction": 0.285,
+      "bounds": [
+        29,
+        46,
+        129,
+        100
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 13,
+      "teamPanelFraction": 0.289,
+      "bounds": [
+        30,
+        46,
+        131,
+        99
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 14,
+      "teamPanelFraction": 0.299,
+      "bounds": [
+        32,
+        47,
+        132,
+        98
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 15,
+      "teamPanelFraction": 0.303,
+      "bounds": [
+        34,
+        47,
+        133,
+        96
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 16,
+      "teamPanelFraction": 0.298,
+      "bounds": [
+        36,
+        48,
+        133,
+        95
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 17,
+      "teamPanelFraction": 0.306,
+      "bounds": [
+        33,
+        47,
+        133,
+        96
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 18,
+      "teamPanelFraction": 0.3,
+      "bounds": [
+        32,
+        47,
+        132,
+        98
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 19,
+      "teamPanelFraction": 0.298,
+      "bounds": [
+        30,
+        47,
+        131,
+        99
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 20,
+      "teamPanelFraction": 0.299,
+      "bounds": [
+        29,
+        46,
+        129,
+        100
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 21,
+      "teamPanelFraction": 0.296,
+      "bounds": [
+        28,
+        43,
+        127,
+        101
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 22,
+      "teamPanelFraction": 0.299,
+      "bounds": [
+        28,
+        41,
+        124,
+        101
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 23,
+      "teamPanelFraction": 0.298,
+      "bounds": [
+        28,
+        38,
+        121,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 24,
+      "teamPanelFraction": 0.293,
+      "bounds": [
+        29,
+        36,
+        117,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 25,
+      "teamPanelFraction": 0.295,
+      "bounds": [
+        30,
+        34,
+        113,
+        103
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 26,
+      "teamPanelFraction": 0.296,
+      "bounds": [
+        31,
+        32,
+        112,
+        103
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 27,
+      "teamPanelFraction": 0.29,
+      "bounds": [
+        33,
+        31,
+        110,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 28,
+      "teamPanelFraction": 0.291,
+      "bounds": [
+        35,
+        29,
+        108,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 29,
+      "teamPanelFraction": 0.287,
+      "bounds": [
+        37,
+        28,
+        106,
+        101
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 30,
+      "teamPanelFraction": 0.287,
+      "bounds": [
+        39,
+        28,
+        104,
+        101
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 31,
+      "teamPanelFraction": 0.284,
+      "bounds": [
+        42,
+        27,
+        101,
+        100
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 32,
+      "teamPanelFraction": 0.266,
+      "bounds": [
+        44,
+        27,
+        99,
+        99
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 33,
+      "teamPanelFraction": 0.284,
+      "bounds": [
+        42,
+        27,
+        101,
+        100
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 34,
+      "teamPanelFraction": 0.285,
+      "bounds": [
+        39,
+        28,
+        104,
+        101
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 35,
+      "teamPanelFraction": 0.284,
+      "bounds": [
+        37,
+        28,
+        106,
+        101
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 36,
+      "teamPanelFraction": 0.288,
+      "bounds": [
+        35,
+        29,
+        108,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 37,
+      "teamPanelFraction": 0.291,
+      "bounds": [
+        33,
+        31,
+        110,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 38,
+      "teamPanelFraction": 0.297,
+      "bounds": [
+        31,
+        32,
+        112,
+        103
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 39,
+      "teamPanelFraction": 0.298,
+      "bounds": [
+        30,
+        34,
+        113,
+        103
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 40,
+      "teamPanelFraction": 0.3,
+      "bounds": [
+        26,
+        36,
+        114,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 41,
+      "teamPanelFraction": 0.301,
+      "bounds": [
+        22,
+        38,
+        115,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 42,
+      "teamPanelFraction": 0.299,
+      "bounds": [
+        19,
+        41,
+        115,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 43,
+      "teamPanelFraction": 0.299,
+      "bounds": [
+        16,
+        43,
+        114,
+        101
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 44,
+      "teamPanelFraction": 0.302,
+      "bounds": [
+        14,
+        46,
+        114,
+        100
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 45,
+      "teamPanelFraction": 0.303,
+      "bounds": [
+        12,
+        47,
+        113,
+        99
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 46,
+      "teamPanelFraction": 0.305,
+      "bounds": [
+        11,
+        47,
+        111,
+        98
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 47,
+      "teamPanelFraction": 0.307,
+      "bounds": [
+        10,
+        47,
+        109,
+        96
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 48,
+      "teamPanelFraction": 0.297,
+      "bounds": [
+        10,
+        47,
+        107,
+        95
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 49,
+      "teamPanelFraction": 0.302,
+      "bounds": [
+        10,
+        46,
+        110,
+        96
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 50,
+      "teamPanelFraction": 0.294,
+      "bounds": [
+        11,
+        46,
+        111,
+        98
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 51,
+      "teamPanelFraction": 0.283,
+      "bounds": [
+        12,
+        46,
+        113,
+        99
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 52,
+      "teamPanelFraction": 0.281,
+      "bounds": [
+        14,
+        46,
+        114,
+        100
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 53,
+      "teamPanelFraction": 0.28,
+      "bounds": [
+        16,
+        45,
+        115,
+        101
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 54,
+      "teamPanelFraction": 0.284,
+      "bounds": [
+        19,
+        45,
+        115,
+        101
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 55,
+      "teamPanelFraction": 0.281,
+      "bounds": [
+        22,
+        45,
+        115,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 56,
+      "teamPanelFraction": 0.275,
+      "bounds": [
+        26,
+        44,
+        114,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 57,
+      "teamPanelFraction": 0.279,
+      "bounds": [
+        30,
+        44,
+        113,
+        103
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 58,
+      "teamPanelFraction": 0.275,
+      "bounds": [
+        31,
+        44,
+        112,
+        103
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 59,
+      "teamPanelFraction": 0.27,
+      "bounds": [
+        33,
+        45,
+        110,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 60,
+      "teamPanelFraction": 0.266,
+      "bounds": [
+        35,
+        45,
+        108,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 61,
+      "teamPanelFraction": 0.262,
+      "bounds": [
+        37,
+        45,
+        106,
+        101
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 62,
+      "teamPanelFraction": 0.264,
+      "bounds": [
+        39,
+        46,
+        104,
+        101
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 63,
+      "teamPanelFraction": 0.258,
+      "bounds": [
+        42,
+        46,
+        101,
+        100
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 0,
+      "teamPanelFraction": null,
+      "bounds": [
+        44,
+        58,
+        98,
+        103
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 1,
+      "teamPanelFraction": null,
+      "bounds": [
+        41,
+        58,
+        100,
+        103
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 2,
+      "teamPanelFraction": null,
+      "bounds": [
+        39,
+        57,
+        103,
+        103
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 3,
+      "teamPanelFraction": null,
+      "bounds": [
+        36,
+        56,
+        105,
+        104
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 4,
+      "teamPanelFraction": null,
+      "bounds": [
+        34,
+        55,
+        108,
+        105
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 5,
+      "teamPanelFraction": null,
+      "bounds": [
+        33,
+        55,
+        110,
+        105
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 6,
+      "teamPanelFraction": null,
+      "bounds": [
+        31,
+        55,
+        111,
+        105
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 7,
+      "teamPanelFraction": null,
+      "bounds": [
+        30,
+        54,
+        113,
+        105
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 8,
+      "teamPanelFraction": null,
+      "bounds": [
+        29,
+        55,
+        116,
+        105
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 9,
+      "teamPanelFraction": null,
+      "bounds": [
+        28,
+        55,
+        120,
+        104
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 10,
+      "teamPanelFraction": null,
+      "bounds": [
+        28,
+        56,
+        123,
+        104
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 11,
+      "teamPanelFraction": null,
+      "bounds": [
+        29,
+        56,
+        126,
+        103
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 12,
+      "teamPanelFraction": null,
+      "bounds": [
+        29,
+        57,
+        129,
+        102
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 13,
+      "teamPanelFraction": null,
+      "bounds": [
+        30,
+        58,
+        131,
+        101
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 14,
+      "teamPanelFraction": null,
+      "bounds": [
+        32,
+        59,
+        132,
+        100
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 15,
+      "teamPanelFraction": null,
+      "bounds": [
+        34,
+        61,
+        133,
+        99
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 16,
+      "teamPanelFraction": null,
+      "bounds": [
+        36,
+        62,
+        133,
+        98
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 17,
+      "teamPanelFraction": null,
+      "bounds": [
+        34,
+        60,
+        133,
+        99
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 18,
+      "teamPanelFraction": null,
+      "bounds": [
+        32,
+        59,
+        133,
+        100
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 19,
+      "teamPanelFraction": null,
+      "bounds": [
+        30,
+        58,
+        131,
+        101
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 20,
+      "teamPanelFraction": null,
+      "bounds": [
+        29,
+        57,
+        130,
+        102
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 21,
+      "teamPanelFraction": null,
+      "bounds": [
+        29,
+        56,
+        127,
+        103
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 22,
+      "teamPanelFraction": null,
+      "bounds": [
+        29,
+        54,
+        125,
+        104
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 23,
+      "teamPanelFraction": null,
+      "bounds": [
+        29,
+        51,
+        121,
+        104
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 24,
+      "teamPanelFraction": null,
+      "bounds": [
+        29,
+        49,
+        118,
+        105
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 25,
+      "teamPanelFraction": null,
+      "bounds": [
+        30,
+        47,
+        113,
+        105
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 26,
+      "teamPanelFraction": null,
+      "bounds": [
+        32,
+        45,
+        112,
+        105
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 27,
+      "teamPanelFraction": null,
+      "bounds": [
+        34,
+        43,
+        110,
+        105
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 28,
+      "teamPanelFraction": null,
+      "bounds": [
+        36,
+        42,
+        109,
+        105
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 29,
+      "teamPanelFraction": null,
+      "bounds": [
+        38,
+        41,
+        107,
+        104
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 30,
+      "teamPanelFraction": null,
+      "bounds": [
+        40,
+        40,
+        104,
+        103
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 31,
+      "teamPanelFraction": null,
+      "bounds": [
+        43,
+        40,
+        102,
+        102
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 32,
+      "teamPanelFraction": null,
+      "bounds": [
+        45,
+        40,
+        99,
+        101
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 33,
+      "teamPanelFraction": null,
+      "bounds": [
+        42,
+        40,
+        102,
+        100
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 34,
+      "teamPanelFraction": null,
+      "bounds": [
+        40,
+        40,
+        104,
+        100
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 35,
+      "teamPanelFraction": null,
+      "bounds": [
+        38,
+        41,
+        107,
+        101
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 36,
+      "teamPanelFraction": null,
+      "bounds": [
+        35,
+        42,
+        109,
+        101
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 37,
+      "teamPanelFraction": null,
+      "bounds": [
+        34,
+        43,
+        110,
+        102
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 38,
+      "teamPanelFraction": null,
+      "bounds": [
+        32,
+        45,
+        112,
+        102
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 39,
+      "teamPanelFraction": null,
+      "bounds": [
+        30,
+        46,
+        113,
+        102
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 40,
+      "teamPanelFraction": null,
+      "bounds": [
+        27,
+        48,
+        114,
+        102
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 41,
+      "teamPanelFraction": null,
+      "bounds": [
+        23,
+        50,
+        115,
+        101
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 42,
+      "teamPanelFraction": null,
+      "bounds": [
+        20,
+        53,
+        115,
+        100
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 43,
+      "teamPanelFraction": null,
+      "bounds": [
+        17,
+        55,
+        115,
+        100
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 44,
+      "teamPanelFraction": null,
+      "bounds": [
+        14,
+        58,
+        114,
+        99
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 45,
+      "teamPanelFraction": null,
+      "bounds": [
+        12,
+        61,
+        113,
+        98
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 46,
+      "teamPanelFraction": null,
+      "bounds": [
+        11,
+        62,
+        111,
+        96
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 47,
+      "teamPanelFraction": null,
+      "bounds": [
+        10,
+        62,
+        110,
+        95
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 48,
+      "teamPanelFraction": null,
+      "bounds": [
+        10,
+        62,
+        107,
+        94
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 49,
+      "teamPanelFraction": null,
+      "bounds": [
+        10,
+        62,
+        109,
+        95
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 50,
+      "teamPanelFraction": null,
+      "bounds": [
+        10,
+        61,
+        111,
+        97
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 51,
+      "teamPanelFraction": null,
+      "bounds": [
+        12,
+        61,
+        112,
+        98
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 52,
+      "teamPanelFraction": null,
+      "bounds": [
+        13,
+        60,
+        114,
+        99
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 53,
+      "teamPanelFraction": null,
+      "bounds": [
+        16,
+        59,
+        114,
+        100
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 54,
+      "teamPanelFraction": null,
+      "bounds": [
+        18,
+        58,
+        114,
+        100
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 55,
+      "teamPanelFraction": null,
+      "bounds": [
+        22,
+        58,
+        114,
+        101
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 56,
+      "teamPanelFraction": null,
+      "bounds": [
+        26,
+        58,
+        114,
+        102
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 57,
+      "teamPanelFraction": null,
+      "bounds": [
+        30,
+        58,
+        113,
+        102
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 58,
+      "teamPanelFraction": null,
+      "bounds": [
+        32,
+        58,
+        111,
+        102
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 59,
+      "teamPanelFraction": null,
+      "bounds": [
+        33,
+        58,
+        110,
+        102
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 60,
+      "teamPanelFraction": null,
+      "bounds": [
+        34,
+        58,
+        107,
+        101
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 61,
+      "teamPanelFraction": null,
+      "bounds": [
+        36,
+        58,
+        105,
+        102
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 62,
+      "teamPanelFraction": null,
+      "bounds": [
+        39,
+        59,
+        103,
+        103
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 63,
+      "teamPanelFraction": null,
+      "bounds": [
+        41,
+        59,
+        100,
+        103
+      ]
+    }
+  ],
+  "arty": [
+    {
+      "team": 0,
+      "frame": 0,
+      "teamPanelFraction": 0.33,
+      "bounds": [
+        49,
+        30,
+        94,
+        100
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 1,
+      "teamPanelFraction": 0.345,
+      "bounds": [
+        39,
+        29,
+        104,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 2,
+      "teamPanelFraction": 0.342,
+      "bounds": [
+        31,
+        30,
+        118,
+        101
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 3,
+      "teamPanelFraction": 0.361,
+      "bounds": [
+        29,
+        34,
+        131,
+        98
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 4,
+      "teamPanelFraction": 0.381,
+      "bounds": [
+        34,
+        39,
+        135,
+        93
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 5,
+      "teamPanelFraction": 0.396,
+      "bounds": [
+        29,
+        35,
+        131,
+        98
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 6,
+      "teamPanelFraction": 0.406,
+      "bounds": [
+        31,
+        25,
+        118,
+        101
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 7,
+      "teamPanelFraction": 0.43,
+      "bounds": [
+        39,
+        18,
+        104,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 8,
+      "teamPanelFraction": 0.412,
+      "bounds": [
+        49,
+        16,
+        94,
+        100
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 9,
+      "teamPanelFraction": 0.405,
+      "bounds": [
+        39,
+        18,
+        104,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 10,
+      "teamPanelFraction": 0.393,
+      "bounds": [
+        25,
+        25,
+        112,
+        101
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 11,
+      "teamPanelFraction": 0.396,
+      "bounds": [
+        12,
+        35,
+        114,
+        98
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 12,
+      "teamPanelFraction": 0.379,
+      "bounds": [
+        8,
+        39,
+        109,
+        93
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 13,
+      "teamPanelFraction": 0.355,
+      "bounds": [
+        12,
+        34,
+        114,
+        98
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 14,
+      "teamPanelFraction": 0.34,
+      "bounds": [
+        25,
+        30,
+        112,
+        101
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 15,
+      "teamPanelFraction": 0.332,
+      "bounds": [
+        39,
+        29,
+        104,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 0,
+      "teamPanelFraction": 0.33,
+      "bounds": [
+        49,
+        30,
+        94,
+        100
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 1,
+      "teamPanelFraction": 0.345,
+      "bounds": [
+        39,
+        29,
+        104,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 2,
+      "teamPanelFraction": 0.342,
+      "bounds": [
+        31,
+        30,
+        118,
+        101
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 3,
+      "teamPanelFraction": 0.361,
+      "bounds": [
+        29,
+        34,
+        131,
+        98
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 4,
+      "teamPanelFraction": 0.381,
+      "bounds": [
+        34,
+        39,
+        135,
+        93
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 5,
+      "teamPanelFraction": 0.396,
+      "bounds": [
+        29,
+        35,
+        131,
+        98
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 6,
+      "teamPanelFraction": 0.406,
+      "bounds": [
+        31,
+        25,
+        118,
+        101
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 7,
+      "teamPanelFraction": 0.43,
+      "bounds": [
+        39,
+        18,
+        104,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 8,
+      "teamPanelFraction": 0.412,
+      "bounds": [
+        49,
+        16,
+        94,
+        100
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 9,
+      "teamPanelFraction": 0.405,
+      "bounds": [
+        39,
+        18,
+        104,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 10,
+      "teamPanelFraction": 0.393,
+      "bounds": [
+        25,
+        25,
+        112,
+        101
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 11,
+      "teamPanelFraction": 0.396,
+      "bounds": [
+        12,
+        35,
+        114,
+        98
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 12,
+      "teamPanelFraction": 0.379,
+      "bounds": [
+        8,
+        39,
+        109,
+        93
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 13,
+      "teamPanelFraction": 0.355,
+      "bounds": [
+        12,
+        34,
+        114,
+        98
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 14,
+      "teamPanelFraction": 0.34,
+      "bounds": [
+        25,
+        30,
+        112,
+        101
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 15,
+      "teamPanelFraction": 0.332,
+      "bounds": [
+        39,
+        29,
+        104,
+        102
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 0,
+      "teamPanelFraction": null,
+      "bounds": [
+        49,
+        48,
+        93,
+        102
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 1,
+      "teamPanelFraction": null,
+      "bounds": [
+        38,
+        47,
+        104,
+        104
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 2,
+      "teamPanelFraction": null,
+      "bounds": [
+        31,
+        49,
+        117,
+        103
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 3,
+      "teamPanelFraction": null,
+      "bounds": [
+        29,
+        53,
+        130,
+        100
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 4,
+      "teamPanelFraction": null,
+      "bounds": [
+        34,
+        57,
+        135,
+        95
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 5,
+      "teamPanelFraction": null,
+      "bounds": [
+        29,
+        53,
+        132,
+        100
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 6,
+      "teamPanelFraction": null,
+      "bounds": [
+        31,
+        43,
+        119,
+        103
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 7,
+      "teamPanelFraction": null,
+      "bounds": [
+        40,
+        36,
+        105,
+        104
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 8,
+      "teamPanelFraction": null,
+      "bounds": [
+        50,
+        34,
+        94,
+        102
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 9,
+      "teamPanelFraction": null,
+      "bounds": [
+        40,
+        36,
+        105,
+        102
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 10,
+      "teamPanelFraction": null,
+      "bounds": [
+        26,
+        42,
+        112,
+        101
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 11,
+      "teamPanelFraction": null,
+      "bounds": [
+        13,
+        52,
+        114,
+        97
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 12,
+      "teamPanelFraction": null,
+      "bounds": [
+        8,
+        58,
+        109,
+        92
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 13,
+      "teamPanelFraction": null,
+      "bounds": [
+        11,
+        53,
+        114,
+        97
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 14,
+      "teamPanelFraction": null,
+      "bounds": [
+        24,
+        49,
+        112,
+        101
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 15,
+      "teamPanelFraction": null,
+      "bounds": [
+        38,
+        48,
+        104,
+        102
+      ]
+    }
+  ],
+  "mcv": [
+    {
+      "team": 0,
+      "frame": 0,
+      "teamPanelFraction": 0.34,
+      "bounds": [
+        49,
+        29,
+        94,
+        97
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 1,
+      "teamPanelFraction": 0.314,
+      "bounds": [
+        38,
+        28,
+        105,
+        100
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 2,
+      "teamPanelFraction": 0.298,
+      "bounds": [
+        31,
+        28,
+        112,
+        101
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 3,
+      "teamPanelFraction": 0.299,
+      "bounds": [
+        30,
+        28,
+        114,
+        99
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 4,
+      "teamPanelFraction": 0.315,
+      "bounds": [
+        36,
+        29,
+        109,
+        95
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 5,
+      "teamPanelFraction": 0.317,
+      "bounds": [
+        31,
+        30,
+        114,
+        99
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 6,
+      "teamPanelFraction": 0.285,
+      "bounds": [
+        31,
+        27,
+        112,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 7,
+      "teamPanelFraction": 0.244,
+      "bounds": [
+        38,
+        26,
+        105,
+        101
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 8,
+      "teamPanelFraction": 0.206,
+      "bounds": [
+        49,
+        26,
+        94,
+        98
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 9,
+      "teamPanelFraction": 0.231,
+      "bounds": [
+        38,
+        29,
+        105,
+        101
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 10,
+      "teamPanelFraction": 0.279,
+      "bounds": [
+        31,
+        32,
+        112,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 11,
+      "teamPanelFraction": 0.319,
+      "bounds": [
+        29,
+        37,
+        113,
+        99
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 12,
+      "teamPanelFraction": 0.318,
+      "bounds": [
+        34,
+        37,
+        107,
+        95
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 13,
+      "teamPanelFraction": 0.311,
+      "bounds": [
+        29,
+        34,
+        113,
+        99
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 14,
+      "teamPanelFraction": 0.316,
+      "bounds": [
+        31,
+        31,
+        112,
+        101
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 15,
+      "teamPanelFraction": 0.322,
+      "bounds": [
+        38,
+        30,
+        105,
+        100
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 0,
+      "teamPanelFraction": 0.34,
+      "bounds": [
+        49,
+        29,
+        94,
+        97
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 1,
+      "teamPanelFraction": 0.314,
+      "bounds": [
+        38,
+        28,
+        105,
+        100
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 2,
+      "teamPanelFraction": 0.298,
+      "bounds": [
+        31,
+        28,
+        112,
+        101
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 3,
+      "teamPanelFraction": 0.299,
+      "bounds": [
+        30,
+        28,
+        114,
+        99
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 4,
+      "teamPanelFraction": 0.315,
+      "bounds": [
+        36,
+        29,
+        109,
+        95
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 5,
+      "teamPanelFraction": 0.317,
+      "bounds": [
+        31,
+        30,
+        114,
+        99
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 6,
+      "teamPanelFraction": 0.285,
+      "bounds": [
+        31,
+        27,
+        112,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 7,
+      "teamPanelFraction": 0.244,
+      "bounds": [
+        38,
+        26,
+        105,
+        101
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 8,
+      "teamPanelFraction": 0.206,
+      "bounds": [
+        49,
+        26,
+        94,
+        98
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 9,
+      "teamPanelFraction": 0.231,
+      "bounds": [
+        38,
+        29,
+        105,
+        101
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 10,
+      "teamPanelFraction": 0.279,
+      "bounds": [
+        31,
+        32,
+        112,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 11,
+      "teamPanelFraction": 0.319,
+      "bounds": [
+        29,
+        37,
+        113,
+        99
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 12,
+      "teamPanelFraction": 0.318,
+      "bounds": [
+        34,
+        37,
+        107,
+        95
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 13,
+      "teamPanelFraction": 0.311,
+      "bounds": [
+        29,
+        34,
+        113,
+        99
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 14,
+      "teamPanelFraction": 0.316,
+      "bounds": [
+        31,
+        31,
+        112,
+        101
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 15,
+      "teamPanelFraction": 0.322,
+      "bounds": [
+        38,
+        30,
+        105,
+        100
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 0,
+      "teamPanelFraction": null,
+      "bounds": [
+        49,
+        48,
+        94,
+        100
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 1,
+      "teamPanelFraction": null,
+      "bounds": [
+        37,
+        47,
+        104,
+        103
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 2,
+      "teamPanelFraction": null,
+      "bounds": [
+        31,
+        48,
+        112,
+        103
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 3,
+      "teamPanelFraction": null,
+      "bounds": [
+        30,
+        52,
+        114,
+        101
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 4,
+      "teamPanelFraction": null,
+      "bounds": [
+        36,
+        54,
+        109,
+        96
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 5,
+      "teamPanelFraction": null,
+      "bounds": [
+        31,
+        52,
+        114,
+        101
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 6,
+      "teamPanelFraction": null,
+      "bounds": [
+        31,
+        49,
+        113,
+        104
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 7,
+      "teamPanelFraction": null,
+      "bounds": [
+        38,
+        48,
+        105,
+        103
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 8,
+      "teamPanelFraction": null,
+      "bounds": [
+        49,
+        48,
+        94,
+        101
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 9,
+      "teamPanelFraction": null,
+      "bounds": [
+        39,
+        50,
+        106,
+        101
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 10,
+      "teamPanelFraction": null,
+      "bounds": [
+        31,
+        51,
+        112,
+        101
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 11,
+      "teamPanelFraction": null,
+      "bounds": [
+        30,
+        54,
+        113,
+        98
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 12,
+      "teamPanelFraction": null,
+      "bounds": [
+        34,
+        57,
+        107,
+        93
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 13,
+      "teamPanelFraction": null,
+      "bounds": [
+        29,
+        52,
+        112,
+        98
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 14,
+      "teamPanelFraction": null,
+      "bounds": [
+        30,
+        49,
+        112,
+        100
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 15,
+      "teamPanelFraction": null,
+      "bounds": [
+        38,
+        48,
+        105,
+        100
+      ]
+    }
+  ],
+  "miner": [
+    {
+      "team": 0,
+      "frame": 0,
+      "teamPanelFraction": 0.53,
+      "bounds": [
+        47,
+        30,
+        96,
+        98
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 1,
+      "teamPanelFraction": 0.536,
+      "bounds": [
+        34,
+        27,
+        108,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 2,
+      "teamPanelFraction": 0.541,
+      "bounds": [
+        26,
+        28,
+        116,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 3,
+      "teamPanelFraction": 0.563,
+      "bounds": [
+        25,
+        31,
+        118,
+        100
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 4,
+      "teamPanelFraction": 0.592,
+      "bounds": [
+        31,
+        38,
+        112,
+        96
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 5,
+      "teamPanelFraction": 0.593,
+      "bounds": [
+        25,
+        33,
+        118,
+        101
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 6,
+      "teamPanelFraction": 0.597,
+      "bounds": [
+        26,
+        30,
+        116,
+        104
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 7,
+      "teamPanelFraction": 0.612,
+      "bounds": [
+        34,
+        29,
+        108,
+        103
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 8,
+      "teamPanelFraction": 0.645,
+      "bounds": [
+        47,
+        31,
+        96,
+        100
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 9,
+      "teamPanelFraction": 0.612,
+      "bounds": [
+        35,
+        29,
+        109,
+        103
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 10,
+      "teamPanelFraction": 0.6,
+      "bounds": [
+        27,
+        30,
+        117,
+        104
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 11,
+      "teamPanelFraction": 0.595,
+      "bounds": [
+        25,
+        33,
+        118,
+        101
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 12,
+      "teamPanelFraction": 0.592,
+      "bounds": [
+        31,
+        38,
+        112,
+        96
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 13,
+      "teamPanelFraction": 0.561,
+      "bounds": [
+        25,
+        31,
+        118,
+        100
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 14,
+      "teamPanelFraction": 0.544,
+      "bounds": [
+        27,
+        28,
+        117,
+        103
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 15,
+      "teamPanelFraction": 0.539,
+      "bounds": [
+        35,
+        27,
+        109,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 0,
+      "teamPanelFraction": 0.53,
+      "bounds": [
+        47,
+        30,
+        96,
+        98
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 1,
+      "teamPanelFraction": 0.536,
+      "bounds": [
+        34,
+        27,
+        108,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 2,
+      "teamPanelFraction": 0.541,
+      "bounds": [
+        26,
+        28,
+        116,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 3,
+      "teamPanelFraction": 0.563,
+      "bounds": [
+        25,
+        31,
+        118,
+        100
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 4,
+      "teamPanelFraction": 0.592,
+      "bounds": [
+        31,
+        38,
+        112,
+        96
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 5,
+      "teamPanelFraction": 0.593,
+      "bounds": [
+        25,
+        33,
+        118,
+        101
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 6,
+      "teamPanelFraction": 0.597,
+      "bounds": [
+        26,
+        30,
+        116,
+        104
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 7,
+      "teamPanelFraction": 0.612,
+      "bounds": [
+        34,
+        29,
+        108,
+        103
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 8,
+      "teamPanelFraction": 0.645,
+      "bounds": [
+        47,
+        31,
+        96,
+        100
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 9,
+      "teamPanelFraction": 0.612,
+      "bounds": [
+        35,
+        29,
+        109,
+        103
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 10,
+      "teamPanelFraction": 0.6,
+      "bounds": [
+        27,
+        30,
+        117,
+        104
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 11,
+      "teamPanelFraction": 0.595,
+      "bounds": [
+        25,
+        33,
+        118,
+        101
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 12,
+      "teamPanelFraction": 0.592,
+      "bounds": [
+        31,
+        38,
+        112,
+        96
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 13,
+      "teamPanelFraction": 0.561,
+      "bounds": [
+        25,
+        31,
+        118,
+        100
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 14,
+      "teamPanelFraction": 0.544,
+      "bounds": [
+        27,
+        28,
+        117,
+        103
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 15,
+      "teamPanelFraction": 0.539,
+      "bounds": [
+        35,
+        27,
+        109,
+        102
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 0,
+      "teamPanelFraction": null,
+      "bounds": [
+        46,
+        45,
+        96,
+        101
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 1,
+      "teamPanelFraction": null,
+      "bounds": [
+        33,
+        42,
+        107,
+        104
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 2,
+      "teamPanelFraction": null,
+      "bounds": [
+        25,
+        43,
+        116,
+        105
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 3,
+      "teamPanelFraction": null,
+      "bounds": [
+        25,
+        47,
+        118,
+        102
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 4,
+      "teamPanelFraction": null,
+      "bounds": [
+        31,
+        54,
+        112,
+        97
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 5,
+      "teamPanelFraction": null,
+      "bounds": [
+        26,
+        50,
+        118,
+        103
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 6,
+      "teamPanelFraction": null,
+      "bounds": [
+        27,
+        47,
+        117,
+        106
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 7,
+      "teamPanelFraction": null,
+      "bounds": [
+        35,
+        46,
+        108,
+        106
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 8,
+      "teamPanelFraction": null,
+      "bounds": [
+        47,
+        47,
+        97,
+        102
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 9,
+      "teamPanelFraction": null,
+      "bounds": [
+        36,
+        47,
+        110,
+        102
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 10,
+      "teamPanelFraction": null,
+      "bounds": [
+        27,
+        48,
+        118,
+        102
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 11,
+      "teamPanelFraction": null,
+      "bounds": [
+        25,
+        51,
+        118,
+        100
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 12,
+      "teamPanelFraction": null,
+      "bounds": [
+        31,
+        55,
+        112,
+        94
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 13,
+      "teamPanelFraction": null,
+      "bounds": [
+        25,
+        49,
+        117,
+        99
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 14,
+      "teamPanelFraction": null,
+      "bounds": [
+        26,
+        45,
+        116,
+        101
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 15,
+      "teamPanelFraction": null,
+      "bounds": [
+        35,
+        45,
+        108,
+        101
+      ]
+    }
+  ],
+  "miner-full": [
+    {
+      "team": 0,
+      "frame": 0,
+      "teamPanelFraction": 0.393,
+      "bounds": [
+        47,
+        30,
+        96,
+        98
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 1,
+      "teamPanelFraction": 0.413,
+      "bounds": [
+        34,
+        27,
+        108,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 2,
+      "teamPanelFraction": 0.43,
+      "bounds": [
+        26,
+        28,
+        116,
+        102
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 3,
+      "teamPanelFraction": 0.455,
+      "bounds": [
+        25,
+        31,
+        118,
+        100
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 4,
+      "teamPanelFraction": 0.484,
+      "bounds": [
+        31,
+        38,
+        112,
+        96
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 5,
+      "teamPanelFraction": 0.492,
+      "bounds": [
+        25,
+        33,
+        118,
+        101
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 6,
+      "teamPanelFraction": 0.494,
+      "bounds": [
+        26,
+        30,
+        116,
+        104
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 7,
+      "teamPanelFraction": 0.502,
+      "bounds": [
+        34,
+        29,
+        108,
+        103
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 8,
+      "teamPanelFraction": 0.52,
+      "bounds": [
+        47,
+        31,
+        96,
+        100
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 9,
+      "teamPanelFraction": 0.499,
+      "bounds": [
+        35,
+        29,
+        109,
+        103
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 10,
+      "teamPanelFraction": 0.494,
+      "bounds": [
+        27,
+        30,
+        117,
+        104
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 11,
+      "teamPanelFraction": 0.486,
+      "bounds": [
+        25,
+        33,
+        118,
+        101
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 12,
+      "teamPanelFraction": 0.473,
+      "bounds": [
+        31,
+        38,
+        112,
+        96
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 13,
+      "teamPanelFraction": 0.45,
+      "bounds": [
+        25,
+        31,
+        118,
+        100
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 14,
+      "teamPanelFraction": 0.434,
+      "bounds": [
+        27,
+        28,
+        117,
+        103
+      ]
+    },
+    {
+      "team": 0,
+      "frame": 15,
+      "teamPanelFraction": 0.417,
+      "bounds": [
+        35,
+        27,
+        109,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 0,
+      "teamPanelFraction": 0.393,
+      "bounds": [
+        47,
+        30,
+        96,
+        98
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 1,
+      "teamPanelFraction": 0.413,
+      "bounds": [
+        34,
+        27,
+        108,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 2,
+      "teamPanelFraction": 0.43,
+      "bounds": [
+        26,
+        28,
+        116,
+        102
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 3,
+      "teamPanelFraction": 0.455,
+      "bounds": [
+        25,
+        31,
+        118,
+        100
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 4,
+      "teamPanelFraction": 0.484,
+      "bounds": [
+        31,
+        38,
+        112,
+        96
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 5,
+      "teamPanelFraction": 0.492,
+      "bounds": [
+        25,
+        33,
+        118,
+        101
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 6,
+      "teamPanelFraction": 0.494,
+      "bounds": [
+        26,
+        30,
+        116,
+        104
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 7,
+      "teamPanelFraction": 0.502,
+      "bounds": [
+        34,
+        29,
+        108,
+        103
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 8,
+      "teamPanelFraction": 0.52,
+      "bounds": [
+        47,
+        31,
+        96,
+        100
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 9,
+      "teamPanelFraction": 0.499,
+      "bounds": [
+        35,
+        29,
+        109,
+        103
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 10,
+      "teamPanelFraction": 0.494,
+      "bounds": [
+        27,
+        30,
+        117,
+        104
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 11,
+      "teamPanelFraction": 0.486,
+      "bounds": [
+        25,
+        33,
+        118,
+        101
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 12,
+      "teamPanelFraction": 0.473,
+      "bounds": [
+        31,
+        38,
+        112,
+        96
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 13,
+      "teamPanelFraction": 0.45,
+      "bounds": [
+        25,
+        31,
+        118,
+        100
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 14,
+      "teamPanelFraction": 0.434,
+      "bounds": [
+        27,
+        28,
+        117,
+        103
+      ]
+    },
+    {
+      "team": 1,
+      "frame": 15,
+      "teamPanelFraction": 0.417,
+      "bounds": [
+        35,
+        27,
+        109,
+        102
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 0,
+      "teamPanelFraction": null,
+      "bounds": [
+        46,
+        45,
+        96,
+        101
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 1,
+      "teamPanelFraction": null,
+      "bounds": [
+        33,
+        42,
+        107,
+        104
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 2,
+      "teamPanelFraction": null,
+      "bounds": [
+        25,
+        43,
+        116,
+        105
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 3,
+      "teamPanelFraction": null,
+      "bounds": [
+        25,
+        47,
+        118,
+        102
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 4,
+      "teamPanelFraction": null,
+      "bounds": [
+        31,
+        54,
+        112,
+        97
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 5,
+      "teamPanelFraction": null,
+      "bounds": [
+        26,
+        50,
+        118,
+        103
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 6,
+      "teamPanelFraction": null,
+      "bounds": [
+        27,
+        47,
+        117,
+        106
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 7,
+      "teamPanelFraction": null,
+      "bounds": [
+        35,
+        46,
+        108,
+        106
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 8,
+      "teamPanelFraction": null,
+      "bounds": [
+        47,
+        47,
+        97,
+        102
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 9,
+      "teamPanelFraction": null,
+      "bounds": [
+        36,
+        47,
+        110,
+        102
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 10,
+      "teamPanelFraction": null,
+      "bounds": [
+        27,
+        48,
+        118,
+        102
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 11,
+      "teamPanelFraction": null,
+      "bounds": [
+        25,
+        51,
+        118,
+        100
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 12,
+      "teamPanelFraction": null,
+      "bounds": [
+        31,
+        55,
+        112,
+        94
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 13,
+      "teamPanelFraction": null,
+      "bounds": [
+        25,
+        49,
+        117,
+        99
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 14,
+      "teamPanelFraction": null,
+      "bounds": [
+        26,
+        45,
+        116,
+        101
+      ]
+    },
+    {
+      "team": 2,
+      "frame": 15,
+      "teamPanelFraction": null,
+      "bounds": [
+        35,
+        45,
+        108,
+        101
+      ]
+    }
+  ]
+}

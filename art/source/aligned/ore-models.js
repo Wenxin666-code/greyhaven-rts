@@ -75,13 +75,16 @@ function oreAtlas(key){
  const truck=key.startsWith('miner'),animated=key==='refining',n=truck||animated?16:1,cols=n===1?1:8,rows=n/cols;
  const sheet=canvas(cols*cell,rows*(animated?2:3)*cell),ctx=sheet.getContext('2d');
  const finish=wornSteel();
- const width=truck?7.45:cell*5/Math.SQRT2/span;
+ const width=truck?7.45:cell*4/Math.SQRT2/span;
  const cam=camera(width,(truck?28:60)*width/(cell*Math.cos(Math.PI/6)),!truck);
  for(let side=0;side<(animated?2:3);side++)for(let i=0;i<n;i++){
   const scene=new T.Scene(),model=oreRig(truck,side,key==='miner-full',animated?i/n:0,finish);lights(scene);scene.add(model);
+  // Compact 2x2 refinery: scale the actual mesh and every conveyor frame,
+  // retaining its ground center and the full-sized unloading exit cell.
+  if(!truck){model.scale.x*=2/3;model.scale.y*=.72;}
   if(truck)model.rotation.y=angle(i);
   renderer.render(scene,cam);ctx.save();ctx.translate(i%cols*cell,(side*rows+Math.floor(i/cols))*cell);
-  if(!truck)slab(ctx,[3,2],side===2);
+  if(!truck)slab(ctx,[2,2],side===2);
   ctx.drawImage(renderer.domElement,0,0);ctx.restore();release(model);
  }
  finish.dispose();return sheet.toDataURL('image/png');

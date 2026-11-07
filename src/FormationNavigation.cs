@@ -1,9 +1,31 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Drawing;
 using System.Collections.Generic;
 namespace Greyhaven {
 public partial class Campaign {
+ // A road headway, not a larger collision body. Only applies behind a friendly
+ // moving vehicle in the same lane. Mining retains its dock/queue behaviour.
+ float FollowingSpeed(Piece unit,PointF waypoint,float speed,float dt){
+  if(unit.T.Foot||unit.Mining||unit.T.Key=="miner")return speed;
+  float requested=speed;
+  float length=Dist(unit.P,waypoint);if(length<.01f)return speed;
+  float fx=(waypoint.X-unit.P.X)/length,fy=(waypoint.Y-unit.P.Y)/length;
+  foreach(var lead in Units){
+   if(lead==unit||lead.Side!=unit.Side||!lead.Deployed||lead.T.Building||lead.T.Foot||lead.Path.Count==0||lead.TrafficBlocked>.8f||lead.NoProgressFor>.6f||lead.FollowingWait>.8f)continue;
+   var next=lead.Path.Peek();float run=Dist(lead.P,next);if(run<.01f)continue;
+   float dot=((next.X-lead.P.X)*fx+(next.Y-lead.P.Y)*fy)/run;if(dot<.90f)continue;
+   float dx=lead.P.X-unit.P.X,dy=lead.P.Y-unit.P.Y,ahead=dx*fx+dy*fy,lateral=Math.Abs(dx*fy-dy*fx);
+   if(ahead<=0||lateral>Math.Min(Tile*.42f,Clearance(unit)+Clearance(lead)))continue;
+   // Ease into a short 4-unit following buffer, never an extra full cell.
+   float room=Math.Max(0,ahead-Tile);
+   speed=Math.Min(speed,Math.Min(room/Math.Max(.001f,dt),lead.T.Speed*Math.Min(1,room/4)));
+  }
+  unit.FollowingWait=speed<requested*.1f?unit.FollowingWait+dt:0;
+  // Near a turn or another vehicle's destination, release the comfort gap and
+  // let TrackStep's existing collision/wait/detour rules resolve congestion.
+  return unit.FollowingWait>1.2f?requested:speed;
+ }
  // Minimum-cost bipartite assignment, O(n^3), at most 55 units per army.
  static int[] MatchSlots(Piece[] units,PointF[] slots){
   int n=units.Length;var u=new double[n+1];var v=new double[n+1];var owner=new int[n+1];var previous=new int[n+1];
@@ -25,6 +47,9 @@ public partial class Campaign {
   var result=new int[n];for(int j=1;j<=n;j++)result[owner[j]-1]=j-1;return result;
  }
  bool TrafficDetour(Piece unit,Piece blocker,PointF waypoint){
+  // Never splice a detour in front of yesterday's detour. That accumulated
+  // repeated U-turns indefinitely when two miners met at a working position.
+  waypoint=unit.Path.Last();
   var temporary=MineTraffic(unit,waypoint);var blocks=Grid(Clearance(unit)).Barriers.Concat(temporary??new RectangleF[0]).ToArray();
   float length=Math.Max(1,Dist(unit.P,waypoint)),fx=(waypoint.X-unit.P.X)/length,fy=(waypoint.Y-unit.P.Y)/length;
   foreach(float gap in new[]{26f,42f,64f})foreach(float side in new[]{1f,-1f}){
@@ -34,7 +59,6 @@ public partial class Campaign {
    if(Blocked(pass,Clearance(unit),null))continue;
    var route=new Queue<PointF>();
    if(!TrackLegs(unit.P,shoulder,blocks,route)||!TrackLegs(shoulder,pass,blocks,route)||!TrackLegs(pass,waypoint,blocks,route))continue;
-   foreach(var point in unit.Path.Skip(1))route.Enqueue(point);
    unit.Path=route;unit.RouteVersion=topology;return true;
   }
   return false;

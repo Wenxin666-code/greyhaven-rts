@@ -1,0 +1,6 @@
+{
+  "tool": "Built-in imagegen",
+  "prompt": "Use case: stylized-concept. Asset type: seamless physically based game material albedo texture, flat square top-down scan, no objects or perspective. Create a production quality neutral GREYSCALE matte powder-coated military steel surface for a semi-realistic modern RTS tank, to be UV wrapped onto a true 3D model. Very subtle fine rough grain, gentle unevenness in the painted metal, sparse faint hairline scuffs, no strong noise, no big damage, no rust, no decals, no panel seams, no bolts, no edges, no directional lighting, no vignette, no shadows. Entire frame uniform mid-light grey around RGB 175 to 205 with delicate tonal variations, never dark high-contrast grunge. Seamlessly tileable on every edge. Natural fine material finish, not plastic, not low-poly, not pixel art. Single material covering full square image, no presentation board, no labels.",
+  "file": "coated-steel.png",
+  "use": "Subtle neutral coating texture on editable 3D mesh. Faction color is supplied at runtime, not generated into the image."
+}

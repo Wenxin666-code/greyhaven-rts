@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Linq;
 using System.Collections.Generic;
 namespace Greyhaven {
 public partial class Campaign {
  // Commands own their destination. Opportunistic fire must not overwrite it.
- static void ClearMission(Piece o){
+ static void ClearMission(Piece o){o.SupportTarget=null;o.Entering=null;o.RouteRetryAt=0;o.NoProgressFor=0;o.StalledFor=0;
   o.GuardHome=null;o.Escort=null;o.GuardTravelling=false;o.GuardReturning=false;
   o.Waypoints.Clear();o.WaypointIndex=0;o.Patrol=false;o.ForceMoving=false;
  }

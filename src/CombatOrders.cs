@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Linq;
 
 namespace Greyhaven {
 public partial class Campaign {
@@ -12,7 +13,7 @@ public partial class Campaign {
  Piece FindContact(Piece o,float range){
   Piece best=null;float bestDistance=float.MaxValue;
   foreach(var e in Units){
-   if(e.Side==o.Side||!Targetable(e)||!VisibleTo(o.Side,e))continue;
+   if(e.Side<0||e.Side==o.Side||!Targetable(e)||!VisibleTo(o.Side,e))continue;
    float d=TargetDistance(o,e);if(d>range||!GuardAllows(o,e))continue;
    bool armed=e.Deployed&&e.T.Hit>0;
    bool bestArmed=best!=null&&best.Deployed&&best.T.Hit>0;
@@ -33,7 +34,7 @@ public partial class Campaign {
  void OnIncomingFire(Piece defender,Piece attacker){
   if(defender.Path.Count>0&&!defender.Advancing&&!defender.GuardHome.HasValue)return;
   if(defender.GuardReturning||defender.GuardTravelling||!GuardAllows(defender,attacker))return;
-  if(!defender.Deployed||defender.T.Hit==0||defender.FirePoint.HasValue||defender.Contact==ContactOrder.Directed)return;
+  if(!defender.Deployed||!Armed(defender)||defender.FirePoint.HasValue||defender.Contact==ContactOrder.Directed)return;
   if(defender.T.Building&&TargetDistance(defender,attacker)>defender.T.Range)return;
   if(defender.Target==attacker){defender.LastContact=attacker.P;defender.Contact=ContactOrder.ReturnFire;return;}
   if(defender.Contact==ContactOrder.ReturnFire&&defender.Target!=null&&Targetable(defender.Target)&&VisibleTo(defender.Side,defender.Target)&&TargetDistance(defender,defender.Target)<=defender.T.Range)return;
@@ -74,7 +75,7 @@ public partial class Campaign {
   if(!seen&&Explored(o.Side,o.LastContact)){EndContact(o);return false;}
   if(o.Replan<=0){
    o.Replan=1;
-   if(seen)ApproachPoint(o,TargetPoint(o.P,e));
+   if(seen){if(o.Path.Count==0||o.StalledFor>.4f||o.NoProgressFor>.6f||Dist(o.Path.Last(),TargetPoint(o.Path.Last(),e))>o.T.Range)FindFiringPosition(o,e.P);}
    else if(!Route(o,o.LastContact))ApproachPoint(o,o.LastContact);
   }
   return false;

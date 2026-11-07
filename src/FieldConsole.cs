@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
@@ -21,16 +21,16 @@ partial class CommandWindow {
   foreach(var r in Campaign.YardWalls){Rect(g,r.X+3,r.Y+3,r.Width,r.Height,Color.FromArgb(80,ink));Rect(g,r.X,r.Y,r.Width,r.Height,C("#928c78"));Line(g,r.Left,r.Top,r.Right,r.Top,pale,2);for(float x=r.Left+4;x<r.Right-4;x+=15)Line(g,x,r.Bottom,x+5,r.Top,gold,2);}
   foreach(var o in world.Live(0).Where(u=>Campaign.HasGate(u.T))){
    var lot=Campaign.Footprint(o.T,o.P);var gate=Campaign.Gate(lot);
-   if(o.T.Key=="refinery"&&(showGrid||place!=null||selection.Contains(o)))DrawTiles(g,Campaign.UnloadingLane(lot),gold,true);
-   if(o.T.Key=="barracks"){DrawTiles(g,Campaign.Muster(lot),teal,true);foreach(var seat in o.Berths)Rect(g,seat.X-3,seat.Y-3,6,6,gold);}
-   for(int i=-1;i<=1;i++){float x=o.P.X+i*12,y=gate.Top+8;Line(g,x-4,y,x,y+4,gold);Line(g,x,y+4,x+4,y,gold);}
+   if(o.T.Key=="refinery"&&showGrid)DrawTiles(g,Campaign.UnloadingLane(lot),gold,true);
+   if(o.T.Key!="refinery"&&showGrid)DrawTiles(g,Campaign.ExitApron(o.T,lot),gold,true);
+   for(int i=0;i<1;i++){float x=Campaign.Middle(Campaign.ExitApron(o.T,lot)).X,y=gate.Top+8;Line(g,x-4,y,x,y+4,gold);Line(g,x,y+4,x+4,y,gold);}
   }
   if(place!=null||showGrid){using(var pen=new Pen(Color.FromArgb(65,pale))){
    for(int x=0;x<Campaign.Width;x+=Campaign.Tile)g.DrawLine(pen,x,100,x,Campaign.Height);
    for(int y=120;y<Campaign.Height;y+=Campaign.Tile)g.DrawLine(pen,0,y,Campaign.Width,y);}}
   foreach(var o in world.Units.Where(o=>o.Alive&&o.T.Building&&world.Visible(o)))DrawTiles(g,Campaign.Footprint(o.T,o.P),Team(o.Side),place!=null||showGrid);
  }
- int Pending(){return world.Live(0).Sum(o=>o.Queue.Count);}
+ int Pending(){return world.Live(0).Sum(o=>o.Queue.Count)+Enumerable.Range(0,2).Count(c=>world.Construction(0,c)!=null);}
  List<Piece> Producers(){return world.Live(0).Where(o=>new[]{"hq","factory","barracks"}.Contains(o.T.Key)).OrderByDescending(o=>o.Queue.Count>0).ThenBy(o=>o.Id).ToList();}
  int queueId;
  void OpenQueue(){
@@ -66,8 +66,8 @@ partial class CommandWindow {
  }
  void FocusLesson(){
   var marker=Marker();if(!marker.IsEmpty)CenterAt(marker);string key=world.LessonKey;queueOpen=false;place=null;attack=false;
-  if(BuildingLesson()){army=false;var t=Campaign.Info(key);if(world.Require(t,0)==null&&!world.Units.Any(o=>o.Side==0&&o.Alive&&o.T==t))place=t;return;}
-  if(key=="squad"||key=="ifv"){army=true;return;}
+  if(BuildingLesson()){army=false;var t=Campaign.Info(key);productionFilter=4;var job=world.Construction(t);if(job!=null&&job.Ready)place=t;return;}
+  if(key=="squad"||key=="ifv"){ProductionTab(key=="squad"?2:3);return;}
   var own=world.Live(0);var focus=own.Where(o=>!o.T.Building&&o.T.Hit>0);
   if(key=="hq")focus=own.Where(o=>o.T.Key=="mcv");
   if(key=="ore"||key=="receipt")focus=own.Where(o=>o.T.Key=="miner").Take(1);
@@ -75,16 +75,16 @@ partial class CommandWindow {
  }
  string LessonHint(){
   string key=world.LessonKey;var own=world.Live(0);
-  if(key=="hq")return world.Landing?"指挥部正在展开，完工后进入下一步。":selection.Any(o=>o.T.Key=="mcv")?"点右侧「展开指挥部」或按 D。":"先点金圈里的工程车，或点「定位本步」选中它。";
+  if(key=="hq")return world.Landing?"指挥部正在展开，完工后进入下一步。":selection.Any(o=>o.T.Key=="mcv")?"再次点工程车或按 D 展开。":"先点金圈里的工程车，或点「定位本步」选中它。";
   if(BuildingLesson()){
-   var t=Campaign.Info(key);var site=world.Units.FirstOrDefault(o=>o.Alive&&o.Side==0&&o.T==t);
-   if(site!=null)return t.Name+" 正在施工，约 "+(int)Math.Ceiling((1-site.Ready)*t.Seconds)+" 秒完成。";
-   return place==t?"左键点击金色推荐地基；红色预览表示此处不能建造。":"打开「建设」，点「"+t.Name+"」，再点地图推荐地基。";
+   var t=Campaign.Info(key);var job=world.Construction(t);if(job!=null&&!job.Ready)return t.Name+"："+world.ConstructionState(job)+"。右键图标暂停／再右键取消，左键继续。";var site=world.Units.FirstOrDefault(o=>o.Alive&&o.Side==0&&o.T==t);
+   if(site!=null)return t.Name+" 正在施工，约 "+(int)Math.Ceiling((1-site.Ready)*Campaign.AssemblySeconds)+" 秒完成。";
+   return place==t?"左键点击金色推荐地基；红色预览表示此处不能建造。":"点「建筑」中的「"+t.Name+"」生产；就绪后再点击图标，放到推荐地基。";
   }
   if(key=="squad"||key=="ifv"){
    var t=Campaign.Info(key);var src=own.FirstOrDefault(o=>o.Queue.Contains(t));
    if(src!=null)return src.T.Name+" #"+src.Id+" 已接单。点「队列」查看进度，等部队出列。";
-   return "点右侧「生产」，再点「"+t.Name+"」。军费立即扣除。";
+   return "按 E 选步兵、R 选车辆，再点「"+t.Name+"」。军费随进度扣除；缺钱自动等待。";
   }
   if(key=="ore"||key=="receipt"){
    var truck=own.FirstOrDefault(o=>o.T.Key=="miner");

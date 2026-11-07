@@ -1,0 +1,32 @@
+{
+  "tank": {
+    "radius": 2.911,
+    "width": 9.25,
+    "length": 4.844999997168779,
+    "vertices": 51741
+  },
+  "ifv": {
+    "radius": 2.5493,
+    "width": 7.5,
+    "length": 4.760000027269125,
+    "vertices": 127180
+  },
+  "arty": {
+    "radius": 3.0698,
+    "width": 9.2,
+    "length": 5.112021251143958,
+    "vertices": 79324
+  },
+  "mcv": {
+    "radius": 2.8197,
+    "width": 8.35,
+    "length": 4.365331850292601,
+    "vertices": 81212
+  },
+  "miner": {
+    "radius": 3.018,
+    "width": 8.1,
+    "length": 5.586793960182744,
+    "vertices": 70190
+  }
+}

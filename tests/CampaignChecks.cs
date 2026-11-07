@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Drawing;
 using Greyhaven;
@@ -6,7 +6,7 @@ class CampaignChecks {
  static void Check(bool ok,string description){if(!ok)throw new Exception(description);}
  static void Wait(Campaign w,float seconds){for(int i=0;i<Math.Ceiling(seconds*10);i++)w.Tick(.1f);}
  static Piece Begin(Campaign w){var m=w.Live(0).First(p=>p.T.Key=="mcv");Check(w.Deploy(m),"deploy");Wait(w,6);return m;}
- static Piece Build(Campaign w,string k,int x,int y){Check(w.Build(Campaign.Info(k),new PointF(x,y)),k+" / "+w.Radio);Wait(w,Campaign.Info(k).Seconds+1);return w.Live(0).Last(p=>p.T.Key==k);}
+ static Piece Build(Campaign w,string k,int x,int y){Check(w.StartConstruction(Campaign.Info(k)),"start "+k);for(int i=0;i<1200&&!w.Construction(Campaign.Info(k)).Ready;i++)w.Tick(.1f);Check(w.Build(Campaign.Info(k),new PointF(x,y)),k+" / "+w.Radio);Wait(w,Campaign.AssemblySeconds+.2f);return w.Live(0).Last(p=>p.T.Key==k);}
  static void Play(bool armor){
   var w=new Campaign();Begin(w);
   Build(w,"power",260,550);Build(w,"refinery",66,450);Build(w,"barracks",120,610);Build(w,"factory",342,551);
@@ -18,7 +18,8 @@ class CampaignChecks {
   int order=0;string[] list=armor?new[]{"tank","engineer","ifv","squad","tank","at"}:new[]{"ifv","squad","at","arty","engineer","squad"};
   while(!w.Won&&!w.Lost&&w.Time<560){
    string k=list[order%list.Length];if(w.Train(Campaign.Info(k),0,null))order++;
-   if(w.Time>(armor?107:95)){
+   // With progressive funding, the infantry/artillery plan assembles its first battery before assault.
+   if(w.Time>(armor?107:165)){
     int i=0;foreach(var o in w.Live(0).Where(o=>!o.T.Building&&o.T.Key!="miner").ToArray()){
      var enemy=w.Units.Where(e=>e.Side==1&&e.Alive&&e.Carrier==null&&w.Visible(e)).OrderBy(e=>Campaign.Dist(o.P,e.P)).FirstOrDefault();
      if(o.T.Hit>0&&enemy!=null){if(o.Target==null)w.Attack(o,enemy);}
@@ -26,7 +27,12 @@ class CampaignChecks {
       // Sweep the expanded base approach, then its southern ore route for survivors.
       var p=w.Time<260?new PointF(Campaign.EnemyHome.X-170+i%4*15,Campaign.EnemyHome.Y+100+i/4%4*16)
        :new PointF(Campaign.EnemyHome.X-90+i%4*20,Campaign.EnemyHome.Y+350+i/4%4*16);
-      w.Move(o,p,true);
+      // Construction can now extend from other buildings and occupy old scripted waypoints.
+     for(int attempt=0;attempt<25;attempt++){
+      double a=attempt*Math.PI/4;float radius=attempt==0?0:24*(1+(attempt-1)/8);
+      var destination=new PointF(p.X+(float)Math.Cos(a)*radius,p.Y+(float)Math.Sin(a)*radius);
+      if(w.CanMoveTo(o,destination)&&w.Move(o,destination,true))break;
+     }
      }
      i++;
     }
@@ -35,6 +41,7 @@ class CampaignChecks {
   }
   Console.WriteLine((armor?"Armour":"Infantry/artillery")+" win="+w.Won+" at "+(int)w.Time+"s, recruited="+order+" remaining="+w.Remaining(1));
   if(!w.Won)Console.WriteLine(String.Join("\n",w.Live(0).Where(u=>!u.T.Building&&u.T.Key!="miner").Take(18).Select(u=>u.T.Key+" "+u.P+" path="+u.Path.Count+" target="+(u.Target==null?"-":u.Target.T.Key+"@"+u.Target.P)))+"\nEnemy "+String.Join(" ",w.Live(1).GroupBy(u=>u.T.Key).Select(g=>g.Key+"="+g.Count())));
+
   Check(w.Won,"mission needs to be winnable");
  }
  static void Training(){
@@ -52,7 +59,7 @@ class CampaignChecks {
  static void Navigation(){
   var w=new Campaign(true);var mover=w.Spawn("tank",0,300,443);var dest=new PointF(500,443);
   Check(w.Move(mover,dest,false)&&mover.Path.Count==1,"clear ground is one straight segment");
-  var obs=w.Spawn("factory",0,395,444);var box=Campaign.Footprint(obs.T,obs.P);Check(box.Width==96&&box.Height==72&&box.Left%24==0&&box.Top%24==0,"factory footprint aligned");
+  var obs=w.Spawn("factory",0,395,444);var box=Campaign.Footprint(obs.T,obs.P);Check(box.Width==72&&box.Height==48&&box.Left%24==0&&box.Top%24==0,"compact factory footprint aligned");
   var expanded=box;expanded.Inflate(mover.T.Clearance-.1f,mover.T.Clearance-.1f);int bends=0;
   for(int i=0;i<180;i++){w.Tick(.1f);bends=Math.Max(bends,mover.Path.Count);Check(!expanded.Contains(mover.P),"no penetration after new construction");}
   Check(bends>=2&&bends<=5&&Campaign.Dist(mover.P,dest)<1,"replan around existing walls then arrive");
@@ -60,11 +67,11 @@ class CampaignChecks {
   var barracks=w.Spawn("barracks",0,480,564);var gate=Campaign.Gate(Campaign.Footprint(barracks.T,barracks.P));var block=new System.Collections.Generic.List<Piece>();
   foreach(float dx in new[]{0f,-.31f,.31f})block.Add(w.Spawn("squad",0,barracks.P.X+dx*gate.Width,gate.Bottom-6));
   for(int i=0;i<4;i++)Check(w.Train(Campaign.Info(i%2==0?"squad":"at"),0,barracks),"reserve infantry slot");
-  Check(barracks.Berths.Distinct().Count()==4,"each paid order owns a distinct cell");
-  var reserved=barracks.Berths[1];int cash=w.Funds[0];Check(w.CancelOrder(barracks,1)&&w.Funds[0]==cash+135&&!barracks.Berths.Contains(reserved),"refund and release exact cell");
+  Check(barracks.Queue.Count==4,"four queued orders accepted without ground seats");
+  int cash=w.Funds[0];Check(w.CancelOrder(barracks,1)&&w.Funds[0]==cash,"unstarted queue entry has no paid cost");
   Check(w.QueueState(barracks).Contains("缺电"),"low power estimate");Wait(w,65);
-  Check(barracks.Queue.Count==0&&barracks.Berths.Count==0&&w.InfantryDelivered==2,"infantry complete even with the old gate blocked");
-  Check(!w.Move(block[0],Campaign.Middle(Campaign.Muster(Campaign.Footprint(barracks.T,barracks.P))),false),"paid assembly area is not a parking lot");
+  Check(barracks.Queue.Count==0&&w.InfantryDelivered==2,"infantry waits for and uses the actual exit");
+  Check(w.Move(block[0],Campaign.Middle(Campaign.ExitApron(barracks.T,Campaign.Footprint(barracks.T,barracks.P))),false),"exit apron is traversable, not forbidden parking");
   Console.WriteLine("Reservation, blocked doorway, refund and staging checks passed.");
  }
  static void ReconAndMarch(){
@@ -72,22 +79,22 @@ class CampaignChecks {
   var a=w.Spawn("ifv",0,350,680);var b=w.Spawn("squad",0,350,710);var goal=new PointF(650,695);
   Check(w.MarchTo(new[]{a,b},goal,true,true)==2&&a.Formation==b.Formation,"mixed march order");
   Check(Math.Abs(a.Formation.Speed(a)-b.T.Speed)<.01f&&Campaign.Dist(a.Goal,b.Goal)>20,"slowest speed and distinct slots");
-  Wait(w,18);Check(Campaign.Dist(a.P,a.Goal)<2&&Campaign.Dist(b.P,b.Goal)<2,"mixed group arrived together");
+  Wait(w,18);Check(Campaign.Dist(a.P,a.Goal)<2&&Campaign.Dist(b.P,b.Goal)<2,"mixed group arrived together "+a.P+"/"+a.Goal+" path "+String.Join(";",a.Path)+" foot "+b.P+"/"+b.Goal+" path "+String.Join(";",b.Path));
   var initial=b.P;var sight=w.Spawn("engineer",0,enemy.P.X-125,enemy.P.Y);Wait(w,1);
   Check(w.Visible(enemy),"foot patrol opens shroud");w.Move(sight,initial,false);Wait(w,45);Check(w.Visible(enemy),"opened ground remains visible after withdrawal");
   var outpost=new PointF(1580,870);Check(w.Move(a,outpost,false),"extended southern flank navigable");Wait(w,55);Check(Campaign.Dist(a.P,outpost)<2,"expanded area reachable");
   var v1=w.Spawn("tank",0,300,810);var v2=w.Spawn("ifv",0,510,810);w.Move(v1,new PointF(510,810),false);w.Move(v2,new PointF(300,810),false);
   float min=999;for(int i=0;i<400;i++){w.Tick(.05f);min=Math.Min(min,Campaign.Dist(v1.P,v2.P));}
-  Check(min>=(v1.T.Clearance+v2.T.Clearance)*.78f-.01f&&v1.P.X>504&&v2.P.X<306,"head-on vehicles must pass, not overlap: "+min+" / "+v1.P+" path "+String.Join(";",v1.Path)+" / "+v2.P+" path "+String.Join(";",v2.Path));
+  Check(min>=v1.T.TrafficRadius+v2.T.TrafficRadius-.01f&&v1.P.X>504&&v2.P.X<306,"head-on vehicles must pass, not overlap: "+min+" / "+v1.P+" path "+String.Join(";",v1.Path)+" / "+v2.P+" path "+String.Join(";",v2.Path));
   Console.WriteLine("Permanent shroud, formation pacing, expanded flank and head-on passing checks passed.");
  }
  static void InfantryWaves(){
-  var w=new Campaign(true);Begin(w);var b=Build(w,"barracks",120,610);var lot=Campaign.Footprint(b.T,b.P);var yard=Campaign.Muster(lot);
-  Check(!w.CanPlace(Campaign.Info("power"),Campaign.Middle(yard),null),"no adjacent building may occupy the mustering cells");
+  var w=new Campaign(true);Begin(w);var b=Build(w,"barracks",120,610);var lot=Campaign.Footprint(b.T,b.P);var yard=Campaign.ExitApron(b.T,lot);
+  Check(!w.CanPlace(Campaign.Info("power"),b.P,null),"actual building footprint remains blocked");
   for(int wave=0;wave<3;wave++){
-   for(int i=0;i<4;i++)Check(w.Train(Campaign.Info("squad"),0,b),"four consecutive paid orders");
-   Check(b.Berths.Distinct().Count()==4&&b.Berths.All(p=>yard.Contains(p)),"four reserved land cells");Wait(w,32);
-   Check(b.Queue.Count==0&&b.Berths.Count==0&&w.InfantryDelivered==4*(wave+1),"batch must clear without player intervention");
+   for(int i=0;i<4;i++)Check(w.Train(Campaign.Info("squad"),0,b),"four consecutive orders");
+   Check(b.Queue.Count==4,"four orders need no artificial assembly cells");Wait(w,32);
+   Check(b.Queue.Count==0&&w.InfantryDelivered==4*(wave+1),"batch must clear without player intervention");
   }Console.WriteLine("12 individual soldiers delivered and rallied without manual gate clearing.");
  }
  static void HeadingChecks(){
@@ -139,7 +146,7 @@ class CampaignChecks {
   var w=new Campaign(true);
   foreach(var fresh in new[]{w,new Campaign(),new Campaign(false,true)})Check(!fresh.Units.Any(o=>o.T.Key=="miner"||o.T.Key=="refinery"),"neither side starts with mining assets");
   Begin(w);Check(!w.Build(Campaign.Info("refinery"),new PointF(66,450)),"power prerequisite");
-  Build(w,"power",260,550);var cash=w.Funds[0];Check(w.Build(Campaign.Info("refinery"),new PointF(66,450)),"pay to build");
+  Build(w,"power",260,550);var cash=w.Funds[0];Check(w.StartConstruction(Campaign.Info("refinery")),"start refinery");Wait(w,Campaign.Info("refinery").Seconds+.2f);Check(w.Build(Campaign.Info("refinery"),new PointF(66,450)),"place completed refinery");
   Check(w.Funds[0]==cash-390&&!w.Live(0).Any(o=>o.T.Key=="miner"),"no truck before completion");
   Wait(w,10);var truck=w.Live(0).Single(o=>o.T.Key=="miner");
   var plant=w.Live(0).Single(o=>o.T.Key=="refinery");w.Halt(truck);
@@ -188,7 +195,7 @@ class CampaignChecks {
    float ca=first.Cargo,cb=second.Cargo;w.Tick(.1f);
    if(ca>0&&first.Cargo==0)a++;if(cb>0&&second.Cargo==0)b++;
   }
-  Check(a>=2&&b>=2,"each miner keeps delivering despite blocked centers: "+a+" / "+b);
+  Check(a>=2&&b>=2,"each miner keeps delivering despite blocked centers: "+a+" / "+b+" "+String.Join(" | ",w.Live(0).Where(u=>!u.T.Building).Select(u=>u.T.Key+" "+u.P+" path="+String.Join(";",u.Path)+" dock="+u.DockReserved+" fail="+u.DockBlockedFor)));
   Console.WriteLine("Blocked-center traffic: two miners delivered "+a+" and "+b+" loads in 170s.");
   float total=patch.Stock+first.Cargo+second.Cargo+w.OreReceipts[0];
   Check(Math.Abs(total-patch.Initial)<2,"ore conservation with alternate berths");
@@ -233,6 +240,7 @@ class CampaignChecks {
   for(int i=0;i<(int)Math.Ceiling(180/dt);i++){
    var before=trucks.Select(t=>t.Cargo).ToArray();w.Tick(dt);
    for(int j=0;j<trucks.Length;j++)if(before[j]>0&&trucks[j].Cargo==0)receipts[j]++;
+   Check(trucks.All(t=>t.Path.Count<40),"traffic detours must not accumulate repeated loops");
   }
   Console.WriteLine("Crowded mine shipments per truck: "+String.Join(", ",receipts));
   Check(receipts.All(n=>n>=2),"mine traffic: "+String.Join(" | ",trucks.Select(u=>u.P+" cargo="+u.Cargo+" returning="+u.Returning+" path="+String.Join(";",u.Path)+" goal="+u.WorkPoint+" turn="+u.Turn)));
@@ -249,8 +257,8 @@ class CampaignChecks {
  static void ExpandedMap(){
   foreach(var key in new[]{"squad","tank","miner","ifv"}){
    var w=new Campaign(true);var unit=w.Spawn(key,0,1640,920);w.Halt(unit);
-   var goal=new PointF(2420,1320);
-   Check(w.Move(unit,goal,false),"expanded region route "+key);Wait(w,42);
+   var goal=new PointF(Campaign.Width-100,Campaign.Height-120);
+   Check(w.Move(unit,goal,false),"expanded region route "+key);Wait(w,80);
    Check(Campaign.Dist(unit.P,goal)<.02f&&unit.Path.Count==0,"expanded route arrival "+key);
    Check(w.Explored(0,goal),"fog extends to new region");
    Check(!w.Move(unit,new PointF(Campaign.Width+10,1320),false),"east map boundary");
@@ -272,7 +280,10 @@ class CampaignChecks {
   }
  }
  static void DockQueueStress(){
-  var w=new Campaign(true);w.Ore.Clear();w.Ore.Add(new OrePatch(480,790,25000));
+  var w=new Campaign(true);w.Ore.Clear();
+  // Ore is now occupied and harvested per ground cell, not from a wide ring
+  // around one abstract pile. Give six trucks six actual working cells.
+  for(int y=0;y<2;y++)for(int x=0;x<3;x++)w.Ore.Add(new OrePatch(480+x*24,790+y*24,25000f/6));
   var plant=w.Spawn("refinery",0,360,660);plant.StarterDelivered=true;
   var trucks=Enumerable.Range(0,6).Select(i=>w.Spawn("miner",0,280+i%3*32,780+i/3*32)).ToArray();
   foreach(var t in trucks){t.Cargo=180;w.MineOrder(t,null,plant);}
@@ -282,7 +293,7 @@ class CampaignChecks {
    Check(trucks.Count(t=>t.DockReserved&&t.Dock==plant)<=1,"one actual dock reservation per refinery");
    for(int i=0;i<6;i++)if(cargo[i]>0&&trucks[i].Cargo==0)deliveries[i]++;
   }
-  Check(deliveries.All(n=>n>=3),"six miners starved in unloading queue: "+String.Join(",",deliveries));
+  Check(deliveries.All(n=>n>=3),"six miners starved in unloading queue: "+String.Join(",",deliveries)+" "+String.Join(" | ",trucks.Select(t=>t.Id+":"+w.MiningStatus(t)+" p="+t.P+" patch="+(t.Patch==null?"none":t.Patch.P.ToString())+" work="+t.WorkPoint+" route="+String.Join(";",t.Path))));
   plant.Hp=0;var replacement=w.Spawn("refinery",0,640,660);replacement.StarterDelivered=true;
   foreach(var t in trucks){t.Cargo=180;w.MineOrder(t,null,plant);}
   int before=w.OreReceipts[0];Wait(w,65);Check(w.OreReceipts[0]>=before+6*180,"queued trucks recover after refinery destruction");
@@ -328,7 +339,79 @@ class CampaignChecks {
    Console.WriteLine("Mixed infantry/tank/IFV cohesion at {0} Hz: progress spread {1:F1} world units.",1/dt,spread);
   }
  }
- static int Main(){try{ClassicCombatChecks();MixedCohesion();ConvoyStress();DockQueueStress();FiringBoundary();ExpandedMap();Run();return 0;}catch(Exception ex){Console.Error.WriteLine(ex.Message);return 1;}}
+ static void ReachabilityChecks(){
+  var w=EmptyBattle();var u=w.Spawn("tank",0,1100,912);var goal=new PointF(1200,1100);w.Move(u,goal,false);var old=u.Path.ToArray();
+  Check(w.CanMoveTo(u,new PointF(912,912)),"initial ground reachable");
+  for(int i=0;i<4;i++){w.Spawn("power",1,840+i*48,840);w.Spawn("power",1,840+i*48,984);}
+  for(int i=1;i<3;i++){w.Spawn("power",1,840,840+i*48);w.Spawn("power",1,984,840+i*48);}
+  Check(!w.CanMoveTo(u,new PointF(912,912)),"enclosed open ground is unreachable");
+  Check(!w.CanMoveTo(u,new PointF(840,840))&&!w.CanMoveTo(u,new PointF(300,50)),"building/water unreachable");
+  Check(u.Goal==goal&&u.Path.SequenceEqual(old),"hover preview must not mutate active route");
+  var timer=System.Diagnostics.Stopwatch.StartNew();for(int n=0;n<500;n++)w.CanMoveTo(u,new PointF(912,912));timer.Stop();
+  var wall=w.Units.First(o=>o.T.Key=="power"&&o.P.X==984&&o.P.Y==888);wall.Hp=1;
+  var gun=w.Spawn("arty",0,1100,880);w.Attack(gun,wall);w.Tick(.1f);Check(!wall.Alive,"destroy wall for topology change");
+  Check(w.CanMoveTo(u,new PointF(912,912)),"destroying wall refreshes reachability");
+  foreach(var p in new[]{new PointF(912,912),new PointF(720,1000),new PointF(840,840),new PointF(-10,500)}){
+   var clone=new Piece{T=u.T,Hp=u.T.Hp,Side=u.Side,P=u.P};Check(w.CanMoveTo(u,p)==w.Move(clone,p,false),"preview/path agreement "+p);
+  }
+  Console.WriteLine("Reachability preview is read-only, detects sealed areas, updates after destruction; 500 cached queries {0:F1}ms.",timer.Elapsed.TotalMilliseconds);
+ }
+ static void FollowingChecks(){
+  foreach(float dt in new[]{.05f,1f/60})foreach(int bearing in new[]{0,2,4,6,8,10,12,14}){
+   var w=new Campaign(true);w.Units.RemoveAll(u=>u.Side==0);var group=new Piece[5];
+   double a=bearing*Math.PI/8;float fx=(float)Math.Sin(a),fy=(float)Math.Cos(a);
+   for(int i=0;i<group.Length;i++){var u=w.Spawn(i==0?"arty":"tank",0,1000-fx*i*32,700-fy*i*32);u.Turn=u.Dir=bearing;group[i]=u;
+    Check(w.Move(u,new PointF(1000+fx*(240-i*32),700+fy*(240-i*32)),false),"convoy order");}
+   float min=100;for(int n=0;n<18/dt;n++){w.Tick(dt);for(int i=1;i<group.Length;i++){
+    float gap=Campaign.Dist(group[i-1].P,group[i].P);min=Math.Min(min,gap);Check(gap>=Campaign.Tile-.05f,"one-cell following gap "+gap);
+   }}
+   Check(group.All(u=>u.Path.Count==0),"following convoy arrived");
+  }
+  Console.WriteLine("Five-vehicle slow-leader convoy: eight bearings at 20/60 Hz retain one cell of headway and all arrive.");
+  foreach(float dt in new[]{.05f,1f/60}){
+   var w=new Campaign(true);w.Units.RemoveAll(u=>u.Side==0);var tanks=new Piece[6];
+   for(int i=0;i<6;i++){var u=w.Spawn("tank",0,606-i%3*32,337+i/3*32);u.Turn=u.Dir=4;tanks[i]=u;Check(w.Move(u,new PointF(766+i/3*32,480-i%3*32),false),"intersection convoy order");}
+   for(int n=0;n<40/dt;n++){
+    w.Tick(dt);for(int i=0;i<6;i++)for(int j=i+1;j<6;j++)Check(!Campaign.TrafficContact(tanks[i].T,tanks[i].P,tanks[j].T,tanks[j].P),"intersection vehicle overlap");
+   }
+   Check(tanks.All(u=>u.Path.Count==0),"intersection convoy reaches goals beyond parked vehicles");
+  }
+  Console.WriteLine("Six-tank intersection: waiting, turning and final-destination replanning passed at 20/60 Hz without body overlap.");
+ }
+ static void TightCellsAndRecovery(){
+  var w=EmptyBattle();var tanks=Enumerable.Range(0,9).Select(i=>w.Spawn("tank",0,800+i%3*32,1100+i/3*32)).ToArray();
+  Check(w.MarchTo(tanks,new PointF(1200,1100),false,true)==9,"compact 3x3 formation orders");
+  var goals=tanks.Select(u=>u.Goal).ToArray();
+  Check(Math.Abs(goals.Max(p=>p.X)-goals.Min(p=>p.X)-48)<.01&&Math.Abs(goals.Max(p=>p.Y)-goals.Min(p=>p.Y)-48)<.01,"vehicle destinations occupy adjacent cells, not 42-unit gaps");
+  for(int n=0;n<900;n++){w.Tick(.05f);for(int i=0;i<9;i++)for(int j=i+1;j<9;j++)Check(!Campaign.TrafficContact(tanks[i].T,tanks[i].P,tanks[j].T,tanks[j].P),"compact convoy cell penetration");}
+  Check(tanks.All(u=>Campaign.Dist(u.P,u.Goal)<.2f),"compact convoy reaches all nine cells");
+  w=EmptyBattle();w.Ore.Clear();var plant=w.Spawn("refinery",0,1200,1000);plant.StarterDelivered=true;
+  var truck=w.Spawn("miner",0,500,1100);truck.Cargo=180;w.MineOrder(truck,null,plant);w.Tick(.1f);
+  var points=new[]{truck.P}.Concat(truck.Path).ToArray();int segment=Enumerable.Range(0,points.Length-1).OrderByDescending(i=>Campaign.Dist(points[i],points[i+1])).First();
+  var block=w.Spawn("mcv",0,(points[segment].X+points[segment+1].X)/2,(points[segment].Y+points[segment+1].Y)/2);
+  for(int n=0;n<1200&&w.OreReceipts[0]==0;n++){w.Tick(.05f);Check(!Campaign.TrafficContact(truck.T,truck.P,block.T,block.P),"haul bypass must not cross blocker");}
+  Check(w.OreReceipts[0]==180,"mid-route stopped vehicle must be bypassed with real delivery");
+  foreach(bool alternate in new[]{true,false}){
+   w=EmptyBattle();w.Ore.Clear();plant=w.Spawn("refinery",0,900,900);plant.StarterDelivered=true;
+   Piece other=null;if(alternate){other=w.Spawn("refinery",0,1250,1100);other.StarterDelivered=true;}
+   var dock=Campaign.DockPoint(plant);var blockers=new[]{-36f,0,36}.Select(x=>w.Spawn("mcv",1,dock.X+x,dock.Y)).ToArray();
+   truck=w.Spawn("miner",0,780,1050);truck.Cargo=180;w.MineOrder(truck,null,plant);Wait(w,45);
+   if(alternate)Check(other.LastReceipt==180&&plant.LastReceipt==0,"blocked refinery must switch to reachable friendly refinery");
+   else{
+    Check(w.OreReceipts[0]==0&&truck.Cargo==180,"sealed dock cannot teleport cargo or money");
+    foreach(var blocker in blockers)blocker.Hp=0;Wait(w,35);Check(w.OreReceipts[0]==180,"opening dock must resume delivery without another player command");
+   }
+  }
+  w=EmptyBattle();w.Funds[0]=5000;w.Spawn("hq",0,600,850);w.Spawn("power",0,470,950);var barracks=w.Spawn("barracks",0,600,1000);
+  var apron=Campaign.ExitApron(barracks.T,Campaign.Footprint(barracks.T,barracks.P));var jam=w.Spawn("mcv",1,Campaign.Middle(apron).X,Campaign.Middle(apron).Y);
+  for(int i=0;i<4;i++)Check(w.Train(Campaign.Info("squad"),0,barracks),"queue accepted despite blocked door");Wait(w,26);
+  Check(barracks.Queue.Count==4&&!w.Live(0).Any(u=>u.T.Foot),"blocked outlet retains completed paid unit inside");
+  jam.Hp=0;int seen=0;var ids=new System.Collections.Generic.HashSet<int>();
+  for(int n=0;n<700;n++){w.Tick(.05f);foreach(var u in w.Live(0).Where(u=>u.T.Foot))if(ids.Add(u.Id)){Check(apron.Contains(u.P),"new soldier must appear in the marked physical exit");seen++;}}
+  Check(seen==4&&barracks.Queue.Count==0,"four units exit and clear automatically");
+  Console.WriteLine("Adjacent-cell formation, moving-route obstruction, refinery failover/reopening, and real blocked production exits passed.");
+ }
+ static int Main(){try{TightCellsAndRecovery();FollowingChecks();ReachabilityChecks();ClassicCombatChecks();MixedCohesion();ConvoyStress();DockQueueStress();FiringBoundary();ExpandedMap();Run();return 0;}catch(Exception ex){Console.Error.WriteLine(ex);return 1;}}
  static void Run(){NarrowGate();CrowdedOreRun(.05f);CrowdedOreRun(1f/60);MinerMidRouteBlock();EnemySupplyChain();MinerTraffic();ExhaustedFields();ProspectChecks();OreChecks();ContactChecks();StreetChecks();InfantryWaves();HeadingChecks();ReconAndMarch();Navigation();Training();Play(true);Play(false);EliminationChecks();
   var w=new Campaign();var car=w.Spawn("ifv",0,212,431);w.Load(car);Check(w.Units.Any(o=>o.Carrier==car),"embark");w.Load(car);Check(!w.Units.Any(o=>o.Carrier==car),"disembark");
   Console.WriteLine("All checks passed.");}

@@ -1,0 +1,252 @@
+[
+  {
+    "path": "art/source/aligned/bake.js",
+    "bytes": 5752,
+    "sha256": "8F7336B1C63B14CC10BC39A4B5B712CD381D6E0C65E23E0B2FA7E7BE3EE35B39"
+  },
+  {
+    "path": "art/source/aligned/chassis.js",
+    "bytes": 2995703,
+    "sha256": "B99275D902D2E75AD9F8F137E8CF1C881031333A1DF2265F6FF8908B3B239378"
+  },
+  {
+    "path": "art/source/aligned/ore-models.js",
+    "bytes": 5149,
+    "sha256": "F508EEC3C14496FFFE13B5F6E3234F93C0397C9566C9436DA7CB4F8DD7B89441"
+  },
+  {
+    "path": "art/source/aligned/packed/iso-arty.png",
+    "bytes": 1636788,
+    "sha256": "0DAF110CCDB192114F41A20EA2148CCA7786C3EE587103CD4A07E5F2FDD78E18"
+  },
+  {
+    "path": "art/source/aligned/packed/iso-ifv.png",
+    "bytes": 1773333,
+    "sha256": "11D8EFCE2807616F8F94AC178FFC056F0906A638C48E49494312F41D22C4A2B0"
+  },
+  {
+    "path": "art/source/aligned/packed/iso-mcv.png",
+    "bytes": 1636600,
+    "sha256": "B79A18ED5B4597AD4DA40D34CF65F711B1DD908EDCBA6F105B0EFF869C613783"
+  },
+  {
+    "path": "art/source/aligned/packed/iso-miner-full.png",
+    "bytes": 1711455,
+    "sha256": "EA4C032DB6EDF002FE5A70E00C39D44352493D301746C54FA6538262CCF7F22B"
+  },
+  {
+    "path": "art/source/aligned/packed/iso-miner.png",
+    "bytes": 1643975,
+    "sha256": "A570297C3619712FB8532F5C8F0A8F2DCB2C1FAAB9B584171F5C50D1C73B4C1B"
+  },
+  {
+    "path": "art/source/aligned/packed/iso-tank.png",
+    "bytes": 6639382,
+    "sha256": "B115C27B8182AD7C55F8759E3533FABEEC305E5260592C37DEADE7C5A952A91C"
+  },
+  {
+    "path": "art/source/aligned/README.md",
+    "bytes": 2589,
+    "sha256": "0CFA1F682CDB658E68E206BBE8559E856BE3D3DAA094B897347CD79AD1F48814"
+  },
+  {
+    "path": "art/source/aligned/tank-drive.js",
+    "bytes": 5718,
+    "sha256": "0AA5DAB7E2D14E5FB55B8E6DD2605D47A755A2F77C06F0CEB7C3B27ADC6C8F3F"
+  },
+  {
+    "path": "art/source/console/portraits.png",
+    "bytes": 79392,
+    "sha256": "B90695E5730E5FB67382FEDB567D3DE15F7652511ACEE4CA166B64BEAF9AA3F3"
+  },
+  {
+    "path": "art/source/isometric/ifv.png",
+    "bytes": 1549777,
+    "sha256": "30388DE358EEFE786AF53C8DFF123CB774B4A7AD961BEF00D69FC68C73592C42"
+  },
+  {
+    "path": "art/source/isometric/packed/hd-arty.png",
+    "bytes": 557291,
+    "sha256": "D8C4050CE0026E8455974BAB938CFAB20B43A07337056187CB179C0BB2A1132E"
+  },
+  {
+    "path": "art/source/isometric/packed/hd-at.png",
+    "bytes": 456783,
+    "sha256": "CDE02A6D419A774C590A819FD62B5D004EB30B85B77EC393DA9C204BDEE3E2E1"
+  },
+  {
+    "path": "art/source/isometric/packed/hd-engineer.png",
+    "bytes": 440333,
+    "sha256": "9746D74011FCF3E3EF4103F26F6CFCC1C7BEC2AA8C71B104A39B9D159D1A8A99"
+  },
+  {
+    "path": "art/source/isometric/packed/hd-ifv.png",
+    "bytes": 1046683,
+    "sha256": "CBC2F533EB2DB19ACE5F5D9E20598EE48E7CB880EAFBF23C416E5736DE9226BD"
+  },
+  {
+    "path": "art/source/isometric/packed/hd-mcv.png",
+    "bytes": 577652,
+    "sha256": "F0FC27234DB5640B5118C98C784EE4EDF7CCD8E3EA3BEE412C9CC5BFFE1361E7"
+  },
+  {
+    "path": "art/source/isometric/packed/hd-squad.png",
+    "bytes": 350576,
+    "sha256": "DA39AD444869C63AF553903D88138B881F426BB3ACFCE44CD30A09CAB441A649"
+  },
+  {
+    "path": "art/source/isometric/packed/hd-tank.png",
+    "bytes": 969539,
+    "sha256": "2773DA7846A87433C8338B0102D722CD424A0FCAF4BBC8EB363B48EE594B4F17"
+  },
+  {
+    "path": "art/source/isometric/README.md",
+    "bytes": 1552,
+    "sha256": "875BD80C1BCF758DB68867AA1F45A3442C3C0992DC09508A2115C221AF0FC0EB"
+  },
+  {
+    "path": "art/source/isometric/tank.png",
+    "bytes": 1471126,
+    "sha256": "26267D9D26311AFF3AFF50D2C0C3D47FF1B8E0333C98CD75A5BE8DB40CF413FE"
+  },
+  {
+    "path": "art/source/readable-units/单位重绘总览.png",
+    "bytes": 149659,
+    "sha256": "033E7FE5AE760E3BA7E79BE71E6C122E957BCF8CC518DE59B6C0BB8FC878D51E"
+  },
+  {
+    "path": "art/source/readable-units/audit.json",
+    "bytes": 75344,
+    "sha256": "D14EE860D243B19623CD2F41F6BCDE6CE3EB7EA1900F5373049CA9EA413ADCF9"
+  },
+  {
+    "path": "art/source/readable-units/concept.png",
+    "bytes": 1817825,
+    "sha256": "E8B98F86C216203742E4660178111DBA05B6C1C386DD0C06A7096D45165CDAC4"
+  },
+  {
+    "path": "art/source/readable-units/index.html",
+    "bytes": 203,
+    "sha256": "6FDA3A780E9BCE0A7EE7C77440667B022A6DB9FC897763A99BC6C75665938875"
+  },
+  {
+    "path": "art/source/readable-units/models.js",
+    "bytes": 7527,
+    "sha256": "F8B9BB15932C75BC8E8F07E71B6875CC8B0539E41DE3FAB3D50DDFF0474ED070"
+  },
+  {
+    "path": "art/source/readable-units/packed/hd-at.png",
+    "bytes": 90364,
+    "sha256": "A5D05DAE003109F76673219FA6BF9DE21B330113793CBDC707DD0418B23508E6"
+  },
+  {
+    "path": "art/source/readable-units/packed/hd-engineer.png",
+    "bytes": 80831,
+    "sha256": "7FFE543E1701F8D12816EF1D27E3CF2399F8975C7282A058E5770411B40CA371"
+  },
+  {
+    "path": "art/source/readable-units/packed/hd-squad.png",
+    "bytes": 80434,
+    "sha256": "FEF5FE162E263A71AE8AE7F9E878286B65F57D08ABE0F006ED475A859862A620"
+  },
+  {
+    "path": "art/source/readable-units/packed/iso-arty.png",
+    "bytes": 364146,
+    "sha256": "757A369AC878FE3527300725AA4A437B45CEF799D1AFB0CD2F4D22E95628AD8D"
+  },
+  {
+    "path": "art/source/readable-units/packed/iso-ifv.png",
+    "bytes": 374795,
+    "sha256": "FD5F172EBD0C114D78F25031041F65BF5101C575DA9A5E960424E3390A3E8628"
+  },
+  {
+    "path": "art/source/readable-units/packed/iso-mcv.png",
+    "bytes": 406906,
+    "sha256": "DB0C62DC44573BFCCB2BACC3CD72ABBBA1AFDE1C5EA592E3EAD856710EF40194"
+  },
+  {
+    "path": "art/source/readable-units/packed/iso-miner-full.png",
+    "bytes": 451216,
+    "sha256": "14329BD11346A35F2E5DE5718049AD2A3D1C5F8B6647F0AF764B0451C969E255"
+  },
+  {
+    "path": "art/source/readable-units/packed/iso-miner.png",
+    "bytes": 369053,
+    "sha256": "3E143A255B9E529C8454BF06011B2FCE174712F40F1BD6C7505A9820EC870FB6"
+  },
+  {
+    "path": "art/source/readable-units/packed/iso-tank.png",
+    "bytes": 1351292,
+    "sha256": "311301D733FFD3A16CBAAF8D394F9993A72624E3EFD0F885909BC3418897EDF3"
+  },
+  {
+    "path": "art/source/readable-units/prompt.json",
+    "bytes": 2553,
+    "sha256": "23E8096FC02AC2C0737E348B1587A4251A560085BB92669284ED357B7B17A252"
+  },
+  {
+    "path": "art/source/readable-units/README.md",
+    "bytes": 3685,
+    "sha256": "CEF9E128092C7FE1FD25726AD0BBE614D55E13C519E5DCA54A132C5D7F9889A7"
+  },
+  {
+    "path": "art/source/readable-units/render.js",
+    "bytes": 5386,
+    "sha256": "F6CBBD337CDA6F3971065ECEE14AE26AB37D940462155F51FBACDED927F38546"
+  },
+  {
+    "path": "art/source/readable-units/tank-bearing-check.csv",
+    "bytes": 2616,
+    "sha256": "9340813E4A41A9C072B8BDFCCF7DD30C185A3B4C3D58A7EECAC985BFD10612F6"
+  },
+  {
+    "path": "art/source/v01/生成记录.md",
+    "bytes": 3972,
+    "sha256": "C9F851FCD391F68C96DD6B297917834D683A237A57D998F0D29BAC7F6E631D1D"
+  },
+  {
+    "path": "art/source/v01/base.png",
+    "bytes": 1874009,
+    "sha256": "850568C1D8ADD4ED8CF4FF68198FD28E30655EF4E952084391AA136D8A90703E"
+  },
+  {
+    "path": "art/source/v01/harbor.png",
+    "bytes": 3259460,
+    "sha256": "7C9B6002FD2CC262E0C9624182AE9285C9780C5C9788C36FE994EE2FDDF3A42F"
+  },
+  {
+    "path": "art/source/v01/units.png",
+    "bytes": 1335898,
+    "sha256": "687A636831073FB296D55BB2983568A8330BAE4E54AF3A646D3AF2C39F90FE30"
+  },
+  {
+    "path": "art/source/v02/bake.html",
+    "bytes": 2492,
+    "sha256": "BBC214BE25BE647F4D7051A447A2EB8358366949D0EC1596B6D7F99D3CC4CDCE"
+  },
+  {
+    "path": "art/source/v02/models.js",
+    "bytes": 10002,
+    "sha256": "C7359F9222BF8C28334D325BB2C58107C587D6140DA67517964290FB980B1CC8"
+  },
+  {
+    "path": "art/source/v02/README.md",
+    "bytes": 3345,
+    "sha256": "DB6C62326CADB98F891D238C95A774E9D01AEC60E47EA03F78856DB19E3B2DB0"
+  },
+  {
+    "path": "art/source/v02/sprites/ifv.png",
+    "bytes": 1046229,
+    "sha256": "6649BBD86162FB5D7F0B815E7AD0FFF9DDB6705E89DCE3B4C64302573FB4E40F"
+  },
+  {
+    "path": "art/source/v02/sprites/squad.png",
+    "bytes": 2992338,
+    "sha256": "09E4A87C0ECE4FBD97CCDF386F10D4EC00F50C80E74EEBF6FFFBD254AEF88E04"
+  },
+  {
+    "path": "art/source/v02/sprites/tank.png",
+    "bytes": 1259313,
+    "sha256": "6EAC358A1F3CCE27A051D089336E89D5D50269C25A7BE73DA69E4D04E6234362"
+  }
+]

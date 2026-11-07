@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Drawing;
 namespace Greyhaven {
@@ -9,8 +9,8 @@ public partial class Campaign {
  }
  PointF TrackStep(Piece o,PointF waypoint,PointF next,float dt){
   if(Dist(o.P,waypoint)<.001f)return waypoint;
-  if(o.ForceMoving&&o.T.Key=="tank")foreach(var victim in Units.Where(u=>u.Deployed&&u.Side!=o.Side&&u.T.Foot&&Dist(u.P,next)<Clearance(o)+Clearance(u)).ToArray())Kill(victim);
-  var obstacle=Units.FirstOrDefault(u=>u!=o&&u.Deployed&&!u.T.Building&&Dist(u.P,next)<(Clearance(u)+Clearance(o))*.78f&&Dist(u.P,next)<Dist(u.P,o.P));
+  if(o.ForceMoving&&o.T.Key=="tank")foreach(var victim in Units.Where(u=>u.Deployed&&u.Side!=o.Side&&u.T.Foot&&TrafficContact(o.T,next,u.T,u.P)).ToArray())Kill(victim);
+  var obstacle=Units.FirstOrDefault(u=>u!=o&&u.Deployed&&!u.T.Building&&TrafficContact(o.T,next,u.T,u.P)&&Dist(u.P,next)<Dist(u.P,o.P));
   if(obstacle==null){o.TrafficBlocked=0;return next;}
   o.TrafficBlocked+=dt;
   if(obstacle.Path.Count>0&&o.TrafficBlocked<.8f){
@@ -19,28 +19,25 @@ public partial class Campaign {
   }
   if(o.TrafficWait<=0){
    o.TrafficWait=.45f+(o.Id%4)*.07f;
-   if(!TrafficDetour(o,obstacle,waypoint)&&o.Mining&&o.TrafficBlocked>1.6f){
-    var destination=o.Path.Last();PlanRoute(o,destination,MineTraffic(o,destination));o.TrafficBlocked=0;
+   if(o.TrafficBlocked>.4f)NudgeIdleFriend(o,obstacle);
+   if(o.Target!=null&&o.TrafficBlocked>.4f&&FindFiringPosition(o,o.Target.P))return o.P;
+   if(o.TrafficBlocked>.6f&&!TrafficDetour(o,obstacle,waypoint)){
+    // A stopped car can occupy an intermediate turn point. Retry the FINAL
+    // destination around nearby traffic instead of repeatedly aiming at it.
+    var destination=o.Path.Last();if(PlanRoute(o,destination,MineTraffic(o,destination)))o.TrafficBlocked=0;
+
    }
   }return o.P;
  }
- public static RectangleF Muster(RectangleF lot){var gate=Gate(lot);return new RectangleF(gate.X,gate.Bottom,gate.Width,2*Tile);}
- public static RectangleF UnloadingLane(RectangleF lot){return new RectangleF(lot.Left,lot.Bottom,lot.Width,2*Tile);}
- static RectangleF ReservedLot(TypeInfo t,RectangleF r){if(HasGate(t))r.Height+=Tile;if(t.Key=="barracks")r.Height+=2*Tile;if(t.Key=="refinery")r.Height+=Tile;return r;}
- bool ParkingAllowed(int side,PointF p){
-  return !Units.Any(o=>o.Alive&&o.Side==side&&o.T.Key=="barracks"&&Muster(Footprint(o.T,o.P)).Contains(p));
+ // Door and dock cells are operational destinations, not extra building foundation.
+ public static RectangleF ExitApron(TypeInfo t,RectangleF lot){
+  return UnloadingLane(lot);
  }
- bool BerthClear(Piece src,PointF p){return !Blocked(p,6,null)&&!Units.Any(u=>u.Deployed&&!u.T.Building&&Dist(u.P,p)<16);}
- PointF? FreeBerth(Piece src){
-  var r=Muster(Footprint(src.T,src.P));
-  for(int row=0;row<2;row++)for(int col=0;col<3;col++){
-   var p=new PointF(r.X+(col+.5f)*Tile,r.Y+(1.5f-row)*Tile);
-   if(!src.Berths.Contains(p)&&BerthClear(src,p))return p;
-  }return null;
- }
- public void Halt(Piece o){ClearMission(o);o.Mining=false;o.Dock=null;o.DockReserved=false;o.DockTicket=0;o.DockRetryAfter=0;o.Unload=0;o.Path.Clear();o.FirePoint=null;o.Target=null;o.Contact=ContactOrder.None;o.ResumeMarch=false;o.Formation=null;o.Advancing=false;}
+ public static RectangleF UnloadingLane(RectangleF lot){return new RectangleF(lot.Left+(float)Math.Floor(lot.Width/Tile/2)*Tile,lot.Bottom,Tile,Tile);}
+ bool ParkingAllowed(int side,PointF p){return true;}
+ public void Halt(Piece o){o.Entering=null;ClearMission(o);o.Mining=false;o.Dock=null;o.DockReserved=false;o.DockTicket=0;o.DockRetryAfter=0;o.DockBlockedFor=0;o.Unload=0;o.Path.Clear();o.FirePoint=null;o.Target=null;o.Contact=ContactOrder.None;o.ResumeMarch=false;o.Formation=null;o.Advancing=false;}
  public bool Suppress(Piece o,PointF p){
-  if(!o.Deployed||o.T.Hit==0||p.X<0||p.Y<0||p.X>=Width||p.Y>=Height)return false;
+  if(!o.Deployed||!Armed(o)||p.X<0||p.Y<0||p.X>=MapWidth||p.Y>=MapHeight)return false;
   Halt(o);o.FirePoint=p;o.Replan=0;return true;
  }
  bool GroundFireTick(Piece o,float dt){
@@ -50,7 +47,7 @@ public partial class Campaign {
   if(!o.T.Building)Face(o,p,dt);
   if(o.Cool<=0){
    var hit=Units.Where(e=>e!=o&&e.Deployed&&Dist(e.P,p)<(e.T.Building?Radius(e.T):14)).OrderBy(e=>Dist(e.P,p)).FirstOrDefault();
-   if(hit!=null)Fire(o,hit);else{o.Cool=o.T.Reload;Shots.Add(new Shot{A=o.P,B=p,Side=o.Side,Life=.23f,Shell=o.T.Key=="arty"});}
+   if(hit!=null)Fire(o,hit);else{o.Cool=o.T.Reload;RecordShot(o,p,null);}
   }return true;
  }
 }
