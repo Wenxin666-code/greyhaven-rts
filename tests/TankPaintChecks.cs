@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -117,8 +117,15 @@ partial class CommandWindow {
     probe.Save(Path.Combine(folder,"模型预览-"+key+".png"),ImageFormat.Png);
    }
    click("切换满载");if(!modelLoaded)throw new Exception("loaded mining preview");
-   click("建筑模型");if(!modelBuildings||modelSpin)throw new Exception("building preview mode");
+   click(Campaign.Info("squad").Name);click("查看行走");if(!modelWalking)throw new Exception("walk preview toggle");click("查看站立");if(modelWalking)throw new Exception("stand preview toggle");
+   click("建筑模型");if(!modelBuildings||!modelSpin)throw new Exception("building animated preview mode");
    foreach(var key in buildingRoster){click(Campaign.Info(key).Name);if(buildingRoster[modelUnit]!=key)throw new Exception("building preview selection");}
+   click("搭建");if(modelBuildingMode!=1||modelClock!=0)throw new Exception("assembly preview control");
+   click("摧毁");if(modelBuildingMode!=2)throw new Exception("collapse preview control");
+   click("暂停");if(modelSpin)throw new Exception("pause building preview");
+   click("播放");if(!modelSpin)throw new Exception("resume building preview");
+   click("待机运转");if(modelBuildingMode!=0)throw new Exception("idle preview control");
+   click("供电中");if(modelPower)throw new Exception("preview blackout toggle");click("停电");if(!modelPower)throw new Exception("preview supply toggle");
    click("紫");click("应用到己方势力");if(UnitColor(0)!=paintSwatches[4])throw new Exception("building palette application");
    click("车辆工厂");probe.Save(Path.Combine(folder,"建筑模型预览.png"),ImageFormat.Png);
    click("蓝");SetUnitColor(0,previous);click("部队模型");click("主战坦克");modelSpin=false;

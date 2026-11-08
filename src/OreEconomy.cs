@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Linq;
 using System.Collections.Generic;
@@ -14,7 +14,7 @@ public partial class Campaign {
  public const int LoadValue=180;
  public readonly List<OrePatch> Ore=CreateFields();
  public bool FirstOreCollected {get;private set;}
- public readonly int[] OreReceipts=new int[3];
+ public readonly int[] OreReceipts=new int[MaxFactions];
  public PointF? LastEvent;public string EventLabel;public float EventTime;float lastStrike=-10;
  void SetEvent(PointF p,string label){EventTime=Time;LastEvent=p;EventLabel=label;}
  void ReportStrike(Piece unit){

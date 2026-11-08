@@ -1,0 +1,2 @@
+Six-faction 2x + native 1920x1080 scrolling: 336 samples, median 12.2ms, p95 106.6ms, max 737.2ms, >33ms 44; living entities 233, game time 279.5. Simulation median/p95 2.4/16.2ms; rendering median/p95 8.6/96.8ms.
+Six-faction measured-time loop: 7.46 game seconds / 3.84 active real seconds = 1.94x; 85 frames, interval median 30.8ms p95 189.9ms.

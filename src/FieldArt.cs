@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Collections.Generic;
 namespace Greyhaven {
@@ -70,7 +70,7 @@ partial class CommandWindow {
  }
  void BuildingArt(Graphics g,string key,int side,RectangleF box,float built,bool wreck=false){
   var source=new Rectangle(0,wreck?2*FrameSize:0,FrameSize,FrameSize);
-  if(built<1&&!wreck&&key!="harbormaster"){key+="-build";EnsureAnimation(key);source=AnimationCell(Math.Min(BuildFrames-1,(int)(built*(BuildFrames-1))));}
+  if(built<1&&!wreck&&BuildingV08.IsBuilding(key)){key=B08Frame(key,"build",Math.Max(0,Math.Min(BuildFrames-1,(int)(built*(BuildFrames-1)))));source=B08Source();}
   DrawStamp(g,key,source,box,wreck?(Color?)null:key=="harbormaster"?Color.FromArgb(140,151,143):UnitColor(side));
  }
  static RectangleF SoldierBox(PointF p,float size){
@@ -78,7 +78,7 @@ partial class CommandWindow {
  }
  static PointF SoldierFeet(Piece o,PointF p,float zoom,float time){
   // Step feedback follows travelled distance; a blocked order must not bob.
-  if(time-o.MovedAt<.10f)p.Y-=(float)Math.Abs(Math.Sin(o.Travel*.22f))*zoom*.65f;
+  // Foot placement is animated in the articulated gait mesh.
   return p;
  }
  // Project the same soldier onto the ground as it falls. Six cached poses per view.
@@ -101,6 +101,7 @@ partial class CommandWindow {
   else PaintFrame(g,t,side,dir,VehicleRect(t,p,s));
  }
  void DrawFieldSprite(Graphics g,Piece o,PointF p,float size){
+  if(o.T.Building&&BuildingV08.IsBuilding(o.T.Key)){DrawB08Field(g,o,p,size);return;}
   p=RecoilPoint(o,p);
   int dir=(o.Dir+14)%16;
   if(o.T.Building&&(!o.Alive||o.Ready<1)){DrawBuildingState(g,o,p,size);return;}
@@ -118,35 +119,13 @@ partial class CommandWindow {
    }
    return;
   }
-  if(o.T.Key=="refinery"&&o.Ready>=1){
-   int frame=(int)(o.MillPhase*16)%16;var rect=BuildingRect(Campaign.Footprint(o.T,o.P),p,zoom);
-   DrawStamp(g,"refining",new Rectangle(frame%8*FrameSize,frame/8*FrameSize,FrameSize,FrameSize),rect,UnitColor(o.Side));return;
-  }
   if(world.RepairVehicle(o)){DrawStamp(g,"ifv-repair",SourceCell(o.T,o.Side,dir),VehicleRect(o.T,p,size),UnitColor(o.Side));return;}
   if(o.T.Key=="miner"&&o.Cargo>10){
    DrawStamp(g,"miner-full",SourceCell(o.T,o.Side,dir),VehicleRect(o.T,p,size),UnitColor(o.Side));return;
   }
-  if(o.T.Foot)p=SoldierFeet(o,p,zoom,world.Time);
+  if(o.T.Foot){DrawFootGait(g,o,p,size);return;}
   DrawLive(g,o.T,o.Side,dir,p,size,o.Ready);
-  if(o.T.Key=="factory"&&o.Ready>=1){
-   float open=Math.Min(1,o.Door*3);
-   if(o.Queue.Count>0)open=Math.Max(open,Math.Max(0,1-(o.Queue.Peek().Seconds-o.Work)/.6f));
-   open=open*open*(3-2*open);var box=BuildingRect(Campaign.Footprint(o.T,o.P),p,zoom);var st=g.Save();
-   g.TranslateTransform(box.Left,box.Top);g.ScaleTransform(box.Width/FrameSize,box.Height/FrameSize);
-   // Same generated ground mapping as the wall, so the shutter remains attached.
-   var a=FactoryDoor[0];var b=FactoryDoor[1];var c=FactoryDoor[2];var d=FactoryDoor[3];
-   float door=(d.Y-a.Y+c.Y-b.Y)*.5f,h=door*(1-open);
-   if(open>.01f){
-    using(var shade=new SolidBrush(C("#202929")))g.FillPolygon(shade,new[]{new PointF(a.X,a.Y+h),new PointF(b.X,b.Y+h),c,d});
-    Line(g,a.X+1,a.Y+h,b.X-1,b.Y+h,C("#8a9182"),2.2f);
-    Rect(g,a.X,a.Y-2,4,2,gold);Rect(g,b.X,b.Y-2,4,2,gold);
-   }
-   if(open>.01f&&h>.2f){
-    using(var brush=new SolidBrush(C("#49565b")))g.FillPolygon(brush,new[]{a,b,new PointF(b.X,b.Y+h),new PointF(a.X,a.Y+h)});
-    for(float j=h-3;j>0;j-=6)Line(g,a.X,a.Y+j,b.X,b.Y+j,C("#77817e"),1);
-   }
-   g.Restore(st);
-  }
+
  }
  string LiveArtKey(Piece o){return world.RepairVehicle(o)?"ifv-repair":o.T.Key=="miner"&&o.Cargo>10?"miner-full":o.T.Key;}
  bool MobileHit(Piece o,PointF p,float size,PointF screen){

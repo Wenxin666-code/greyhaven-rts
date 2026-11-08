@@ -4,7 +4,8 @@ namespace Greyhaven {
 public partial class Campaign {
  public float VisualTime,OutcomeAt=-100;
  int visualShotId;
- public bool OutcomeReady {get{return (Won||Lost)&&VisualTime-OutcomeAt>=1.35f;}}
+ public const float BuildingDestructionSeconds=2.4f;
+ public bool OutcomeReady {get{return (Won||Lost)&&VisualTime-OutcomeAt>=BuildingDestructionSeconds+.25f;}}
  public void TickVisuals(float dt){
   VisualTime+=dt;Shots.ForEach(s=>s.Life-=dt);Shots.RemoveAll(s=>s.Life<=0);
   foreach(var o in Units)if(!o.Alive)o.Dead+=dt;

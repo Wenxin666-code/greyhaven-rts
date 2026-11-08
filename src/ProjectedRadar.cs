@@ -32,7 +32,7 @@ partial class CommandWindow {
   float width=MW/zoom/Axis*148/span,height=MH/zoom/Rise*100/span;
   using(var pen=new Pen(pale,1))g.DrawRectangle(pen,x+center.X-width/2,88+center.Y-height/2,width,height);
   g.Restore(state);
-  hits.Add(new HitBox{Id="radar-map",Box=new RectangleF(x,88,148,100),Run=()=>{var p=RadarWorldPoint(new PointF(mouse.X-x,mouse.Y-88));if(p.X>=0&&p.Y>=0&&p.X<world.MapWidth&&p.Y<world.MapHeight)CenterAt(p);}});
+  hits.Add(new HitBox{Id="radar-map",Box=new RectangleF(x,88,148,100),Run=()=>RadarAction(RadarWorldPoint(new PointF(mouse.X-x,mouse.Y-88)),false),Right=()=>RadarAction(RadarWorldPoint(new PointF(mouse.X-x,mouse.Y-88)),true)});
  }
 }
 }

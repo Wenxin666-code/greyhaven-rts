@@ -27,10 +27,14 @@ public partial class Campaign {
  }
  internal void CheckFactories(){
   EmptyEconomy();Spawn("power",0,500,500);var a=Spawn("factory",0,400,600);var b=Spawn("factory",0,600,600);
-  Train(Info("ifv"),0,b);AssertEconomy(a.Queue.Count==1&&b.Queue.Count==0,"selection is not primary factory");a.Work=3;SetPrimary(b);AssertEconomy(b.Work==3&&b.Queue.Count==1&&a.Queue.Count==0,"primary switch retains paid progress");AssertEconomy(Math.Abs(ProductionRate(b)-.5625f)<.001,"low power and factory bonus combine");Spawn("power",0,600,500);AssertEconomy(Math.Abs(ProductionRate(b)-1.25f)<.001,"second factory bonus");
-  UnitTick(b,1,true);AssertEconomy(Math.Abs(b.Work-4.25f)<.001,"shared production rate");Kill(b);AssertEconomy(a.Queue.Count==1&&Math.Abs(a.Work-4.25f)<.001,"destroyed primary hands over orders");
-  var enemy=Spawn("factory",1,1000,600);Train(Info("ifv"),1,null);UnitTick(enemy,1,true);int paid=enemy.WorkPaid;int money=Funds[1];var door=Middle(ExitApron(enemy.T,Footprint(enemy.T,enemy.P)));var eng=Spawn("engineer",0,door.X,door.Y);EngineerOrder(eng,enemy);UnitTick(eng,.1f,true);AssertEconomy(enemy.Side==0&&enemy.Queue.Count==0&&Funds[1]==money+paid,"captured factory never gifts old orders");
-  Console.WriteLine("Shared queue, primary switch, production speed, destruction/capture handover passed.");
+  Train(Info("ifv"),0,b);Train(Info("ifv"),0,b);AssertEconomy(a.Queue.Count==1&&b.Queue.Count==1,"orders spread across both factories");
+  UnitTick(a,1,true);UnitTick(b,1,true);float work=a.Work;int paid=a.WorkPaid;SetPrimary(b);
+  AssertEconomy(a.Work==work&&a.WorkPaid==paid&&a.Queue.Count==1&&b.Queue.Count==1,"priority switch never steals work");
+  AssertEconomy(Math.Abs(ProductionRate(b)-.45f)<.001,"low power slows each independent line");Spawn("power",0,600,500);
+  AssertEconomy(Math.Abs(ProductionRate(b)-1)<.001,"no double speed bonus");UnitTick(b,1,true);float kept=b.Work;int keptPaid=b.WorkPaid;
+  int cash=Funds[0];a.Hp=0;Kill(a);AssertEconomy(b.Queue.Count==2&&b.Work==kept&&b.WorkPaid==keptPaid&&Funds[0]==cash+paid,"combat loss preserves busy survivor and refunds restarted work");
+  var enemy=Spawn("factory",1,1000,600);Train(Info("ifv"),1,null);UnitTick(enemy,1,true);paid=enemy.WorkPaid;int money=Funds[1];var door=Middle(ExitApron(enemy.T,Footprint(enemy.T,enemy.P)));var eng=Spawn("engineer",0,door.X,door.Y);EngineerOrder(eng,enemy);UnitTick(eng,.1f,true);AssertEconomy(enemy.Side==0&&enemy.Queue.Count==0&&Funds[1]==money+paid,"captured factory never gifts old orders");
+  Console.WriteLine("Independent factory queues, priority isolation, power, combat destruction and capture handover passed.");
  }
  internal void CheckOreChoice(){
   EmptyEconomy();var near=new OrePatch(420,600,480);var far=new OrePatch(1100,600,480);Ore.Add(near);Ore.Add(far);var car=Spawn("miner",0,400,600);var other=Spawn("miner",0,900,900);other.Patch=near;car.Patch=far;

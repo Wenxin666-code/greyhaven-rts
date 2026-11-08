@@ -1,0 +1,38 @@
+{
+  "date": "2026-11-08",
+  "state": "local-unpublished",
+  "rate_normal": 2,
+  "rate_tutorial": 1,
+  "available_rates": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "exe_sha256": "2b818b163838c9b170ddec7c2501f272aae89dd2df1327f4859c87c2cf6b2d8b",
+  "exe_bytes": 206569984,
+  "passed": [
+    "MatchTempoChecks",
+    "OriginalControlChecks",
+    "ParallelProductionChecks",
+    "EconomyChecks",
+    "ConstructionChecks",
+    "QueueSurrenderChecks",
+    "CampaignChecks",
+    "PathingChecks",
+    "WindowChecks",
+    "ScrollChecks",
+    "ThirdMissionChecks"
+  ],
+  "benchmark": "Six-faction 2x + native 1920x1080 scrolling: 336 samples, median 12.2ms, p95 106.6ms, max 737.2ms, >33ms 44; living entities 233, game time 279.5. Simulation median/p95 2.4/16.2ms; rendering median/p95 8.6/96.8ms.",
+  "realtime_benchmark": "Six-faction measured-time loop: 7.46 game seconds / 3.84 active real seconds = 1.94x; 85 frames, interval median 30.8ms p95 189.9ms.",
+  "performance_note": "冷缓存及大规模场景仍有长帧，高负载时实际倍速会偏离目标。",
+  "comparison": {
+    "step_game_seconds": 0.05,
+    "max_game_seconds": 600,
+    "player_actions": "deploy_only",
+    "before_rate": 1,
+    "after_rate": 2
+  },
+  "sources": "参考资料.json"
+}

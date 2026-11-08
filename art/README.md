@@ -1,5 +1,17 @@
-# 灰港登陆 · 美术清单
-当前可操作版本为 [v02 港区演练场](review/index.html)。[v02 制作记录](source/v02/README.md) 说明方向图集、阵营和状态。以下保留 v01 静态蓝本的范围。固定高位斜俯视，车辆适当加宽轮廓。冷灰蓝港区、橄榄色载具和米白识别纹共用左上光源。除颜色外，还要用车轮、履带、炮管和屋顶结构区分对象。
+# 美术素材与制作记录
+
+## 当前素材
+
+- 单位：`source/units-v04` 与 `source/tank-prototype`；士兵步态使用 `source/unit-motion-v09`。
+- 建筑：`source/buildings-v09` 保存模型与待机，`source/buildings-v10` 保存分构件搭建、局部破损与受损燃爆；`source/blast-v11` 补充烟火与独立弹片。
+- [建筑模型与动画验收](review/buildings-v10/index.html) · [燃爆与弹片验收](review/blast-v11/index.html) · [早期单位素材归档](archive/unit-art-history-20261106/README.md)。
+- 主菜单与操作界面沿用 `source/console` 的港区主视觉、金属纹理及本项目绘制的文字和按钮。
+
+模型源文件、材质、正式资源包和制作脚本随源码保存。`source/**/frames` 是可重新导出的中间帧，仅本地保留；重新制作时先运行对应 `scripts/export-*`，再执行 `scripts/pack-*`。普通源码构建直接使用已保存的正式资源包，不需要中间帧或美术工具。
+
+## 历史蓝本
+
+[V02 港区演练场](review/index.html) 和 [V02 制作记录](source/v02/README.md) 为早期验收资料。以下保留 V01 静态蓝本的范围，不代表当前单位编制、尺寸或占格。
 
 | 原稿 | 内容 | 验收重点 |
 | --- | --- | --- |

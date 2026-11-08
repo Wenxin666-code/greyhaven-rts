@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -9,13 +9,13 @@ partial class CommandWindow {
  bool mapReview,mapDragging,mapLabels=true;PointF mapDragPoint,mapCenter;
  float mapZoom;RiverbendMap riverMap;TextureBrush[] riverTextures;
  Bitmap riverView;PointF riverViewCenter;float riverViewZoom,riverViewScale;bool riverViewLabels;
- bool riverBattleRender,riverViewBattle;
+ bool riverBattleRender,riverViewBattle;RiverbendMap riverViewMap;
  RectangleF mapViewport {get{return riverBattleRender?new RectangleF(0,MapTop,MW,MH):new RectangleF(0,55,W-212,H-100);}}
  const int RiverMargin=144;
- RectangleF riverDrawArea {get{var r=mapViewport;r.Inflate(RiverMargin,RiverMargin);return r;}}
+ RectangleF riverDrawArea {get{if(riverTileDrawArea.HasValue)return riverTileDrawArea.Value;var r=mapViewport;r.Inflate(RiverMargin,RiverMargin);return r;}}
  PointF RiverScreen(float x,float y,float height=0){return new PointF(mapViewport.Width*.5f+(x-y-mapCenter.X+mapCenter.Y)*Campaign.Tile*Axis*mapZoom,mapViewport.Top+mapViewport.Height*.5f+(x+y-mapCenter.X-mapCenter.Y)*Campaign.Tile*Rise*mapZoom-height*15*mapZoom);}
  PointF RiverWorld(PointF p){float a=(p.X-mapViewport.Width*.5f)/(Campaign.Tile*Axis*mapZoom),b=(p.Y-mapViewport.Top-mapViewport.Height*.5f)/(Campaign.Tile*Rise*mapZoom);return new PointF(mapCenter.X+(a+b)/2,mapCenter.Y+(b-a)/2);}
- void RiverFit(){mapCenter=new PointF(RiverbendMap.Columns*.5f,RiverbendMap.Rows*.5f);mapZoom=Math.Min((mapViewport.Width-92)/((RiverbendMap.Columns+RiverbendMap.Rows)*Campaign.Tile*Axis),(mapViewport.Height-60)/((RiverbendMap.Columns+RiverbendMap.Rows)*Campaign.Tile*Rise));}
+ void RiverFit(){mapCenter=new PointF(riverMap.WidthCells*.5f,riverMap.HeightCells*.5f);mapZoom=Math.Min((mapViewport.Width-92)/((riverMap.WidthCells+riverMap.HeightCells)*Campaign.Tile*Axis),(mapViewport.Height-60)/((riverMap.WidthCells+riverMap.HeightCells)*Campaign.Tile*Rise));}
  void RiverFocus(float x,float y,float k){mapCenter=new PointF(x,y);mapZoom=k;hudDirty=true;Invalidate();}
  void EnsureRiverArt(){
   if(riverMap==null)riverMap=new RiverbendMap();
@@ -32,6 +32,7 @@ partial class CommandWindow {
   }
  }
  void OpenMapReview(){
+  if(riverMap==null||riverMap.IsIsland!=islandMissionSelected){riverMap=new RiverbendMap(islandMissionSelected);riverViewZoom=-1;}
   EnsureRiverArt();mapReview=true;briefing=true;missionPicker=false;modelReview=false;rulesOpen=false;mapDragging=false;hits.Clear();RiverFit();riverViewZoom=-1;hudDirty=true;Invalidate();
  }
  void CloseMapReview(){mapReview=false;mapDragging=false;Capture=false;missionPicker=true;hits.Clear();hudDirty=true;Invalidate();}
@@ -41,7 +42,7 @@ partial class CommandWindow {
   float a=key==Keys.Left?-90:key==Keys.Right?90:0,b=key==Keys.Up?-90:key==Keys.Down?90:0;
   if(a!=0||b!=0)RiverPan(a,b);hudDirty=true;Invalidate();
  }
- void RiverPan(float dx,float dy){var p=RiverWorld(new PointF(mapViewport.Width/2+dx,mapViewport.Top+mapViewport.Height/2+dy));mapCenter=new PointF(Math.Max(0,Math.Min(RiverbendMap.Columns,p.X)),Math.Max(0,Math.Min(RiverbendMap.Rows,p.Y)));hudDirty=true;}
+ void RiverPan(float dx,float dy){var p=RiverWorld(new PointF(mapViewport.Width/2+dx,mapViewport.Top+mapViewport.Height/2+dy));mapCenter=new PointF(Math.Max(0,Math.Min(riverMap.WidthCells,p.X)),Math.Max(0,Math.Min(riverMap.HeightCells,p.Y)));hudDirty=true;}
  void RiverWheel(PointF p,int delta){if(!mapViewport.Contains(p))return;var a=RiverWorld(p);mapZoom=Math.Max(.12f,Math.Min(3.1f,mapZoom*(float)Math.Pow(1.18,delta/120f)));var b=RiverWorld(p);mapCenter=new PointF(mapCenter.X+a.X-b.X,mapCenter.Y+a.Y-b.Y);hudDirty=true;Invalidate();}
  PointF[] RiverQuad(float x,float y,float w,float h,float z){return new[]{RiverScreen(x,y,z),RiverScreen(x+w,y,z),RiverScreen(x+w,y+h,z),RiverScreen(x,y+h,z)};}
  static void RiverPoly(Graphics g,PointF[] p,Color c){using(var b=new SolidBrush(c))g.FillPolygon(b,p);}
@@ -75,7 +76,7 @@ partial class CommandWindow {
  }
  void DrawRiverTree(Graphics g,int x,int y){
   var c=riverMap.At(x,y);var p=RiverScreen(x+.5f,y+.5f,c.Height);float z=mapZoom,h=(20+c.Variation%13)*z,w=(9+c.Variation%5)*z;
-  if(p.X<riverDrawArea.Left-w||p.X>riverDrawArea.Right+w||p.Y<riverDrawArea.Top-5||p.Y>riverDrawArea.Bottom+h)return;
+  if(p.X+2*w<riverDrawArea.Left||p.X-w>riverDrawArea.Right||p.Y+10*z<riverDrawArea.Top||p.Y-h>riverDrawArea.Bottom)return;
   RiverPoly(g,new[]{new PointF(p.X-w*.6f,p.Y),new PointF(p.X+w*.4f,p.Y-2*z),new PointF(p.X+w*2,p.Y+8*z),new PointF(p.X+w*.8f,p.Y+10*z)},Color.FromArgb(60,15,25,22));
   Rect(g,p.X-z,p.Y-h*.46f,2*z,h*.46f,C("#665e42"));
   for(int i=0;i<3;i++){float top=p.Y-h+i*h*.20f,wide=w*(.68f+i*.17f);var points=new[]{new PointF(p.X,top),new PointF(p.X+wide*.46f,top+h*.25f),new PointF(p.X+wide,top+h*.42f),new PointF(p.X+wide*.35f,top+h*.47f),new PointF(p.X-wide,top+h*.36f),new PointF(p.X-wide*.4f,top+h*.18f)};RiverPoly(g,points,i==0?C("#697f54"):i==1?C("#506c49"):C("#3e5b43"));}
@@ -94,7 +95,7 @@ partial class CommandWindow {
   g.SmoothingMode=SmoothingMode.None;
   // Only inverse-projected visible cells are visited when zoomed in.
   var corners=new[]{RiverWorld(new PointF(riverDrawArea.Left,riverDrawArea.Top-80)),RiverWorld(new PointF(riverDrawArea.Right,riverDrawArea.Top-80)),RiverWorld(new PointF(riverDrawArea.Left,riverDrawArea.Bottom+120)),RiverWorld(new PointF(riverDrawArea.Right,riverDrawArea.Bottom+120))};
-  int x0=Math.Max(0,(int)Math.Floor(corners.Min(p=>p.X))-10),x1=Math.Min(RiverbendMap.Columns-1,(int)Math.Ceiling(corners.Max(p=>p.X))+10),y0=Math.Max(0,(int)Math.Floor(corners.Min(p=>p.Y))-10),y1=Math.Min(RiverbendMap.Rows-1,(int)Math.Ceiling(corners.Max(p=>p.Y))+10);
+  int x0=Math.Max(0,(int)Math.Floor(corners.Min(p=>p.X))-10),x1=Math.Min(riverMap.WidthCells-1,(int)Math.Ceiling(corners.Max(p=>p.X))+10),y0=Math.Max(0,(int)Math.Floor(corners.Min(p=>p.Y))-10),y1=Math.Min(riverMap.HeightCells-1,(int)Math.Ceiling(corners.Max(p=>p.Y))+10);
   for(int depth=x0+y0;depth<=x1+y1;depth++)for(int x=x0;x<=x1;x++){int y=depth-x;if(y>=y0&&y<=y1)DrawRiverCell(g,x,y);}
   g.SmoothingMode=SmoothingMode.AntiAlias;
   foreach(var bridge in riverMap.Bridges){
@@ -110,50 +111,54 @@ partial class CommandWindow {
   }
   if(mapLabels&&!riverBattleRender){
    foreach(var label in riverMap.Labels){var p=RiverScreen(label.Position.X,label.Position.Y);if(!riverDrawArea.Contains(p)||mapZoom>.6f&&label.Style==0)continue;
-    var color=label.Style==1?C("#7db6d2"):label.Style==2?C("#db9c87"):label.Style==6?C("#95bd76"):label.Style==4?C("#93bbc1"):gold;
+    var color=label.Style>=7?UnitColor(label.Style-6):label.Style==1?C("#7db6d2"):label.Style==2?C("#db9c87"):label.Style==6?C("#95bd76"):label.Style==4?C("#93bbc1"):gold;
     Rect(g,p.X-42,p.Y-10,84,23,Color.FromArgb(215,20,32,33));Txt(g,label.Name,p.X-35,p.Y-7,12,color,true);
    }
   }
   // Scale witnesses, explicitly staged in the preview, never combat entities.
   if(mapZoom>.65f&&!riverBattleRender){
-   var p=RiverScreen(92,76);DrawLive(g,Campaign.Info("engineer"),0,14,p,Campaign.Info("engineer").Size*mapZoom,1);
-   p=RiverScreen(94,77);DrawLive(g,Campaign.Info("squad"),0,14,p,Campaign.Info("squad").Size*mapZoom,1);
-   p=RiverScreen(97,77);DrawLive(g,Campaign.Info("tank"),0,14,p,Campaign.Info("tank").Size*mapZoom,1);
+   var p=RiverScreen(riverMap.IsIsland?92:92,riverMap.IsIsland?50:76);DrawLive(g,Campaign.Info("engineer"),0,14,p,Campaign.Info("engineer").Size*mapZoom,1);
+   p=RiverScreen(94,riverMap.IsIsland?51:77);DrawLive(g,Campaign.Info("squad"),0,14,p,Campaign.Info("squad").Size*mapZoom,1);
+   p=RiverScreen(97,riverMap.IsIsland?51:77);DrawLive(g,Campaign.Info("tank"),0,14,p,Campaign.Info("tank").Size*mapZoom,1);
   }
   g.Restore(saved);
  }
  void DrawMapReview(Graphics g){
-  DrawRiverCached(g);Metal(g,0,0,W,55);Emblem(g,28,25,11);Txt(g,"河湾镇",53,10,25,pale,true);Txt(g,"新关卡地形预览  /  220 × 150 格",174,19,14,gold,true);
+  DrawRiverCached(g);Metal(g,0,0,W,55);Emblem(g,28,25,11);Txt(g,riverMap.Title,53,10,25,pale,true);Txt(g,"关卡地形预览  /  "+riverMap.WidthCells+" × "+riverMap.HeightCells+" 格",174,19,14,gold,true);
   Button(g,W-194,9,177,36,"返回关卡选择",CloseMapReview);
   Metal(g,W-212,55,212,H-100);float x=W-197;
-  Txt(g,"战区总览",x,76,22,pale,true);Txt(g,"面积约为旧地图 2.6 倍",x,111,13,dim);
+  Txt(g,"战区总览",x,76,22,pale,true);Txt(g,riverMap.IsIsland?"六方交战 · 第二关面积 2.6 倍":"面积约为旧地图 2.6 倍",x,111,13,dim);
   Button(g,x,150,180,38,"全图   [Home]",()=>{RiverFit();hudDirty=true;});
-  Button(g,x,202,180,38,"老街与中央桥",()=>RiverFocus(96,75,1.55f));
-  Button(g,x,254,180,38,"东部高地与坡道",()=>RiverFocus(165,76,.80f));
-  Button(g,x,306,180,38,"南桥与河口湿地",()=>RiverFocus(111,123,1.15f));
+  Button(g,x,202,180,38,riverMap.IsIsland?"资源岛与唯一堤桥":"老街与中央桥",()=>{if(riverMap.IsIsland)RiverFocus(64,42,.55f);else RiverFocus(96,75,1.55f);});
+  Button(g,x,254,180,38,"东部高地与坡道",()=>{if(riverMap.IsIsland)RiverFocus(281,153,.80f);else RiverFocus(165,76,.80f);});
+  Button(g,x,306,180,38,riverMap.IsIsland?"中央河道与居民区":"南桥与河口湿地",()=>{if(riverMap.IsIsland)RiverFocus(211,117,.65f);else RiverFocus(111,123,1.15f);});
   Button(g,x,358,180,38,mapLabels?"地点标注：开 [L]":"地点标注：关 [L]",()=>{mapLabels=!mapLabels;hudDirty=true;});
   Txt(g,"地形图例",x,430,18,gold,true);
-  var names=new[]{"河流 / 湖泊：不可通行","三座桥梁：跨河通道","陡崖：阻挡 · 坡道通行","林带：需绕行","中立房屋：28 栋","金色矿区：10 处"};
+  var names=riverMap.IsIsland?new[]{"海域 / 河湖：不可通行","西北资源岛：唯一堤桥","高地 / 坡道 / 林带 / 湿地","中立房屋：40 栋","五个独立敌方阵营","岛内三片矿区 · 大陆矿田"}:new[]{"河流 / 湖泊：不可通行","三座桥梁：跨河通道","陡崖：阻挡 · 坡道通行","林带：需绕行","中立房屋：28 栋","金色矿区：10 处"};
   for(int i=0;i<names.Length;i++)Txt(g,names[i],x,467+i*27,13,dim);
   Txt(g,"房屋驻防规则",x,650,17,gold,true);Txt(g,"工兵占领后换色",x,680,13,dim);Txt(g,"驻防 4 / 6 / 8 名步兵",x,704,13,dim);Txt(g,"毁楼后从出口撤出",x,728,13,dim);
-  Metal(g,0,H-45,W,45);Txt(g,"滚轮缩放  ·  左键或中键拖动  ·  方向键平移  ·  Esc 返回",18,H-31,14,pale);
+  Metal(g,0,H-45,W,45);Txt(g,"滚轮缩放  ·  左键／右键／中键拖动  ·  方向键平移  ·  Esc 返回",18,H-31,14,pale);
   Txt(g,"选关预览 · 正式对局限制战术缩放",W-345,H-31,13,gold,true);
  }
  void DrawRiverCached(Graphics g){
   var anchor=RiverScreen(riverViewCenter.X,riverViewCenter.Y);float dx=anchor.X-mapViewport.Width*.5f,dy=anchor.Y-mapViewport.Top-mapViewport.Height*.5f;
   var size=new Size((int)Math.Ceiling(riverDrawArea.Width*scale),(int)Math.Ceiling(riverDrawArea.Height*scale));
-  if(riverView==null||riverView.Size!=size||riverViewScale!=scale||Math.Abs(dx)>=RiverMargin||Math.Abs(dy)>=RiverMargin||riverViewZoom!=mapZoom||riverViewLabels!=mapLabels||riverViewBattle!=riverBattleRender){
+  if(riverViewMap!=riverMap||riverView==null||riverView.Size!=size||riverViewScale!=scale||Math.Abs(dx)>=RiverMargin||Math.Abs(dy)>=RiverMargin||riverViewZoom!=mapZoom||riverViewLabels!=mapLabels||riverViewBattle!=riverBattleRender){
    if(riverView==null||riverView.Size!=size){if(riverView!=null)riverView.Dispose();riverView=new Bitmap(size.Width,size.Height,PixelFormat.Format32bppPArgb);}
    using(var target=Graphics.FromImage(riverView)){
     target.ScaleTransform(scale,scale);target.TranslateTransform(RiverMargin,RiverMargin-mapViewport.Top);target.InterpolationMode=InterpolationMode.Bilinear;
-    bool prior=drawingClient;drawingClient=false;try{DrawRiverMap(target);}finally{drawingClient=prior;}
+    bool prior=drawingClient;drawingClient=false;try{if(riverBattleRender)DrawRiverGroundTiles(target);else DrawRiverMap(target);}finally{drawingClient=prior;}
    }
-   riverViewScale=scale;riverViewCenter=mapCenter;riverViewZoom=mapZoom;riverViewLabels=mapLabels;riverViewBattle=riverBattleRender;dx=dy=0;
+   riverViewMap=riverMap;riverViewScale=scale;riverViewCenter=mapCenter;riverViewZoom=mapZoom;riverViewLabels=mapLabels;riverViewBattle=riverBattleRender;dx=dy=0;
   }
-  var saved=g.Save();g.IntersectClip(mapViewport);g.ResetTransform();g.DrawImageUnscaled(riverView,(int)Math.Round(ox+(riverDrawArea.X+dx)*scale),(int)Math.Round(oy+(riverDrawArea.Y+dy)*scale));g.Restore(saved);
+  var saved=g.Save();g.IntersectClip(mapViewport);g.ResetTransform();g.CompositingMode=CompositingMode.SourceCopy;g.DrawImageUnscaled(riverView,(int)Math.Round(ox+(riverDrawArea.X+dx)*scale),(int)Math.Round(oy+(riverDrawArea.Y+dy)*scale));g.Restore(saved);
+  if(riverBattleRender)WarmRiverGroundTiles();
  }
- void StartRiverMission(){
-  Restart();world=new Campaign(false,false,true);OpenMapReview();riverMap=world.River;mapReview=false;briefing=false;paused=false;selection.Clear();selection.Add(world.Units[0]);CenterAt(world.Home(0));zoom=DefaultZoom;edgeArmed=true;hits.Clear();hudDirty=true;
+ void StartRiverMission(){StartTerrainMission(false);}
+ void StartIslandMission(){StartTerrainMission(true);}
+ void StartTerrainMission(bool island){
+  Restart();world=new Campaign(false,false,true,island);riverMap=world.River;EnsureRiverArt();riverViewZoom=-1;ClearRiverGroundCache();
+  mapReview=false;briefing=false;paused=false;selection.Clear();selection.Add(world.Units[0]);CenterAt(world.Home(0));zoom=DefaultZoom;edgeArmed=true;hits.Clear();hudDirty=true;
  }
  void DrawRiverBattleGround(Graphics g){
   riverBattleRender=true;riverMap=world.River;mapCenter=new PointF(camera.X/Campaign.Tile,camera.Y/Campaign.Tile);mapZoom=zoom;

@@ -22,14 +22,16 @@ public class TypeInfo {
 }
 public enum ContactOrder { None, Directed, Automatic, ReturnFire }
 public class Piece {
+ public bool BaseTransition,PendingDeploy;public float DeployFacing;public PointF DeployOrigin;
  public bool Assembly,ProductionPaused,Repairing,Selling;public int WorkPaid,RepairPaid;public float Packing,RepairClock,RepairCost;public PointF? Relocation;
+ public float Experience,CheerAt=-100;public int Rank {get{return Experience>=1.99999f?2:Experience>=.99999f?1:0;}}
  public Piece SupportTarget;public bool Primary;public OrePatch OrderedOre;
  public Piece Entering;public float CaptureWork;public bool Capturing;
  public float FiredAt=-100,HitAt=-100,CompletedAt=-100,RepairAt=-100,MovedAt=-100,Travel;
  public PointF LastFirePoint,RepairPoint;
  public float TrafficBlocked,FollowingWait,DockBlockedFor,StalledFor,RouteRetryAt,ProgressAt,NoProgressFor;public PointF ProgressAnchor;
  public PointF? GuardHome;public Piece Escort;public PointF EscortOffset;public bool GuardTravelling,GuardReturning,ForceMoving;
- public readonly List<PointF> Waypoints=new List<PointF>();public int WaypointIndex;public bool Patrol;
+ public readonly List<PointF> Waypoints=new List<PointF>();public int WaypointIndex;public bool Patrol;public int PatrolStart;
  public bool DockReserved;public float DockTicket,DockRetryAfter;
  public int LastReceipt;public float ReceiptAt;public PointF WorkPoint,TravelSample;public float TrafficSampleTime;public bool Mining,StarterDelivered,Returning,Surveying;public float Cargo,Unload,Dispatch,MillPhase;public Piece Dock;public OrePatch Patch;
  public ContactOrder Contact;public bool ResumeMarch;public PointF LastContact;public float ScanIn;
@@ -48,6 +50,9 @@ public class Site {
 }
 public class Shot {public PointF A,B;public float Life,Born,Heading,ImpactLift;public int Side,Id,SourceId,TargetId;public bool Shell,HitFoot,Garrison;public string Weapon;}
 public partial class Campaign {
+ public const int MaxFactions=6;
+ public int FactionCount {get{return River==null?2:River.Starts.Length;}}
+ public bool IslandMission {get{return River!=null&&River.IsIsland;}}
  public static readonly TypeInfo[] Types={
   new TypeInfo("hq","指挥部","",0,1550,0,0,132,0,5,0),
   new TypeInfo("power","电站","hq",170,470,0,0,108,0,5,0),
@@ -70,15 +75,15 @@ public partial class Campaign {
  public readonly List<Piece> Units=new List<Piece>();public readonly List<Shot> Shots=new List<Shot>();
  public readonly Site[] Sites;
  public Site Harbor {get{return Sites.Length==0?null:Sites[0];}}
- public int[] Funds={1150,1150,1150};public bool[] Upgraded={false,false,false};public float Time; public bool Landing,Won,Lost;public string Radio="展开工程车，在西南建立登陆基地。";
+ public int[] Funds=Enumerable.Repeat(1150,MaxFactions).ToArray();public float Time; public bool Landing,Won,Lost;public string Radio="展开工程车，在西南建立登陆基地。";
  int seq;float nextEnemyDecision=1,nextWave=92;
  public readonly bool Tutorial,Assisted;
  public int Lesson,InfantryDelivered,VehiclesDelivered;public Piece LastOrder,LastReady;public float ReadyAt;
- public Campaign(bool tutorial=false,bool assisted=false,bool riverbend=false){
-  River=riverbend?new RiverbendMap():null;Sites=riverbend?new Site[0]:new[]{new Site("港务中心",1330,292,1265,227)};
-  discovered=new bool[3,MapFogCols,MapFogRows];
+ public Campaign(bool tutorial=false,bool assisted=false,bool riverbend=false,bool island=false){
+  River=riverbend||island?new RiverbendMap(island):null;Sites=River!=null?new Site[0]:new[]{new Site("港务中心",1330,292,1265,227)};
+  discovered=new bool[MaxFactions,MapFogCols,MapFogRows];
   Tutorial=tutorial;Assisted=assisted||tutorial;if(Assisted){Funds[0]=1700;nextWave=175;}
-  if(riverbend){SetupRiverbend();Reveal();return;}
+  if(River!=null){SetupRiverbend();Reveal();return;}
   Spawn("mcv",0,152,514);Spawn("squad",0,214,418);Spawn("squad",0,258,410);
 
   if(tutorial){Spawn("squad",1,1390,287);Reveal();return;}
@@ -92,19 +97,12 @@ public partial class Campaign {
  public int Power(int side){return Live(side).Sum(o=>o.T.Key=="hq"?4:o.T.Key=="power"?8:o.T.Key=="factory"?-5:o.T.Key=="barracks"?-2:o.T.Key=="radar"?-3:o.T.Key=="satellite"?-6:o.T.Key=="post"?-2:0);}
  public bool Visible(Piece o){return o.Side==0||Explored(0,o.P);}
  static float Sight(Piece p){return p.T.Foot?198:p.T.Building?163:p.T.Key=="arty"?133:166;}
- int CommittedUnits(int side){
-  return Units.Where(o=>o.Alive&&o.Side==side).Sum(o=>(o.T.Building?0:1)+o.Queue.Count+(o.T.Key=="refinery"&&!o.StarterDelivered?1:0));
- }
+ public const int ProductionQueueLimit=30;
  public string Require(TypeInfo t,int side){
   if(!Live(side).Any(p=>p.T.Key==t.Producer))return "需要"+(t.Producer==""?"工程车":Info(t.Producer).Name);
-  if((t.Key=="tank"||t.Key=="arty")&&!Upgraded[side])return "需要装甲升级";
   if(t.Key=="satellite"&&(!Live(side).Any(p=>p.T.Key=="radar")||!Live(side).Any(p=>p.T.Key=="factory")))return "需要雷达和车辆工厂";
   if((t.Key=="factory"||t.Key=="refinery")&&!Live(side).Any(p=>p.T.Key=="power"))return "先建电站";
-  if(t.Key=="refinery"&&CommittedUnits(side)>=55)return "部队满编";
-  if(!t.Building){
-   if(PrimaryFactory(side,t.Producer).Queue.Count>=4)return "队列已满";
-   if(CommittedUnits(side)>=55)return "部队满编";
-  }
+  if(!t.Building&&NextUnitFactory(side,t.Producer)==null)return "所有工厂队列已满（每厂 30 单）";
   return null;
  }
  static float Radius(TypeInfo t){return t.Size*.27f;}
@@ -112,23 +110,26 @@ public partial class Campaign {
   return o!=null&&o.Side==0&&DeployVehicle(o);
  }
  bool DeployVehicle(Piece o){
+  if(o==null||!o.Deployed||o.T.Key!="mcv")return false;
+  if(o.PendingDeploy)return true;
+  if(!CanDeploy(o)){if(o.Side==0)Radio="此处空间不足。将工程车移到一块空地后再展开。";return false;}
+  float delta=((24-o.Turn)%16)-8;
+  if(Math.Abs(delta)>.04f){var origin=o.P;float facing=o.Turn;Halt(o);o.DeployOrigin=origin;o.DeployFacing=facing;o.PendingDeploy=true;if(o.Side==0){Landing=true;Radio="工程车正在停车转正，随后展开基地。";}return true;}
+  return BeginBaseExpansion(o);
+ }
+ bool BeginBaseExpansion(Piece o){
   if(!o.Deployed||o.T.Key!="mcv")return false;
   if(!CanDeploy(o)){if(o.Side==0)Radio="此处空间不足。将工程车移到一块空地后再展开。";return false;}
-  float health=o.Hp/o.T.Hp;Halt(o);Changed();o.T=Info("hq");o.P=Middle(Footprint(o.T,o.P));o.Turn=0;o.Dir=0;o.Hp=Math.Max(1,o.T.Hp*health);o.Assembly=true;o.Ready=.001f;o.Path.Clear();o.Target=null;if(o.Side==0){Landing=true;Radio="基地正在展开。先建电站，再建矿石精炼厂。完工后，首辆矿车会从厂门出发找矿。";}return true;
+  float health=o.Hp/o.T.Hp;if(!o.PendingDeploy){o.DeployOrigin=o.P;o.DeployFacing=o.Turn;}o.BaseTransition=true;Halt(o);Changed();o.T=Info("hq");o.P=Middle(Footprint(o.T,o.P));o.Turn=0;o.Dir=0;o.Hp=Math.Max(1,o.T.Hp*health);o.Assembly=true;o.Ready=.001f;o.Path.Clear();o.Target=null;if(o.Side==0){Landing=true;Radio="基地正在展开。先建电站，再建矿石精炼厂。完工后，首辆矿车会从厂门出发找矿。";}return true;
  }
  public bool Build(TypeInfo t,PointF p){return PlaceConstruction(t,p,0);}
  bool BuildFor(TypeInfo t,PointF p,int side){
   if(!StartConstruction(t,side))return false;return PlaceConstruction(t,p,side);
  }
  public bool Train(TypeInfo t,int side,Piece preferred){
-  string reason=Require(t,side);var src=PrimaryFactory(side,t.Producer);
-  if(t.Building||reason!=null||src==null||CommittedUnits(side)>=55){if(side==0)Radio=reason??(src==null?"同类生产设施的四个位置均已排满。":"部队及待产订单已达 55 上限。");return false;}
+  string reason=Require(t,side);var src=NextUnitFactory(side,t.Producer,preferred);
+  if(t.Building||reason!=null||src==null){if(side==0)Radio=reason??"需要已建成的生产设施。";return false;}
   src.Queue.Enqueue(t);if(side==0){LastOrder=src;Radio=src.T.Name+" #"+src.Id+" 已接单："+t.Name+"，排第 "+src.Queue.Count+" 位。";}return true;
- }
- public void Upgrade(){Radio=UpgradeArmor(0)?"装甲升级完成，可以生产坦克和自行火炮。":"升级需要已建成的车辆工厂和 260 军费。";}
- bool UpgradeArmor(int side){
-  if(Upgraded[side]||Funds[side]<260||!Live(side).Any(o=>o.T.Key=="factory"))return false;
-  Funds[side]-=260;Upgraded[side]=true;return true;
  }
  public bool Move(Piece o,PointF p,bool attack){
   if(!o.Deployed||o.T.Building)return false;if(!ParkingAllowed(o.Side,p)||!Route(o,p))return false;ClearMission(o);o.Mining=false;o.Dock=null;o.DockReserved=false;o.DockTicket=0;o.DockRetryAfter=0;o.DockBlockedFor=0;o.Unload=0;o.FirePoint=null;o.Formation=null;o.Target=null;o.Contact=ContactOrder.None;o.ResumeMarch=false;o.Advancing=attack;o.Goal=p;return true;
@@ -167,8 +168,8 @@ public partial class Campaign {
   if(o.T.Key=="ifv"&&e.T.Foot)factor=1.55f;if(o.T.Key=="squad"&&e.T.Key=="tank")factor=.29f;
   if(River==null&&o.T.Foot&&o.P.X<735&&o.P.Y<324)factor*=1.12f;
   RecordShot(o,TargetPoint(o.P,e),e);
-  if(e.Side==0)ReportStrike(e);
-  e.HitAt=VisualTime;e.Hp-=o.T.Hit*factor;if(e.Hp<=0)Kill(e);else OnIncomingFire(e,o.Carrier!=null&&o.Carrier.T.Civilian?o.Carrier:o);
+  if(e.Side==0)ReportStrike(e);RememberAiAttack(e,o);
+  e.HitAt=VisualTime;e.Hp-=o.T.Hit*factor;if(e.Hp<=0){if(o.Side!=e.Side&&e.Side>=0&&!o.T.Building&&o.T.Price>0)o.Experience+=e.T.Price/(o.T.Price*3f);Kill(e);}else OnIncomingFire(e,o.Carrier!=null&&o.Carrier.T.Civilian?o.Carrier:o);
  }
  static float Bearing(PointF from,PointF to){return (float)(Math.Atan2(to.X-from.X,to.Y-from.Y)*8/Math.PI+16)%16;}
  static float TurnToward(Piece o,float heading,float dt){
@@ -194,7 +195,8 @@ public partial class Campaign {
   if(o.Side<0)return;
   if(o.Packing>0){TickPacking(o,dt);return;}
   if(TickEntry(o,dt))return;
-  if(o.Ready<1){o.Ready=Math.Min(1,o.Ready+dt/(o.Assembly?AssemblySeconds:o.T.Seconds));if(o.Ready>=1)o.CompletedAt=VisualTime;return;}
+  if(o.T.Key=="mcv"&&o.PendingDeploy){float delta=((24-o.Turn)%16)-8,step=Math.Max(-8*dt,Math.Min(8*dt,delta));o.Turn=(o.Turn+step+16)%16;o.Dir=(int)Math.Round(o.Turn)%16;if(Math.Abs(delta)<=8*dt+.001f){o.Turn=0;o.Dir=0;BeginBaseExpansion(o);}return;}
+  if(o.Ready<1){o.Ready=Math.Min(1,o.Ready+dt/(o.Assembly?AssemblyDuration(o):o.T.Seconds));if(o.Ready>=1){o.CompletedAt=VisualTime;o.BaseTransition=false;}return;}
   o.Cool-=dt;o.Replan-=dt;o.TrafficWait-=dt;o.Door=Math.Max(0,o.Door-dt);o.Rollout=Math.Max(0,o.Rollout-dt);
   if(o.T.Key=="refinery")RunRefinery(o,dt);
   if(o.Mining)RunMiner(o,dt);
@@ -219,6 +221,7 @@ public partial class Campaign {
  bool VisibleTo(int side,Piece e){return Explored(side,e.P);}
  public int Remaining(int side){return Units.Count(o=>o.Alive&&o.Side==side);}
  void EnemyOrders(int side=1){
+  if(River!=null){SmartTactics(side,true);return;}
   var known=Units.Where(o=>o.Side>=0&&o.Side!=side&&o.Alive&&o.Carrier==null&&Explored(side,o.P)).ToArray();
   var beach=River==null?new PointF(152,514):Enumerable.Range(0,3).Where(s=>s!=side&&Remaining(s)>0).Select(Home).OrderBy(p=>Dist(p,Home(side))).FirstOrDefault();
   foreach(var unit in Live(side).Where(o=>!o.T.Building&&o.T.Hit>0&&o.Entering==null)){
@@ -231,15 +234,15 @@ public partial class Campaign {
  }
  public void Tick(float dt){
   if(Won||Lost)return;TickVisuals(dt);Time+=dt;visionTimer-=dt;if(visionTimer<=0){visionTimer=.20f;Reveal();}
-  TickConstruction(dt);
-  bool[] power={Power(0)>=0,Power(1)>=0,Power(2)>=0};
+  TickConstruction(dt);BalanceProduction();
+  bool[] power=Enumerable.Range(0,MaxFactions).Select(s=>Power(s)>=0).ToArray();
   foreach(var o in Units.ToArray()){var before=o.P;UnitTick(o,dt,o.Side<0||power[o.Side]);if(o.Alive&&o.Carrier==null){float travel=Dist(before,o.P);o.Travel+=travel;if(travel>.001f)o.MovedAt=VisualTime;TrackRouteProgress(o);o.StalledFor=o.Path.Count>0&&travel<o.T.Speed*dt*.15f?o.StalledFor+dt:Math.Max(0,o.StalledFor-dt*2);}}
+  TickAiMarchRequests();CheckEnemySurrender(dt);
   Lost=Remaining(0)==0;Won=!Lost&&!Units.Any(o=>o.Alive&&o.Side>0);
   if(Won||Lost){OutcomeAt=VisualTime;return;}
-  if(!Tutorial&&Time>=nextEnemyDecision){
-   nextEnemyDecision=Time+2;for(int side=1;side<(River==null?2:3);side++){EnemyEconomy(side);if(River!=null)EnemyHousing(side);}
-  }
-  if(!Tutorial&&Time>=nextWave){for(int side=1;side<(River==null?2:3);side++)EnemyOrders(side);nextWave=Time+54*(Assisted?1.5f:1);}
+  if(!Tutorial&&River!=null)TickStrategicAis();
+  else if(!Tutorial&&Time>=nextEnemyDecision){nextEnemyDecision=Time+2;EnemyEconomy(1);}
+  if(!Tutorial&&River==null&&Time>=nextWave){EnemyOrders(1);nextWave=Time+54*(Assisted?1.5f:1);}
   if(Tutorial)AdvanceLesson();
  }
 }

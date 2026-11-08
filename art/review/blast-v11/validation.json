@@ -1,0 +1,72 @@
+{
+  "date": "2026-11-07",
+  "baseCommit": "814cb94",
+  "githubUploaded": false,
+  "imagegenMode": "built-in image_gen",
+  "generationRecord": "art/source/blast-v11/generation.json",
+  "cloudSourceFrames": 24,
+  "cloudRuntimeFrames": 96,
+  "debrisKinds": 4,
+  "debrisYaws": 8,
+  "debrisPoses": 32,
+  "deterministicProfilesChecked": 396,
+  "maximumDebrisLifeSeconds": 1.16,
+  "gameplayRandomUsed": false,
+  "gameplayObjectsAdded": false,
+  "retainedBuildingRuin": false,
+  "cratersDecorationOnly": true,
+  "nativeChecks": {
+    "blastPhysicsAndVisuals": true,
+    "buildingDamageAndClearance": true,
+    "arbitraryFactionColor": true,
+    "defaultZoomLegibility": true,
+    "nativeInterface": true
+  },
+  "cacheLimits": {
+    "colorFrames": 1280,
+    "colorFrameMiB": 20,
+    "cloudFrames": 32,
+    "cloudCropMiB": 4.5,
+    "profileCount": 128,
+    "sharedDisplayMiB": 64
+  },
+  "referenceVideo": "https://www.youtube.com/watch?v=E7X9pT4AMu8&t=461s",
+  "video": {
+    "file": "docs/弹片与爆炸实机-v11.mp4",
+    "bytes": 2061478,
+    "sha256": "1f4c050fe121235cde854d79500462b61f302b92fd64a7ab9f35c0169e887c18"
+  },
+  "executable": {
+    "file": "断线前沿.exe",
+    "bytes": 206504960,
+    "sha256": "3c617eeebc82ffc61de341a94d7600f7540728ec12b85a95074981e146feee7c"
+  },
+  "artifacts": [
+    {
+      "file": "art/source/blast-v11/blast-cloud-source-v11.png",
+      "bytes": 2250644,
+      "sha256": "2fb2a1278993358a709a78a7af1d71afd6ba60a31e0912dc0ad79af7e9f2c07f"
+    },
+    {
+      "file": "art/source/blast-v11/blast-cloud-v11.png",
+      "bytes": 5426852,
+      "sha256": "017c87fde7d2344fa4df0ad9ed7feacbd1977a64e26da174e529acc52a1c5a43"
+    },
+    {
+      "file": "art/source/blast-v11/debris-base-v11.png",
+      "bytes": 899122,
+      "sha256": "7c0877cad93667764c86a6ccd2d240ce6825fb95d57572ffb0ec1dc5818747af"
+    },
+    {
+      "file": "art/source/blast-v11/debris-paint-v11.png",
+      "bytes": 44077,
+      "sha256": "51db4f5bbb498b7bfe729c70658c22ab16f377c893254fd863878147f820c4c4"
+    }
+  ],
+  "threeExplosionEffectsOnlyMs": {
+    "warmMedian": 9.61,
+    "p95": 15.74,
+    "colorFrames": 871,
+    "scope": "Effect layers only. Not whole-game frame rate."
+  }
+}

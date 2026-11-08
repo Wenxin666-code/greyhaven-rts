@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -62,8 +62,8 @@ partial class CommandWindow {
    case "ifv":x=-.27f;y=2.27f;z=1.755f;width=7.5f;break;
    case "arty":y=3.16f;z=3.36f;width=9.2f;break;
    case "post":{
-    var r=BuildingRect(Campaign.Footprint(t,s.A),p,zoom);float view=FrameSize*2/(float)Math.Sqrt(2)/LotSpan;
-    return new PointF(r.X+r.Width*(.5f+(.045f-.48f)/(float)Math.Sqrt(2)/view),r.Y+r.Height*(GroundY/(float)FrameSize+((.045f+.48f)/(float)Math.Sqrt(2)*.5f-.75f*.8660254f)/view));
+    var r=BuildingRect(Campaign.Footprint(t,s.A),p,zoom);var muzzle=BuildingV08.Specs["post"].Muzzle;
+    return new PointF(r.X+r.Width*muzzle.X/FrameSize,r.Y+r.Height*muzzle.Y/FrameSize);
    }
   }
   // Use precisely the same view quantization as the body sprite.
@@ -101,16 +101,28 @@ partial class CommandWindow {
    using(var pen=new Pen(Color.FromArgb((int)alpha,231,210,153),Math.Max(.7f,zoom*(s.Weapon=="squad"?.45f:.8f))))g.DrawLine(pen,a,b);
   }
  }
+ PointF BuildingDamagePoint(Piece o,PointF p){
+  var box=BuildingRect(Campaign.Footprint(o.T,o.P),p,zoom);var ink=SpriteInk(o.T.Key,new Rectangle(0,0,FrameSize,FrameSize));return new PointF(box.X+(ink.Left+ink.Width*.55f)*box.Width/FrameSize,box.Y+(ink.Top+ink.Height*.35f)*box.Height/FrameSize);
+ }
+ void WeaponResidue(Graphics g,Shot shot,float age){
+  if(age<0||age>.40f)return;var p=Muzzle(shot);
+  if((shot.Weapon=="tank"||shot.Weapon=="arty")&&age>.035f)Effect(g,"smoke",p,15*zoom,(age-.035f)/.55f);
+  if(shot.Weapon=="squad"||shot.Weapon=="ifv"){
+   float t=age/.4f,a=shot.Heading*(float)Math.PI/8,x=p.X+(float)Math.Cos(a)*(2+9*t)*zoom,y=p.Y+(float)Math.Sin(a)*(2+9*t)*zoom*.5f-7*zoom*(float)Math.Sin(t*Math.PI)+6*zoom*t*t;
+   var st=g.Save();g.TranslateTransform(x,y);g.RotateTransform(t*330);Rect(g,-zoom,-zoom*.4f,2*zoom,.8f*zoom,Color.FromArgb((int)(225*(1-t)),194,164,94));g.Restore(st);
+  }
+ }
  void DrawActorEffects(Graphics g,Piece o,PointF p){
   float now=world.VisualTime;
   foreach(var s in world.Shots){
-   if(s.SourceId==o.Id&&world.Explored(0,s.A))MuzzleFlash(g,s,now-s.Born);
+   if(s.SourceId==o.Id&&world.Explored(0,s.A)){MuzzleFlash(g,s,now-s.Born);WeaponResidue(g,s,now-s.Born);}
    if(s.TargetId==o.Id)ShotImpact(g,s);
   }
+  if(o.T.Building&&BuildingV08.IsBuilding(o.T.Key)){StructuralActorEffects(g,o,p);return;}
   if(!o.Alive){
    if(o.T.Foot){Effect(g,"dust",p,14*zoom,o.Dead/.65f);return;}
    float size=(o.T.Building?(o.T.FoundationWidth+o.T.FoundationHeight)*16:37)*zoom;
-   var center=new PointF(p.X,p.Y-size*.23f);
+   var center=o.T.Building?BuildingDamagePoint(o,p):new PointF(p.X,p.Y-size*.23f);
    Effect(g,"blast",center,size,o.Dead/.8f);
    if(o.T.Building){Effect(g,"blast",new PointF(center.X+size*.23f,center.Y+size*.13f),size*.65f,(o.Dead-.14f)/.8f);Effect(g,"dust",p,size*1.15f,(o.Dead-.15f)/1.5f);}
    if(o.Dead>.25f&&o.Dead<4.8f)Effect(g,"smoke",center,size*.8f,((o.Dead-.25f)%1.6f)/1.6f);
@@ -120,13 +132,8 @@ partial class CommandWindow {
    }
    return;
   }
-  if(o.T.Building&&o.Ready<1){
-   var box=BuildingRect(Campaign.Footprint(o.T,o.P),p,zoom);float phase=(now*1.6f+o.Id*.17f)%1;
-   if(o.Ready>.1f&&o.Ready<.96f)Effect(g,"weld",new PointF(p.X+(phase-.5f)*box.Width*.36f,p.Y-box.Height*(.06f+o.Ready*.23f)),13*zoom,(now*3.1f)%1);
-   Effect(g,"dust",p,box.Width*.55f,(now*.63f+o.Id*.19f)%1);return;
-  }
   if(!o.T.Foot&&o.Hp<o.T.Hp*.45f){
-   float size=(o.T.Building?34:21)*zoom;var smoke=new PointF(p.X+size*.16f,p.Y-size*.55f);
+   float size=(o.T.Building?34:21)*zoom;var smoke=o.T.Building?BuildingDamagePoint(o,p):new PointF(p.X+size*.16f,p.Y-size*.55f);
    Effect(g,"smoke",smoke,size,(now*.65f+o.Id*.13f)%1);
    if(o.Hp<o.T.Hp*.25f)Effect(g,"fire",smoke,size*.58f,(now*1.7f+o.Id*.21f)%1);
   }

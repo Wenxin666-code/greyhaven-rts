@@ -1,0 +1,46 @@
+{
+  "version": "v0.19.0",
+  "release_date": "2026-11-08",
+  "previous_release": "v0.18.0",
+  "verified_at_utc": "2026-11-08T04:17:16Z",
+  "clean_source_build": true,
+  "commands": [
+    "scripts/build.ps1 -Test -RiverPreview -MapPreview (13 suites passed before optional historical-comparison fixture correction)",
+    "Recompiled and reran full WindowChecks, RiverPreview, MapPreview and PathingChecks after the fixture correction"
+  ],
+  "validation_correction": "Historical before/after image export is optional when local snapshots are absent; current building footprint assertions remain active.",
+  "verification_result": "passed",
+  "suites": [
+    "MatchTempoChecks",
+    "OriginalControlChecks",
+    "ThirdMissionChecks",
+    "ParallelProductionChecks",
+    "BlastEffectChecks",
+    "StructuralAnimationChecks",
+    "FacilityAnimationChecks",
+    "BuildingV08Checks",
+    "ScrollChecks",
+    "QueueSurrenderChecks",
+    "ConstructionChecks",
+    "EconomyChecks",
+    "CampaignChecks",
+    "WindowChecks",
+    "PathingChecks"
+  ],
+  "extra_checks": [
+    "RiverPreview",
+    "MapPreview",
+    "source index format and resource size checks",
+    "three mission briefing layouts and native UI verification from preceding local update"
+  ],
+  "artifact": {
+    "name": "Greyhaven-v0.19.0.exe",
+    "bytes": 206569984,
+    "file_version": "0.19.0.0",
+    "sha256": "5b31ae87e7a916413a1f83c12e31f004ca24622af5dc8944a764b890a2cbbb20"
+  },
+  "source_policy": "Model sources, materials and runtime packs included; intermediate frames, temporary snapshots, tools and build outputs excluded.",
+  "known_limitations": [
+    "Cold terrain caches and large battles can still produce long frames. Performance measurements describe the recorded scenes only."
+  ]
+}

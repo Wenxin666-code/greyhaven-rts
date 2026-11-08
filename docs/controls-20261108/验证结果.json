@@ -1,0 +1,99 @@
+{
+  "date": "2026-11-08",
+  "state": "local-unpublished",
+  "head_unchanged": "814cb94",
+  "exe": "断线前沿.exe",
+  "exe_bytes": 206563840,
+  "exe_sha256": "121348468c6688d51d299050e35908cc7c9e3e7ca8e4c6dd1dad49251e754f27",
+  "reference_keyboard_sha256": "03325002b57cc79bc4456b4e7f4eb8617d4d71d1776cf20cce3c7f4f27f5c8d9",
+  "checks": [
+    {
+      "suite": "OriginalControlChecks",
+      "passed": true,
+      "scope": "85 条默认键位及实际映射、鼠标拖屏、编组、路径点、标记、雷达、部署、截图、改键",
+      "local_log": ".cache/controls-native-checks.log"
+    },
+    {
+      "suite": "ParallelProductionChecks",
+      "passed": true,
+      "scope": "三阵营各 1／2／3 座设施的实际产出及独立队列、退款、暂停",
+      "local_log": ".cache/controls-regression.log"
+    },
+    {
+      "suite": "EconomyChecks",
+      "passed": true,
+      "scope": "矿石、工兵、载员、维修、卫星",
+      "local_log": ".cache/controls-regression.log"
+    },
+    {
+      "suite": "ConstructionChecks",
+      "passed": true,
+      "scope": "建筑生产付款、就绪放置、搬迁、维修、出售",
+      "local_log": ".cache/controls-regression.log"
+    },
+    {
+      "suite": "QueueSurrenderChecks",
+      "passed": true,
+      "scope": "30 单容量、生产总览与逐阵营投降",
+      "local_log": ".cache/controls-regression.log"
+    },
+    {
+      "suite": "CampaignChecks",
+      "passed": true,
+      "scope": "十步教学及两类正常付费自动通关，254 秒胜利，仍为 560 秒上限",
+      "local_log": ".cache/controls-campaign.log"
+    },
+    {
+      "suite": "PathingChecks",
+      "passed": true,
+      "scope": "20／60 Hz 混编通行及后排开火",
+      "local_log": ".cache/controls-regression-remaining.log"
+    },
+    {
+      "suite": "WindowChecks",
+      "passed": true,
+      "scope": "全屏、指针、预选、生产入口、教学、雷达、第二关运行",
+      "local_log": ".cache/controls-regression-final.log"
+    },
+    {
+      "suite": "ScrollChecks",
+      "passed": true,
+      "scope": "地面拼接、三档倍率、64 MiB 缓存、迷雾",
+      "local_log": ".cache/controls-regression-final.log"
+    },
+    {
+      "suite": "ThirdMissionChecks",
+      "passed": true,
+      "scope": "六方、岛屿唯一出口、真实开局、雷达、第二关 360 秒和第三关 420 秒推演",
+      "local_log": ".cache/controls-regression-final.log"
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "经典操作界面-收起指令栏.png",
+      "bytes": 2289709,
+      "sha256": "7ad1f976323b6a2c414f2eb6cc687678ffa32540edb108c6560916933ba4b0f9"
+    },
+    {
+      "file": "经典操作界面-本地.png",
+      "bytes": 2306440,
+      "sha256": "f81926b29834c68b93fb92de77456be4bfa0d4f5a5470194fdc5638a9fb54457"
+    },
+    {
+      "file": "键盘设置-本地.png",
+      "bytes": 337112,
+      "sha256": "7903007b03fc455d3bb8af43ab243e05a33f4f88a8f8dafe2d6684c7a5199ee5"
+    },
+    {
+      "file": "阵营信息-本地.png",
+      "bytes": 416107,
+      "sha256": "7c679e8ba0eadf8d5894204abcf2f66211798066096be6e8f5de5f59e37af890"
+    }
+  ],
+  "performance_note": "河湾镇批量测试曾为中位 58.1 ms；单独复测中位 9.5 ms、p95 10.7 ms。第三关本次中位 11.3 ms、p95 13.9 ms。它们是本机离屏窗口绘制样本，不是恒定帧率承诺。",
+  "notes": [
+    "测试配置和截图路径重定向至 .cache，不覆盖用户按键文件。",
+    "旧通关脚本改为八人以上集结、避免追逐全图远处侦察单位并使用工兵占领，胜利、资金和时间断言保留。",
+    "分批验证，只重跑失败或存在耗时疑问的项目。没有提交、推送或发布。"
+  ]
+}

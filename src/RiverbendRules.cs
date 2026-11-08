@@ -4,19 +4,19 @@ using System.Linq;
 namespace Greyhaven {
 public partial class Campaign {
  public readonly RiverbendMap River;
- public int MapWidth {get{return River==null?Width:RiverbendMap.Columns*Tile;}}
- public int MapHeight {get{return River==null?Height:RiverbendMap.Rows*Tile;}}
+ public int MapWidth {get{return River==null?Width:River.WidthCells*Tile;}}
+ public int MapHeight {get{return River==null?Height:River.HeightCells*Tile;}}
  static readonly RectangleF[] EmptyTerrain=new RectangleF[0];
  RectangleF[] MapRoads {get{return River==null?Roads:EmptyTerrain;}}
  RectangleF[] MapWalls {get{return River==null?YardWalls:EmptyTerrain;}}
- public PointF Home(int side){if(River==null)return side==0?new PointF(152,514):EnemyHome;var p=side==0?River.WestStart:side==1?River.EastStart:River.SouthStart;return new PointF((p.X+.5f)*Tile,(p.Y+.5f)*Tile);}
+ public PointF Home(int side){if(River==null)return side==0?new PointF(152,514):EnemyHome;var p=River.Starts[side];return new PointF((p.X+.5f)*Tile,(p.Y+.5f)*Tile);}
  void SetupRiverbend(){
   Ore.Clear();foreach(var p in River.Ore)Ore.Add(new OrePatch((p.X+.5f)*Tile,(p.Y+.5f)*Tile,480));
-  for(int side=0;side<3;side++){
+  for(int side=0;side<FactionCount;side++){
    var home=Home(side);Spawn("mcv",side,home.X,home.Y);Spawn("squad",side,home.X+48,home.Y-48);Spawn("squad",side,home.X+72,home.Y-48);Spawn("engineer",side,home.X,home.Y-48);
   }
   foreach(var h in River.Houses)Spawn(h.Kind,-1,(h.Lot.X+h.Lot.Width*.5f)*Tile,(h.Lot.Y+h.Lot.Height*.5f)*Tile);
-  Radio="三方互为敌对。展开基地、采矿扩军；工兵可占领中立房屋，步兵可进驻防守。";
+  Radio=IslandMission?"孤岛要塞：我方位于西北资源岛，堤桥是唯一陆路；五个敌方各自为战。":"三方互为敌对。展开基地、采矿扩军；工兵可占领中立房屋，步兵可进驻防守。";
  }
  public float GroundHeight(PointF p){if(River==null)return 0;var c=River.At((int)(p.X/Tile),(int)(p.Y/Tile));return c==null?0:c.Height;}
  bool GroundOpen(float x,float y){if(River==null)return true;var c=River.At((int)Math.Floor(x/Tile),(int)Math.Floor(y/Tile));return c!=null&&c.Ground!=RiverbendMap.Surface.Water&&!c.Tree;}
@@ -91,6 +91,7 @@ public partial class Campaign {
   if(enemy==null)return;Fire(unit,enemy);var shot=Shots.Last();shot.Garrison=true;shot.SourceId=house.Id;shot.A=TargetPoint(enemy.P,house);shot.A=new PointF(shot.A.X+(house.P.X-shot.A.X)*.12f,shot.A.Y+(house.P.Y-shot.A.Y)*.12f);
  }
  void EnemyHousing(int side){
+  if(River!=null){SmartHousing(side);return;}
   foreach(var engineer in Live(side).Where(u=>u.T.Key=="engineer"&&u.Entering==null).ToArray()){
    var house=Units.Where(h=>h.Alive&&h.T.Civilian&&h.Side<0).OrderBy(h=>Dist(h.P,engineer.P)).FirstOrDefault();if(house!=null)EnterHouse(engineer,house);
   }

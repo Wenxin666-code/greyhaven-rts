@@ -1,0 +1,26 @@
+{
+  "date": "2026-11-07",
+  "mode": "built-in image_gen",
+  "intent": "generate",
+  "transparent_background": true,
+  "source": "C:\\Users\\23930\\.codex\\generated_images\\01a190c0-faa5-7461-8355-efe1e72fd03d\\exec-7c54f736-459b-4400-97bb-22e9022a769b.png",
+  "prompt": "Use case: stylized-concept. Asset type: production-ready 2D RTS explosion VFX animation sprite sheet with genuine transparent alpha. Create ONE exactly aligned sprite sheet, 1536 x 1024 pixels, 6 columns by 4 rows, 24 equal square 256 x 256 cells, read left to right then top to bottom. Each cell is one successive frame of the SAME conventional industrial-building explosion over approximately 1.2 seconds. Art direction: detailed pre-rendered volumetric combustion, appropriate for an isometric military RTS in the visual tradition of Command and Conquer Red Alert 2, strong readable fire/smoke forms at small in-game scale, restrained semi-realistic game rendering. The fire has turbulent billowing pockets, white-hot inner ignition changing through pale yellow, golden orange, burnt orange, then dense textured charcoal and gray smoke. Clearly detailed rolling smoke lobes, torn wisps, fine soot texture, lighting from within the flame, deep contrasting creases; NOT a blurry orange blob, NOT flat uniform circles, NOT neon soft bloom. Fixed camera at shallow isometric angle. The explosion origin must stay exactly at local cell coordinate (128, 204) in EVERY cell, with the cloud developing upward from that origin. Keep the entire effect INSIDE each cell with at least 16 pixels of transparent safety margin, including the smoke. Preserve cell registration, consistent scale and continuity: frames 1-3 compact sharp ignition/flash; frames 4-9 rapid irregular multi-lobe fireball; frames 10-15 fire retracts and black smoke takes over; frames 16-21 expanding dissipating smoke with only a few tiny embers; frames 22-24 faint residual smoke fading nearly completely to transparency. Maximum effect extent around 206 px wide and 212 px high, empty space around compact early frames is intentional. Leave background genuinely transparent, not black, not gray, not a painted checkerboard. NO ground, buildings, units, wreckage, circles, shockwave rings, detached metal debris, labels, text, numbers, grid lines, borders, watermark, arrows, or presentation card. This is the actual image atlas for a game renderer, not a concept board.",
+  "sourceGrid": {
+    "columns": 6,
+    "rows": 4,
+    "cell": 256,
+    "frames": 24,
+    "inspectedAnchor": [
+      128,
+      238
+    ]
+  },
+  "runtimeGrid": {
+    "columns": 8,
+    "rows": 12,
+    "cell": 192,
+    "frames": 96
+  },
+  "referenceVideo": "https://www.youtube.com/watch?v=E7X9pT4AMu8&t=461s",
+  "notes": "Inspected reference frames 7:41–7:42 in browser. Generated bitmap is original project artwork, not ripped game art. Packing scales/crops and premultiplied temporal interpolation only; alpha preserved. Debris models and physics are independent editable code."
+}

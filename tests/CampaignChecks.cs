@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Drawing;
 using Greyhaven;
@@ -11,19 +11,25 @@ class CampaignChecks {
   var w=new Campaign();Begin(w);
   Build(w,"power",260,550);Build(w,"refinery",66,450);Build(w,"barracks",120,610);Build(w,"factory",342,551);
   Check(!w.Build(Campaign.Info("power"),new PointF(260,550)),"overlap blocked");
-  for(int i=0;i<450&&w.Funds[0]<260;i++)w.Tick(.1f);
-  w.Upgrade();Check(w.Upgraded[0],"upgrade after ore delivery");
+  // No separate armor fee or cash-saving pause before factory orders.
+  Check(w.Require(Campaign.Info("tank"),0)==null,"factory directly unlocks armor");
   for(int i=0;i<450&&w.Funds[0]<195;i++)w.Tick(.1f);
   Check(w.Train(Campaign.Info("miner"),0,null),"add a second miner");
-  int order=0;string[] list=armor?new[]{"tank","engineer","ifv","squad","tank","at"}:new[]{"ifv","squad","at","arty","engineer","squad"};
+  bool assault=false;int order=0;string[] list=armor?new[]{"tank","engineer","ifv","squad","tank","at"}:new[]{"ifv","squad","at","arty","engineer","squad"};
   while(!w.Won&&!w.Lost&&w.Time<560){
    string k=list[order%list.Length];if(w.Train(Campaign.Info(k),0,null))order++;
-   // With progressive funding, the infantry/artillery plan assembles its first battery before assault.
-   if(w.Time>(armor?107:165)){
+   // Assemble a real first wave; an obsolete opening script sent each fresh unit
+   // alone, then chased permanently explored enemy scouts across the whole map.
+   if(!assault&&w.Live(0).Count(o=>!o.T.Building&&o.T.Hit>0)>=8)assault=true;
+   if(assault){
     int i=0;foreach(var o in w.Live(0).Where(o=>!o.T.Building&&o.T.Key!="miner").ToArray()){
-     var enemy=w.Units.Where(e=>e.Side==1&&e.Alive&&e.Carrier==null&&w.Visible(e)).OrderBy(e=>Campaign.Dist(o.P,e.P)).FirstOrDefault();
-     if(o.T.Hit>0&&enemy!=null){if(o.Target==null)w.Attack(o,enemy);}
-     else if(o.Path.Count==0){
+     var enemy=w.Units.Where(e=>e.Side==1&&e.Alive&&e.Carrier==null&&w.Visible(e)&&Campaign.Dist(o.P,e.P)<Math.Max(260,o.T.Range*1.5f)).OrderBy(e=>Campaign.Dist(o.P,e.P)).FirstOrDefault();
+     if(o.T.Key=="engineer"){
+      var building=w.Live(1).Where(e=>e.T.Building&&w.Visible(e)&&w.CanEngineer(o,e)).OrderBy(e=>Campaign.Dist(o.P,e.P)).FirstOrDefault();
+      if(building!=null&&o.Entering==null)w.EngineerOrder(o,building);continue;
+     }
+     if(o.T.Hit>0&&enemy!=null){if(o.Target==null||Campaign.Dist(o.P,o.Target.P)>Campaign.Dist(o.P,enemy.P)*1.5f)w.Attack(o,enemy);}
+     else if(o.Path.Count==0||o.Target!=null&&Campaign.Dist(o.P,o.Target.P)>400){
       // Sweep the expanded base approach, then its southern ore route for survivors.
       var p=w.Time<260?new PointF(Campaign.EnemyHome.X-170+i%4*15,Campaign.EnemyHome.Y+100+i/4%4*16)
        :new PointF(Campaign.EnemyHome.X-90+i%4*20,Campaign.EnemyHome.Y+350+i/4%4*16);
@@ -210,7 +216,7 @@ class CampaignChecks {
   Check(w.OreReceipts[0]>=Campaign.LoadValue,"blocked destination after dispatch: release and reroute");
  }
  static void EnemySupplyChain(){
-  var w=new Campaign();Check(w.Live(1).Single().T.Key=="mcv"&&!w.Upgraded[1],"enemy starts with only a construction vehicle");
+  var w=new Campaign();Check(w.Live(1).Single().T.Key=="mcv","enemy starts with only a construction vehicle");
   // Shut off mining to prove the first combat order depends on physical delivery.
   for(int i=0;i<700&&!w.Live(1).Any(o=>o.T.Key=="miner");i++)w.Tick(.1f);
   var truck=w.Live(1).Single(o=>o.T.Key=="miner");w.Halt(truck);int cash=w.Funds[1];
@@ -218,7 +224,7 @@ class CampaignChecks {
   Wait(w,90);Check(w.Funds[1]==cash&&w.OreReceipts[1]==0&&!w.Live(1).Any(o=>o.T.Hit>0||o.Queue.Count>0),"without ore no troops or orders");
   w.MineOrder(truck,null,null);bool infantry=false,armor=false;
   for(int i=0;i<3900;i++){w.Tick(.1f);infantry|=w.Live(1).Any(o=>o.T.Foot);armor|=w.Live(1).Any(o=>o.T.Key=="tank");if(infantry&&armor)break;}
-  Check(w.OreReceipts[1]>0&&infantry&&armor&&w.Upgraded[1],"supply chain: "+w.Funds[1]+" receipts "+w.OreReceipts[1]+" T "+w.Time+" cargo "+truck.Cargo+" path "+truck.Path.Count+" "+String.Join(" ",w.Live(1).Select(o=>o.T.Key+"@"+o.P)));
+  Check(w.OreReceipts[1]>0&&infantry&&armor,"supply chain: "+w.Funds[1]+" receipts "+w.OreReceipts[1]+" T "+w.Time+" cargo "+truck.Cargo+" path "+truck.Path.Count+" "+String.Join(" ",w.Live(1).Select(o=>o.T.Key+"@"+o.P)));
   Console.WriteLine("Enemy bootstrap: interrupted income stopped recruitment; mining resumed and funded infantry and armor.");
  }
  static void EliminationChecks(){

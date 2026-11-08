@@ -7,7 +7,7 @@ using System.Windows.Forms;
 namespace Greyhaven {
 partial class CommandWindow {
  bool rulesOpen,unitRoster;
- bool missionPicker,frontEnterHeld,riverMissionSelected;
+ bool missionPicker,frontEnterHeld,riverMissionSelected,islandMissionSelected;
  void Portrait(Graphics g,TypeInfo t,RectangleF box){
   DrawCardArt(g,t,box);
  }
@@ -45,7 +45,7 @@ partial class CommandWindow {
    hudDirty=true;Invalidate();return;
   }
   if(key==Keys.Escape&&missionPicker){missionPicker=false;hits.Clear();}
-  else if(key==Keys.Enter){if(missionPicker){if(riverMissionSelected)StartRiverMission();else LaunchMission();}else OpenMissions();}
+  else if(key==Keys.Enter){if(missionPicker){LaunchSelectedMission();}else OpenMissions();}
   hudDirty=true;Invalidate();
  }
  void DrawFront(Graphics g){
@@ -69,49 +69,31 @@ partial class CommandWindow {
   Button(g,64,682,190,40,"退出游戏",Close);
   Button(g,270,682,190,40,"模型预览",OpenModelReview);
  }
+ void LaunchSelectedMission(){if(islandMissionSelected)StartIslandMission();else if(riverMissionSelected)StartRiverMission();else LaunchMission();}
  void DrawPicker(Graphics g){
-  Txt(g,"行动选择",58,90,46,pale,true);Txt(g,"MISSION DIRECTORY   /   01 — 02",61,155,14,gold,true);
-  Button(g,64,224,373,75,"01    野外训练",()=>{riverMissionSelected=false;hudDirty=true;},!riverMissionSelected);
-  Button(g,64,320,373,75,"02    河湾镇",()=>{riverMissionSelected=true;hudDirty=true;},riverMissionSelected);
-  Txt(g,"三方交战 / 河流 / 高地 / 居民区",84,402,15,dim);
-  Button(g,84,433,330,46,"查看新地图",OpenMapReview);
+  var mission=islandMissionSelected?MissionBriefing.Island:riverMissionSelected?MissionBriefing.Riverbend:MissionBriefing.Training;
+  Txt(g,"行动选择",58,90,46,pale,true);Txt(g,"MISSION DIRECTORY   /   01 — 03",61,155,14,gold,true);
+  Button(g,64,224,373,75,"01    野外训练",()=>{riverMissionSelected=false;islandMissionSelected=false;hudDirty=true;},!riverMissionSelected);
+  Button(g,64,320,373,75,"02    河湾镇",()=>{riverMissionSelected=true;islandMissionSelected=false;hudDirty=true;},riverMissionSelected&&!islandMissionSelected);
+  Button(g,64,416,373,75,"03    孤岛要塞",()=>{riverMissionSelected=true;islandMissionSelected=true;hudDirty=true;},islandMissionSelected);
+  Txt(g,mission.Location,84,507,15,dim);
+  Button(g,84,541,330,46,"查看地图",OpenMapReview);
 
   Button(g,64,674,180,45,"‹  返回主界面",()=>{missionPicker=false;hits.Clear();hudDirty=true;});
   Metal(g,492,91,908,628);Rect(g,492,91,6,83,gold);
-  Txt(g,riverMissionSelected?"OPERATION 02   /   RIVERBEND":"FIELD SCHOOL  01   /   TRAINING",527,116,14,gold,true);
-  Txt(g,riverMissionSelected?"河湾镇 · 三方交战":"野外训练",524,144,38,pale,true);
-  var map=new RectangleF(528,219,496,290);if(riverMissionSelected)DrawRiverBrief(g,map);else DrawTrainingBrief(g,map);
+  Txt(g,mission.Code,527,116,14,gold,true);
+  Txt(g,mission.Title,524,144,38,pale,true);
+  var map=new RectangleF(528,219,414,245);if(riverMissionSelected)DrawRiverBrief(g,map);else DrawTrainingBrief(g,map);
   using(var veil=new SolidBrush(Color.FromArgb(75,ink)))g.FillRectangle(veil,map);
-  Txt(g,riverMissionSelected?"220 × 150 格   /   GH–02":"教学港区   /   GH–01",540,478,13,pale,true);
-  Txt(g,"行动简报",1051,224,21,pale,true);
-  var notes=riverMissionSelected?new[]{"我方：西南 · 蓝色","敌方一：东北 · 红色","敌方二：东南 · 绿色","三方独立采矿、生产。","工兵占房，步兵驻防。","消灭两方全部单位与建筑。"}:new[]{"教官引导完成 10 个目标。","学习自建矿厂、生产排队、","步战协同并消灭敌方守军。","可以随时定位当前步骤。"};
-  for(int i=0;i<notes.Length;i++)Txt(g,notes[i],1052,274+i*31,17,dim);
-  Txt(g,"初次指挥建议先完成第一教学关",528,543,19,teal,true);
-  Txt(g,"河湾镇：三方独立建设；工兵占房、步兵驻防。",528,595,16,dim);
-  Button(g,1078,620,278,62,riverMissionSelected?"进入河湾镇":"进入训练",riverMissionSelected?(Action)StartRiverMission:LaunchMission,true);Txt(g,"›",1320,625,30,ink,true);
- }
- void DrawInspector(Graphics g){
-  var unit=selection.FirstOrDefault();
-  if(unit==null)return;
-  float x=15,y=H-103;var box=new RectangleF(x,y,508,90);
-  Plate(g,box,C("#19282e"),C("#849195"));hits.Add(new HitBox{Box=box,Run=()=>{}});
-  Portrait(g,unit.T,new RectangleF(x+6,y+7,96,72));
-  Txt(g,selection.Count==1?(world.RepairVehicle(unit)?"工兵维修车":unit.T.Name):"编队 × "+selection.Count,x+114,y+9,20,pale,true);
-  if(unit.T.Key=="miner"){
-   var status=world.MiningStatus(unit).Split('·');Txt(g,status[0].Trim(),x+114,y+35,12,gold,true);
-   if(status.Length>1)Txt(g,status[1].Trim(),x+114,y+54,11,dim);
-  }else Txt(g,"HP   "+(int)Math.Ceiling(Math.Max(0,unit.Hp))+" / "+unit.T.Hp,x+114,y+40,13,dim,true);
-  float barY=y+(unit.T.Key=="miner"?76:66);
-  Rect(g,x+114,barY,147,5,ink);Rect(g,x+114,barY,147*Math.Max(0,Math.Min(1,unit.Hp/unit.T.Hp)),5,teal);
-  float bx=x+284;if(unit.T.Civilian)Button(g,bx,y+7,207,34,"撤出驻军 "+world.HouseCount(unit)+" / "+world.HouseCapacity(unit)+"  [D]",()=>world.EvacuateHouse(unit));
-  else if(unit.T.Key=="hq")Button(g,bx,y+7,207,34,"收起基地   [D]",()=>world.Relocate(unit,unit.P));
-  else if(unit.T.Key=="mcv")Button(g,bx,y+7,207,34,"展开指挥部   [D]",()=>world.Deploy(unit),true);
-  else if(unit.T.Key=="ifv")Button(g,bx,y+7,207,34,"装载 / 卸载   [D]",()=>world.Load(unit));
-  else if(unit.T.Key=="miner")Button(g,bx,y+7,207,34,"恢复自动采矿",()=>world.MineOrder(unit,null,null));
-  else if(world.ProductionBuilding(unit))Button(g,bx,y+7,207,34,world.PrimaryFactory(unit.Side,unit.T.Key)==unit?"主要生产建筑":"设为主要生产建筑",()=>world.SetPrimary(unit));
-  else Button(g,bx,y+7,207,34,"攻击移动",selection.Any(o=>o.Deployed&&!o.T.Building&&world.Armed(o))?(Action)(()=>{place=null;attack=true;}):null,attack);
-  Button(g,bx,y+47,100,33,"停止 [S]",unit.T.Building?(Action)null:()=>{foreach(var o in selection)world.Halt(o);attack=false;markedPoint=null;markedEnemy=null;});
-  Button(g,bx+107,y+47,100,33,"警戒 [G]",unit.Deployed?(System.Action)GuardSelection:null);
+  Txt(g,mission.Location,540,438,13,pale,true);
+  Txt(g,"行动简报",970,224,21,pale,true);
+  BriefingParagraph(g,mission.Story,new RectangleF(970,264,386,200),17,pale);
+  Line(g,528,489,1356,489,C("#506165"));
+  Txt(g,"任务目标",528,510,15,gold,true);
+  BriefingParagraph(g,mission.Orders,new RectangleF(528,540,828,31),18,pale);
+  Txt(g,"胜利条件",528,581,13,dim,true);
+  BriefingParagraph(g,mission.Victory,new RectangleF(611,578,745,29),16,pale);
+  Button(g,1078,620,278,62,islandMissionSelected?"进入孤岛要塞":riverMissionSelected?"进入河湾镇":"进入训练",LaunchSelectedMission,true);Txt(g,"›",1320,625,30,ink,true);
  }
 }
 }

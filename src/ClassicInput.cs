@@ -45,13 +45,13 @@ partial class CommandWindow {
   if(e.KeyCode==Keys.K){StructureTool(StructureMode.Repair);return true;}
   if(e.KeyCode==Keys.L){StructureTool(StructureMode.Sell);return true;}
   if(e.KeyCode==Keys.G){GuardSelection();return true;}
-  if(e.KeyCode==Keys.F){followUnit=selection.FirstOrDefault(u=>u.Alive);if(followUnit!=null)CenterAt(followUnit.P);return true;}
+  if(e.KeyCode==Keys.F){var chosen=selection.FirstOrDefault(u=>u.Alive);followUnit=followUnit==chosen?null:chosen;if(followUnit!=null)CenterAt(followUnit.P);return true;}
   if(e.KeyCode==Keys.X){world.Scatter(selection.Where(u=>u.Deployed&&!u.T.Building).ToArray());return true;}
-  if(e.KeyCode==Keys.Z){if(!zHeld){zHeld=true;planned.Clear();plannedLoops.Clear();}world.Radio="按住 Z 依次点击路径点，松开执行；点回首个路径点形成巡逻。";return true;}
-  if(e.KeyCode==Keys.P){selection=world.Live(0).Where(u=>!u.T.Building).ToList();return true;}
+  if(e.KeyCode==Keys.Z){if(!zHeld){if(!PlanningActive){planned.Clear();plannedLoops.Clear();patrolStarts.Clear();}zHeld=true;}world.Radio="按住 Z 依次点击路径点，松开执行；点回首个路径点形成巡逻。";return true;}
+  if(e.KeyCode==Keys.P){selection=world.Live(0).Where(u=>!u.T.Building&&u.T.Hit>0).ToList();return true;}
   if(e.KeyCode==Keys.M||e.KeyCode==Keys.N){
    var units=world.Live(0).Where(u=>!u.T.Building).OrderBy(u=>u.Id).ToList();if(units.Count==0)return true;
-   int current=units.IndexOf(selection.FirstOrDefault()),next=(current+(e.KeyCode==Keys.M?1:-1)+units.Count)%units.Count;
+   int current=units.IndexOf(selection.FirstOrDefault()),next=(current+(e.KeyCode==Keys.N?1:-1)+units.Count)%units.Count;
    selection.Clear();selection.Add(units[next]);return true;
   }
   return false;
@@ -60,16 +60,19 @@ partial class CommandWindow {
   var eligible=selection.Where(u=>world.CanMoveTo(u,p)).ToArray();if(eligible.Length==0){RejectDestination();return;}
   foreach(var u in eligible){
    List<PointF> points;if(!planned.TryGetValue(u,out points)){world.Halt(u);planned[u]=points=new List<PointF>();}
-   if(points.Count>1&&Campaign.Dist(points[0],p)<24){plannedLoops.Add(u);continue;}
+   int loop=points.FindIndex(q=>Campaign.Dist(q,p)<12);if(points.Count>1&&loop>=0&&loop<points.Count-1){plannedLoops.Add(u);patrolStarts[u]=loop;continue;}
    points.Add(p);
   }
   Mark(p,null,false);
  }
  void CommitPlans(){
-  zHeld=false;if(planned.Count==0){world.Radio="没有可执行的路径点，保留原命令。";plannedLoops.Clear();return;}int failed=0;foreach(var pair in planned)if(!world.SetWaypoints(pair.Key,pair.Value.ToArray(),plannedLoops.Contains(pair.Key)))failed++;
-  world.Radio=failed>0?failed+" 个单位的首个路径点不可达。":"部队按规划路线出发。";planned.Clear();plannedLoops.Clear();
+  zHeld=false;planningPinned=false;if(planned.Count==0){world.Radio="没有可执行的路径点，保留原命令。";plannedLoops.Clear();return;}int failed=0;foreach(var pair in planned)if(!world.SetWaypoints(pair.Key,pair.Value.ToArray(),plannedLoops.Contains(pair.Key),patrolStarts.ContainsKey(pair.Key)?patrolStarts[pair.Key]:0))failed++;
+  world.Radio=failed>0?failed+" 个单位的首个路径点不可达。":"部队按规划路线出发。";planned.Clear();plannedLoops.Clear();patrolStarts.Clear();waypointOwner=null;waypointSelected=-1;
  }
- TypeInfo[] ProductionCards(){return Campaign.Types.Where(t=>army?!t.Building:t.Building&&t.Key!="hq").Where(t=>productionFilter==1?t.Key=="post":productionFilter==2?t.Foot:productionFilter==3?!t.Foot:productionFilter==4?t.Key!="post":true).ToArray();}
+ TypeInfo[] ProductionCards(){
+  foreach(var type in Campaign.Types){string reason=world.Require(type,0);if(reason==null||reason.Contains("队列已满")||world.Construction(type)!=null)seenCameos.Add(type.Key);}
+  return Campaign.Types.Where(t=>seenCameos.Contains(t.Key)&&(army?!t.Building:t.Building&&t.Key!="hq")).Where(t=>productionFilter==1?t.Key=="post":productionFilter==2?t.Foot:productionFilter==3?!t.Foot:productionFilter==4?t.Key!="post":true).ToArray();
+ }
  void DrawPlannedPaths(Graphics g){
   foreach(var pair in planned){var points=new[]{pair.Key.P}.Concat(pair.Value).Select(ScreenOf).ToArray();if(points.Length<2)continue;
    using(var pen=new Pen(gold,1.5f))g.DrawLines(pen,points);

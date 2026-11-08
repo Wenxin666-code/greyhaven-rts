@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -54,10 +54,10 @@ partial class CommandWindow {
   float speed=740*dt*ramp/Math.Max(1,(float)Math.Sqrt(x*x+y*y));
   Pan(x*speed,y*speed);
  }
- protected override void OnMouseWheel(MouseEventArgs e){base.OnMouseWheel(e);var p=ToScreenPoint(e);if(mapReview){RiverWheel(p,e.Delta);return;}if(briefing||paused||p.X<0||p.X>=MW||p.Y<MapTop||p.Y>=MapTop+MH)return;
+ protected override void OnMouseWheel(MouseEventArgs e){base.OnMouseWheel(e);var p=ToScreenPoint(e);if(QueueWheel(p,e.Delta))return;if(!briefing&&!paused&&!queueOpen&&p.X>=MW&&p.Y>=274){SidebarScroll(-Math.Sign(e.Delta));return;}if(mapReview){RiverWheel(p,e.Delta);return;}if(briefing||paused||p.X<0||p.X>=MW||p.Y<MapTop||p.Y>=MapTop+MH)return;
   var before=WorldOf(p);zoom=Math.Max(MinBattleZoom,Math.Min(MaxBattleZoom,zoom*(float)Math.Pow(1.18,e.Delta/120.0)));var after=WorldOf(p);CenterAt(new PointF(camera.X+before.X-after.X,camera.Y+before.Y-after.Y));Invalidate();}
  void GroundSpace(Graphics g){var origin=ScreenOf(PointF.Empty);using(var m=new Matrix(Axis*zoom,Rise*zoom,-Axis*zoom,Rise*zoom,origin.X,origin.Y))g.MultiplyTransform(m);}
- Campaign fogWorld;int fogRevision;RectangleF[] fogRuns;
+ Campaign fogWorld;int fogRevision;RectangleF[] fogRuns,fogVisibleRuns;PointF fogVisibleCamera;float fogVisibleZoom=-1;
  void Shroud(Graphics g){
   if(fogWorld!=world||fogRevision!=world.FogRevision){
    var runs=new List<RectangleF>();var previous=new Dictionary<int,int>();
@@ -72,15 +72,24 @@ partial class CommandWindow {
     }
     previous=next;
    }
-   fogRuns=runs.ToArray();fogWorld=world;fogRevision=world.FogRevision;
+   fogRuns=runs.ToArray();fogWorld=world;fogRevision=world.FogRevision;fogVisibleZoom=-1;
   }
-  if(fogRuns.Length>0)using(var brush=new SolidBrush(C("#152323")))g.FillRectangles(brush,fogRuns);
+  if(fogVisibleZoom!=zoom||fogVisibleCamera!=camera){
+   // Bound the inverse-projected viewport before sending rectangles to GDI+.
+   // This changes only offscreen work; all fog state and visible edges are shared.
+   float extent=((MW*.5f+2)/(Axis*zoom)+(MH*.5f+2)/(Rise*zoom))*.5f;
+   var visible=new RectangleF(camera.X-extent,camera.Y-extent,extent*2,extent*2);
+   fogVisibleRuns=fogRuns.Where(r=>r.IntersectsWith(visible)).ToArray();fogVisibleCamera=camera;fogVisibleZoom=zoom;
+  }
+  if(fogVisibleRuns.Length>0)using(var brush=new SolidBrush(C("#152323")))g.FillRectangles(brush,fogVisibleRuns);
  }
  void DrawBattle(Graphics g){
+  facilityAt=-1;
   var view=g.Save();g.SetClip(new Rectangle(0,MapTop,MW,MH));
   if(world.River==null)DrawGroundView(g);else DrawRiverBattleGround(g);var land=g.Save();GroundSpace(g);if(world.River==null)DrawTerrainPlan(g);
   var mode=g.SmoothingMode;g.SmoothingMode=SmoothingMode.None;Shroud(g);g.SmoothingMode=mode;g.Restore(land);
-  DrawOre(g);
+  DrawOre(g);DrawBeacons(g);
+  DrawBuildingScars(g);
   foreach(var shot in world.Shots)if(shot.TargetId==0)ShotImpact(g,shot);
   foreach(var o in world.Units.Where(a=>a.Carrier==null&&world.Visible(a)&&(a.T.Foot||a.T.Building)))
    DrawGroundShadow(g,o,ScreenOf(o.P),o.T.Size*zoom);
@@ -105,7 +114,8 @@ partial class CommandWindow {
    var p=ScreenOf(o.P);float s=o.T.Size*zoom;
    if(p.X< -s||p.X>MW+s||p.Y<MapTop-s||p.Y>MapTop+MH+s)continue;
    if(o.Alive&&selection.Contains(o))SelectionPixels(g,o,p,s);
-   DrawFieldSprite(g,o,p,s);
+   DrawFieldSprite(g,o,p,s);DrawSelectionPips(g,o,p);
+   DrawFacilityEffects(g,o,p);
    DrawActorEffects(g,o,p);
    DrawTargetFlash(g,o,p,s);
    float age=world.Time-o.ReceiptAt;
@@ -118,7 +128,7 @@ partial class CommandWindow {
   foreach(var o in world.Units.Where(u=>u.Alive&&u.Carrier==null&&world.Visible(u)))
    if(selection.Contains(o)||o==hovered||o.Hp<o.T.Hp||o.Ready<1)DrawUnitHealth(g,o,ScreenOf(o.P),o.T.Size*zoom);
   foreach(var house in world.Units.Where(u=>u.Alive&&u.T.Civilian&&world.Visible(u))){
-   var p=ScreenOf(house.P);var capturing=world.Units.FirstOrDefault(u=>u.Alive&&u.Carrier==house&&u.Capturing);
+   var p=ScreenOf(house.P);if(p.X< -80||p.X>MW+80||p.Y<MapTop-35||p.Y>MapTop+MH+35)continue;var capturing=world.Units.FirstOrDefault(u=>u.Alive&&u.Carrier==house&&u.Capturing);
    if(capturing!=null){Rect(g,p.X-23,p.Y+8,46,5,ink);Rect(g,p.X-22,p.Y+9,44*Math.Min(1,capturing.CaptureWork/3),3,Team(capturing.Side));}
    else if(house.Side<0&&(selection.Any(u=>u.T.Key=="engineer")||house==hovered))Txt(g,"中立 · 可占领",p.X-32,p.Y+7,11,pale,true);
    else if(house.Side>=0)Txt(g,world.HouseCount(house)+" / "+world.HouseCapacity(house),p.X-14,p.Y+7,11,Team(house.Side),true);
@@ -215,7 +225,7 @@ partial class CommandWindow {
    }return bmp;
   }
  }
- static Bitmap Raw(string name){using(var stream=typeof(CommandWindow).Assembly.GetManifestResourceStream("Greyhaven.Art."+name+".png"))using(var src=new Bitmap(stream)){
+ static Bitmap Raw(string name){if(BuildingV08.Has(name))return BuildingV08.Read(name);using(var stream=typeof(CommandWindow).Assembly.GetManifestResourceStream("Greyhaven.Art."+name+".png"))using(var src=new Bitmap(stream)){
   var bmp=new Bitmap(src.Width,src.Height,PixelFormat.Format32bppPArgb);
   using(var g=Graphics.FromImage(bmp)){g.CompositingMode=CompositingMode.SourceCopy;g.DrawImageUnscaled(src,0,0);}return bmp;
  }}

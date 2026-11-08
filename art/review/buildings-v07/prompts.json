@@ -1,0 +1,167 @@
+[
+  {
+    "key": "hq",
+    "name": "指挥部",
+    "file": "hq.png",
+    "targetFoundation": "3×2",
+    "dimensions": [
+      1254,
+      1254
+    ],
+    "sha256": "ef3dc7c87e59df7fedd052117650da4f92bde86ebb472ca0cc6e71de9f9bd0a4",
+    "tool": "built-in image_gen",
+    "prompt": "Use case: stylized-concept. Asset type: ONE single-view architectural concept image for a native modern-warfare RTS, Greyhaven. Reference image 1 is ONLY the approved tank's angular industrial material language and color-block readability; reference image 2 shows older buildings which are TOO SIMPLE, improve them substantially, do not copy the UI or the presentation sheet. Draw ONE command headquarters building only, complete and centered, not a sheet and not multiple viewpoints. Fixed orthographic dimetric camera: 45 degree horizontal rotation, 30 degree elevation, 2:1 ground diamonds. Compact low-rise 3 by 2 ground-cell rectangular foundation, actual walls cover nearly all of this footprint; steps, ducts and small entrance ramp entirely inside it. Distinct asymmetric stepped command bunker, offset low observation tower with dark continuous slit windows, protected operations wing, credible antennas, segmented armor cornices and maintenance panels. Strong angular silhouette, bevels with crisp planar highlights, not rounded toy architecture. Precision hand-painted / pre-rendered 2.5D RTS visual quality with realistic industrial construction, nuanced metal/concrete/paint materials, subtle wear only at edges, carefully grouped detail rather than tiny noisy greebles. Larger clean blue faction-color areas on roof panels, tower cladding and side armored panels together about 35-40% visible surface, suitable for eventual separate recolor mask; glass, bare steel, ventilation, concrete and hazard markings remain neutral. Light warm grey concrete, warm grey metal, desaturated military blue paint, dark charcoal machinery, tiny muted amber practical lights. Soft directional light from upper left, readable modest cast shadow to lower right. Entire asset on a plain dark slate #202c32 studio background with a very faint 3x2 isometric tile grid immediately under the thin rectangular plinth, no surrounding map. Object fills 78% of a square canvas; ample unclipped margin above antennas. Keep the existing compact RTS scale and architectural believability. No people, vehicles, UI, caption, watermark, logo, circular selection rings, huge perimeter apron, photoreal diorama landscaping, rounded sci-fi dome, low-poly primitive look or coarse pixelation. This is an art-review concept only, no animation and no extra view.",
+    "neutralEditPrompt": null,
+    "generatedSourceFile": "exec-490dd3d8-15b1-4521-9ecf-e81eda308f3b.png"
+  },
+  {
+    "key": "barracks",
+    "name": "兵营",
+    "file": "barracks.png",
+    "targetFoundation": "2×2",
+    "dimensions": [
+      1254,
+      1254
+    ],
+    "sha256": "6ff1306b7a7cdafc0af4036c031d94f3500952b45ea911c0ac8ca4c3c1b64658",
+    "tool": "built-in image_gen",
+    "prompt": "Use case: stylized-concept. ONE single-view building concept for Greyhaven modern warfare RTS. The reference is the approved direction of THIS REVIEW SET: reproduce its precise orthographic dimetric 45-degree yaw /30-degree elevation, crisp angular architecture, material sophistication, blue faction paint, restrained edge wear and soft upper-left lighting casting a modest lower-right shadow. SAME quality and design universe. Square image, entire building complete and centered with ample unclipped margin, on the same plain dark slate #202c32 background, no UI, labels, people or vehicles. Thin rectangular foundation corresponds to specified tile footprint; structural walls use nearly the whole footprint, entrance steps and aprons stay INSIDE the plinth, faint isometric cell lines immediately below it. No surrounding scenery. Art quality is sophisticated pre-rendered 2.5D RTS, convincing material transitions and planar highlights, not photographic landscaping, no rounded toy form, no coarse low-poly primitives or coarse pixels, no dramatic perspective. Group functional details so it remains legible as a small game sprite. No multiple views, animation, process diagram, collage, watermark, logo or selection rings. Each building must have its OWN unmistakable silhouette. Military structures have generous contiguous desaturated blue faction-color regions on roofs and armored sides (about 35-40% visible area); these will become a separate recolor mask later. Do not tint concrete, bare steel, dark glass, machinery, piping, hazard stripes or amber lights. Neutral palette warm-grey concrete, light-grey steel, charcoal mechanisms, muted amber accents. Design a compact 2x2-cell BARRACKS: TWO crisp chamfered pitched-roof troop dormitory wings joined by a recessed short entrance spine, two clearly separate entry doors and a tiny sheltered central pedestrian lane, tidy roof vents, modular window bands, external conduit and an inset equipment locker. Low-profile human-scale practical architecture, neither a cathedral nor a giant factory. Broad blue roof panels define the twin-gabled silhouette. All components fit a square plinth.",
+    "neutralEditPrompt": null,
+    "generatedSourceFile": "exec-09938e7c-3388-43d4-aa22-78758d0a6096.png"
+  },
+  {
+    "key": "factory",
+    "name": "车辆工厂",
+    "file": "factory.png",
+    "targetFoundation": "3×2",
+    "dimensions": [
+      1254,
+      1254
+    ],
+    "sha256": "b3bf913c9e84976b00bb3e82611a9fc5fb59101af465b73e2e532f9668fc7214",
+    "tool": "built-in image_gen",
+    "prompt": "Use case: stylized-concept. ONE single-view building concept for Greyhaven modern warfare RTS. The reference is the approved direction of THIS REVIEW SET: reproduce its precise orthographic dimetric 45-degree yaw /30-degree elevation, crisp angular architecture, material sophistication, blue faction paint, restrained edge wear and soft upper-left lighting casting a modest lower-right shadow. SAME quality and design universe. Square image, entire building complete and centered with ample unclipped margin, on the same plain dark slate #202c32 background, no UI, labels, people or vehicles. Thin rectangular foundation corresponds to specified tile footprint; structural walls use nearly the whole footprint, entrance steps and aprons stay INSIDE the plinth, faint isometric cell lines immediately below it. No surrounding scenery. Art quality is sophisticated pre-rendered 2.5D RTS, convincing material transitions and planar highlights, not photographic landscaping, no rounded toy form, no coarse low-poly primitives or coarse pixels, no dramatic perspective. Group functional details so it remains legible as a small game sprite. No multiple views, animation, process diagram, collage, watermark, logo or selection rings. Each building must have its OWN unmistakable silhouette. Military structures have generous contiguous desaturated blue faction-color regions on roofs and armored sides (about 35-40% visible area); these will become a separate recolor mask later. Do not tint concrete, bare steel, dark glass, machinery, piping, hazard stripes or amber lights. Neutral palette warm-grey concrete, light-grey steel, charcoal mechanisms, muted amber accents. Design a compact 3x2-cell VEHICLE / WAR FACTORY: an unmistakable WIDE industrial bay opening with an armored segmented roller shutter partially raised, heavy rectangular blue gantry frame and exposed lifting rails spanning the roof, a low side maintenance annex, exhaust ducts and overhead work lights. A very short vehicle egress ramp fully inside the plinth, not an extra reserved ground row. Large engineered roof beams, broad lintel and deep dark vehicle bay make it recognizable, not just an enlarged headquarters. No vehicle inside or outside.",
+    "neutralEditPrompt": null,
+    "generatedSourceFile": "exec-61a4b446-5020-4be1-805f-f84aa5ad0945.png"
+  },
+  {
+    "key": "power",
+    "name": "电站",
+    "file": "power.png",
+    "targetFoundation": "2×2",
+    "dimensions": [
+      1254,
+      1254
+    ],
+    "sha256": "1da148282e0d0a45dd020b0c63a355372f333da3513e8d9efb93a61e61e7b998",
+    "tool": "built-in image_gen",
+    "prompt": "Use case: stylized-concept. ONE single-view building concept for Greyhaven modern warfare RTS. The reference is the approved direction of THIS REVIEW SET: reproduce its precise orthographic dimetric 45-degree yaw /30-degree elevation, crisp angular architecture, material sophistication, blue faction paint, restrained edge wear and soft upper-left lighting casting a modest lower-right shadow. SAME quality and design universe. Square image, entire building complete and centered with ample unclipped margin, on the same plain dark slate #202c32 background, no UI, labels, people or vehicles. Thin rectangular foundation corresponds to specified tile footprint; structural walls use nearly the whole footprint, entrance steps and aprons stay INSIDE the plinth, faint isometric cell lines immediately below it. No surrounding scenery. Art quality is sophisticated pre-rendered 2.5D RTS, convincing material transitions and planar highlights, not photographic landscaping, no rounded toy form, no coarse low-poly primitives or coarse pixels, no dramatic perspective. Group functional details so it remains legible as a small game sprite. No multiple views, animation, process diagram, collage, watermark, logo or selection rings. Each building must have its OWN unmistakable silhouette. Military structures have generous contiguous desaturated blue faction-color regions on roofs and armored sides (about 35-40% visible area); these will become a separate recolor mask later. Do not tint concrete, bare steel, dark glass, machinery, piping, hazard stripes or amber lights. Neutral palette warm-grey concrete, light-grey steel, charcoal mechanisms, muted amber accents. Design a compact 2x2-cell POWER PLANT: TWO parallel armored turbine / generator housings, two narrow squared exhaust stacks of slightly different heights, inset polygonal cooling fans with protective grilles, articulated coolant pipes and an open transformer cabinet with angular ceramic insulators. Low generator volume and tall twin chimney silhouette. Broad blue machine covers and rectangular stack bands, vents remain charcoal. Not a cooling-tower nuclear plant, no oversized steam cloud.",
+    "neutralEditPrompt": null,
+    "generatedSourceFile": "exec-cc9651c5-9486-4d7e-8efc-e025c8ade948.png"
+  },
+  {
+    "key": "radar",
+    "name": "雷达站",
+    "file": "radar.png",
+    "targetFoundation": "2×2",
+    "dimensions": [
+      1254,
+      1254
+    ],
+    "sha256": "22225d5681587c8e33ca02adda6cf80365c0cd70a0c349be28060460a402d1de",
+    "tool": "built-in image_gen",
+    "prompt": "Use case: stylized-concept. ONE single-view building concept for Greyhaven modern warfare RTS. The reference is the approved direction of THIS REVIEW SET: reproduce its precise orthographic dimetric 45-degree yaw /30-degree elevation, crisp angular architecture, material sophistication, blue faction paint, restrained edge wear and soft upper-left lighting casting a modest lower-right shadow. SAME quality and design universe. Square image, entire building complete and centered with ample unclipped margin, on the same plain dark slate #202c32 background, no UI, labels, people or vehicles. Thin rectangular foundation corresponds to specified tile footprint; structural walls use nearly the whole footprint, entrance steps and aprons stay INSIDE the plinth, faint isometric cell lines immediately below it. No surrounding scenery. Art quality is sophisticated pre-rendered 2.5D RTS, convincing material transitions and planar highlights, not photographic landscaping, no rounded toy form, no coarse low-poly primitives or coarse pixels, no dramatic perspective. Group functional details so it remains legible as a small game sprite. No multiple views, animation, process diagram, collage, watermark, logo or selection rings. Each building must have its OWN unmistakable silhouette. Military structures have generous contiguous desaturated blue faction-color regions on roofs and armored sides (about 35-40% visible area); these will become a separate recolor mask later. Do not tint concrete, bare steel, dark glass, machinery, piping, hazard stripes or amber lights. Neutral palette warm-grey concrete, light-grey steel, charcoal mechanisms, muted amber accents. Design a compact 2x2-cell RADAR STATION: one large upright tilted RECTANGULAR phased-array panel with a precise visible grid of submodules, robust triangular structural braces, compact angular rotating pedestal above a flat low equipment bunker. Distinct flat rectangular radar silhouette, absolutely no dish antenna, dome or sphere. Blue frame and equipment roof blocks, neutral dark sensor panel, believable cable runs, junction boxes, heat-exchanger fins and small warning lights.",
+    "neutralEditPrompt": null,
+    "generatedSourceFile": "exec-741662d0-37f0-4def-8f49-eb667249d990.png"
+  },
+  {
+    "key": "satellite",
+    "name": "间谍卫星上行站",
+    "file": "satellite.png",
+    "targetFoundation": "2×2",
+    "dimensions": [
+      1254,
+      1254
+    ],
+    "sha256": "b9d50eb68568cfe36efbe91dac865f493b6acaebd885efce26c451b7bc75f68a",
+    "tool": "built-in image_gen",
+    "prompt": "Use case: stylized-concept. ONE single-view building concept for Greyhaven modern warfare RTS. The reference is the approved direction of THIS REVIEW SET: reproduce its precise orthographic dimetric 45-degree yaw /30-degree elevation, crisp angular architecture, material sophistication, blue faction paint, restrained edge wear and soft upper-left lighting casting a modest lower-right shadow. SAME quality and design universe. Square image, entire building complete and centered with ample unclipped margin, on the same plain dark slate #202c32 background, no UI, labels, people or vehicles. Thin rectangular foundation corresponds to specified tile footprint; structural walls use nearly the whole footprint, entrance steps and aprons stay INSIDE the plinth, faint isometric cell lines immediately below it. No surrounding scenery. Art quality is sophisticated pre-rendered 2.5D RTS, convincing material transitions and planar highlights, not photographic landscaping, no rounded toy form, no coarse low-poly primitives or coarse pixels, no dramatic perspective. Group functional details so it remains legible as a small game sprite. No multiple views, animation, process diagram, collage, watermark, logo or selection rings. Each building must have its OWN unmistakable silhouette. Military structures have generous contiguous desaturated blue faction-color regions on roofs and armored sides (about 35-40% visible area); these will become a separate recolor mask later. Do not tint concrete, bare steel, dark glass, machinery, piping, hazard stripes or amber lights. Neutral palette warm-grey concrete, light-grey steel, charcoal mechanisms, muted amber accents. Design a compact 2x2-cell SATELLITE UPLINK: a large upward-tilted faceted parabolic reflector with an angular polygonal perimeter, tessellated reflector panels and clear feed-arm assembly, robust azimuth/elevation support on an octagonal turntable above a LOW squared equipment bunker. Must read instantly as satellite communications, distinct from flat rectangular radar. Blue equipment roof and support side panels, light-grey metallic reflector, charcoal mechanism. Keep reflector and overhang inside the ground footprint in plan.",
+    "neutralEditPrompt": null,
+    "generatedSourceFile": "exec-caff078e-e194-4ffd-b3c8-a96782992620.png"
+  },
+  {
+    "key": "post",
+    "name": "防御阵地",
+    "file": "post.png",
+    "targetFoundation": "1×1",
+    "dimensions": [
+      1254,
+      1254
+    ],
+    "sha256": "e7a1fa3063a1bb307b6589a5b91d043c8da5a769623023da7444a8abd2eacf46",
+    "tool": "built-in image_gen",
+    "prompt": "Use case: stylized-concept. ONE single-view building concept for Greyhaven modern warfare RTS. The reference is the approved direction of THIS REVIEW SET: reproduce its precise orthographic dimetric 45-degree yaw /30-degree elevation, crisp angular architecture, material sophistication, blue faction paint, restrained edge wear and soft upper-left lighting casting a modest lower-right shadow. SAME quality and design universe. Square image, entire building complete and centered with ample unclipped margin, on the same plain dark slate #202c32 background, no UI, labels, people or vehicles. Thin rectangular foundation corresponds to specified tile footprint; structural walls use nearly the whole footprint, entrance steps and aprons stay INSIDE the plinth, faint isometric cell lines immediately below it. No surrounding scenery. Art quality is sophisticated pre-rendered 2.5D RTS, convincing material transitions and planar highlights, not photographic landscaping, no rounded toy form, no coarse low-poly primitives or coarse pixels, no dramatic perspective. Group functional details so it remains legible as a small game sprite. No multiple views, animation, process diagram, collage, watermark, logo or selection rings. Each building must have its OWN unmistakable silhouette. Military structures have generous contiguous desaturated blue faction-color regions on roofs and armored sides (about 35-40% visible area); these will become a separate recolor mask later. Do not tint concrete, bare steel, dark glass, machinery, piping, hazard stripes or amber lights. Neutral palette warm-grey concrete, light-grey steel, charcoal mechanisms, muted amber accents. Design a very compact 1x1-cell DEFENSIVE GUN EMPLACEMENT: low angular reinforced concrete bunker with sloped faceted armor cheeks, two dark firing slits, and a compact sharp-edged remote weapon turret with a short autocannon, ammo box, optical sensor and protective armor plates. This is a small one-cell point-defense structure, NOT a tank or a large fort. Generous blue replaceable armor plates on the low parapet and turret sides, neutral concrete plinth and bare dark gun. A narrow rear service hatch fits inside plinth.",
+    "neutralEditPrompt": null,
+    "generatedSourceFile": "exec-352e7de4-507a-4d6d-83f6-1a22921f3f5a.png"
+  },
+  {
+    "key": "refinery",
+    "name": "矿石精炼厂",
+    "file": "refinery.png",
+    "targetFoundation": "2×2",
+    "dimensions": [
+      1254,
+      1254
+    ],
+    "sha256": "7365c5cb975785e57a1114ebfd8e66859cbedefbbedb4552aa9bc2e22e0b382f",
+    "tool": "built-in image_gen",
+    "prompt": "Use case: stylized-concept. ONE single-view building concept for Greyhaven modern warfare RTS. The reference is the approved direction of THIS REVIEW SET: reproduce its precise orthographic dimetric 45-degree yaw /30-degree elevation, crisp angular architecture, material sophistication, blue faction paint, restrained edge wear and soft upper-left lighting casting a modest lower-right shadow. SAME quality and design universe. Square image, entire building complete and centered with ample unclipped margin, on the same plain dark slate #202c32 background, no UI, labels, people or vehicles. Thin rectangular foundation corresponds to specified tile footprint; structural walls use nearly the whole footprint, entrance steps and aprons stay INSIDE the plinth, faint isometric cell lines immediately below it. No surrounding scenery. Art quality is sophisticated pre-rendered 2.5D RTS, convincing material transitions and planar highlights, not photographic landscaping, no rounded toy form, no coarse low-poly primitives or coarse pixels, no dramatic perspective. Group functional details so it remains legible as a small game sprite. No multiple views, animation, process diagram, collage, watermark, logo or selection rings. Each building must have its OWN unmistakable silhouette. Military structures have generous contiguous desaturated blue faction-color regions on roofs and armored sides (about 35-40% visible area); these will become a separate recolor mask later. Do not tint concrete, bare steel, dark glass, machinery, piping, hazard stripes or amber lights. Neutral palette warm-grey concrete, light-grey steel, charcoal mechanisms, muted amber accents. Design a compact 2x2-cell ORE REFINERY with tightly integrated machinery: a faceted raw-ore receiving hopper, diagonal enclosed conveyor climbing to a squared crushing / processing tower, a lower processing equipment block, external pipes, filter ducts, yellow safety rails and accessible service ladder. A clearly legible short truck unloading recess along the near edge stays inside the foundation; NO vehicles, no huge empty forecourt, no ore landscape. Broad blue hopper armor and machine cladding, bare dark conveyor rubber, small golden ore visible only inside hopper. Distinct asymmetric industrial L-shaped machinery silhouette, never generic office.",
+    "neutralEditPrompt": null,
+    "generatedSourceFile": "exec-dcac186d-8499-4f14-b17e-268c52a5ad4a.png"
+  },
+  {
+    "key": "residence",
+    "name": "河岸民居",
+    "file": "residence.png",
+    "targetFoundation": "2×2",
+    "dimensions": [
+      1254,
+      1254
+    ],
+    "sha256": "abcf89c52cd272cf6597efcc3d2860620e305c62bc962136feab165bc59e059a",
+    "tool": "built-in image_gen",
+    "prompt": "Use case: stylized-concept. ONE single-view building concept for Greyhaven modern warfare RTS. The reference is the approved direction of THIS REVIEW SET: reproduce its precise orthographic dimetric 45-degree yaw /30-degree elevation, crisp angular architecture, material sophistication, blue faction paint, restrained edge wear and soft upper-left lighting casting a modest lower-right shadow. SAME quality and design universe. Square image, entire building complete and centered with ample unclipped margin, on the same plain dark slate #202c32 background, no UI, labels, people or vehicles. Thin rectangular foundation corresponds to specified tile footprint; structural walls use nearly the whole footprint, entrance steps and aprons stay INSIDE the plinth, faint isometric cell lines immediately below it. No surrounding scenery. Art quality is sophisticated pre-rendered 2.5D RTS, convincing material transitions and planar highlights, not photographic landscaping, no rounded toy form, no coarse low-poly primitives or coarse pixels, no dramatic perspective. Group functional details so it remains legible as a small game sprite. No multiple views, animation, process diagram, collage, watermark, logo or selection rings. Each building must have its OWN unmistakable silhouette. Neutral civilian architecture uses weathered warm-grey plaster, concrete, dark glass and muted neutral grey-blue sheet metal. Reserve large clean pale-grey roof-edge and facade panel regions for future faction recoloring, about 25-35% visible area; never bake a faction insignia or national flag. Same controlled precision and restrained wear as reference, small warm window and porch lights. No troops or vehicles. Design ONE compact 2x2-cell RIVERSIDE CIVILIAN HOUSE, two modest storeys, distinct angular stepped gable roof, practical brick lower level with pale plaster upper wall, framed rectangular windows with deep sills, a short inset front porch, drainpipes, chimney cap, rooftop utility box and a couple of fixed shutters. Wartime but intact and occupiable. Crisp planar surfaces, no ruined walls, no rounded fairytale cottage. All steps and porch fit the square footprint. Low domestic scale, clean neutral facade panels suitable for capture recoloring.",
+    "neutralEditPrompt": "Use case: precise-object-edit. This is a neutral, unoccupied civilian building in an RTS. Change ONLY the blue painted roof strips, awning strips and blue facade panels into a consistent neutral PALE WARM GREY / OFF-WHITE (roughly #d8dbd4). It must clearly read as grey-white, unclaimed civilian architecture rather than a blue faction building. Preserve absolutely all architecture, silhouette, camera, perspective, footprint, lighting, background, shadow, bricks, window glass, warm interior lamps, wear, texture detail and image composition exactly. Keep the existing functional panel boundaries so those pale areas can later become a recolorable capture mask. No other changes, no new objects, no caption or logo. Entire building intact. Same high precision 2.5D RTS concept style.",
+    "generatedSourceFile": "exec-d7987642-f2c1-47c2-b3fe-798267b1c477.png"
+  },
+  {
+    "key": "shop",
+    "name": "沿街商住楼",
+    "file": "shop.png",
+    "targetFoundation": "3×2",
+    "dimensions": [
+      1254,
+      1254
+    ],
+    "sha256": "762d546715a13b223800f310ae77a12174a810fa1157ef7c6157adc27839d6df",
+    "tool": "built-in image_gen",
+    "prompt": "Use case: stylized-concept. ONE single-view building concept for Greyhaven modern warfare RTS. The reference is the approved direction of THIS REVIEW SET: reproduce its precise orthographic dimetric 45-degree yaw /30-degree elevation, crisp angular architecture, material sophistication, blue faction paint, restrained edge wear and soft upper-left lighting casting a modest lower-right shadow. SAME quality and design universe. Square image, entire building complete and centered with ample unclipped margin, on the same plain dark slate #202c32 background, no UI, labels, people or vehicles. Thin rectangular foundation corresponds to specified tile footprint; structural walls use nearly the whole footprint, entrance steps and aprons stay INSIDE the plinth, faint isometric cell lines immediately below it. No surrounding scenery. Art quality is sophisticated pre-rendered 2.5D RTS, convincing material transitions and planar highlights, not photographic landscaping, no rounded toy form, no coarse low-poly primitives or coarse pixels, no dramatic perspective. Group functional details so it remains legible as a small game sprite. No multiple views, animation, process diagram, collage, watermark, logo or selection rings. Each building must have its OWN unmistakable silhouette. Neutral civilian architecture uses weathered warm-grey plaster, concrete, dark glass and muted neutral grey-blue sheet metal. Reserve large clean pale-grey roof-edge and facade panel regions for future faction recoloring, about 25-35% visible area; never bake a faction insignia or national flag. Same controlled precision and restrained wear as reference, small warm window and porch lights. No troops or vehicles. Design ONE compact 3x2-cell STREETFRONT SHOP / APARTMENT building, three storeys, unmistakable long urban frontage: ground-floor shop windows under a sharp folded-metal awning, an inset corner entrance, two residential floors above with repeated framed windows, a stepped flat parapet roof with utility equipment. Layered masonry, exposed downpipe, discrete ventilation boxes, broad pale-grey awning / cornice color zones for future capture recoloring. No words or readable signs, no city streets, no attached neighboring buildings. Whole structure and steps fit rectangular plinth.",
+    "neutralEditPrompt": "Use case: precise-object-edit. This is a neutral, unoccupied civilian building in an RTS. Change ONLY the blue painted roof strips, awning strips and blue facade panels into a consistent neutral PALE WARM GREY / OFF-WHITE (roughly #d8dbd4). It must clearly read as grey-white, unclaimed civilian architecture rather than a blue faction building. Preserve absolutely all architecture, silhouette, camera, perspective, footprint, lighting, background, shadow, bricks, window glass, warm interior lamps, wear, texture detail and image composition exactly. Keep the existing functional panel boundaries so those pale areas can later become a recolorable capture mask. No other changes, no new objects, no caption or logo. Entire building intact. Same high precision 2.5D RTS concept style.",
+    "generatedSourceFile": "exec-49fc2449-7bec-4c2c-aa1d-07bd14322e92.png"
+  },
+  {
+    "key": "municipal",
+    "name": "镇公所",
+    "file": "municipal.png",
+    "targetFoundation": "3×3",
+    "dimensions": [
+      1254,
+      1254
+    ],
+    "sha256": "7f79cd00d84e21971a68a668d4c3e80ea6c45927637415ddae54fb73dca4c2a9",
+    "tool": "built-in image_gen",
+    "prompt": "Use case: stylized-concept. ONE single-view building concept for Greyhaven modern warfare RTS. The reference is the approved direction of THIS REVIEW SET: reproduce its precise orthographic dimetric 45-degree yaw /30-degree elevation, crisp angular architecture, material sophistication, blue faction paint, restrained edge wear and soft upper-left lighting casting a modest lower-right shadow. SAME quality and design universe. Square image, entire building complete and centered with ample unclipped margin, on the same plain dark slate #202c32 background, no UI, labels, people or vehicles. Thin rectangular foundation corresponds to specified tile footprint; structural walls use nearly the whole footprint, entrance steps and aprons stay INSIDE the plinth, faint isometric cell lines immediately below it. No surrounding scenery. Art quality is sophisticated pre-rendered 2.5D RTS, convincing material transitions and planar highlights, not photographic landscaping, no rounded toy form, no coarse low-poly primitives or coarse pixels, no dramatic perspective. Group functional details so it remains legible as a small game sprite. No multiple views, animation, process diagram, collage, watermark, logo or selection rings. Each building must have its OWN unmistakable silhouette. Neutral civilian architecture uses weathered warm-grey plaster, concrete, dark glass and muted neutral grey-blue sheet metal. Reserve large clean pale-grey roof-edge and facade panel regions for future faction recoloring, about 25-35% visible area; never bake a faction insignia or national flag. Same controlled precision and restrained wear as reference, small warm window and porch lights. No troops or vehicles. Design ONE compact 3x3-cell TOWN HALL / MUNICIPAL OFFICE: a dignified but utilitarian three-storey civic building with a recessed central entrance and broad low squared entrance canopy, symmetrical flanking office wings, raised short central rectangular administrative tower, sharp stepped cornices, restrained civic stonework and one small roof communications mast. No dome, no palace, no giant clock face or national iconography. Distinct civic hierarchy and clean wide front elevation, broad pale-grey parapet and facade inset panels support capture recoloring. All stairs sit within square plinth. Neutral grey-white appearance before capture.",
+    "neutralEditPrompt": "Use case: precise-object-edit. This is a neutral, unoccupied civilian building in an RTS. Change ONLY the blue painted roof strips, awning strips and blue facade panels into a consistent neutral PALE WARM GREY / OFF-WHITE (roughly #d8dbd4). It must clearly read as grey-white, unclaimed civilian architecture rather than a blue faction building. Preserve absolutely all architecture, silhouette, camera, perspective, footprint, lighting, background, shadow, bricks, window glass, warm interior lamps, wear, texture detail and image composition exactly. Keep the existing functional panel boundaries so those pale areas can later become a recolorable capture mask. No other changes, no new objects, no caption or logo. Entire building intact. Same high precision 2.5D RTS concept style.",
+    "generatedSourceFile": "exec-40b2edd5-3849-4262-aa88-b3f57ba4a7ce.png"
+  }
+]

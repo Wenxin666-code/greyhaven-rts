@@ -73,7 +73,7 @@ partial class CommandWindow {
    var home=world.Home(0);world.Spawn("power",0,home.X+120,home.Y);world.Spawn("radar",0,home.X-120,home.Y);world.RevealReview();
    foreach(var p in new[]{home,world.Home(1),world.Home(2),house.P})if(Campaign.Dist(p,RadarWorldPoint(RadarPoint(p)))>.01f)throw new Exception("radar inverse mismatch");
    hudDirty=true;OnPaint(new PaintEventArgs(g,ClientRectangle));if(!RadarOnline()||!hits.Any(h=>h.Id=="radar-map"))throw new Exception("river radar unavailable");
-   var radar=hits.Last(h=>h.Id=="radar-map");var pin=RadarPoint(world.Home(2));mouse=new PointF(radar.Box.Left+pin.X,radar.Box.Top+pin.Y);radar.Run();if(Campaign.Dist(camera,world.Home(2))>.01f)throw new Exception("radar click failed");CenterAt(house.P);mouse=PointF.Empty;
+   var radar=hits.Last(h=>h.Id=="radar-map");var pin=RadarPoint(world.Home(2));mouse=new PointF(radar.Box.Left+pin.X,radar.Box.Top+pin.Y);radar.Right();if(Campaign.Dist(camera,world.Home(2))>.01f||!selection.Contains(house))throw new Exception("radar right focus with selection failed");CenterAt(house.P);mouse=PointF.Empty;
    OnPaint(new PaintEventArgs(g,ClientRectangle));
    frame.Save(Path.Combine(folder,"河湾镇-驻防与雷达.png"),ImageFormat.Png);
    var samples=new System.Collections.Generic.List<double>();

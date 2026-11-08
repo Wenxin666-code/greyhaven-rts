@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -18,6 +18,7 @@ partial class CommandWindow {
   found=r<0?Rectangle.Empty:Rectangle.FromLTRB(l,t,r+1,b+1);inkBounds.Add(id,found);return found;
  }
  RectangleF VisibleUnitBox(Piece unit,PointF p,float size){
+  if(unit.T.Building)p=DeploymentPoint(unit,p);
   var t=unit.T;int dir=(unit.Dir+14)%16;
   var source=t.Key=="tank"?TankCell(0,TankFrame(unit)):SourceCell(t,unit.Side,dir);
   var box=t.Building?BuildingRect(Campaign.Footprint(t,unit.P),p,zoom):t.Foot?SoldierBox(SoldierFeet(unit,p,zoom,world.Time),size):VehicleRect(t,p,size);
@@ -62,7 +63,13 @@ partial class CommandWindow {
   return new Rectangle(body.Left+(body.Width-width)/2,body.Top-interior-5,width,interior+2);
  }
  void DrawUnitHealth(Graphics g,Piece unit,PointF position,float size){
-  if(!unit.Alive)return;var body=DeviceBox(VisibleUnitBox(unit,position,size));var r=HealthBox(unit,body);
+  if(!unit.Alive)return;
+  // A health label cannot be visible outside this conservative sprite + label
+  // envelope. Reject it before resolving/scanning any offscreen damaged art.
+  var anchor=unit.T.Building?DeploymentPoint(unit,position):position;
+  var envelope=unit.T.Building?BuildingRect(Campaign.Footprint(unit.T,unit.P),anchor,zoom):unit.T.Foot?SoldierBox(anchor,size):VehicleRect(unit.T,anchor,size);
+  envelope.Inflate(130/Math.Max(.5f,PixelScale),20/Math.Max(.5f,PixelScale));if(!g.IsVisible(envelope))return;
+  var body=DeviceBox(VisibleUnitBox(unit,position,size));var r=HealthBox(unit,body);
   float fraction=Math.Max(0,Math.Min(1,unit.Ready<1?unit.Ready:unit.Hp/unit.T.Hp));
   Color color=unit.Ready<1?gold:HealthColor(fraction);var state=g.Save();g.ResetTransform();g.SmoothingMode=SmoothingMode.None;g.PixelOffsetMode=PixelOffsetMode.None;
   using(var outline=new SolidBrush(Color.FromArgb(8,12,9)))using(var empty=new SolidBrush(Color.FromArgb(40,47,40)))using(var fill=new SolidBrush(color)){

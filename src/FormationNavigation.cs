@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Drawing;
 using System.Collections.Generic;
@@ -26,7 +26,7 @@ public partial class Campaign {
   // let TrackStep's existing collision/wait/detour rules resolve congestion.
   return unit.FollowingWait>1.2f?requested:speed;
  }
- // Minimum-cost bipartite assignment, O(n^3), at most 55 units per army.
+ // Minimum-cost bipartite assignment, O(n^3).
  static int[] MatchSlots(Piece[] units,PointF[] slots){
   int n=units.Length;var u=new double[n+1];var v=new double[n+1];var owner=new int[n+1];var previous=new int[n+1];
   for(int i=1;i<=n;i++){

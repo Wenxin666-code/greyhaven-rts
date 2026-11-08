@@ -1,30 +1,31 @@
-using System;
+﻿using System;
 using System.Drawing;
 namespace Greyhaven {
 partial class CommandWindow {
- internal const int BuildFrames=24,CollapseFrames=16;
- internal const float CollapseSeconds=1.20f;
- static Rectangle AnimationCell(int frame){return new Rectangle(frame%8*FrameSize,frame/8*FrameSize,FrameSize,FrameSize);}
- void EnsureAnimation(string key){
-  if(painted.ContainsKey(key))return;
-  painted[key]=Raw("anim-"+key);painted[key+"-paint"]=Raw("anim-"+key+"-paint");
- }
+ internal const int BuildFrames=BuildingV08.Frames;
+ internal const float DestructionSeconds=Campaign.BuildingDestructionSeconds;
  string BuildingVisual(Piece o,out Rectangle source){
-  if(o.T.Civilian){source=new Rectangle(0,o.Alive?0:FrameSize*2,FrameSize,FrameSize);return o.T.Key;}
-  if(o.Alive&&o.Packing>0){string key=o.T.Key+"-build";EnsureAnimation(key);source=AnimationCell(Math.Min(BuildFrames-1,(int)(o.Packing/Campaign.AssemblySeconds*(BuildFrames-1))));return key;}
-  if(o.Alive&&o.Ready<1){string key=o.T.Key+"-build";EnsureAnimation(key);source=AnimationCell(Math.Min(BuildFrames-1,(int)(o.Ready*(BuildFrames-1))));return key;}
-  if(!o.Alive&&o.Dead<CollapseSeconds){
-   bool partial=o.Ready<1;string key=o.T.Key+(partial?"-build":"-collapse");EnsureAnimation(key);
-   int frame=partial?(int)(o.Ready*(1-o.Dead/CollapseSeconds)*(BuildFrames-1)):(int)(o.Dead/CollapseSeconds*(CollapseFrames-1));
-   source=AnimationCell(Math.Max(0,frame));return key;
+  if(BuildingV08.IsBuilding(o.T.Key)){
+   source=B08Source();
+   if(!o.Alive){
+    float ready=StructuralReadiness(o);
+    if(o.Dead<TerminalWreckAt){if(o.Ready<1)return B08Frame(o.T.Key,"build",Math.Min(BuildFrames-1,(int)(ready*(BuildFrames-1))));return EnsureB08("b08/"+o.T.Key+"/damage-3");}
+    return "removed-building";
+   }
+   if(o.BaseTransition&&!o.Selling&&(o.Ready<1||o.Packing>0)){float q=BaseProgress(o);return B08Frame(o.T.Key,"deploy",Math.Max(0,Math.Min(BuildingV08.DeployFrames-1,(int)(Clamp01(q)*(BuildingV08.DeployFrames-1)))));}
+   if(o.Packing>0||o.Ready<1){float progress=o.Packing>0?o.Packing/Campaign.AssemblySeconds:o.Ready;return B08Frame(o.T.Key,"build",Math.Max(0,Math.Min(BuildFrames-1,(int)(progress*(BuildFrames-1)))));}
+   int damage=BuildingDamageLevel(o);if(damage>0)return EnsureB08("b08/"+o.T.Key+"/damage-"+damage);
+   source=new Rectangle(0,0,FrameSize,FrameSize);return o.T.Key;
   }
   source=new Rectangle(0,o.Alive?0:FrameSize*2,FrameSize,FrameSize);return o.T.Key;
  }
  void DrawBuildingState(Graphics g,Piece o,PointF p,float size){
+  if(!o.Alive&&o.Dead>=TerminalWreckAt)return;
+  p=DeploymentPoint(o,p);
   Rectangle source;var key=BuildingVisual(o,out source);var box=BuildingRect(Campaign.Footprint(o.T,o.P),p,size/o.T.Size);
-  DrawStamp(g,key,source,box,o.Alive||o.Dead<CollapseSeconds?(Color?)UnitColor(o.Side):null);
+  DrawStamp(g,key,source,box,o.Alive||o.Dead<DestructionSeconds?(Color?)UnitColor(o.Side):null);
  }
- bool BuildingInkHit(Piece o,RectangleF box,PointF screen){Rectangle source;var key=BuildingVisual(o,out source);return PixelHit(key,source,box,screen);}
+ bool BuildingInkHit(Piece o,RectangleF box,PointF screen){if(!box.Contains(screen))return false;Rectangle source;var key=BuildingVisual(o,out source);return PixelHit(key,source,box,screen);}
  PointF RecoilPoint(Piece o,PointF p){
   float age=world.VisualTime-o.FiredAt;if(!o.Alive||age<0||age>.24f||o.T.Building)return p;
   float amount=(float)Math.Sin(Math.PI*age/.24f)*(o.T.Foot?.35f:o.T.Key=="tank"||o.T.Key=="arty"?1.1f:.45f)*zoom;

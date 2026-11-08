@@ -10,3 +10,10 @@ Thumbs.db
 
 # Local pre-edit snapshots; curated art history is tracked.
 /art/archive/*-before-*/
+
+# Offline authoring caches.
+__pycache__/
+*.pyc
+
+# Regenerable frames; model sources, materials and runtime packs are tracked.
+/art/source/**/frames/

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -70,7 +70,7 @@ public partial class Campaign {
   }return best;
  }
  int topology;
- sealed class NavigationGrid {public RectangleF[] Barriers;public bool[] Open;public int[] Regions;}
+ sealed class NavigationGrid {public RectangleF[] Barriers;public bool[] Open;public int[] Regions;public ushort[] Links;public Dictionary<long,bool> Reachability;public int LinkStamp;}
  readonly Dictionary<float,NavigationGrid> grids=new Dictionary<float,NavigationGrid>();
  void Changed(){topology++;grids.Clear();}
  NavigationGrid Grid(float pad){
@@ -106,6 +106,14 @@ public partial class Campaign {
   }return false;
  }
  bool CanLink(bool tracks,PointF a,PointF b,RectangleF[] blocks,float pad=0){return tracks?TrackLegs(a,b,blocks,null,pad):Clear(a,b,blocks,pad);}
+ // Probe increasingly distant points, then refine the last valid interval.
+ // Every accepted segment still passes the exact swept terrain/obstacle check.
+ int FarthestRoutePoint(PointF from,List<PointF> points,int first,bool tracks,RectangleF[] blocks,float pad){
+  int far=first,stride=1,upper=points.Count-1;
+  while(far<upper){int test=Math.Min(upper,far+stride);if(!CanLink(tracks,from,points[test],blocks,pad)){upper=test-1;break;}far=test;stride*=2;}
+  while(far<upper){int middle=(far+upper+1)/2;if(CanLink(tracks,from,points[middle],blocks,pad))far=middle;else upper=middle-1;}
+  return far;
+ }
  public bool Route(Piece o,PointF dest){return PlanRoute(o,dest,null);}
  bool PlanRoute(Piece o,PointF dest,RectangleF[] temporary,Piece ignore=null){
   bool tracks=!o.T.Foot&&!o.T.Building;
@@ -113,33 +121,32 @@ public partial class Campaign {
   var grid=ignore==null?Grid(pad):new NavigationGrid{Barriers=Obstacles(ignore).Select(r=>Inflated(r,pad)).ToArray()};
   if(temporary!=null){
    // Reuse static terrain and touch only cells covered by current traffic.
-   OpenGrid(grid,pad);var open=(bool[])grid.Open.Clone();
+   OpenGrid(grid,pad);var open=TemporaryNavigationOpen(grid.Open);
    foreach(var r in temporary)for(int y=Math.Max(0,(int)(r.Top/Step));y<=Math.Min(M-1,(int)(r.Bottom/Step));y++)
     for(int x=Math.Max(0,(int)(r.Left/Step));x<=Math.Min(N-1,(int)(r.Right/Step));x++)if(r.Contains(Center(y*N+x)))open[y*N+x]=false;
-   grid=new NavigationGrid{Barriers=grid.Barriers.Concat(temporary).ToArray(),Open=open};
+   grid=new NavigationGrid{Barriers=grid.Barriers.Concat(temporary).ToArray(),Open=open,LinkStamp=BeginTemporaryNavigation()};
   }
   var blocks=grid.Barriers;var route=new Queue<PointF>();
   if(tracks&&StreetCorner(o.P,dest,blocks,route,pad)){o.Path=route;o.RouteVersion=topology;return true;}
   if(!CanLink(tracks,o.P,dest,blocks,pad)){
    OpenGrid(grid,pad);
    bool[] open=grid.Open;
-   int start=Anchor(o.P,open,blocks,tracks,pad),end=Anchor(dest,open,blocks,tracks,pad);if(start<0||end<0)return false;
-   var previous=new int[N*M];var cost=Enumerable.Repeat(int.MaxValue,N*M).ToArray();var frontier=new SortedSet<long>();cost[start]=0;frontier.Add((long)Estimate(start,end)*(N*M)+start);
-   while(frontier.Count!=0){
-    long key=frontier.Min;frontier.Remove(key);int cur=(int)(key%(N*M));if(cur==end)break;
+   int start=Anchor(o.P,open,blocks,tracks,pad),end=Anchor(dest,open,blocks,tracks,pad);if(start<0||end<0)return false;if(SmallGoalEnclosed(grid,start,end,pad))return false;
+   BeginNavigationSearch();SetNavigationCost(start,0,start);navigationHeap.Add(NavigationPriority(0,Estimate(start,end),start));
+   while(navigationHeap.Count!=0){
+    long key=navigationHeap.Pop();int cur=(int)(key%(N*M));if(NavigationCost(cur)==int.MaxValue||key!=NavigationPriority(NavigationCost(cur),Estimate(cur,end),cur))continue;if(cur==end)break;
     for(int y=-1;y<=1;y++)for(int x=-1;x<=1;x++){
      int col=cur%N+x,row=cur/N+y,n=row*N+col;if(col<0||col>=N||row<0||row>=M||!open[n])continue;
-     int next=cost[cur]+(x*y==0?10:14);if(next>=cost[n])continue;
+     int next=NavigationCost(cur)+(x*y==0?10:14);if(next>=NavigationCost(n))continue;
      if(x*y!=0&&(!open[cur+x]||!open[cur+y*N]))continue;
-     if(!Clear(Center(cur),Center(n),blocks,pad))continue;
-     int h=Estimate(n,end);if(cost[n]!=int.MaxValue)frontier.Remove((long)(cost[n]+h)*(N*M)+n);
-     cost[n]=next;previous[n]=cur;frontier.Add((long)(next+h)*(N*M)+n);
+     if(!NavigationLink(grid,cur,n,pad))continue;
+     int h=Estimate(n,end);SetNavigationCost(n,next,cur);navigationHeap.Add(NavigationPriority(next,h,n));
     }
    }
-   if(cost[end]==int.MaxValue)return false;
-   var points=new List<PointF>();for(int i=end;;i=previous[i]){points.Add(Center(i));if(i==start)break;}
+   if(NavigationCost(end)==int.MaxValue)return false;
+   var points=new List<PointF>();for(int i=end;;i=navigationPrevious[i]){points.Add(Center(i));if(i==start)break;}
    points.Reverse();points.Add(dest);PointF from=o.P;
-   for(int i=0;i<points.Count;){int far=i;while(far+1<points.Count&&CanLink(tracks,from,points[far+1],blocks,pad))far++;if(tracks){if(!TrackLegs(from,points[far],blocks,route,pad))return false;}else route.Enqueue(points[far]);from=points[far];i=far+1;}
+   for(int i=0;i<points.Count;){int far=FarthestRoutePoint(from,points,i,tracks,blocks,pad);if(tracks){if(!TrackLegs(from,points[far],blocks,route,pad))return false;}else route.Enqueue(points[far]);from=points[far];i=far+1;}
   }else if(tracks)TrackLegs(o.P,dest,blocks,route,pad);else route.Enqueue(dest);
   o.Path=route;o.RouteVersion=topology;return true;
  }

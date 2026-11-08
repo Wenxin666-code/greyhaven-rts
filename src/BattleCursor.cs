@@ -22,8 +22,8 @@ partial class CommandWindow {
    count<troops.Length?new PointerHint(PointerKind.Partial,"部分单位可达 · "+count+" / "+troops.Length):new PointerHint(kind,text);
  }
  PointerHint DescribePointer(Keys mods){
-  if(briefing||paused||world.Won||world.Lost||mouse.X<0||mouse.X>=MW||mouse.Y<MapTop||mouse.Y>=MapTop+MH||hits.Any(h=>h.Box.Contains(mouse)))return new PointerHint(PointerKind.Arrow,"");
-  if(panning)return new PointerHint(PointerKind.Pan,"拖动视角");
+  if(briefing||paused||diplomacyOpen||world.Won||world.Lost||mouse.X<0||mouse.X>=MW||mouse.Y<MapTop||mouse.Y>=MapTop+MH||hits.Any(h=>h.Box.Contains(mouse)))return new PointerHint(PointerKind.Arrow,"");
+  if(panning||rightDragging)return new PointerHint(PointerKind.Pan,"拖动视角");
   if(drag&&dragged)return new PointerHint(PointerKind.Select,"");
   var p=WorldOf(mouse);var hit=HitScreen(mouse);
   if(place!=null)return world.Construction(place)!=null&&world.Construction(place).Ready&&world.Live(0).Any(u=>u.T.Key=="hq")&&world.CanPlace(place,p,null)?new PointerHint(PointerKind.Build,"放置 "+place.Name):new PointerHint(PointerKind.Blocked,"此处不能建造");
@@ -34,7 +34,8 @@ partial class CommandWindow {
    if(hit.Deployed&&(hit.T.Civilian||hit.T.Key=="ifv")&&world.HouseCount(hit)>0)return new PointerHint(PointerKind.Deploy,"卸载／撤出 · 左键或 D");
   }
   if(!attack&&mods==Keys.None&&hit==null&&selection.Count==1&&selection[0].T.Key=="hq")return new PointerHint(world.CanRelocate(selection[0],p)?PointerKind.Move:PointerKind.Blocked,"收起基地并移动");
-  if(zHeld)return MovementHint(p,PointerKind.Waypoint,"添加路径点");
+  if(beaconMode)return new PointerHint(PointerKind.Waypoint,"放置战场标记");
+  if(PlanningActive)return MovementHint(p,PointerKind.Waypoint,"添加路径点");
   if((mods&(Keys.Control|Keys.Alt))==(Keys.Control|Keys.Alt)){
    if(hit!=null&&hit.Side==0)return selection.Any(u=>u!=hit&&u.Deployed&&!u.T.Building)?new PointerHint(PointerKind.Escort,"护卫 "+hit.T.Name):new PointerHint(PointerKind.Blocked,"请选其他部队进行护卫");
    return MovementHint(p,PointerKind.Guard,"到达后警戒");

@@ -1,0 +1,490 @@
+{
+  "date": "2026-11-07",
+  "baseCommit": "814cb94",
+  "githubUploaded": false,
+  "construction": {
+    "buildings": 11,
+    "frames": 72,
+    "rigidAssembly": true,
+    "originalCompletePixelsRetained": true,
+    "assemblySeconds": 1.2,
+    "footprintAndProductionParametersUnchanged": true
+  },
+  "damage": {
+    "skinsPerBuilding": 3,
+    "healthThresholds": [
+      0.75,
+      0.5,
+      0.25
+    ],
+    "independentFactionContribution": true,
+    "repairRestoresAppearance": true,
+    "factoryDamagedDoorFramesPerSkin": 16
+  },
+  "destruction": {
+    "uprightUntilDetonation": true,
+    "blastSecondsAfterDeath": 1.28,
+    "clearBuildingAndShadowAt": 1.43,
+    "physicalCollapsePlayed": false,
+    "retainedBuildingRuin": false,
+    "embersFadeSeconds": 1.1,
+    "cratersAreRenderOnly": true,
+    "craterLimit": 256,
+    "cratersSurviveCorpseCleanup": true,
+    "cratersBelowStructures": true,
+    "craterCollision": false,
+    "outcomeWaitSeconds": 2.65
+  },
+  "hazardAtlases": {
+    "flameFrames": 96,
+    "smokeFrames": 96,
+    "blastFrames": 32,
+    "prebaked": true
+  },
+  "nativeChecks": {
+    "fullRegression": true,
+    "constructionAndColor": true,
+    "burnBeforeBlast": true,
+    "partialBuildingCleared": true,
+    "removedGeometryAndShadow": true,
+    "craterDoesNotAddGameplayObjects": true,
+    "craterSurvivesCleanup": true,
+    "tutorial": true,
+    "mining": true,
+    "queuesAndSurrender": true,
+    "convoyAndRearFiring20And60Hz": true,
+    "terrainReferenceThreeZooms": true,
+    "fullscreenAndInput": true,
+    "modelPreviewControls": true
+  },
+  "sourceFingerprint": "40d094afd580f53c54ded03200329f6ae5d6d13ce9c0ad5df8694ceab85cb142",
+  "artPack": {
+    "file": "art/source/buildings-v10/packed/structures-v10.pak",
+    "bytes": 58447567,
+    "sha256": "75cc4b507842248fea110b62a134b6f75ece7314050cffd0c9c321d2c5603ca0"
+  },
+  "models": [
+    {
+      "key": "hq",
+      "rigidConstructionPieces": 606,
+      "temporarySupports": 30,
+      "buildSnapshots": [
+        {
+          "t": 0.15,
+          "supports": 29,
+          "walls": 0,
+          "roofs": 0,
+          "systems": 0
+        },
+        {
+          "t": 0.4,
+          "supports": 30,
+          "walls": 134,
+          "roofs": 0,
+          "systems": 0
+        },
+        {
+          "t": 0.7,
+          "supports": 30,
+          "walls": 152,
+          "roofs": 61,
+          "systems": 0
+        },
+        {
+          "t": 0.9,
+          "supports": 30,
+          "walls": 152,
+          "roofs": 93,
+          "systems": 129
+        }
+      ]
+    },
+    {
+      "key": "barracks",
+      "rigidConstructionPieces": 407,
+      "temporarySupports": 24,
+      "buildSnapshots": [
+        {
+          "t": 0.15,
+          "supports": 24,
+          "walls": 0,
+          "roofs": 0,
+          "systems": 0
+        },
+        {
+          "t": 0.4,
+          "supports": 24,
+          "walls": 84,
+          "roofs": 0,
+          "systems": 0
+        },
+        {
+          "t": 0.7,
+          "supports": 24,
+          "walls": 91,
+          "roofs": 129,
+          "systems": 0
+        },
+        {
+          "t": 0.9,
+          "supports": 24,
+          "walls": 91,
+          "roofs": 187,
+          "systems": 30
+        }
+      ]
+    },
+    {
+      "key": "factory",
+      "rigidConstructionPieces": 543,
+      "temporarySupports": 18,
+      "buildSnapshots": [
+        {
+          "t": 0.15,
+          "supports": 16,
+          "walls": 0,
+          "roofs": 0,
+          "systems": 0
+        },
+        {
+          "t": 0.4,
+          "supports": 18,
+          "walls": 91,
+          "roofs": 0,
+          "systems": 0
+        },
+        {
+          "t": 0.7,
+          "supports": 18,
+          "walls": 123,
+          "roofs": 67,
+          "systems": 0
+        },
+        {
+          "t": 0.9,
+          "supports": 18,
+          "walls": 123,
+          "roofs": 99,
+          "systems": 188
+        }
+      ]
+    },
+    {
+      "key": "power",
+      "rigidConstructionPieces": 298,
+      "temporarySupports": 42,
+      "buildSnapshots": [
+        {
+          "t": 0.15,
+          "supports": 42,
+          "walls": 0,
+          "roofs": 0,
+          "systems": 0
+        },
+        {
+          "t": 0.4,
+          "supports": 42,
+          "walls": 82,
+          "roofs": 0,
+          "systems": 0
+        },
+        {
+          "t": 0.7,
+          "supports": 42,
+          "walls": 86,
+          "roofs": 14,
+          "systems": 0
+        },
+        {
+          "t": 0.9,
+          "supports": 42,
+          "walls": 86,
+          "roofs": 18,
+          "systems": 116
+        }
+      ]
+    },
+    {
+      "key": "radar",
+      "rigidConstructionPieces": 394,
+      "temporarySupports": 12,
+      "buildSnapshots": [
+        {
+          "t": 0.15,
+          "supports": 12,
+          "walls": 0,
+          "roofs": 0,
+          "systems": 0
+        },
+        {
+          "t": 0.4,
+          "supports": 12,
+          "walls": 31,
+          "roofs": 0,
+          "systems": 0
+        },
+        {
+          "t": 0.7,
+          "supports": 12,
+          "walls": 31,
+          "roofs": 49,
+          "systems": 0
+        },
+        {
+          "t": 0.9,
+          "supports": 12,
+          "walls": 31,
+          "roofs": 75,
+          "systems": 163
+        }
+      ]
+    },
+    {
+      "key": "satellite",
+      "rigidConstructionPieces": 302,
+      "temporarySupports": 12,
+      "buildSnapshots": [
+        {
+          "t": 0.15,
+          "supports": 12,
+          "walls": 0,
+          "roofs": 0,
+          "systems": 0
+        },
+        {
+          "t": 0.4,
+          "supports": 12,
+          "walls": 31,
+          "roofs": 0,
+          "systems": 0
+        },
+        {
+          "t": 0.7,
+          "supports": 12,
+          "walls": 31,
+          "roofs": 49,
+          "systems": 0
+        },
+        {
+          "t": 0.9,
+          "supports": 12,
+          "walls": 31,
+          "roofs": 75,
+          "systems": 71
+        }
+      ]
+    },
+    {
+      "key": "post",
+      "rigidConstructionPieces": 88,
+      "temporarySupports": 6,
+      "buildSnapshots": [
+        {
+          "t": 0.15,
+          "supports": 6,
+          "walls": 0,
+          "roofs": 0,
+          "systems": 0
+        },
+        {
+          "t": 0.4,
+          "supports": 6,
+          "walls": 4,
+          "roofs": 0,
+          "systems": 0
+        },
+        {
+          "t": 0.7,
+          "supports": 6,
+          "walls": 4,
+          "roofs": 3,
+          "systems": 0
+        },
+        {
+          "t": 0.9,
+          "supports": 6,
+          "walls": 4,
+          "roofs": 4,
+          "systems": 26
+        }
+      ]
+    },
+    {
+      "key": "refinery",
+      "rigidConstructionPieces": 278,
+      "temporarySupports": 24,
+      "buildSnapshots": [
+        {
+          "t": 0.15,
+          "supports": 21,
+          "walls": 0,
+          "roofs": 0,
+          "systems": 0
+        },
+        {
+          "t": 0.4,
+          "supports": 24,
+          "walls": 49,
+          "roofs": 0,
+          "systems": 0
+        },
+        {
+          "t": 0.7,
+          "supports": 24,
+          "walls": 95,
+          "roofs": 33,
+          "systems": 0
+        },
+        {
+          "t": 0.9,
+          "supports": 24,
+          "walls": 95,
+          "roofs": 43,
+          "systems": 78
+        }
+      ]
+    },
+    {
+      "key": "residence",
+      "rigidConstructionPieces": 288,
+      "temporarySupports": 18,
+      "buildSnapshots": [
+        {
+          "t": 0.15,
+          "supports": 17,
+          "walls": 0,
+          "roofs": 0,
+          "systems": 0
+        },
+        {
+          "t": 0.4,
+          "supports": 18,
+          "walls": 40,
+          "roofs": 0,
+          "systems": 0
+        },
+        {
+          "t": 0.7,
+          "supports": 18,
+          "walls": 47,
+          "roofs": 56,
+          "systems": 0
+        },
+        {
+          "t": 0.9,
+          "supports": 18,
+          "walls": 47,
+          "roofs": 85,
+          "systems": 22
+        }
+      ]
+    },
+    {
+      "key": "shop",
+      "rigidConstructionPieces": 501,
+      "temporarySupports": 24,
+      "buildSnapshots": [
+        {
+          "t": 0.15,
+          "supports": 17,
+          "walls": 0,
+          "roofs": 0,
+          "systems": 0
+        },
+        {
+          "t": 0.4,
+          "supports": 24,
+          "walls": 47,
+          "roofs": 0,
+          "systems": 0
+        },
+        {
+          "t": 0.7,
+          "supports": 24,
+          "walls": 63,
+          "roofs": 56,
+          "systems": 0
+        },
+        {
+          "t": 0.9,
+          "supports": 24,
+          "walls": 63,
+          "roofs": 85,
+          "systems": 68
+        }
+      ]
+    },
+    {
+      "key": "municipal",
+      "rigidConstructionPieces": 593,
+      "temporarySupports": 54,
+      "buildSnapshots": [
+        {
+          "t": 0.15,
+          "supports": 45,
+          "walls": 0,
+          "roofs": 0,
+          "systems": 0
+        },
+        {
+          "t": 0.4,
+          "supports": 54,
+          "walls": 80,
+          "roofs": 0,
+          "systems": 0
+        },
+        {
+          "t": 0.7,
+          "supports": 54,
+          "walls": 100,
+          "roofs": 109,
+          "systems": 0
+        },
+        {
+          "t": 0.9,
+          "supports": 54,
+          "walls": 100,
+          "roofs": 157,
+          "systems": 65
+        }
+      ]
+    }
+  ],
+  "reviewVideo": {
+    "artifact": {
+      "file": "docs/结构搭建与受损燃爆-v10.mp4",
+      "bytes": 2674591,
+      "sha256": "b19a9dc3cc96285b8cee2ef0364071e506b3a3482c3d4052b9f35acdf196c568"
+    },
+    "durationSeconds": 28,
+    "notes": "Construction quarter speed; damage/fire/detonation normal speed; incomplete-structure death half speed; enlarged native render detail in final scene."
+  },
+  "effects": [
+    {
+      "file": "art/source/buildings-v10/materials/hazard-flame-v10.png",
+      "bytes": 598668,
+      "sha256": "944bc6d688ddab2e6cd6a283082281f405dd985da56d3ebb8f520ccafee70e0a"
+    },
+    {
+      "file": "art/source/buildings-v10/materials/hazard-soot-v10.png",
+      "bytes": 353813,
+      "sha256": "30c66ffcdc631254ebf80e8b6c2896511ddf076ad62fc9da9786d8d4b3c646b8"
+    },
+    {
+      "file": "art/source/buildings-v10/materials/hazard-blast-v10.png",
+      "bytes": 202266,
+      "sha256": "28512cbd032f4664810e07dbf417537c25b09ed3e34a90472de0e8e031ef45b5"
+    }
+  ],
+  "executable": {
+    "file": "断线前沿.exe",
+    "bytes": 197869568,
+    "sha256": "963d77c7911173a29a79824c410ec2c14f2bcf28e1b8dde49cd08426746527aa"
+  },
+  "isolatedElevenBuildingTimingMs": {
+    "warmMedian": 1.41,
+    "warmP95": 1.56,
+    "firstCycleP95": 5.19,
+    "scope": "Sprite-only local measurement; not complete battle FPS."
+  }
+}

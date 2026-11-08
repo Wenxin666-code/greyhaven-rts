@@ -10,6 +10,7 @@ partial class CommandWindow {
  }
  void DrawTargetFlash(Graphics g,Piece unit,PointF position,float size){
   float strength=TargetFlash(unit);if(strength<=.01f)return;
+  if(unit.T.Building)position=DeploymentPoint(unit,position);
   var t=unit.T;var source=t.Key=="tank"?TankCell(unit.Side,TankFrame(unit)):SourceCell(t,unit.Side,(unit.Dir+14)%16);
   var key=t.Building?BuildingVisual(unit,out source):LiveArtKey(unit);
   var box=t.Building?BuildingRect(Campaign.Footprint(t,unit.P),position,zoom):t.Foot?SoldierBox(SoldierFeet(unit,position,zoom,world.Time),size):VehicleRect(t,position,size);

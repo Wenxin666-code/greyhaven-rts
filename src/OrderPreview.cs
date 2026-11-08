@@ -6,8 +6,9 @@ namespace Greyhaven {
 public partial class Campaign {
  void OpenGrid(NavigationGrid grid,float pad){
   if(grid.Open!=null)return;
-  grid.Open=new bool[N*M];
-  for(int i=0;i<grid.Open.Length;i++){var c=Center(i);grid.Open[i]=c.X>=pad&&c.X<=MapWidth-pad&&c.Y>=(River==null?99:0)+pad&&c.Y<=MapHeight-pad&&TerrainOpen(c,pad)&&!grid.Barriers.Any(r=>r.Contains(c));}
+  grid.Open=(bool[])TerrainNavigation(pad).Open.Clone();
+  foreach(var r in grid.Barriers)for(int y=Math.Max(0,(int)Math.Floor(r.Top/Step));y<=Math.Min(M-1,(int)Math.Floor(r.Bottom/Step));y++)
+   for(int x=Math.Max(0,(int)Math.Floor(r.Left/Step));x<=Math.Min(N-1,(int)Math.Floor(r.Right/Step));x++){int i=y*N+x;if(r.Contains(Center(i)))grid.Open[i]=false;}
  }
  void ConnectGrid(NavigationGrid grid,float pad){
   if(grid.Regions!=null)return;OpenGrid(grid,pad);
@@ -19,7 +20,7 @@ public partial class Campaign {
      if(x==0&&y==0)continue;int col=cur%N+x,row=cur/N+y,n=row*N+col;
      if(col<0||col>=N||row<0||row>=M||!grid.Open[n]||grid.Regions[n]!=0)continue;
      if(x*y!=0&&(!grid.Open[cur+x]||!grid.Open[cur+y*N]))continue;
-     if(!Clear(Center(cur),Center(n),grid.Barriers,pad))continue;
+     if(!NavigationLink(grid,cur,n,pad))continue;
      grid.Regions[n]=region;queue.Enqueue(n);
     }
    }
@@ -32,6 +33,7 @@ public partial class Campaign {
   float pad=Clearance(unit);if(Blocked(p,pad,null))return false;
   var grid=Grid(pad);bool tracks=!unit.T.Foot;
   if(CanLink(tracks,unit.P,p,grid.Barriers,pad))return true;
+  if(IslandMission)return IslandMovePreview(unit,p,grid,pad,tracks);
   ConnectGrid(grid,pad);int a=Anchor(unit.P,grid.Open,grid.Barriers,tracks,pad),b=Anchor(p,grid.Open,grid.Barriers,tracks,pad);
   return a>=0&&b>=0&&grid.Regions[a]==grid.Regions[b];
  }

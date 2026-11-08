@@ -1,0 +1,613 @@
+{
+  "version": 8,
+  "frameSize": 320,
+  "buildFrames": 48,
+  "collapseFrames": 48,
+  "idleFrames": 48,
+  "idleFps": 24,
+  "doorFrames": 16,
+  "bytes": 74066400,
+  "sourceFingerprint": "83290613e7e8245d54a2b7a39731cd44e195f10400e45043155b9380c717954e",
+  "buildings": {
+    "hq": {
+      "stats": {
+        "key": "hq",
+        "meshes": 436,
+        "uniqueGeometry": 112,
+        "materials": 66,
+        "triangles": 9260,
+        "parts": 21,
+        "movingParts": 8,
+        "foundation": [
+          3,
+          2
+        ],
+        "groundBounds": [
+          -1.5,
+          -1,
+          1.5,
+          1.0000000029802323
+        ]
+      },
+      "complete": {
+        "ink": 25394,
+        "bounds": [
+          48,
+          69,
+          272,
+          276
+        ],
+        "paintInk": 7414,
+        "paintFraction": 0.29195873040875797
+      },
+      "points": {
+        "muzzle": null
+      },
+      "buildCrop": [
+        0,
+        0,
+        320,
+        320
+      ],
+      "collapseCrop": [
+        0,
+        0,
+        320,
+        320
+      ],
+      "idleCrop": [
+        56,
+        131,
+        189,
+        236
+      ]
+    },
+    "barracks": {
+      "stats": {
+        "key": "barracks",
+        "meshes": 271,
+        "uniqueGeometry": 64,
+        "materials": 40,
+        "triangles": 5032,
+        "parts": 18,
+        "movingParts": 4,
+        "foundation": [
+          2,
+          2
+        ],
+        "groundBounds": [
+          -1,
+          -1,
+          1,
+          1.0000000029802323
+        ]
+      },
+      "complete": {
+        "ink": 25653,
+        "bounds": [
+          48,
+          92,
+          272,
+          276
+        ],
+        "paintInk": 6575,
+        "paintFraction": 0.25630530542236774
+      },
+      "points": {
+        "muzzle": null
+      },
+      "buildCrop": [
+        0,
+        0,
+        320,
+        320
+      ],
+      "collapseCrop": [
+        0,
+        0,
+        320,
+        320
+      ],
+      "idleCrop": [
+        74,
+        180,
+        144,
+        219
+      ]
+    },
+    "factory": {
+      "stats": {
+        "key": "factory",
+        "meshes": 346,
+        "uniqueGeometry": 96,
+        "materials": 60,
+        "triangles": 6016,
+        "parts": 22,
+        "movingParts": 11,
+        "foundation": [
+          3,
+          2
+        ],
+        "groundBounds": [
+          -1.5,
+          -1,
+          1.5,
+          1
+        ]
+      },
+      "complete": {
+        "ink": 26965,
+        "bounds": [
+          48,
+          97,
+          272,
+          276
+        ],
+        "paintInk": 11843,
+        "paintFraction": 0.4391989616169108
+      },
+      "points": {
+        "gate": {
+          "left": -1.2,
+          "right": 0.36,
+          "top": 1.075,
+          "bottom": 0.08,
+          "z": 0.82
+        },
+        "muzzle": null
+      },
+      "buildCrop": [
+        0,
+        0,
+        320,
+        320
+      ],
+      "collapseCrop": [
+        0,
+        0,
+        320,
+        320
+      ],
+      "idleCrop": [
+        76,
+        100,
+        184,
+        233
+      ],
+      "doorCrop": [
+        66,
+        147,
+        144,
+        244
+      ]
+    },
+    "power": {
+      "stats": {
+        "key": "power",
+        "meshes": 214,
+        "uniqueGeometry": 50,
+        "materials": 32,
+        "triangles": 4652,
+        "parts": 14,
+        "movingParts": 5,
+        "foundation": [
+          2,
+          2
+        ],
+        "groundBounds": [
+          -1,
+          -1,
+          1,
+          1
+        ]
+      },
+      "complete": {
+        "ink": 28662,
+        "bounds": [
+          48,
+          30,
+          272,
+          276
+        ],
+        "paintInk": 6739,
+        "paintFraction": 0.23511967064405834
+      },
+      "points": {
+        "muzzle": null
+      },
+      "buildCrop": [
+        0,
+        0,
+        320,
+        320
+      ],
+      "collapseCrop": [
+        0,
+        0,
+        320,
+        320
+      ],
+      "idleCrop": [
+        124,
+        31,
+        226,
+        235
+      ]
+    },
+    "radar": {
+      "stats": {
+        "key": "radar",
+        "meshes": 316,
+        "uniqueGeometry": 166,
+        "materials": 39,
+        "triangles": 5472,
+        "parts": 10,
+        "movingParts": 2,
+        "foundation": [
+          2,
+          2
+        ],
+        "groundBounds": [
+          -1,
+          -1,
+          1,
+          1.0000000029802323
+        ]
+      },
+      "complete": {
+        "ink": 28220,
+        "bounds": [
+          48,
+          39,
+          272,
+          276
+        ],
+        "paintInk": 13271,
+        "paintFraction": 0.4702693125442948
+      },
+      "points": {
+        "muzzle": null
+      },
+      "buildCrop": [
+        0,
+        0,
+        320,
+        320
+      ],
+      "collapseCrop": [
+        0,
+        0,
+        320,
+        320
+      ],
+      "idleCrop": [
+        82,
+        35,
+        225,
+        206
+      ]
+    },
+    "satellite": {
+      "stats": {
+        "key": "satellite",
+        "meshes": 223,
+        "uniqueGeometry": 74,
+        "materials": 39,
+        "triangles": 4276,
+        "parts": 10,
+        "movingParts": 2,
+        "foundation": [
+          2,
+          2
+        ],
+        "groundBounds": [
+          -1,
+          -1,
+          1,
+          1.0000000029802323
+        ]
+      },
+      "complete": {
+        "ink": 28940,
+        "bounds": [
+          48,
+          39,
+          272,
+          276
+        ],
+        "paintInk": 13638,
+        "paintFraction": 0.4712508638562543
+      },
+      "points": {
+        "muzzle": null
+      },
+      "buildCrop": [
+        0,
+        0,
+        320,
+        320
+      ],
+      "collapseCrop": [
+        0,
+        0,
+        320,
+        320
+      ],
+      "idleCrop": [
+        82,
+        36,
+        208,
+        206
+      ]
+    },
+    "post": {
+      "stats": {
+        "key": "post",
+        "meshes": 81,
+        "uniqueGeometry": 37,
+        "materials": 17,
+        "triangles": 1720,
+        "parts": 7,
+        "movingParts": 3,
+        "foundation": [
+          1,
+          1
+        ],
+        "groundBounds": [
+          -0.5,
+          -0.5,
+          0.5,
+          0.4999999701976776
+        ]
+      },
+      "complete": {
+        "ink": 23612,
+        "bounds": [
+          48,
+          81,
+          272,
+          276
+        ],
+        "paintInk": 9651,
+        "paintFraction": 0.408732847704557
+      },
+      "points": {
+        "muzzle": [
+          106.2400000000008,
+          148.11657357098184
+        ]
+      },
+      "buildCrop": [
+        0,
+        0,
+        320,
+        320
+      ],
+      "collapseCrop": [
+        0,
+        0,
+        320,
+        320
+      ],
+      "idleCrop": [
+        131,
+        78,
+        186,
+        196
+      ]
+    },
+    "refinery": {
+      "stats": {
+        "key": "refinery",
+        "meshes": 197,
+        "uniqueGeometry": 65,
+        "materials": 41,
+        "triangles": 3780,
+        "parts": 16,
+        "movingParts": 10,
+        "foundation": [
+          2,
+          2
+        ],
+        "groundBounds": [
+          -1,
+          -1,
+          1,
+          1
+        ]
+      },
+      "complete": {
+        "ink": 25393,
+        "bounds": [
+          48,
+          77,
+          272,
+          276
+        ],
+        "paintInk": 8444,
+        "paintFraction": 0.33253258772102545
+      },
+      "points": {
+        "muzzle": null
+      },
+      "buildCrop": [
+        0,
+        0,
+        320,
+        320
+      ],
+      "collapseCrop": [
+        0,
+        0,
+        320,
+        320
+      ],
+      "idleCrop": [
+        122,
+        91,
+        211,
+        215
+      ]
+    },
+    "residence": {
+      "stats": {
+        "key": "residence",
+        "meshes": 174,
+        "uniqueGeometry": 56,
+        "materials": 43,
+        "triangles": 3324,
+        "parts": 10,
+        "movingParts": 1,
+        "foundation": [
+          2,
+          2
+        ],
+        "groundBounds": [
+          -1,
+          -1,
+          1,
+          1.0000000029802323
+        ]
+      },
+      "complete": {
+        "ink": 31445,
+        "bounds": [
+          48,
+          67,
+          272,
+          276
+        ],
+        "paintInk": 8227,
+        "paintFraction": 0.26163141993957706
+      },
+      "points": {
+        "muzzle": null
+      },
+      "buildCrop": [
+        0,
+        0,
+        320,
+        320
+      ],
+      "collapseCrop": [
+        0,
+        0,
+        320,
+        320
+      ],
+      "idleCrop": [
+        117,
+        202,
+        136,
+        215
+      ]
+    },
+    "shop": {
+      "stats": {
+        "key": "shop",
+        "meshes": 338,
+        "uniqueGeometry": 69,
+        "materials": 44,
+        "triangles": 6276,
+        "parts": 14,
+        "movingParts": 6,
+        "foundation": [
+          3,
+          2
+        ],
+        "groundBounds": [
+          -1.5,
+          -1,
+          1.5,
+          1.0000000029802323
+        ]
+      },
+      "complete": {
+        "ink": 30945,
+        "bounds": [
+          48,
+          55,
+          272,
+          276
+        ],
+        "paintInk": 10920,
+        "paintFraction": 0.35288414929714007
+      },
+      "points": {
+        "muzzle": null
+      },
+      "buildCrop": [
+        0,
+        0,
+        320,
+        320
+      ],
+      "collapseCrop": [
+        0,
+        0,
+        320,
+        320
+      ],
+      "idleCrop": [
+        59,
+        100,
+        194,
+        235
+      ]
+    },
+    "municipal": {
+      "stats": {
+        "key": "municipal",
+        "meshes": 340,
+        "uniqueGeometry": 74,
+        "materials": 47,
+        "triangles": 6348,
+        "parts": 11,
+        "movingParts": 2,
+        "foundation": [
+          3,
+          3
+        ],
+        "groundBounds": [
+          -1.5,
+          -1.5,
+          1.5,
+          1.5
+        ]
+      },
+      "complete": {
+        "ink": 29464,
+        "bounds": [
+          48,
+          54,
+          272,
+          276
+        ],
+        "paintInk": 9540,
+        "paintFraction": 0.32378495791474343
+      },
+      "points": {
+        "muzzle": null
+      },
+      "buildCrop": [
+        0,
+        0,
+        320,
+        320
+      ],
+      "collapseCrop": [
+        0,
+        0,
+        320,
+        320
+      ],
+      "idleCrop": [
+        182,
+        79,
+        195,
+        90
+      ]
+    }
+  },
+  "materialFingerprint": "96cb8f34c862eb27af7e0f90361ec1e2e44b1c078a8650939d7df2660256d0db"
+}

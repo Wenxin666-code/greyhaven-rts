@@ -89,7 +89,7 @@ partial class CommandWindow {
     }
    }
   }
-  var state=g.Save();g.ResetTransform();
+  var state=g.Save();g.ResetTransform();g.CompositingMode=CompositingMode.SourceCopy;
   g.DrawImageUnscaled(terrainView,(int)Math.Round(ox)+dx-TerrainMargin,(int)Math.Round(oy+MapTop*scale)+dy-TerrainMargin);g.Restore(state);
   // Prepare one nearby tile per ordinary frame instead of a whole new strip
   // at the next viewport-cache boundary. UI input never waits for that strip.

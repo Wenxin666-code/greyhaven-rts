@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -38,7 +38,7 @@ class WindowChecks {
    Press(f,158,700);if((bool)Field(f,"rulesOpen"))throw new Exception("rules return");Press(f,220,571);
    if(!(bool)Field(f,"missionPicker")||!(bool)Field(f,"briefing"))throw new Exception("start must open mission selection");
    Frame(f,args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"关卡选择.png"));
-   Press(f,220,454);if(!(bool)Field(f,"mapReview"))throw new Exception("new map preview entry");
+   Press(f,220,556);if(!(bool)Field(f,"mapReview"))throw new Exception("new map preview entry");
    typeof(CommandWindow).GetMethod("OnKeyDown",flags).Invoke(f,new object[]{new KeyEventArgs(Keys.Escape)});Frame(f,null);
    if((bool)Field(f,"mapReview")||!(bool)Field(f,"missionPicker"))throw new Exception("map preview return to missions");
    Press(f,140,694);if((bool)Field(f,"missionPicker"))throw new Exception("back to title");
@@ -49,15 +49,15 @@ class WindowChecks {
    var after=(PointF)inv.Invoke(f,new object[]{screen});if(Campaign.Dist(before,after)>2||(float)Field(f,"zoom")<=oldZoom)throw new Exception("cursor anchored zoom");Frame(f,null);
    Tap(f,"步兵");CardClick(f,0);if(((Campaign)Field(f,"world")).LastOrder!=null)throw new Exception("locked card accepted");
    Tap(f,"建筑");
-   var w=(Campaign)Field(f,"world");Press(f,399,738);if(!w.Landing)throw new Exception("deploy button");
+   var w=(Campaign)Field(f,"world");Tap(f,"command-deploy");if(!w.Landing)throw new Exception("deploy button");
    for(int i=0;i<60;i++)w.Tick(.1f);Frame(f,null);
    CardClick(f,0);for(int i=0;i<80;i++)w.Tick(.1f);Frame(f,null);CardClick(f,0);MapClick(f,263,548);if(!w.Units.Any(o=>o.Side==0&&o.T.Key=="power"))throw new Exception("construction click");
    for(int i=0;i<60;i++)w.Tick(.1f);Frame(f,null);
    if(w.LessonKey!="refinery")throw new Exception("missing refinery stage");
-   Press(f,767,90);Tap(f,"card-refinery");for(int i=0;i<180;i++)w.Tick(.1f);Frame(f,null);Tap(f,"card-refinery");MapClick(f,66,450);
+   Tap(f,"定位本步");Tap(f,"card-refinery");for(int i=0;i<180;i++)w.Tick(.1f);Frame(f,null);Tap(f,"card-refinery");MapClick(f,66,450);
    for(int i=0;i<14;i++)w.Tick(.1f);Frame(f,null);
    if(w.LessonKey!="ore")throw new Exception("ore stage "+w.LessonKey);
-   Press(f,767,90);var miner=w.Live(0).First(o=>o.T.Key=="miner");
+   Tap(f,"定位本步");var miner=w.Live(0).First(o=>o.T.Key=="miner");
    if(!((System.Collections.Generic.List<Piece>)Field(f,"selection")).Contains(miner))throw new Exception("focus truck");
    for(int i=0;i<400&&w.LessonKey=="ore";i++)w.Tick(.1f);
    if(w.LessonKey!="receipt"||w.OreReceipts[0]!=0)throw new Exception("deposit lesson before sale");
@@ -67,16 +67,16 @@ class WindowChecks {
    for(int i=0;i<60;i++)w.Tick(.1f);Frame(f,null);CardClick(f,1);for(int i=0;i<100;i++)w.Tick(.1f);Frame(f,null);CardClick(f,1);MapClick(f,123,610);for(int i=0;i<65;i++)w.Tick(.1f);
    Frame(f,null);CardClick(f,2);for(int i=0;i<170;i++)w.Tick(.1f);Frame(f,null);CardClick(f,2);MapClick(f,339,548);for(int i=0;i<110;i++)w.Tick(.1f);
    Tap(f,"步兵");CardClick(f,0);if(!w.Live(0).Any(o=>o.Queue.Count>0))throw new Exception("training click");
-   CardClick(f,0);Tap(f,"总览");
+   CardClick(f,0);typeof(CommandWindow).GetMethod("OnKeyDown",flags).Invoke(f,new object[]{new KeyEventArgs(Keys.Escape)});Frame(f,null);Tap(f,"生产队列");
    if(!(bool)Field(f,"queueOpen"))throw new Exception("queue tab");
    var source=w.Live(0).Single(o=>o.Queue.Count>0);if(source.Queue.Count!=2)throw new Exception("second order");
    Frame(f,args.Length==0?null:args[0]);int funds=w.Funds[0];Tap(f,"cancel-1");if(source.Queue.Count!=1||w.Funds[0]!=funds)throw new Exception("cancel waiting slot");
    if(w.LessonKey!="squad"||!w.Tutorial)throw new Exception("default tutorial step");
    for(int i=0;i<60;i++)w.Tick(.1f);Frame(f,null);
    if(w.LessonKey!="ifv")throw new Exception("soldier delivery plus prebuilt factory");
-   Press(f,767,90);CardClick(f,0);for(int i=0;i<95;i++)w.Tick(.1f);Frame(f,null);
+   Tap(f,"定位本步");CardClick(f,0);for(int i=0;i<95;i++)w.Tick(.1f);Frame(f,null);
    if(args.Length>0){
-    w.Upgrade();w.Train(Campaign.Info("tank"),0,null);for(int i=0;i<140;i++)w.Tick(.1f);
+    w.Train(Campaign.Info("tank"),0,null);for(int i=0;i<140;i++)w.Tick(.1f);
     Tap(f,"步兵");typeof(CommandWindow).GetMethod("CenterAt",flags).Invoke(f,new object[]{new PointF(300,495)});
 
     var armor=w.Live(0).FirstOrDefault(u=>u.T.Key=="tank");if(armor!=null){
@@ -85,12 +85,12 @@ class WindowChecks {
     var factory=w.Live(0).First(u=>u.T.Key=="factory");w.Train(Campaign.Info("tank"),0,factory);w.Train(Campaign.Info("ifv"),0,factory);for(int t=0;t<28;t++)w.Tick(.1f);
     Frame(f,Path.Combine(Path.GetDirectoryName(args[0]),"等距战场.png"));f.CaptureDefaultScale(Path.Combine(Path.GetDirectoryName(args[0]),"战场比例.png"));while(factory.Queue.Count>0)w.CancelOrder(factory,0);
    }
-   if(w.LessonKey!="eliminate")throw new Exception("ifv training");Press(f,767,90);
+   if(w.LessonKey!="eliminate")throw new Exception("ifv training");Tap(f,"定位本步");
    typeof(CommandWindow).GetField("mouse",flags).SetValue(f,(PointF)typeof(CommandWindow).GetMethod("ScreenOf",flags).Invoke(f,new object[]{new PointF(1330,292)}));typeof(CommandWindow).GetMethod("ContextOrder",flags).Invoke(f,new object[]{Keys.Control|Keys.Shift});
    for(int i=0;i<1100;i++)w.Tick(.1f);Frame(f,null);if(!w.Won)throw new Exception("tutorial victory through interface: "+w.LessonKey+" "+w.Radio+" / "+String.Join(" ",w.Live(0).Where(u=>u.T.Foot).Select(u=>u.P+" to "+u.Goal)));
    // The live window advances only the visual clock after the final kill.
-   w.TickVisuals(1.4f);Frame(f,null);
-   Press(f,688,574);if(!(bool)Field(f,"mapReview"))throw new Exception("tutorial completion to map preview");
+   w.TickVisuals(Campaign.BuildingDestructionSeconds+.30f);Frame(f,null);
+   Tap(f,"预览新地图");if(!(bool)Field(f,"mapReview"))throw new Exception("tutorial completion to map preview");
    typeof(CommandWindow).GetMethod("OnKeyDown",flags).Invoke(f,new object[]{new KeyEventArgs(Keys.Escape)});Frame(f,null);Press(f,1194,651);
    w=(Campaign)Field(f,"world");if(!w.Tutorial)throw new Exception("obsolete campaign became available");var trooper=w.Live(0).First(o=>o.T.Foot);var nearby=w.Spawn("squad",1,351,421);for(int i=0;i<3;i++)w.Tick(.1f);Frame(f,null);
    MapClick(f,(int)trooper.P.X,(int)trooper.P.Y);var units=(System.Collections.Generic.List<Piece>)Field(f,"selection");

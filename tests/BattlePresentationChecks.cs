@@ -142,11 +142,15 @@ partial class CommandWindow {
  }
  internal void CaptureCompactBuildingScale(string folder){
   if(folder==null)return;
+  string[] keys={"hq","factory","barracks","refinery","power","radar","post"};
+  string history=Path.GetFullPath(Path.Combine(folder,"../art/archive/building-scale-before-20261106"));
+  if(!keys.All(key=>File.Exists(Path.Combine(history,"iso-"+key+".png")))){
+   Console.WriteLine("Historical comparison export omitted: optional local snapshots absent; current building footprint checks completed.");return;
+  }
   drawingClient=false;zoom=1.5f;
   using(var board=new Bitmap(1960,860))using(var g=Graphics.FromImage(board)){
    g.Clear(C("#202c32"));Txt(g,"建筑与部队 · 同倍率前后对比",24,16,27,pale,true);
    Txt(g,"上排：修改前    下排：紧凑地基与房体    每栋旁边均为相同尺寸的步枪兵和坦克；镜头、单位没有缩放变化。",24,59,18,dim);
-   string[] keys={"hq","factory","barracks","refinery","power","radar","post"};
    for(int row=0;row<2;row++)for(int col=0;col<keys.Length;col++){
     var key=keys[col];var t=Campaign.Info(key);int w=row==0?(key=="factory"?4:key=="hq"||key=="barracks"||key=="refinery"?3:2):t.FoundationWidth;
     int d=row==0?(key=="factory"||key=="hq"?3:2):t.FoundationHeight;
@@ -158,7 +162,7 @@ partial class CommandWindow {
      for(float y=-halfD;y<=halfD;y+=Campaign.Tile)g.DrawLine(pen,project(-halfW,y),project(halfW,y));
     }
     var lot=new RectangleF(0,0,w*Campaign.Tile,d*Campaign.Tile);var box=BuildingRect(lot,p,zoom);
-    if(row==0){using(var old=Image.FromFile(Path.Combine(folder,"../art/archive/building-scale-before-20261106/iso-"+key+".png")))g.DrawImage(old,box,new RectangleF(0,0,320,320),GraphicsUnit.Pixel);}
+    if(row==0){using(var old=Image.FromFile(Path.Combine(history,"iso-"+key+".png")))g.DrawImage(old,box,new RectangleF(0,0,320,320),GraphicsUnit.Pixel);}
     else {var u=world.Spawn(key,0,800,800);DrawFieldSprite(g,u,p,t.Size*zoom);}
     var soldier=world.Spawn("squad",0,800,800);var tank=world.Spawn("tank",0,800,800);tank.Dir=0;tank.Turn=0;
     DrawFieldSprite(g,soldier,new PointF(left+85,top+270),soldier.T.Size*zoom);

@@ -1,13 +1,13 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Linq;
 using System.Collections.Generic;
 namespace Greyhaven {
 public partial class Campaign {
  // Commands own their destination. Opportunistic fire must not overwrite it.
- static void ClearMission(Piece o){o.SupportTarget=null;o.Entering=null;o.RouteRetryAt=0;o.NoProgressFor=0;o.StalledFor=0;
+ static void ClearMission(Piece o){o.PendingDeploy=false;o.SupportTarget=null;o.Entering=null;o.RouteRetryAt=0;o.NoProgressFor=0;o.StalledFor=0;
   o.GuardHome=null;o.Escort=null;o.GuardTravelling=false;o.GuardReturning=false;
-  o.Waypoints.Clear();o.WaypointIndex=0;o.Patrol=false;o.ForceMoving=false;
+  o.Waypoints.Clear();o.WaypointIndex=0;o.PatrolStart=0;o.Patrol=false;o.ForceMoving=false;
  }
  public static float ScanRange(Piece o){
   if(o.T.Building)return o.T.Range;
@@ -35,9 +35,9 @@ public partial class Campaign {
     if(Move(u,new PointF(u.P.X+(float)Math.Cos(a)*48,u.P.Y+(float)Math.Sin(a)*48),false))break;}
   }
  }
- public bool SetWaypoints(Piece o,PointF[] points,bool patrol){
+ public bool SetWaypoints(Piece o,PointF[] points,bool patrol,int loopStart=0){
   if(points.Length==0||!Move(o,points[0],true))return false;
-  o.Waypoints.AddRange(points);o.Patrol=patrol&&points.Length>1;return true;
+  o.Waypoints.AddRange(points);o.Patrol=patrol&&points.Length>1;o.PatrolStart=Math.Max(0,Math.Min(points.Length-1,loopStart));return true;
  }
  void MissionTick(Piece o){
   if(o.Escort!=null){
@@ -55,7 +55,7 @@ public partial class Campaign {
   }
   if(o.Path.Count==0&&o.Waypoints.Count>0&&Dist(o.P,o.Goal)<12){
    int next=o.WaypointIndex+1;
-   if(next>=o.Waypoints.Count){if(!o.Patrol){o.Waypoints.Clear();return;}next=0;}
+   if(next>=o.Waypoints.Count){if(!o.Patrol){o.Waypoints.Clear();return;}next=o.PatrolStart;}
    if(o.Replan<=0){o.Replan=.7f;if(Route(o,o.Waypoints[next])){o.WaypointIndex=next;o.Goal=o.Waypoints[next];}}
   }
   if(o.Path.Count==0)o.ForceMoving=false;

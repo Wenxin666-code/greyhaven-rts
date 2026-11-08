@@ -1,0 +1,62 @@
+[
+  {
+    "file": "rules-yr.ini",
+    "url": "https://raw.githubusercontent.com/CnCNet/cncnet-yr-client-package/e4b5712df96ec3acb05ddbda9fe2ba63e30576ab/game-assets/cncnet.pack/rulesmd.ini",
+    "sha256": "f33edabdced41e7448ae2c82b68f46b39f64e172a8bf40dd9e0188f677b5a4fe",
+    "bytes": 726765
+  },
+  {
+    "file": "rules-ra2.ini",
+    "url": "https://raw.githubusercontent.com/CnCNet/cncnet-yr-client-package/e4b5712df96ec3acb05ddbda9fe2ba63e30576ab/game-assets/ra2mode.pack/rulesmd.ini",
+    "sha256": "010af82ebf5b4df28920e38e88cfe9bc945e7cdc764298caab037fc00fbd013b",
+    "bytes": 574453
+  },
+  {
+    "file": "aimd.ini",
+    "url": "https://raw.githubusercontent.com/CnCNet/cncnet-yr-client-package/e4b5712df96ec3acb05ddbda9fe2ba63e30576ab/game-assets/cncnet.pack/aimd.ini",
+    "sha256": "08ed525b0b9aa47fce2090d9467c7b8cd4021777a0624fd7435acdb8c6399d11",
+    "bytes": 131138
+  },
+  {
+    "file": "phobos-tree.json",
+    "url": "https://api.github.com/repos/Phobos-developers/Phobos/git/trees/develop?recursive=1",
+    "sha256": "d685e4729ea4856404c47daeb8383f0e45653dee65e7ab2b56ba0f2adae0ff60",
+    "bytes": 157080
+  },
+  {
+    "file": "yrpp-tree.json",
+    "url": "https://api.github.com/repos/Phobos-developers/YRpp/git/trees/phobos-dev?recursive=1",
+    "sha256": "7c51432367b43aededa86d4aee8bd34a7bf0118f366ce7a008628618735a90ad",
+    "bytes": 80816
+  },
+  {
+    "file": "Hooks.Gamespeed.cpp",
+    "url": "https://raw.githubusercontent.com/Phobos-developers/Phobos/develop/src/Misc/Hooks.Gamespeed.cpp",
+    "sha256": "cde1e4375c763588701a7a7431ab3c48eb8160519fb2804c8e3c35b9e729b18d",
+    "bytes": 2274
+  },
+  {
+    "file": "Hooks.Timers.cpp",
+    "url": "https://raw.githubusercontent.com/Phobos-developers/Phobos/develop/src/Misc/Hooks.Timers.cpp",
+    "sha256": "70a1fe3cd1ff1c25a8c1d50e53b7b3f23a199886e72e8cc4de5d90f9881dee2a",
+    "bytes": 2348
+  },
+  {
+    "file": "YRpp-Timer.h",
+    "url": "https://raw.githubusercontent.com/Phobos-developers/YRpp/phobos-dev/Timer.h",
+    "sha256": "eca50084c1337f71ce426700bff934fe5c1d78e6246e495214b72894a94124a6",
+    "bytes": 3297
+  },
+  {
+    "file": "YRpp-GeneralDefinitions.h",
+    "url": "https://raw.githubusercontent.com/Phobos-developers/YRpp/phobos-dev/GeneralDefinitions.h",
+    "sha256": "a5fd03cdeb12c857ce230022b2b3a6f78f1843b238d87a29ef799c4051abf065",
+    "bytes": 31457
+  },
+  {
+    "file": "YRpp-GeneralStructures.h",
+    "url": "https://raw.githubusercontent.com/Phobos-developers/YRpp/phobos-dev/GeneralStructures.h",
+    "sha256": "525701214afab2dd9a6f0fbdcd4555a34d578d83fd523d903ff8c05169fd713d",
+    "bytes": 1119
+  }
+]

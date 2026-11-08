@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -40,9 +40,9 @@ public partial class Campaign {
   var factory=Spawn("factory",0,900,600);var adjacent=new PointF(factory.P.X,Footprint(factory.T,factory.P).Bottom+Tile);
   ExpectBuild(CanPlace(power,adjacent,null),"production exit is not reserved foundation");Spawn("power",0,adjacent.X,adjacent.Y);ExpectBuild(!ExitClear(factory,Info("tank"),Middle(ExitApron(factory.T,Footprint(factory.T,factory.P)))),"blocked exit still operationally blocked");
   hq.Hp=hq.T.Hp*.4f;StartConstruction(Info("barracks"));var pending=Construction(Info("barracks"));float work=pending.Work;
-  ExpectBuild(CanRelocate(hq,new PointF(650,700)),"relocation route ignores own old footprint");ExpectBuild(Relocate(hq,new PointF(650,700)),"relocate");AdvanceBuild(1.3f);
+  ExpectBuild(CanRelocate(hq,new PointF(650,700)),"relocation route ignores own old footprint");ExpectBuild(Relocate(hq,new PointF(650,700)),"relocate");AdvanceBuild(BaseDeploySeconds+.1f);
   ExpectBuild(hq.T.Key=="mcv"&&Math.Abs(hq.Hp/hq.T.Hp-.4)<.001&&pending.Work==work,"health proportion and suspended construction survive packing");
-  Halt(hq);ExpectBuild(Deploy(hq),"redeploy");AdvanceBuild(1.3f);ExpectBuild(hq.T.Key=="hq"&&Math.Abs(hq.Hp/hq.T.Hp-.4)<.001,"redeploy cannot heal");AdvanceBuild(1);ExpectBuild(pending.Work>work,"construction resumes after redeployment");
+  Halt(hq);ExpectBuild(Deploy(hq),"redeploy");AdvanceBuild(BaseDeploySeconds+.1f);ExpectBuild(hq.T.Key=="hq"&&Math.Abs(hq.Hp/hq.T.Hp-.4)<.001,"redeploy cannot heal");AdvanceBuild(1);ExpectBuild(pending.Work>work,"construction resumes after redeployment");
   int cash=Funds[0];Train(Info("ifv"),0,null);ExpectBuild(Funds[0]==cash,"unit queue not prepaid");UnitTick(factory,1,true);int spent=factory.WorkPaid;ExpectBuild(spent>0,"unit progressive payment");cash=Funds[0];CancelOrder(factory,0);ExpectBuild(Funds[0]==cash+spent,"unit paid portion refunded");
   plant.Hp=100;cash=Funds[0];ToggleRepair(plant);UnitTick(plant,1,true);ExpectBuild(plant.Hp>100&&Funds[0]<cash,"paid building repair");cash=Funds[0];ExpectBuild(Sell(plant)&&Funds[0]==cash+power.Price/2,"sell refund");UnitTick(plant,2,true);ExpectBuild(!plant.Alive,"sale removes building without wreck");
   Console.WriteLine("Construction: sidebar work/payment/pause/cancel, independent defense, placement, unreserved exits, MCV health/orders, unit refunds, repair/sell passed.");
@@ -52,7 +52,7 @@ partial class CommandWindow {
  internal void CheckConstructionInput(string folder){
   StartMission(true,false);ClientSize=new Size(1920,1080);var mcv=world.Live(0).First(u=>u.T.Key=="mcv");selection.Clear();selection.Add(mcv);mouse=ScreenOf(mcv.P);
   if(DescribePointer(Keys.None).Kind!=PointerKind.Deploy)throw new Exception("MCV deploy cursor");ContextOrder(Keys.None);
-  for(int i=0;i<15;i++)world.Tick(.1f);if(mcv.T.Key!="hq"||!mcv.Deployed)throw new Exception("repeat click deploy");
+  for(int i=0;i<(int)Math.Ceiling((Campaign.BaseDeploySeconds+1.2f)*10);i++)world.Tick(.1f);if(mcv.T.Key!="hq"||!mcv.Deployed)throw new Exception("repeat click deploy");
   ProductionTab(4);BuildCardClick(Campaign.Info("power"));if(place!=null)throw new Exception("unbuilt placement preview");
   for(int i=0;i<12;i++)world.Tick(.1f);BuildCardRight(Campaign.Info("power"));if(!world.Construction(Campaign.Info("power")).Paused)throw new Exception("right click pause");BuildCardClick(Campaign.Info("power"));
   for(int i=0;i<80;i++)world.Tick(.1f);ProductionTab(4);if(place!=Campaign.Info("power"))throw new Exception("Q ready placement");

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Linq;
 namespace Greyhaven {
@@ -7,8 +7,9 @@ public sealed class ConstructionJob {
  public bool Ready {get{return Work>=Type.Seconds;}}
 }
 public partial class Campaign {
- public const float AssemblySeconds=1.2f;
- readonly ConstructionJob[,] construction=new ConstructionJob[3,2];
+ public const float AssemblySeconds=1.2f,BaseDeploySeconds=AssemblySeconds;
+ public static float AssemblyDuration(Piece o){return o.T.Key=="hq"&&o.BaseTransition?BaseDeploySeconds:AssemblySeconds;}
+ readonly ConstructionJob[,] construction=new ConstructionJob[MaxFactions,2];
  public static int BuildCategory(TypeInfo t){return t.Key=="post"?1:0;}
  public ConstructionJob Construction(int side,int category){return construction[side,category];}
  public ConstructionJob Construction(TypeInfo t,int side=0){var job=Construction(side,BuildCategory(t));return job!=null&&job.Type==t?job:null;}
@@ -39,18 +40,18 @@ public partial class Campaign {
   due=Math.Max(paid,Math.Min(paid+Funds[side],due));Funds[side]-=due-paid;paid=due;work=next;
  }
  void TickConstruction(float dt){
-  for(int side=0;side<3;side++)for(int category=0;category<2;category++){
+  for(int side=0;side<MaxFactions;side++)for(int category=0;category<2;category++){
    var job=construction[side,category];if(job==null||job.Ready||job.Paused)continue;
    var source=PrimaryFactory(side,"hq");if(source==null)continue;
    PaidWork(side,job.Type,dt*ProductionRate(source),ref job.Work,ref job.Paid);
    if(job.Ready&&side==0)Radio=job.Type.Name+"就绪：点击图标，或按 "+(category==0?"Q":"W")+" 放置。";
   }
  }
- public string ConstructionState(ConstructionJob job,int side=0){
+ public string ConstructionState(ConstructionJob job,int side=0,float timeScale=1){
   if(job.Ready)return "就绪";if(job.Paused)return "已暂停";
   var source=PrimaryFactory(side,"hq");if(source==null)return "等待指挥部";
   if(Funds[side]==0)return "等待资金";
-  return (Power(side)<0?"缺电 · ":"")+(int)Math.Ceiling((job.Type.Seconds-job.Work)/ProductionRate(source))+" 秒";
+  return (Power(side)<0?"缺电 · ":"")+(int)Math.Ceiling((job.Type.Seconds-job.Work)/Math.Max(.01f,ProductionRate(source)*timeScale))+" 秒";
  }
  bool PlaceConstruction(TypeInfo t,PointF p,int side){
   var job=Construction(t,side);if(job==null||!job.Ready){if(side==0)Radio="先在侧栏完成建筑生产。";return false;}
@@ -66,19 +67,19 @@ public partial class Campaign {
  }
  public bool Relocate(Piece o,PointF destination){
   if(!CanRelocate(o,destination)){if(o!=null&&o.Side==0)Radio="基地车无法到达此处，保留当前基地。";return false;}
-  TransferProduction(o);Halt(o);o.Packing=AssemblySeconds;o.Relocation=destination;o.Repairing=false;Changed();
+  TransferProduction(o);Halt(o);o.BaseTransition=true;o.DeployOrigin=o.P;o.DeployFacing=0;o.Packing=BaseDeploySeconds;o.Relocation=destination;o.Repairing=false;Changed();
   if(o.Side==0)Radio="基地收起后前往指定位置；建筑生产等待可用指挥部。";return true;
  }
  void TickPacking(Piece o,float dt){
   o.Packing=Math.Max(0,o.Packing-dt);if(o.Packing>0)return;
   if(o.Selling){o.Hp=0;o.Dead=25;Changed();return;}
-  float health=o.Hp/o.T.Hp;o.T=Info("mcv");o.Hp=Math.Max(1,health*o.T.Hp);o.Ready=1;o.Assembly=false;Changed();
+  float health=o.Hp/o.T.Hp;o.T=Info("mcv");o.Hp=Math.Max(1,health*o.T.Hp);o.Ready=1;o.Assembly=false;o.BaseTransition=false;Changed();
   var target=o.Relocation;o.Relocation=null;if(target.HasValue&&!Move(o,target.Value,false)&&o.Side==0)Radio="基地已收起，前路临时受阻，请重新指定目的地。";
  }
  public bool CanSell(Piece o){return o!=null&&o.Deployed&&o.Side==0&&o.T.Building&&!o.T.Civilian;}
  public bool Sell(Piece o){
   if(!CanSell(o))return false;TransferProduction(o);int value=o.T.Key=="hq"?Info("mcv").Price:o.T.Price;
-  Funds[o.Side]+=(int)(value*.5f);o.Repairing=false;o.Selling=true;o.Packing=AssemblySeconds;Halt(o);Changed();Radio="正在出售"+o.T.Name+"。";return true;
+  Funds[o.Side]+=(int)(value*.5f);o.Repairing=false;o.Selling=true;o.BaseTransition=false;o.Packing=AssemblySeconds;Halt(o);Changed();Radio="正在出售"+o.T.Name+"。";return true;
  }
  public bool ToggleRepair(Piece o){
   if(o==null||!o.Deployed||o.Side!=0||!o.T.Building||o.Hp>=o.T.Hp&&!o.Repairing)return false;

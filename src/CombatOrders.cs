@@ -40,6 +40,15 @@ public partial class Campaign {
   if(defender.Contact==ContactOrder.ReturnFire&&defender.Target!=null&&Targetable(defender.Target)&&VisibleTo(defender.Side,defender.Target)&&TargetDistance(defender,defender.Target)<=defender.T.Range)return;
   TakeContact(defender,attacker,ContactOrder.ReturnFire);
  }
+ // Reuse a valid long detour when a distant target shifts by a few pixels.
+ // Close-range firing and genuinely blocked paths keep their original checks.
+ bool ChaseRouteNeedsUpdate(Piece unit,Piece target){
+  if(unit.Path.Count==0||unit.StalledFor>.4f||unit.NoProgressFor>.6f)return true;
+  float drift=Dist(unit.Path.Last(),TargetPoint(unit.Path.Last(),target));if(drift<=unit.T.Range)return false;
+  float distance=0,limit=Math.Max(12*Tile,unit.T.Range*4);var from=unit.P;
+  foreach(var point in unit.Path){distance+=Dist(from,point);from=point;if(distance>limit)break;}
+  return drift>unit.T.Range+(distance>limit?4*Tile:0);
+ }
  bool FightContact(Piece o,float dt){
   o.ScanIn-=dt;
   bool travelling=o.Target==null&&o.Path.Count>0&&!o.Advancing;
@@ -75,7 +84,7 @@ public partial class Campaign {
   if(!seen&&Explored(o.Side,o.LastContact)){EndContact(o);return false;}
   if(o.Replan<=0){
    o.Replan=1;
-   if(seen){if(o.Path.Count==0||o.StalledFor>.4f||o.NoProgressFor>.6f||Dist(o.Path.Last(),TargetPoint(o.Path.Last(),e))>o.T.Range)FindFiringPosition(o,e.P);}
+   if(seen){if(ChaseRouteNeedsUpdate(o,e))FindFiringPosition(o,e.P);}
    else if(!Route(o,o.LastContact))ApproachPoint(o,o.LastContact);
   }
   return false;

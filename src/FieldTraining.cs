@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Linq;
 namespace Greyhaven {
@@ -20,12 +20,12 @@ public partial class Campaign {
    if(!complete)break;Lesson++;
   }
  }
- public string QueueState(Piece o){
+ public string QueueState(Piece o,float timeScale=1){
   if(o==null||o.Queue.Count==0)return "空闲";
   if(o.Work>=o.Queue.Peek().Seconds)return "出口受阻，正在等待通行";
   if(o.ProductionPaused)return "已暂停";if(Funds[o.Side]==0)return "等待资金";
   bool low=Power(o.Side)<0;
-  int seconds=(int)Math.Ceiling((o.Queue.Peek().Seconds-o.Work)/ProductionRate(o));
+  int seconds=(int)Math.Ceiling((o.Queue.Peek().Seconds-o.Work)/Math.Max(.01f,ProductionRate(o)*timeScale));
   return (low?"缺电减速 · ":"")+seconds+" 秒";
  }
  public string Coach(){

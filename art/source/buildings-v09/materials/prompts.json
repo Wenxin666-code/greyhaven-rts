@@ -1,0 +1,12 @@
+[
+  {
+    "material": "coated-armor",
+    "prompt": "Use case: stylized-concept. Asset type: tileable PBR albedo texture for editable 3D RTS military architecture. Create a seamless, perfectly flat orthographic square texture of NEUTRAL LIGHT GREY PAINTED STEEL ARMOR PANELS. No blue, no faction color, absolutely achromatic grey; faction color will be applied by a renderer. Precise fine industrial panel workmanship: large quiet painted plate fields, very thin recessed panel seams at an irregular but orderly modular grid, a few tiny countersunk fasteners near seams, occasional access plate outlines, extremely restrained edge scuffs revealing slightly lighter steel, fine subtle paint grain. Scale: the whole square represents about 3 metres of surface, a screw head is only 1 centimetre. Keep 85% calm flat paint area; do not fill every area with noise. No objects, ventilation grilles, scenery, signs, lettering or perspective. NO large bolts, prominent rust, battle damage or black thick comic outlines. Uniform diffuse illumination without cast shadows, no baked directional lighting, no vignette. High quality coherent modern pre-rendered 2.5D RTS building material, clean precision with modest wear, not cartoon and not low-resolution pixel art. Seamless on all four edges, square canvas.",
+    "tool": "built-in image_gen"
+  },
+  {
+    "material": "cast-concrete",
+    "prompt": "Use case: stylized-concept. Asset type: tileable PBR albedo texture for editable 3D modern military/civilian RTS buildings. A seamless perfectly flat square of light warm-grey architectural cast concrete, nearly neutral grey for use on fine 3D buildings. Subtle realistic pores and fine sandy aggregate, a few very faint board-formed joints, sparse tiny anchor impressions, modest staining at joint edges, restrained mature surface patina. Large quiet fields, no big cracks, no exposed reinforcing bars, no ruins, moss, brick, panel bolts, objects, cast shadows, directional lighting, perspective, text or vignette. This is a clean high quality building material rather than a grunge photograph. Uniform diffuse illumination, restrained contrast, no coarse pixels, seamlessly tileable on four edges. Match the refined industrial workmanship and angular 2.5D RTS architecture aesthetic.",
+    "tool": "built-in image_gen"
+  }
+]

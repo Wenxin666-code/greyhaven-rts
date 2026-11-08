@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Linq;
 
 namespace Greyhaven {
 public partial class Campaign {
  PointF EnemySite(int side,float x,float y){var home=Home(side);return new PointF(home.X+x,home.Y+y);}
- readonly int[] enemyTurns=new int[3];readonly float[] enemyClocks=new float[3];
+ readonly int[] enemyTurns=new int[MaxFactions];readonly float[] enemyClocks=new float[MaxFactions];
  bool EnemyFacility(int side,string key,PointF location){
   var type=Info(key);var existing=Units.FirstOrDefault(u=>u.Side==side&&u.Alive&&u.T==type);
   if(existing!=null)return existing.Deployed;
@@ -17,9 +17,33 @@ public partial class Campaign {
   }
   return false;
  }
+ // Surviving factories can recover a base; surviving barracks can still reinforce.
+ void EnemyRecoveryProduction(int side){
+  var factory=PrimaryFactory(side,"factory");
+  if(Live(side).Any(p=>p.Queue.Any(t=>t.Key=="mcv")))return;
+  if(factory!=null&&Funds[side]>=Info("mcv").Price){Train(Info("mcv"),side,null);return;}
+  if(Time<enemyClocks[side])return;
+  string[] choices={"ifv","at","squad"};
+  var options=choices.Select(Info).Where(t=>Require(t,side)==null).ToArray();
+  if(options.Length==0)return;var next=options[enemyTurns[side]%options.Length];
+  if(Train(next,side,null)){enemyTurns[side]++;enemyClocks[side]=Time+14*(Assisted?1.7f:1);}
+ }
+ void DeployEnemyBase(Piece mcv){
+  if(DeployVehicle(mcv)||mcv.Path.Count>0)return;
+  // A newly produced MCV must clear the factory before deploying its foundation.
+  for(int ring=1;ring<=12;ring++)for(int y=-ring;y<=ring;y++)for(int x=-ring;x<=ring;x++){
+   if(Math.Max(Math.Abs(x),Math.Abs(y))!=ring)continue;
+   var p=Middle(Footprint(Info("hq"),new PointF(mcv.P.X+x*Tile,mcv.P.Y+y*Tile)));
+   if(CanPlace(Info("hq"),p,mcv,mcv.Side)&&Move(mcv,p,false))return;
+  }
+ }
  void EnemyEconomy(int side=1){
+  if(River!=null){SmartEconomy(side);return;}
+  if(HasSurrendered(side))return;
   if(!Live(side).Any(u=>u.T.Key=="hq")){
-   var mcv=Live(side).FirstOrDefault(u=>u.T.Key=="mcv");if(mcv!=null)DeployVehicle(mcv);return;
+   var mcv=Live(side).FirstOrDefault(u=>u.T.Key=="mcv");if(mcv!=null)DeployEnemyBase(mcv);
+   else if(!Units.Any(u=>u.Alive&&u.Side==side&&(u.T.Key=="hq"||u.T.Key=="mcv")))EnemyRecoveryProduction(side);
+   return;
   }
   if(!EnemyFacility(side,"power",EnemySite(side,84,-68))||!EnemyFacility(side,"refinery",EnemySite(side,12,192)))return;
   if(!Live(side).Any(u=>u.T.Key=="miner")){
@@ -42,7 +66,6 @@ public partial class Campaign {
   if(Time<enemyClocks[side])return;
   string[] order={"ifv","at","tank","squad","engineer","arty"};
   var next=Info(order[(enemyTurns[side]-1)%order.Length]);
-  if((next.Key=="tank"||next.Key=="arty")&&!Upgraded[side]&&!UpgradeArmor(side))return;
   if(Train(next,side,null)){enemyTurns[side]++;enemyClocks[side]=Time+14*(Assisted?1.7f:1);}
  }
 }

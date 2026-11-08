@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Diagnostics;
@@ -15,24 +15,17 @@ partial class CommandWindow {
  internal void CheckBattleAnimations(){
   drawingClient=false;
   foreach(var key in buildingRoster){
-   EnsureAnimation(key+"-build");EnsureAnimation(key+"-collapse");
-   var build=painted[key+"-build"];var collapse=painted[key+"-collapse"];
-   if(build.Size!=new Size(FrameSize*8,FrameSize*3)||collapse.Size!=new Size(FrameSize*8,FrameSize*2))throw new Exception("animation dimensions "+key);
-   int changes=0,first=0,last=0;var end=AnimationCell(BuildFrames-1);var rubble=AnimationCell(CollapseFrames-1);
-   for(int y=0;y<320;y+=4)for(int x=0;x<320;x+=4){
-    var b=build.GetPixel(end.X+x,end.Y+y);var c=painted[key].GetPixel(x,y);
-    if(b!=c)changes++;if(build.GetPixel(x,y).A>80)first++;if(b.A>80)last++;
-    if(collapse.GetPixel(rubble.X+x,rubble.Y+y)!=painted[key].GetPixel(x,640+y))throw new Exception("collapse endpoint differs from rubble "+key);
-   }
-   if(changes>3||first>=last*.85)throw new Exception("construction endpoint/assembly "+key+" diff="+changes);
+   var build=B08Frame(key,"build",BuildFrames-1);
+   if(!BuildingPixels(painted[build],B08Source()).SequenceEqual(BuildingPixels(painted[key],B08Source())))throw new Exception("assembly endpoint "+key);
+
   }
   world=new Campaign(true);world.Units.Clear();world.Shots.Clear();
   var tank=world.Spawn("tank",0,600,600);var target=world.Spawn("factory",1,650,600);target.Hp=1;
   world.ReviewFire(tank,target);if(target.Alive||world.Shots.Count!=1||tank.FiredAt!=world.VisualTime)throw new Exception("shot event not synchronized with damage");
   world.Tick(.01f);if(!world.Won||world.OutcomeReady)throw new Exception("victory must allow the final explosion");
   float frozenTime=world.Time;world.TickVisuals(.6f);if(target.Dead<.6f||world.OutcomeReady||world.Time!=frozenTime)throw new Exception("outcome visual clock changed gameplay");
-  world.TickVisuals(.8f);if(!world.OutcomeReady||world.Shots.Count!=0)throw new Exception("outcome completion / shot cleanup");
-  target.Ready=.35f;target.Dead=.4f;Rectangle src;if(BuildingVisual(target,out src)!="factory-build")throw new Exception("unfinished wreck reveals a finished building");
+  world.TickVisuals(.8f);if(world.OutcomeReady)throw new Exception("outcome hides the terminal explosion");world.TickVisuals(1.3f);if(!world.OutcomeReady||world.Shots.Count!=0)throw new Exception("outcome completion / shot cleanup");
+  target.Ready=.35f;target.Dead=.4f;Rectangle src;if(!BuildingVisual(target,out src).StartsWith("b08/factory/build/",StringComparison.Ordinal))throw new Exception("unfinished wreck reveals a finished building");
   var hidden=new Shot{A=new PointF(3000,1800),B=new PointF(3000,1800),Weapon="tank",Born=world.VisualTime-.1f};
   using(var bitmap=new Bitmap(MW,MH))using(var g=Graphics.FromImage(bitmap)){
    CenterAt(hidden.B);zoom=1;ShotImpact(g,hidden);
@@ -42,11 +35,11 @@ partial class CommandWindow {
    if(!visible)throw new Exception("revealed impact missing / invalid test viewport");
   }
   foreach(var type in new[]{"blast","smoke","dust","spark","weld"})EnsureEffect(type);
-  Console.WriteLine(buildingRoster.Length+" construction/collapse endpoints, partial building destruction, hit timing, final-explosion clock and hidden impacts passed.");
+  Console.WriteLine(buildingRoster.Length+" construction endpoints / damage presentation, partial building destruction, hit timing, final-explosion clock and hidden impacts passed.");
  }
  internal void CaptureAnimationReview(string folder){
   Directory.CreateDirectory(folder);ClientSize=new Size(1600,900);briefing=false;paused=false;modelReview=false;selection.Clear();showRanges=false;showGrid=false;mouse=new PointF(-100,-100);
-  string output=Path.Combine(folder,"建造开火损毁-v06.mp4");
+  string output=Path.Combine(folder,"建造开火损毁-v08.mp4");
   var info=new ProcessStartInfo(Environment.GetEnvironmentVariable("GREYHAVEN_FFMPEG")??"ffmpeg","-y -hide_banner -loglevel error -f rawvideo -pixel_format bgra -video_size 1600x900 -framerate 30 -i pipe:0 -an -c:v libx264 -preset fast -crf 20 -pix_fmt yuv420p -movflags +faststart \""+output+"\""){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden,RedirectStandardInput=true};
   using(var encoder=Process.Start(info))using(var frame=new Bitmap(1600,900,PixelFormat.Format32bppArgb))using(var g=Graphics.FromImage(frame)){
    var bytes=new byte[1600*900*4];
@@ -78,7 +71,7 @@ partial class CommandWindow {
      using(var font=new Font("Microsoft YaHei UI",19,FontStyle.Bold))using(var brush=new SolidBrush(Color.FromArgb(236,181,78)))g.DrawString(scene==0?"01  建造装配 · 施工演示加速":scene==1?"02  实际武器射速 · 枪口、震动与弹着反馈":"03  受损冒烟 · 连锁爆炸、坍塌与残骸",font,brush,28,88);
      var bits=frame.LockBits(new Rectangle(0,0,1600,900),ImageLockMode.ReadOnly,PixelFormat.Format32bppArgb);
      try{Marshal.Copy(bits.Scan0,bytes,0,bytes.Length);encoder.StandardInput.BaseStream.Write(bytes,0,bytes.Length);}finally{frame.UnlockBits(bits);}
-     if(i==(scene==0?100:scene==1?60:66))frame.Save(Path.Combine(folder,new[]{"施工动画-v06.png","交火动画-v06.png","损毁动画-v06.png"}[scene]),ImageFormat.Png);
+     if(i==(scene==0?100:scene==1?60:66))frame.Save(Path.Combine(folder,new[]{"施工动画-v08.png","交火动画-v08.png","损毁动画-v08.png"}[scene]),ImageFormat.Png);
     }
    }
    encoder.StandardInput.Close();if(!encoder.WaitForExit(30000)||encoder.ExitCode!=0)throw new Exception("animation video export failed");

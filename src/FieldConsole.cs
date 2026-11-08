@@ -1,13 +1,13 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Collections.Generic;
 namespace Greyhaven {
 partial class CommandWindow {
- bool queueOpen;int queueIndex;
+ bool queueOpen;int queueIndex,queuePage,queuePageSource;
  void StartMission(bool tutorial,bool easy){
-  Restart();world=new Campaign(tutorial,easy);selection.Clear();selection.Add(world.Units[0]);briefing=false;edgeArmed=true;
+  Restart();ResetMatchClock(tutorial);world=new Campaign(tutorial,easy);selection.Clear();selection.Add(world.Units[0]);briefing=false;edgeArmed=true;
  }
  void DrawTiles(Graphics g,RectangleF r,Color color,bool lines){
   Rect(g,r.X,r.Y,r.Width,r.Height,Color.FromArgb(lines?38:48,color));
@@ -34,7 +34,7 @@ partial class CommandWindow {
  List<Piece> Producers(){return world.Live(0).Where(o=>new[]{"hq","factory","barracks"}.Contains(o.T.Key)).OrderByDescending(o=>o.Queue.Count>0).ThenBy(o=>o.Id).ToList();}
  int queueId;
  void OpenQueue(){
-  queueOpen=true;place=null;var list=Producers();var producer=selection.FirstOrDefault(o=>o.Queue.Count>0)??world.LastOrder;
+  queueOpen=true;place=null;queuePage=0;queuePageSource=0;var list=Producers();var producer=selection.FirstOrDefault(o=>o.Queue.Count>0)??world.LastOrder;
   int i=list.IndexOf(producer);queueIndex=Math.Max(0,i);queueId=list.Count==0?0:list[queueIndex].Id;
  }
  PointF SuggestSpot(TypeInfo t){
@@ -77,8 +77,8 @@ partial class CommandWindow {
   string key=world.LessonKey;var own=world.Live(0);
   if(key=="hq")return world.Landing?"指挥部正在展开，完工后进入下一步。":selection.Any(o=>o.T.Key=="mcv")?"再次点工程车或按 D 展开。":"先点金圈里的工程车，或点「定位本步」选中它。";
   if(BuildingLesson()){
-   var t=Campaign.Info(key);var job=world.Construction(t);if(job!=null&&!job.Ready)return t.Name+"："+world.ConstructionState(job)+"。右键图标暂停／再右键取消，左键继续。";var site=world.Units.FirstOrDefault(o=>o.Alive&&o.Side==0&&o.T==t);
-   if(site!=null)return t.Name+" 正在施工，约 "+(int)Math.Ceiling((1-site.Ready)*Campaign.AssemblySeconds)+" 秒完成。";
+   var t=Campaign.Info(key);var job=world.Construction(t);if(job!=null&&!job.Ready)return t.Name+"："+world.ConstructionState(job,0,speed)+"。右键图标暂停／再右键取消，左键继续。";var site=world.Units.FirstOrDefault(o=>o.Alive&&o.Side==0&&o.T==t);
+   if(site!=null)return t.Name+" 正在施工，约 "+(int)Math.Ceiling((1-site.Ready)*Campaign.AssemblySeconds/speed)+" 秒完成。";
    return place==t?"左键点击金色推荐地基；红色预览表示此处不能建造。":"点「建筑」中的「"+t.Name+"」生产；就绪后再点击图标，放到推荐地基。";
   }
   if(key=="squad"||key=="ifv"){
@@ -89,7 +89,7 @@ partial class CommandWindow {
   if(key=="ore"||key=="receipt"){
    var truck=own.FirstOrDefault(o=>o.T.Key=="miner");
    if(truck==null)return "精炼厂完工会派出首车，请留出厂门。矿车损失后可在车辆工厂补造。";
-   if(!truck.Mining)return "选中矿车，点右侧「恢复自动采矿」，或左键点已发现的金色矿石。";
+   if(!truck.Mining)return "选中矿车，左键点已发现的金色矿石，恢复自动采矿。";
    if(key=="ore")return truck.Patch==null?"矿车会向未探索地带找矿。也可派步兵先探路，再选矿车左键点金色矿石。":"矿车已找到金色矿点，正在驶近。点「定位本步」查看矿点和车上的载量。";
    return truck.Returning?"矿车正在返厂卸货。留出厂门，留意精炼厂上方显示的入账金额。":"采集进度 "+(int)truck.Cargo+" / "+Campaign.LoadValue+"。满载后自动返厂，也可选车点己方精炼厂提前卸矿。";
   }
@@ -97,7 +97,7 @@ partial class CommandWindow {
  }
  void DrawCoach(Graphics g){
   string advice=world.Coach();
-  if(!world.Tutorial&&advice==null)return;
+  if(!world.Tutorial){if(advice!=null)Txt(g,advice,14,12,14,gold,true);else DrawStatusMessage(g);return;}
   hits.Add(new HitBox{Box=new RectangleF(16,MapTop+9,810,65),Run=()=>{}});
   Plate(g,new RectangleF(16,MapTop+9,810,65),panel,C("#b49457"));
   Rect(g,24,MapTop+16,5,24,gold);Rect(g,33,MapTop+16,115,24,gold);

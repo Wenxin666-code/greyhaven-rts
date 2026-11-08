@@ -29,7 +29,7 @@ public partial class Campaign {
  public int FogRevision {get;private set;}
  void Discover(int side,int x,int y){if(!discovered[side,x,y]){discovered[side,x,y]=true;if(side==0)FogRevision++;}}
  float visionTimer;
- public bool Seen(int side,int x,int y){return x>=0&&y>=0&&side>=0&&side<3&&x<MapFogCols&&y<MapFogRows&&(satelliteVision[side]||discovered[side,x,y]);}
+ public bool Seen(int side,int x,int y){return x>=0&&y>=0&&side>=0&&side<MaxFactions&&x<MapFogCols&&y<MapFogRows&&(satelliteVision[side]||discovered[side,x,y]);}
  public bool Explored(int side,PointF p){return Seen(side,(int)(p.X/FogSize),(int)(p.Y/FogSize));}
  void Reveal(){
   UpdateSatellites();
