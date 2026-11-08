@@ -7,8 +7,8 @@ public partial class Campaign {
  void OpenGrid(NavigationGrid grid,float pad){
   if(grid.Open!=null)return;
   grid.Open=(bool[])TerrainNavigation(pad).Open.Clone();
-  foreach(var r in grid.Barriers)for(int y=Math.Max(0,(int)Math.Floor(r.Top/Step));y<=Math.Min(M-1,(int)Math.Floor(r.Bottom/Step));y++)
-   for(int x=Math.Max(0,(int)Math.Floor(r.Left/Step));x<=Math.Min(N-1,(int)Math.Floor(r.Right/Step));x++){int i=y*N+x;if(r.Contains(Center(i)))grid.Open[i]=false;}
+  foreach(var r in grid.Barriers)for(int y=Math.Max(0,NavY(r.Top));y<=Math.Min(M-1,NavY(r.Bottom));y++)
+   for(int x=Math.Max(0,NavX(r.Left));x<=Math.Min(N-1,NavX(r.Right));x++){int i=y*N+x;if(r.Contains(Center(i)))grid.Open[i]=false;}
  }
  void ConnectGrid(NavigationGrid grid,float pad){
   if(grid.Regions!=null)return;OpenGrid(grid,pad);

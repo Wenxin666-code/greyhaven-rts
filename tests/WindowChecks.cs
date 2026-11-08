@@ -361,8 +361,8 @@ partial class CommandWindow {
   camera=home;ResetEdgeScroll();for(int i=0;i<8;i++)EdgeScroll(.02f,mouse,1,0);if(camera!=home)throw new Exception("pan after deactivation");
   point(0,300);paused=true;advance();paused=false;drag=true;advance();drag=false;
   hits.Add(new HitBox{Box=new RectangleF(0,280,22,40)});advance();hits.Clear();if(camera!=home)throw new Exception("pan behind overlay or while dragging");
-  camera=new PointF(Campaign.Width,0);point(MW-1,MapTop+MH/2);advance();
-  if(camera.X!=Campaign.Width||camera.Y!=0)throw new Exception("world edge clamp");
+  CenterAt(new PointF(Campaign.Width,0));var edgeCamera=camera;point(MW-1,MapTop+MH/2);advance();
+  if(Campaign.Dist(camera,edgeCamera)>.02f)throw new Exception("projected viewport edge clamp: "+Campaign.Dist(camera,edgeCamera));
   Restart();Console.WriteLine("Edge pan: eight directions, dwell, map bounds, sidebar, mouse leave, pause and drag passed.");
  }
  internal void CheckFocusAndMining(){
@@ -374,10 +374,10 @@ partial class CommandWindow {
   tap(Keys.T);if(selection.Count!=3||!selection.Contains(far)||selection.Contains(enemy))throw new Exception("global type select");
   var saved=camera;float z=zoom;tap(Keys.Control|Keys.F1);zoom=3;CenterAt(far.P);tap(Keys.F1);
   if(camera!=saved||zoom!=z)throw new Exception("camera bookmark");
-  for(int slot=0;slot<4;slot++){
-   CenterAt(new PointF(190+slot*100,210+slot*90));tap(Keys.Control|(Keys)((int)Keys.F1+slot));
+  var bookmarkPositions=new PointF[4];for(int slot=0;slot<4;slot++){
+   CenterAt(new PointF(190+slot*100,210+slot*90));bookmarkPositions[slot]=camera;tap(Keys.Control|(Keys)((int)Keys.F1+slot));
   }
-  for(int slot=3;slot>=0;slot--){tap((Keys)((int)Keys.F1+slot));if(camera!=new PointF(190+slot*100,210+slot*90))throw new Exception("independent bookmarks");}
+  for(int slot=3;slot>=0;slot--){tap((Keys)((int)Keys.F1+slot));if(Campaign.Dist(camera,bookmarkPositions[slot])>.02f)throw new Exception("independent bookmarks");}
   tap(Keys.H);if(camera!=world.Units[0].P)throw new Exception("home before deploy");
   for(int i=0;i<5;i++)world.Tick(.1f);
   if(!world.LastEvent.HasValue)throw new Exception("incoming attack event");

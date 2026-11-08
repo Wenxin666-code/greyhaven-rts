@@ -69,7 +69,7 @@ public partial class Campaign {
   new TypeInfo("arty","自行火炮","factory",315,150,54,222,53,57.6f,13,3.5f),
   new TypeInfo("mcv","工程车","factory",340,290,0,0,55,60,13,0),
   new TypeInfo("refinery","矿石精炼厂","hq",390,720,0,0,136,0,9,0),
-  new TypeInfo("miner","采矿车","factory",195,310,0,0,44,72,9,0)};
+  new TypeInfo("miner","采矿车","factory",195,310,0,0,44,48,9,0)};
  public static readonly TypeInfo[] CivilTypes={new TypeInfo("residence","民居","",0,550,0,0,108,0,1,0),new TypeInfo("shop","商住楼","",0,720,0,0,132,0,1,0),new TypeInfo("municipal","镇公所","",0,1050,0,0,150,0,1,0)};
  public static TypeInfo Info(string k){return Array.Find(Types,t=>t.Key==k)??Array.Find(CivilTypes,t=>t.Key==k);}
  public readonly List<Piece> Units=new List<Piece>();public readonly List<Shot> Shots=new List<Shot>();

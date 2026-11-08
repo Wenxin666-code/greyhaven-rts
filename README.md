@@ -1,8 +1,10 @@
 # 断线前沿 · 灰港登陆
 
-现代战争单人即时战略游戏，Windows x64 原生桌面程序。最新发布 **v0.19.0**，汇总自 v0.18.0 以来的第三关「孤岛要塞」、六方作战、敌军发育与进攻、独立并行生产、建筑重绘与动画、键鼠操作、对局节奏及剧情简报，详见 [版本记录](CHANGELOG.md)。
+现代战争单人即时战略游戏，Windows x64 原生桌面程序。最新发布 **v0.20.0**，汇总自 v0.19.0 以来的矿车寻矿与返厂优化、完整雷达战场范围、整格海岸和逐格建造提示，详见 [版本记录](CHANGELOG.md)。
 
-从 [v0.19.0 发布页](https://github.com/Wenxin666-code/greyhaven-rts/releases/tag/v0.19.0) 下载 `Greyhaven-v0.19.0.exe` 后直接运行，或在本机项目根目录打开 `断线前沿.exe`。地图和正式素材均嵌入程序，可离线游玩；需要 Windows 自带的 .NET Framework 4.x。
+海岸由完整沙滩格、陆地格、海水格组成，显示、寻路、雷达和建造读取同一地形；建造预览逐格标红受阻位置并说明原因。矿车比较可达路径，空闲卸矿口直接接近，远车不提前预占泊位。地图后续制作遵循[地格与建造提示规范](docs/design/地图地格与建造提示规范.md)。问题对照与历史验证见[采矿及地图边界补充](docs/research/红警2建筑生产与采矿机制调研.md#2026-11-08-矿车与矩形地图边界补充)。
+
+从 [v0.20.0 发布页](https://github.com/Wenxin666-code/greyhaven-rts/releases/tag/v0.20.0) 下载 `Greyhaven-v0.20.0.exe` 后直接运行，或在本机项目根目录打开 `断线前沿.exe`。地图和正式素材均嵌入程序，可离线游玩；需要 Windows 自带的 .NET Framework 4.x。
 
 河湾镇滚动已改用有内存上限的地形分块与提前准备，改善缓存边界的长帧停顿；同机测试重绘帧中位约 165→11 ms，详见 [测量与验证](docs/design/河湾镇滚动缓存优化.md)。[建筑蓝本 V07](art/review/buildings-v07/index.html) 已通过风格验收。11 类建筑已据此重建可编辑模型，接入分层涂装、72 帧分构件搭建、三档破损与最终燃爆、96 帧设备待机、连续工程车展开及工作特效；[查看模型与动画](art/review/buildings-v10/index.html)；[V11 独立弹片与燃爆](art/review/blast-v11/index.html)。
 
@@ -69,6 +71,6 @@
 - `art/source/**/frames` 为可重新导出的中间帧，仅本地保留；模型源文件、材质和正式资源包随源码同步。
 - 修改前的临时快照保留在本机 `art/archive/*-before-*`，不加入仓库；正式历史美术归档仍同步保存。
 
-在 Windows x64、PowerShell 7 下执行 `./scripts/build.ps1` 构建。对局节奏专项执行 `./scripts/build.ps1 -TempoVerify`，截图及运行测量执行 `-TempoPreview`；键鼠与界面专项执行 `./scripts/build.ps1 -ControlsVerify`，同时导出界面截图执行 `-ControlsPreview`；完整游戏回归执行 `./scripts/build.ps1 -Test -RiverPreview -MapPreview`；第三关与智能敌军专项执行 `./scripts/build.ps1 -AiVerify`，地图截图与数据导出执行 `-IslandPreview`；爆炸弹片验收执行 `./scripts/build.ps1 -BlastPreview`，不录视频的专项检查执行 `-BlastVerify`；建筑施工与燃爆验收执行 `./scripts/build.ps1 -StructurePreview`；待机与步态验收执行 `./scripts/build.ps1 -MotionPreview`（录像需要 ffmpeg）；地图滚动与缓存专项执行 `./scripts/build.ps1 -ScrollPreview`；建造操作专项执行 `./scripts/build.ps1 -ConstructionPreview`。导出美术使用项目中的 Three.js 与其许可证，玩游戏不需要安装美术工具。
+在 Windows x64、PowerShell 7 下执行 `./scripts/build.ps1` 构建。矿车、海域边界与雷达专项执行 `./scripts/build.ps1 -HaulVerify`，导出地图验收图执行 `-HaulPreview`；对局节奏专项执行 `./scripts/build.ps1 -TempoVerify`，截图及运行测量执行 `-TempoPreview`；键鼠与界面专项执行 `./scripts/build.ps1 -ControlsVerify`，同时导出界面截图执行 `-ControlsPreview`；完整游戏回归执行 `./scripts/build.ps1 -Test -RiverPreview -MapPreview`；第三关与智能敌军专项执行 `./scripts/build.ps1 -AiVerify`，地图截图与数据导出执行 `-IslandPreview`；爆炸弹片验收执行 `./scripts/build.ps1 -BlastPreview`，不录视频的专项检查执行 `-BlastVerify`；建筑施工与燃爆验收执行 `./scripts/build.ps1 -StructurePreview`；待机与步态验收执行 `./scripts/build.ps1 -MotionPreview`（录像需要 ffmpeg）；地图滚动与缓存专项执行 `./scripts/build.ps1 -ScrollPreview`；建造操作专项执行 `./scripts/build.ps1 -ConstructionPreview`。导出美术使用项目中的 Three.js 与其许可证，玩游戏不需要安装美术工具。
 
-本版保留建造、经济、工兵、并行生产、投降、六方关卡、键鼠、窗口、教学、通行、建筑动作及对局节奏的专项检查与验收记录；发布前检查源码构建所需素材完整，逐帧导出和临时缓存不入库。性能结果为测试场景数据，冷缓存与大规模战斗仍可能出现长帧。
+项目保留既有规则检查和历史验收记录。v0.20.0 重新编译并核对发布文件；按要求，最新整格海岸修改未重新运行冒烟测试或完整游戏回归，历史记录不代表本版已完成全量复测，详见[发布记录](docs/releases/v0.20.0.json)。逐帧导出和临时缓存不入库。性能数据仅对应记录场景，冷缓存与大规模战斗仍可能出现长帧。

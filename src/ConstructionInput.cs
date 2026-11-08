@@ -43,11 +43,16 @@ partial class CommandWindow {
   using(var brush=new SolidBrush(Color.FromArgb(155,ink)))g.FillPie(brush,portrait.X-21,portrait.Y-35,portrait.Width+42,portrait.Width+42,-90+360*progress,360*(1-progress));g.Restore(state);
  }
  void PlacementPreview(Graphics g,TypeInfo t,PointF at,Piece skip=null){
-  var r=Campaign.Footprint(t,at);bool range=world.FoundationLevel(t,at)&&(skip!=null||world.InBuildRange(t,r,0)&&world.Live(0).Any(u=>u.T.Key=="hq"));
-  for(float y=r.Top;y<r.Bottom;y+=Campaign.Tile)for(float x=r.Left;x<r.Right;x+=Campaign.Tile){
-   var cell=new RectangleF(x,y,Campaign.Tile,Campaign.Tile);bool valid=range&&world.PlacementCell(cell,skip,0);
-   DrawPlacedTiles(g,cell,valid?Color.FromArgb(83,235,91):Color.FromArgb(242,66,51));
+  var result=world.AssessPlacement(t,at,skip,0,true);
+  foreach(var tile in result.Tiles){bool valid=tile.Valid&&result.Global==PlacementBlock.None;
+   DrawPlacementCell(g,tile.Bounds,valid);
   }
+  string text=result.Valid?"全部地格可放置 · 左键落地":result.Summary;
+  const float x=18,y=H-114;float width=Math.Min(MW-36,Math.Max(390,90+text.Length*14));
+  Plate(g,new RectangleF(x,y,width,65),C("#1b2a2d"),result.Valid?teal:red);
+  Txt(g,t.Name+"  "+t.FoundationWidth+" × "+t.FoundationHeight+"　绿格可用 · 红格受阻",x+12,y+8,14,pale,true);
+  Txt(g,text,x+12,y+34,14,result.Valid?teal:C("#ff9c82"),true);
  }
+
 }
 }

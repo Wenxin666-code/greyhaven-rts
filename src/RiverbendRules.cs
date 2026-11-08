@@ -18,11 +18,11 @@ public partial class Campaign {
   foreach(var h in River.Houses)Spawn(h.Kind,-1,(h.Lot.X+h.Lot.Width*.5f)*Tile,(h.Lot.Y+h.Lot.Height*.5f)*Tile);
   Radio=IslandMission?"孤岛要塞：我方位于西北资源岛，堤桥是唯一陆路；五个敌方各自为战。":"三方互为敌对。展开基地、采矿扩军；工兵可占领中立房屋，步兵可进驻防守。";
  }
- public float GroundHeight(PointF p){if(River==null)return 0;var c=River.At((int)(p.X/Tile),(int)(p.Y/Tile));return c==null?0:c.Height;}
- bool GroundOpen(float x,float y){if(River==null)return true;var c=River.At((int)Math.Floor(x/Tile),(int)Math.Floor(y/Tile));return c!=null&&c.Ground!=RiverbendMap.Surface.Water&&!c.Tree;}
- bool CornerGround(float x,float y,float height){var c=River.At((int)Math.Floor(x/Tile),(int)Math.Floor(y/Tile));return c!=null&&c.Ground!=RiverbendMap.Surface.Water&&!c.Tree&&Math.Abs(c.Height-height)<=.27f;}
+ public float GroundHeight(PointF p){var c=Terrain.At((int)Math.Floor(p.X/Tile),(int)Math.Floor(p.Y/Tile));return c==null?0:c.Height;}
+ bool GroundOpen(float x,float y){var c=Terrain.At((int)Math.Floor(x/Tile),(int)Math.Floor(y/Tile));return c!=null&&c.Ground!=RiverbendMap.Surface.Water&&!c.Tree;}
+ bool CornerGround(float x,float y,float height){var c=Terrain.At((int)Math.Floor(x/Tile),(int)Math.Floor(y/Tile));return c!=null&&c.Ground!=RiverbendMap.Surface.Water&&!c.Tree&&Math.Abs(c.Height-height)<=.27f;}
  bool TerrainOpen(PointF p,float pad){
-  if(River==null)return true;if(!GroundOpen(p.X,p.Y))return false;float h=GroundHeight(p);
+  if(!Battlefield.ContainsFootprint(p,pad)||!GroundOpen(p.X,p.Y))return false;float h=GroundHeight(p);
   return CornerGround(p.X-pad,p.Y-pad,h)&&CornerGround(p.X+pad,p.Y-pad,h)&&CornerGround(p.X-pad,p.Y+pad,h)&&CornerGround(p.X+pad,p.Y+pad,h);
  }
  static void TerrainCuts(System.Collections.Generic.List<float> cuts,float a,float b,float offset){
@@ -35,7 +35,7 @@ public partial class Campaign {
  // Inspect each terrain interval crossed by the center and all footprint corners.
  // Fixed-distance sampling can miss arbitrarily thin diagonal clips of a cell.
  bool TerrainLine(PointF a,PointF b,float pad=0){
-  if(River==null)return true;if(!TerrainOpen(a,pad)||!TerrainOpen(b,pad))return false;
+  if(!TerrainOpen(a,pad)||!TerrainOpen(b,pad))return false;
   var cuts=new System.Collections.Generic.List<float>{0,1};TerrainCuts(cuts,a.X,b.X,0);TerrainCuts(cuts,a.Y,b.Y,0);
   if(pad>0){TerrainCuts(cuts,a.X,b.X,-pad);TerrainCuts(cuts,a.X,b.X,pad);TerrainCuts(cuts,a.Y,b.Y,-pad);TerrainCuts(cuts,a.Y,b.Y,pad);}
   cuts.Sort();float prior=GroundHeight(a);
@@ -45,9 +45,9 @@ public partial class Campaign {
   }return Math.Abs(GroundHeight(b)-prior)<=.27f;
  }
  bool TerrainBuildable(RectangleF r){
-  if(River==null)return true;float? height=null;
-  for(int y=(int)(r.Top/Tile);y<(int)Math.Ceiling(r.Bottom/Tile);y++)for(int x=(int)(r.Left/Tile);x<(int)Math.Ceiling(r.Right/Tile);x++){
-   var c=River.At(x,y);if(c==null||c.Tree||c.Ground==RiverbendMap.Surface.Water||c.Ground==RiverbendMap.Surface.Bridge||c.Ground==RiverbendMap.Surface.Ramp)return false;
+  float? height=null;
+  for(int y=(int)Math.Floor(r.Top/Tile);y<(int)Math.Ceiling(r.Bottom/Tile);y++)for(int x=(int)Math.Floor(r.Left/Tile);x<(int)Math.Ceiling(r.Right/Tile);x++){
+   var c=Terrain.At(x,y);if(c==null||c.Tree||c.Ground==RiverbendMap.Surface.Water||c.Ground==RiverbendMap.Surface.Bridge||c.Ground==RiverbendMap.Surface.Ramp)return false;
    if(height.HasValue&&Math.Abs(height.Value-c.Height)>.05f)return false;height=c.Height;
   }return true;
  }

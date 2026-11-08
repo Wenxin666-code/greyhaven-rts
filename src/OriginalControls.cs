@@ -94,7 +94,7 @@ partial class CommandWindow {
  void OpenOptions(){paused=!paused;help=false;keyboardOpen=false;diplomacyOpen=false;cameraKeys.Clear();rightPending=rightDragging=false;Capture=false;}
  void OpenDiplomacy(){diplomacyOpen=!diplomacyOpen;keyboardOpen=false;rightPending=rightDragging=false;Capture=false;hudDirty=true;}
  void RadarAction(PointF point,bool right){
-  if(point.X<0||point.Y<0||point.X>=world.MapWidth||point.Y>=world.MapHeight)return;
+  if(!world.Battlefield.Contains(point))return;
   if(right||selection.Count==0){followUnit=null;CenterAt(point);return;}
   var target=world.Units.Where(p=>p.Alive&&p.Carrier==null&&world.Visible(p)&&(p.T.Building?Campaign.Footprint(p.T,p.P).Contains(point):Campaign.Dist(p.P,point)<Math.Max(12,world.MapWidth/148f))).OrderBy(p=>Campaign.Dist(p.P,point)).FirstOrDefault();
   ContextOrderAt(ModifierKeys,point,target);

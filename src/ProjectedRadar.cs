@@ -14,9 +14,9 @@ partial class CommandWindow {
   var pixels=new byte[148*100*4];
   for(int y=0;y<100;y++)for(int x=0;x<148;x++){
    var p=RadarWorldPoint(new PointF(x+.5f,y+.5f));var c=Color.FromArgb(16,27,32);
-   if(p.X>=0&&p.Y>=0&&p.X<world.MapWidth&&p.Y<world.MapHeight&&world.Explored(0,p)){
-    if(world.River==null)c=radarGround.GetPixel(Math.Min(radarGround.Width-1,(int)(p.X/world.MapWidth*radarGround.Width)),Math.Min(radarGround.Height-1,(int)(p.Y/world.MapHeight*radarGround.Height)));
-    else{var tile=world.River.At((int)(p.X/Campaign.Tile),(int)(p.Y/Campaign.Tile));c=tile.Ground==RiverbendMap.Surface.Water?C("#365f6b"):tile.Tree?C("#405a3d"):tile.Ground==RiverbendMap.Surface.Road||tile.Ground==RiverbendMap.Surface.Bridge||tile.Ground==RiverbendMap.Surface.Ramp?C("#96998a"):tile.Height>1?C("#969c76"):C("#758b61");}
+   if(world.Explored(0,p)){
+    var tile=world.Terrain.At((int)Math.Floor(p.X/Campaign.Tile),(int)Math.Floor(p.Y/Campaign.Tile));
+    c=tile==null||tile.Ground==RiverbendMap.Surface.Water?BattlefieldBounds.SeaColor:tile.Ground==RiverbendMap.Surface.Sand?C("#a8ad86"):tile.Tree?C("#405a3d"):tile.Ground==RiverbendMap.Surface.Road||tile.Ground==RiverbendMap.Surface.Bridge||tile.Ground==RiverbendMap.Surface.Ramp?C("#96998a"):tile.Height>1?C("#969c76"):C("#758b61");
    }
    int i=(y*148+x)*4;pixels[i]=c.B;pixels[i+1]=c.G;pixels[i+2]=c.R;pixels[i+3]=255;
   }

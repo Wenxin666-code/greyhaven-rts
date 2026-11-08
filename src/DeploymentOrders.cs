@@ -37,7 +37,7 @@ public partial class Campaign {
  bool ParkingAllowed(int side,PointF p){return true;}
  public void Halt(Piece o){o.Entering=null;ClearMission(o);o.Mining=false;o.Dock=null;o.DockReserved=false;o.DockTicket=0;o.DockRetryAfter=0;o.DockBlockedFor=0;o.Unload=0;o.Path.Clear();o.FirePoint=null;o.Target=null;o.Contact=ContactOrder.None;o.ResumeMarch=false;o.Formation=null;o.Advancing=false;}
  public bool Suppress(Piece o,PointF p){
-  if(!o.Deployed||!Armed(o)||p.X<0||p.Y<0||p.X>=MapWidth||p.Y>=MapHeight)return false;
+  if(!o.Deployed||!Armed(o)||!Battlefield.Contains(p))return false;
   Halt(o);o.FirePoint=p;o.Replan=0;return true;
  }
  bool GroundFireTick(Piece o,float dt){

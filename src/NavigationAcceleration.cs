@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 namespace Greyhaven {
@@ -10,7 +10,7 @@ public partial class Campaign {
  TerrainNav TerrainNavigation(float pad){
   TerrainNav result;if(terrainNavigation.TryGetValue(pad,out result))return result;
   result=new TerrainNav{Open=new bool[N*M],Links=new ushort[N*M]};
-  for(int i=0;i<result.Open.Length;i++){var p=Center(i);result.Open[i]=p.X>=pad&&p.X<=MapWidth-pad&&p.Y>=(River==null?99:0)+pad&&p.Y<=MapHeight-pad&&TerrainOpen(p,pad);}
+  for(int i=0;i<result.Open.Length;i++){var p=Center(i);result.Open[i]=Battlefield.ContainsFootprint(p,pad)&&TerrainOpen(p,pad);}
   terrainNavigation.Add(pad,result);return result;
  }
  // Traffic grids live only for a synchronous route call. Reuse their large
@@ -31,7 +31,7 @@ public partial class Campaign {
   int dx=to%N-from%N,dy=to/N-from/N,direction=NavDirection(dx,dy);int known=1<<direction,value=known<<8;
   ushort entry=transient&&temporaryNavigationStamps[from]!=grid.LinkStamp?(ushort)0:links[from];if((entry&known)!=0)return (entry&value)!=0;
   var a=Center(from);var b=Center(to);bool valid=true;
-  if(River!=null){
+  {
    var terrain=TerrainNavigation(pad);int edge=terrain.Links[from];
    if((edge&known)==0){bool open=TerrainLine(a,b,pad);edge|=known;if(open)edge|=value;terrain.Links[from]=(ushort)edge;}
    valid=(edge&value)!=0;

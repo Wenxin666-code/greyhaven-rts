@@ -21,7 +21,7 @@ public partial class Campaign {
   if(Time-lastStrike<2)return;
   SetEvent(unit.P,unit.T.Name+"遇袭");lastStrike=Time;
  }
- static List<OrePatch> CreateFields(){
+ internal static List<OrePatch> CreateFields(){
   var ore=new List<OrePatch>();
   foreach(var center in new[]{new PointF(53,626),new PointF(EnemyHome.X+160,EnemyHome.Y+180),
    new PointF(449,221),new PointF(896,629),new PointF(1020,140),
@@ -123,20 +123,25 @@ public partial class Campaign {
   if(truck.Cargo>.01f){truck.Returning=true;truck.Surveying=false;truck.Path.Clear();return;}
   // Busy cells are not an exhausted field. Wait nearby while another truck
   // clears its working cell instead of launching an unrelated exploration trip.
-  if(Ore.Any(p=>p.Stock>.01f&&Explored(truck.Side,p.P)&&Units.Any(u=>u!=truck&&u.Deployed&&u.Mining&&u.Patch==p))){truck.Path.Clear();truck.Surveying=false;truck.Dispatch=.7f;return;}
+  if(Ore.Any(p=>p.Stock>.01f&&Explored(truck.Side,p.P)&&Units.Any(u=>u!=truck&&u.Deployed&&u.Mining&&u.Patch==p)&&CanMoveTo(truck,p.P))){truck.Path.Clear();truck.Surveying=false;truck.Dispatch=.7f;return;}
   if(truck.Path.Count==0)SurveyForOre(truck);
  }
  bool ChooseOre(Piece truck){
   var manual=truck.OrderedOre;truck.OrderedOre=null;
   if(manual!=null&&manual.Stock>.01f&&RouteToWork(truck,manual.P,false)){truck.Patch=manual;truck.Surveying=false;return true;}
-  OrePatch best=null;PointF[] route=null;PointF work=PointF.Empty;float bestCost=float.MaxValue;int reachable=0;
-  foreach(var dest in Ore.Where(p=>p.Stock>.01f&&Explored(truck.Side,p.P)).OrderBy(p=>Dist(truck.P,p.P)+(WorkingPatch(truck,p)?0:Tile))){
-   float lower=Dist(truck.P,dest.P);if(best!=null&&lower>bestCost+Tile)break;
+  OrePatch best=null;PointF[] route=null;PointF work=PointF.Empty;float bestCost=float.MaxValue;
+  var candidates=Ore.Where(p=>p.Stock>.01f&&Explored(truck.Side,p.P))
+   .Select(p=>new{Patch=p,Penalty=WorkingPatch(truck,p)?0:Tile})
+   .Select(p=>new{p.Patch,p.Penalty,Lower=Math.Max(0,Dist(truck.P,p.Patch.P)-6)+p.Penalty}).OrderBy(p=>p.Lower);
+  foreach(var candidate in candidates){
+   var dest=candidate.Patch;
+   // Distance is a lower bound on a legal route. Do not stop at an arbitrary
+   // number of reachable veins: a nearby vein may be across a long detour.
+   if(best!=null&&candidate.Lower>=bestCost)break;
    if(!RouteToWork(truck,dest.P,false))continue;
    float cost=0;var prev=truck.P;foreach(var p in truck.Path){cost+=Dist(prev,p);prev=p;}
-   cost+=WorkingPatch(truck,dest)?0:Tile;
+   cost+=candidate.Penalty;
    if(cost<bestCost){best=dest;bestCost=cost;route=truck.Path.ToArray();work=truck.WorkPoint;}
-   if(++reachable>=6)break;
   }
   if(best==null)return false;
   truck.Path=new Queue<PointF>(route);truck.WorkPoint=work;truck.Patch=best;truck.Surveying=false;return true;
@@ -148,8 +153,8 @@ public partial class Campaign {
  }
  bool ExploreGround(Piece unit){
   const int spacing=4*Tile;var candidates=new List<PointF>();
-  for(int y=144;y<MapHeight;y+=spacing)for(int x=48;x<MapWidth;x+=spacing){
-   var point=new PointF(x,y);if(!Explored(unit.Side,point))candidates.Add(point);
+  for(int y=(int)FogOriginY+48;y<FogOriginY+MapWidth+MapHeight;y+=spacing)for(int x=(int)FogOriginX+48;x<FogOriginX+MapWidth+MapHeight;x+=spacing){
+   var point=new PointF(x,y);if(!Explored(unit.Side,point)&&TerrainOpen(point,Clearance(unit)))candidates.Add(point);
   }
   foreach(var point in candidates.OrderBy(p=>Dist(unit.P,p))){
    if(Route(unit,point))return true;

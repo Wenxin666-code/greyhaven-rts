@@ -1,12 +1,13 @@
 using System;
 using System.Drawing;
+using System.Linq;
 namespace Greyhaven {
 partial class CommandWindow {
  Bitmap riverBriefMap,trainingBriefMap,islandBriefMap;
  void DrawRiverBrief(Graphics g,RectangleF box){
   bool island=islandMissionSelected;var cache=island?islandBriefMap:riverBriefMap;
   if(cache==null){
-   if(riverMap==null||riverMap.IsIsland!=island){riverMap=new RiverbendMap(island);riverViewZoom=-1;}
+   if(riverMap==null||riverMap.IsTraining||riverMap.IsIsland!=island){riverMap=new RiverbendMap(island);riverViewZoom=-1;}
    EnsureRiverArt();var oldCenter=mapCenter;float oldZoom=mapZoom;bool oldBattle=riverBattleRender,oldLabels=mapLabels,oldClient=drawingClient;
    try{
     riverBattleRender=false;mapLabels=false;drawingClient=false;RiverFit();
@@ -28,11 +29,19 @@ partial class CommandWindow {
   if(island)islandBriefMap=cache;else riverBriefMap=cache;g.DrawImage(cache,box);
  }
  void DrawTrainingBrief(Graphics g,RectangleF box){
-  if(trainingBriefMap==null){trainingBriefMap=new Bitmap(496,290);using(var bg=Graphics.FromImage(trainingBriefMap)){
-   bg.Clear(C("#152629"));float k=466f/((Campaign.Width+Campaign.Height)*Axis);
-   float x=15+Campaign.Height*Axis*k,y=(290-(Campaign.Width+Campaign.Height)*Rise*k)/2;
-   bg.DrawImage(ground,new[]{new PointF(x,y),new PointF(x+Campaign.Width*Axis*k,y+Campaign.Width*Rise*k),new PointF(x-Campaign.Height*Axis*k,y+Campaign.Height*Rise*k)});
-  }}g.DrawImage(trainingBriefMap,box);
+  if(trainingBriefMap==null){
+   var oldMap=riverMap;var oldCenter=mapCenter;float oldZoom=mapZoom;bool oldBattle=riverBattleRender,oldLabels=mapLabels,oldClient=drawingClient;
+   try{
+    riverMap=RiverbendMap.Training(Campaign.CreateFields().Select(p=>p.P));EnsureRiverArt();riverBattleRender=false;mapLabels=false;drawingClient=false;RiverFit();
+    using(var full=new Bitmap(W,H))using(var bg=Graphics.FromImage(full)){
+     DrawRiverMap(bg);trainingBriefMap=new Bitmap(496,290);using(var output=Graphics.FromImage(trainingBriefMap)){
+      output.Clear(C("#152629"));output.InterpolationMode=System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+      var view=mapViewport;float k=Math.Min(496/view.Width,290/view.Height);
+      output.DrawImage(full,new RectangleF((496-view.Width*k)/2,(290-view.Height*k)/2,view.Width*k,view.Height*k),view,GraphicsUnit.Pixel);
+     }
+    }
+   }finally{riverMap=oldMap;mapCenter=oldCenter;mapZoom=oldZoom;riverBattleRender=oldBattle;mapLabels=oldLabels;drawingClient=oldClient;}
+  }g.DrawImage(trainingBriefMap,box);
  }
 }
 }

@@ -74,7 +74,7 @@ public sealed partial class RiverbendMap {
   s.Append("],\"cells\":[");for(int i=0;i<Cells.Length;i++){if(i>0)s.Append(',');var c=Cells[i];s.Append('[').Append((int)c.Ground).Append(',').Append(c.Height.ToString("0.000",CultureInfo.InvariantCulture)).Append(',').Append(c.Tree?1:0).Append(']');}
   s.Append("],\"ore\":[");for(int i=0;i<Ore.Count;i++){if(i>0)s.Append(',');s.Append('[').Append(Ore[i].X).Append(',').Append(Ore[i].Y).Append(']');}
   s.Append("],\"houses\":[");for(int i=0;i<Houses.Count;i++){if(i>0)s.Append(',');var h=Houses[i];s.Append("{\"kind\":\"").Append(h.Kind).Append("\",\"lot\":[").Append(h.Lot.X).Append(',').Append(h.Lot.Y).Append(',').Append(h.Lot.Width).Append(',').Append(h.Lot.Height).Append("],\"initialOwner\":null}");}
-  s.Append("]}");File.WriteAllText(path,s.ToString(),new UTF8Encoding(false));
+  s.Append(']');AppendRadarTerrain(s);s.Append('}');File.WriteAllText(path,s.ToString(),new UTF8Encoding(false));
  }
 }
 }

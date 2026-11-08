@@ -1,8 +1,25 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Linq;
 namespace Greyhaven {
 public partial class Campaign {
+ bool ChooseRefinery(Piece truck,Piece excluded){
+  var saved=truck.Path;int savedVersion=truck.RouteVersion;Piece best=null;PointF[] bestRoute=null;float bestCost=float.MaxValue;
+  foreach(var candidate in Live(truck.Side).Where(o=>o.T.Key=="refinery"&&o!=excluded).OrderBy(o=>Dist(truck.P,DockPoint(o)))){
+   var gate=DockPoint(candidate);
+   // Evaluate static access, not momentary occupancy by a truck unloading.
+   // This also avoids committing to the closest building on the wrong bank.
+   if(!PlanRoute(truck,gate,null))continue;
+   float distance=0;var previous=truck.P;foreach(var p in truck.Path){distance+=Dist(previous,p);previous=p;}
+   int ahead=Units.Count(u=>u!=truck&&u.Deployed&&u.Side==truck.Side&&u.Returning&&u.Dock==candidate&&
+    (u.DockReserved||EarlierDock(u,truck)&&Dist(u.P,gate)<180));
+   float cost=distance/Math.Max(1,truck.T.Speed)+ahead*1.6f;
+   if(cost<bestCost){best=candidate;bestCost=cost;bestRoute=truck.Path.ToArray();}
+  }
+  truck.Path=saved;truck.RouteVersion=savedVersion;if(best==null)return false;
+  truck.Dock=best;truck.DockReserved=false;truck.DockRetryAfter=0;truck.DockBlockedFor=0;truck.Unload=0;
+  truck.Path=new System.Collections.Generic.Queue<PointF>(bestRoute);truck.WorkPoint=DockPoint(best);truck.RouteVersion=topology;return true;
+ }
  static bool EarlierDock(Piece a,Piece b){return a.DockTicket<b.DockTicket||a.DockTicket==b.DockTicket&&a.Id<b.Id;}
  int DockPosition(Piece truck){return 1+Units.Count(o=>o!=truck&&o.Deployed&&o.Mining&&o.Returning&&o.Dock==truck.Dock&&EarlierDock(o,truck));}
  string DockStatus(Piece truck){
@@ -31,8 +48,8 @@ public partial class Campaign {
    truck.Dock=null;truck.DockReserved=false;truck.Path.Clear();truck.Unload=0;plant=null;
   }
   if(plant==null){
-   plant=Live(truck.Side).Where(o=>o.T.Key=="refinery").OrderBy(o=>Dist(truck.P,o.P)+Units.Count(u=>u!=truck&&u.Deployed&&u.Returning&&u.Dock==o)*80).FirstOrDefault();
-   truck.Dock=plant;if(plant==null){truck.Path.Clear();return;}
+   if(truck.Dispatch>0)return;
+   if(!ChooseRefinery(truck,null)){truck.Path.Clear();truck.Dispatch=1;return;}plant=truck.Dock;
   }
   if(truck.DockReserved&&Dist(truck.P,truck.WorkPoint)<1&&Dist(truck.WorkPoint,DockPoint(plant))<.05f){
    truck.Path.Clear();plant.Door=1;truck.Unload+=dt;
@@ -43,8 +60,13 @@ public partial class Campaign {
   }
   if(truck.Dispatch>0)return;truck.Dispatch=.5f;
   if(truck.DockBlockedFor>=2&&AlternateDock(truck,plant))return;
+  bool near=Dist(truck.P,DockPoint(plant))<140,free=DockFree(truck,plant);
+  if(near&&!truck.DockReserved&&!free){
+   if(truck.Path.Count>0&&Dist(truck.Path.Last(),DockPoint(plant))<.05f)truck.Path.Clear();
+   if(truck.Path.Count==0&&!DockQueueRoute(truck,plant))truck.DockBlockedFor+=.5f;return;
+  }
   // A reservation starts at the refinery apron, not at a distant ore patch.
-  if(truck.DockRetryAfter<=Time&&Dist(truck.P,DockPoint(plant))<140&&DockFree(truck,plant)){
+  if(truck.DockRetryAfter<=Time&&near&&free){
    if(truck.DockReserved&&truck.Path.Count>0)return;
    foreach(var idle in Live(truck.Side).Where(u=>u!=truck&&!u.T.Building&&!u.Mining&&u.Path.Count==0&&u.Target==null&&!u.FirePoint.HasValue&&TrafficContact(truck.T,DockPoint(plant),u.T,u.P)).ToArray())RallyNewUnit(plant,idle);
    if(RouteToWork(truck,DockPoint(plant),true)){truck.DockReserved=true;truck.DockBlockedFor=0;return;}
@@ -52,7 +74,10 @@ public partial class Campaign {
    truck.DockReserved=false;truck.DockRetryAfter=Time+2;
    truck.DockBlockedFor+=.5f;
   }
-  if(!truck.DockReserved&&truck.Path.Count==0&&!DockQueueRoute(truck,plant))truck.DockBlockedFor+=.5f;
+  if(!truck.DockReserved&&truck.Path.Count==0){
+   if(free&&RouteToWork(truck,DockPoint(plant),true)){truck.DockReserved=near;truck.DockBlockedFor=0;return;}
+   if(!DockQueueRoute(truck,plant))truck.DockBlockedFor+=.5f;
+  }
  }
  void ClearDockApproach(Piece head,Piece plant){
   var gate=DockPoint(plant);
@@ -66,12 +91,7 @@ public partial class Campaign {
   }
  }
  bool AlternateDock(Piece truck,Piece failed){
-  foreach(var candidate in Live(truck.Side).Where(o=>o.T.Key=="refinery"&&o!=failed).OrderBy(o=>Dist(truck.P,o.P))){
-   if(!RouteToWork(truck,DockPoint(candidate),true))continue;
-   truck.Dock=candidate;truck.DockReserved=false;truck.DockRetryAfter=0;truck.DockBlockedFor=0;truck.Unload=0;
-   return true;
-  }
-  return false;
+  return ChooseRefinery(truck,failed);
  }
 }
 }

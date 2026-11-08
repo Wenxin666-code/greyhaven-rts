@@ -1,0 +1,57 @@
+{
+  "date": "2026-11-08",
+  "base_commit": "8a545bcf56e420d01039352ed6a979d5a0c26ead",
+  "github_uploaded": true,
+  "status": "passed",
+  "checks": [
+    "HaulAndBoundsChecks",
+    "OriginalControlChecks",
+    "ScrollChecks",
+    "EconomyChecks",
+    "CampaignChecks",
+    "PathingChecks",
+    "WindowChecks",
+    "RiverbendPlayChecks"
+  ],
+  "baseline": {
+    "ore_target": [
+      690,
+      576
+    ],
+    "miner_speed": 72,
+    "free_refinery_route_endpoint_distance": 110.6
+  },
+  "current": {
+    "ore_target": [
+      450,
+      930
+    ],
+    "miner_speed": 48,
+    "tank_speed": 72,
+    "five_game_second_travel": {
+      "miner": 240,
+      "tank": 360
+    },
+    "free_refinery_route_endpoint_distance": 0,
+    "sealed_refinery_rejected": true,
+    "unreachable_busy_vein_no_longer_waits": true
+  },
+  "fog_reference": {
+    "coverage_interior": "identical",
+    "native_raster_boundary_tolerance_device_pixels": 1,
+    "zoom_levels": [
+      1.05,
+      1.55,
+      2.4
+    ]
+  },
+  "map_geometry": {
+    "outer_corners": "procedural impassable sea",
+    "radar_fog_viewport": "shared rectangular projected bounds",
+    "authored_land_starts_and_island_gate": "preserved",
+    "current_design": "Superseded by full radar-domain land/sand/water cells; see docs/design/地图地格与建造提示规范.md."
+  },
+  "release_exe_sha256": "3fd5bfe3002f73c71e0a463704bb33a1ca103efd07b9f1ae3872e9b81675b2d4",
+  "scope": "Historical intermediate mining/bounds validation, recorded before full-domain terrain and whole-cell coastline changes.",
+  "current_release_validation": "See docs/releases/v0.20.0.json; latest terrain and placement changes were not re-smoke-tested at user request."
+}

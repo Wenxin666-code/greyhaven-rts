@@ -1,0 +1,52 @@
+[
+  {
+    "url": "https://raw.githubusercontent.com/CnCNet/WorldAlteringEditor/f01be61e460c1fe5d76c827ed0f4eb1adaa2bf92/src/MapEditorLibrary/Helpers.cs",
+    "file": "WorldAlteringEditor-src_MapEditorLibrary_Helpers.cs",
+    "sha256": "1b526cebb6a2757295cfc925f13d51c9e1316736ae825e012d229a1cce9c6793"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/CnCNet/WorldAlteringEditor/f01be61e460c1fe5d76c827ed0f4eb1adaa2bf92/src/MapEditorLibrary/Models/Map.cs",
+    "file": "WorldAlteringEditor-src_MapEditorLibrary_Models_Map.cs",
+    "sha256": "f91da8be4b81a6220031336d0680cde0c136c9fc503bef08fe90230165539fb3"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/CnCNet/WorldAlteringEditor/f01be61e460c1fe5d76c827ed0f4eb1adaa2bf92/src/MapEditorLibrary/Models/MapTile.cs",
+    "file": "WorldAlteringEditor-src_MapEditorLibrary_Models_MapTile.cs",
+    "sha256": "871d6d181d8cfa195b658ef8f5655365a121b3b47b4c5c0fa9dc69f1cc8ad169"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/CnCNet/WorldAlteringEditor/f01be61e460c1fe5d76c827ed0f4eb1adaa2bf92/src/MapEditorLibrary/Constants.cs",
+    "file": "WAE-src_MapEditorLibrary_Constants.cs",
+    "sha256": "94e06fc130241cae8c0f396cbffcc54439b3705a18c5c1e3e72e11d8edfbe884"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/CnCNet/WorldAlteringEditor/f01be61e460c1fe5d76c827ed0f4eb1adaa2bf92/src/MapEditorMCP/Infos/MapCellCoordinate.cs",
+    "file": "WAE-src_MapEditorMCP_Infos_MapCellCoordinate.cs",
+    "sha256": "0941aa33271c1aef21baf1239d3d240b1a4489221e4c2d0001944fd4b88f84b4"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/Phobos-developers/Phobos/ce864b03e56b15f4c59f78955aee87079e54ce76/src/Ext/Unit/Hooks.Harvester.cpp",
+    "file": "Phobos-src_Ext_Unit_Hooks.Harvester.cpp",
+    "sha256": "baf9efb92ec0236281d1200311ddcf86c009be232795534a2a38caf16aa4ca37"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/Phobos-developers/YRpp/8d7e43ef26add6bdf593a2469b64cf75e4a841f8/MapClass.h",
+    "file": "YRpp-MapClass.h",
+    "sha256": "1a3606f334710390675754cd615df6e5ae862ceb5a6f09672f785559af17f5cb"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/Phobos-developers/YRpp/8d7e43ef26add6bdf593a2469b64cf75e4a841f8/RadarClass.h",
+    "file": "YRpp-RadarClass.h",
+    "sha256": "6afc41ef2d9fb960054410b788473fea63902e6ab93609a49589801427b8692d"
+  },
+  {
+    "url": "https://github.com/CnCNet/cncnet-yr-client-package/blob/e4b5712df96ec3acb05ddbda9fe2ba63e30576ab/game-assets/ra2mode.pack/rulesmd.ini",
+    "file": "prior-pinned-ra2mode.ini",
+    "sha256": "010af82ebf5b4df28920e38e88cfe9bc945e7cdc764298caab037fc00fbd013b",
+    "scope": "HARV/CMIN=4, HTNK=6, MTNK=7, FV=10"
+  },
+  {
+    "url": "https://static.wikia.nocookie.net/cnc_gamepedia_en/images/3/3b/CCUC-RA2-pcMANOLeUS.pdf/revision/latest",
+    "scope": "Original manual, Radar Screen, printed page 5; primary document read through web extraction"
+  }
+]

@@ -23,20 +23,20 @@ public class March {
  }
 }
 public partial class Campaign {
- public const int FogSize=12,FogCols=Width/FogSize,FogRows=Height/FogSize;
+ public const int FogSize=12,FogCols=(Width+Height)/FogSize+1,FogRows=FogCols;
  readonly bool[,,] discovered;
- public int MapFogCols {get{return MapWidth/FogSize;}} public int MapFogRows {get{return MapHeight/FogSize;}}
+ public int MapFogCols {get{return (MapWidth+MapHeight)/FogSize+1;}} public int MapFogRows {get{return MapFogCols;}}
  public int FogRevision {get;private set;}
  void Discover(int side,int x,int y){if(!discovered[side,x,y]){discovered[side,x,y]=true;if(side==0)FogRevision++;}}
  float visionTimer;
  public bool Seen(int side,int x,int y){return x>=0&&y>=0&&side>=0&&side<MaxFactions&&x<MapFogCols&&y<MapFogRows&&(satelliteVision[side]||discovered[side,x,y]);}
- public bool Explored(int side,PointF p){return Seen(side,(int)(p.X/FogSize),(int)(p.Y/FogSize));}
+ public bool Explored(int side,PointF p){return Battlefield.Contains(p)&&Seen(side,FogColumn(p.X),FogRow(p.Y));}
  void Reveal(){
   UpdateSatellites();
   foreach(var o in Units){if(!o.Deployed||o.Side<0)continue;float r=Sight(o);
-   for(int y=Math.Max(0,(int)((o.P.Y-r)/FogSize));y<=Math.Min(MapFogRows-1,(int)((o.P.Y+r)/FogSize));y++)
-    for(int x=Math.Max(0,(int)((o.P.X-r)/FogSize));x<=Math.Min(MapFogCols-1,(int)((o.P.X+r)/FogSize));x++){
-     if(discovered[o.Side,x,y])continue;float dx=(x+.5f)*FogSize-o.P.X,dy=(y+.5f)*FogSize-o.P.Y;
+   for(int y=Math.Max(0,FogRow(o.P.Y-r));y<=Math.Min(MapFogRows-1,FogRow(o.P.Y+r));y++)
+    for(int x=Math.Max(0,FogColumn(o.P.X-r));x<=Math.Min(MapFogCols-1,FogColumn(o.P.X+r));x++){
+     if(discovered[o.Side,x,y])continue;float dx=FogOriginX+(x+.5f)*FogSize-o.P.X,dy=FogOriginY+(y+.5f)*FogSize-o.P.Y;
      if(dx*dx+dy*dy<=r*r)Discover(o.Side,x,y);
     }
   }
@@ -89,7 +89,7 @@ public partial class Campaign {
   double heading=Math.Atan2(next.Y-o.P.Y,next.X-o.P.X);
   foreach(double angle in new[]{0,.65,-.65,1.12,-1.12,1.52,-1.52}){
    var q=new PointF(o.P.X+(float)Math.Cos(heading+angle)*step,o.P.Y+(float)Math.Sin(heading+angle)*step);
-   if(!Clear(o.P,q,Grid(Clearance(o)).Barriers,Clearance(o))||q.X<Clearance(o)||q.Y<(River==null?99:0)+Clearance(o)||q.X>MapWidth-Clearance(o)||q.Y>MapHeight-Clearance(o))continue;
+   if(!Clear(o.P,q,Grid(Clearance(o)).Barriers,Clearance(o))||!Battlefield.ContainsFootprint(q,Clearance(o)))continue;
    if(near.All(u=>!TrafficContact(o.T,q,u.T,u.P)||Dist(u.P,q)>=Dist(u.P,o.P)-.001f))return q;
   }return o.P;
  }

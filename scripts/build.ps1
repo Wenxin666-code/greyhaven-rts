@@ -1,5 +1,5 @@
-﻿[CmdletBinding()]
-param([switch]$TempoVerify,[switch]$TempoPreview,[switch]$ControlsVerify,[switch]$ControlsPreview,[switch]$IslandPreview,[switch]$AiVerify,[switch]$ProductionVerify,[switch]$BlastVerify,[switch]$BlastPreview,[switch]$StructurePreview,[switch]$MotionPreview,[switch]$BuildingPreview,[switch]$ScrollVerify,[switch]$ScrollPreview,[switch]$QueuePreview,[switch]$Test,[switch]$MeasureFrames,[switch]$MeasureScroll,[switch]$ModelPreview,[switch]$SpacingPreview,[switch]$PresentationPreview,[switch]$TrafficPreview,[switch]$AnimationPreview,[switch]$MapPreview,[switch]$RiverPreview,[switch]$PathingPreview,[switch]$EconomyPreview,[switch]$ConstructionPreview,[switch]$InterfacePreview,[string]$DriveFrames,[string]$OreFrames)
+[CmdletBinding()]
+param([switch]$HaulVerify,[switch]$HaulPreview,[switch]$TempoVerify,[switch]$TempoPreview,[switch]$ControlsVerify,[switch]$ControlsPreview,[switch]$IslandPreview,[switch]$AiVerify,[switch]$ProductionVerify,[switch]$BlastVerify,[switch]$BlastPreview,[switch]$StructurePreview,[switch]$MotionPreview,[switch]$BuildingPreview,[switch]$ScrollVerify,[switch]$ScrollPreview,[switch]$QueuePreview,[switch]$Test,[switch]$MeasureFrames,[switch]$MeasureScroll,[switch]$ModelPreview,[switch]$SpacingPreview,[switch]$PresentationPreview,[switch]$TrafficPreview,[switch]$AnimationPreview,[switch]$MapPreview,[switch]$RiverPreview,[switch]$PathingPreview,[switch]$EconomyPreview,[switch]$ConstructionPreview,[switch]$InterfacePreview,[string]$DriveFrames,[string]$OreFrames)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
@@ -44,6 +44,15 @@ $options = @('/nologo','/optimize+','/platform:x64','/codepage:65001',('/win32ma
 $exe = Join-Path $root '断线前沿.exe'
 & $compiler @options /target:winexe "/out:$exe" @resources @source
 if ($LASTEXITCODE) { throw '构建失败，请先关闭正在运行的游戏。' }
+if ($HaulVerify -or $HaulPreview -or $Test) {
+ $haulCheck=Join-Path ([IO.Path]::GetTempPath()) ("greyhaven-haul-{0}.exe" -f [guid]::NewGuid())
+ try {
+  & $compiler @options "/out:$haulCheck" /main:HaulAndBoundsChecks @resources @source (Join-Path $root 'tests/HaulAndBoundsChecks.cs')
+  if($LASTEXITCODE){throw '矿车与边界检查编译失败'}
+  if($HaulPreview){& $haulCheck (Join-Path $root 'docs/haul-map-20261108')}else{& $haulCheck}
+  if($LASTEXITCODE){throw '矿车与边界检查未通过'}
+ }finally{if(Test-Path -LiteralPath $haulCheck){Remove-Item -LiteralPath $haulCheck}}
+}
 if ($TempoVerify -or $TempoPreview -or $Test) {
  $tempoCheck=Join-Path ([IO.Path]::GetTempPath()) ("greyhaven-tempo-{0}.exe" -f [guid]::NewGuid())
  try {

@@ -6,13 +6,13 @@ using System.IO;
 using System.Linq;
 using System.Text;
 namespace Greyhaven {
-// Standalone authored map definition. The existing training world is unchanged.
+// Authored map core plus full radar-domain terrain; all coast cells are whole tiles.
 // Preview rendering and connectivity checks consume these SAME cells and lots.
 public sealed partial class RiverbendMap {
  public const int Columns=220,Rows=150;
  public readonly int WidthCells,HeightCells;public readonly bool IsIsland;public readonly Point[] Starts;
- public string Title {get{return IsIsland?"孤岛要塞":"河湾镇";}}
- public enum Surface { Meadow,Soil,Rock,Marsh,Water,Road,Bridge,Square,Ramp }
+ public string Title {get{return IsTraining?"野外训练":IsIsland?"孤岛要塞":"河湾镇";}}
+ public enum Surface { Meadow,Soil,Rock,Marsh,Water,Road,Bridge,Square,Ramp,Sand }
  public sealed class Cell {public Surface Ground;public float Height;public bool Tree;public int Variation;}
  public sealed class House {
   public string Kind,Name;public Rectangle Lot;public int Capacity;
@@ -25,15 +25,17 @@ public sealed partial class RiverbendMap {
  public readonly List<Landmark> Labels=new List<Landmark>();
  public readonly List<Point> Ore=new List<Point>();
  public readonly Point WestStart=new Point(23,114),EastStart=new Point(202,31),SouthStart=new Point(199,136);
- public Cell At(int x,int y){return x<0||y<0||x>=WidthCells||y>=HeightCells?null:Cells[y*WidthCells+x];}
+ public Cell At(int x,int y){return x<0||y<0||x>=WidthCells||y>=HeightCells?ExtensionAt(x,y):Cells[y*WidthCells+x];}
  public static float RiverCenter(float y){return 111+(float)Math.Sin(y/19)*7+(float)Math.Sin(y/41)*5;}
  static float RiverWidth(float y){return y<112?5.4f:5.4f+(y-112)*.24f;}
  static double Ellipse(int x,int y,float cx,float cy,float rx,float ry){return Math.Pow((x-cx)/rx,2)+Math.Pow((y-cy)/ry,2);}
  static int Hash(int x,int y){unchecked{uint q=(uint)(x*73856093^y*19349663^71423);q^=q>>13;q*=1274126177;return (int)(q&0x7fffffff);}}
- public RiverbendMap(bool island=false){
-  IsIsland=island;WidthCells=island?360:Columns;HeightCells=island?240:Rows;Cells=new Cell[WidthCells*HeightCells];
-  Starts=island?new[]{new Point(36,30),new Point(320,31),new Point(325,115),new Point(316,209),new Point(191,213),new Point(163,105)}:new[]{WestStart,EastStart,SouthStart};
-  if(island){GenerateIsland();return;}
+ public RiverbendMap(bool island=false):this(island,false,null){}
+ RiverbendMap(bool island,bool training,IEnumerable<PointF> minerals){
+  IsIsland=island;IsTraining=training;WidthCells=training?Campaign.Width/Campaign.Tile:island?360:Columns;HeightCells=training?Campaign.Height/Campaign.Tile:island?240:Rows;Cells=new Cell[WidthCells*HeightCells];
+  Starts=training?new[]{new Point(6,21),new Point((int)(Campaign.EnemyHome.X/Campaign.Tile),(int)(Campaign.EnemyHome.Y/Campaign.Tile))}:island?new[]{new Point(36,30),new Point(320,31),new Point(325,115),new Point(316,209),new Point(191,213),new Point(163,105)}:new[]{WestStart,EastStart,SouthStart};
+  if(training){GenerateTraining(minerals);PrepareCoastline();return;}
+  if(island){GenerateIsland();PrepareCoastline();return;}
   for(int y=0;y<HeightCells;y++)for(int x=0;x<WidthCells;x++){
    int n=Hash(x,y);var c=new Cell{Ground=Surface.Meadow,Variation=n};Cells[y*WidthCells+x]=c;
    float bank=Math.Abs(x-RiverCenter(y))-RiverWidth(y);
@@ -88,6 +90,7 @@ public sealed partial class RiverbendMap {
   Label("西岸老街",85,65,0);Label("东岸社区",135,88,0);Label("北桥驿站",136,20,0);Label("南岸村落",95,112,0);
   Label("采石高地",62,28,3);Label("东部台地",176,80,3);Label("镜湖",31,22,4);Label("河口湿地",117,143,4);
   Label("北桥",117,33,5);Label("中央桥",109,77,5);Label("南桥",109,121,5);
+  PrepareCoastline();
  }
  void Label(string name,float x,float y,int style){Labels.Add(new Landmark{Name=name,Position=new PointF(x,y),Style=style});}
  void Paint(Rectangle r,Surface ground,float? height){for(int y=r.Top;y<r.Bottom;y++)for(int x=r.Left;x<r.Right;x++){var c=At(x,y);if(c==null)continue;c.Ground=ground;c.Tree=false;if(height.HasValue)c.Height=height.Value;}}
@@ -106,17 +109,17 @@ public sealed partial class RiverbendMap {
  public bool CanStep(Point a,Point b){return Walkable(b.X,b.Y)&&Walkable(a.X,a.Y)&&Math.Abs(At(a.X,a.Y).Height-At(b.X,b.Y).Height)<=.26f;}
  public bool Connected(Point a,Point b){
   if(!Walkable(a.X,a.Y)||!Walkable(b.X,b.Y))return false;
-  var seen=new bool[Cells.Length];var q=new Queue<Point>();q.Enqueue(a);seen[a.Y*WidthCells+a.X]=true;
-  while(q.Count>0){var p=q.Dequeue();if(p==b)return true;foreach(var d in new[]{new Point(1,0),new Point(-1,0),new Point(0,1),new Point(0,-1)}){var n=new Point(p.X+d.X,p.Y+d.Y);if(n.X<0||n.Y<0||n.X>=WidthCells||n.Y>=HeightCells||seen[n.Y*WidthCells+n.X]||!CanStep(p,n))continue;seen[n.Y*WidthCells+n.X]=true;q.Enqueue(n);}}
+  var seen=new HashSet<long>();var q=new Queue<Point>();q.Enqueue(a);seen.Add(CellKey(a.X,a.Y));
+  while(q.Count>0){var p=q.Dequeue();if(p==b)return true;foreach(var d in new[]{new Point(1,0),new Point(-1,0),new Point(0,1),new Point(0,-1)}){var n=new Point(p.X+d.X,p.Y+d.Y);long key=CellKey(n.X,n.Y);if(seen.Contains(key)||!CanStep(p,n))continue;seen.Add(key);q.Enqueue(n);}}
   return false;
  }
  public void Export(string path){
   if(IsIsland){ExportIsland(path);return;}
-  var s=new StringBuilder("{\n  \"id\":\"riverbend-v01\",\"status\":\"playable\",\"columns\":220,\"rows\":150,\"cellWorldSize\":24,\n  \"surfaceLegend\":[\"meadow\",\"soil\",\"rock\",\"marsh\",\"water\",\"road\",\"bridge\",\"square\",\"ramp\"],\n  \"cells\":[\n");
+  var s=new StringBuilder("{\n  \"id\":\"riverbend-v01\",\"status\":\"playable\",\"columns\":220,\"rows\":150,\"cellWorldSize\":24,\n  \"surfaceLegend\":[\"meadow\",\"soil\",\"rock\",\"marsh\",\"water\",\"road\",\"bridge\",\"square\",\"ramp\",\"sand\"],\n  \"cells\":[\n");
   for(int i=0;i<Cells.Length;i++){var c=Cells[i];if(i>0)s.Append(',');if(i%WidthCells==0)s.Append('\n');s.Append('[').Append((int)c.Ground).Append(',').Append(c.Height.ToString("0.000",CultureInfo.InvariantCulture)).Append(',').Append(c.Tree?1:0).Append(']');}
   s.Append("\n],\"houses\":[\n");for(int i=0;i<Houses.Count;i++){var h=Houses[i];if(i>0)s.Append(",\n");s.Append("{\"kind\":\"").Append(h.Kind).Append("\",\"lot\":[").Append(h.Lot.X).Append(',').Append(h.Lot.Y).Append(',').Append(h.Lot.Width).Append(',').Append(h.Lot.Height).Append("],\"capacity\":").Append(h.Capacity).Append(",\"initialOwner\":null,\"engineerCapture\":true,\"evacuateOnDestruction\":true}");}
   s.Append("\n],\"bridges\":[");for(int i=0;i<Bridges.Count;i++){if(i>0)s.Append(',');var b=Bridges[i];s.Append('[').Append(b.X).Append(',').Append(b.Y).Append(',').Append(b.Width).Append(',').Append(b.Height).Append(']');}
-  s.Append("],\"starts\":[[23,114],[202,31],[199,136]],\"ore\":[");for(int i=0;i<Ore.Count;i++){if(i>0)s.Append(',');s.Append('[').Append(Ore[i].X).Append(',').Append(Ore[i].Y).Append(']');}s.Append("]\n}\n");File.WriteAllText(path,s.ToString(),new UTF8Encoding(false));
+  s.Append("],\"starts\":[[23,114],[202,31],[199,136]],\"ore\":[");for(int i=0;i<Ore.Count;i++){if(i>0)s.Append(',');s.Append('[').Append(Ore[i].X).Append(',').Append(Ore[i].Y).Append(']');}s.Append(']');AppendRadarTerrain(s);s.Append("\n}\n");File.WriteAllText(path,s.ToString(),new UTF8Encoding(false));
  }
 }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -19,7 +19,7 @@ partial class CommandWindow {
   for(float height=3.1f;height>=0;height-=.025f){float shift=height*15/(2*Rise);var p=new PointF(flat.X+shift,flat.Y+shift);if(Math.Abs(world.GroundHeight(p)-height)<.026f)return p;}
   return flat;
  }
- void CenterAt(PointF p){camera=new PointF(Math.Max(0,Math.Min(world.MapWidth,p.X)),Math.Max(0,Math.Min(world.MapHeight,p.Y)));}
+ void CenterAt(PointF p){camera=world.Battlefield.ClampCenter(p,MW/(2*Axis*zoom),MH/(2*Rise*zoom));}
  void Pan(float x,float y){followUnit=null;float a=x/(Axis*zoom),b=y/(Rise*zoom);CenterAt(new PointF(camera.X+(b+a)/2,camera.Y+(b-a)/2));}
  bool edgeArmed;float edgeDwell;
  void ResetEdgeScroll(){edgeArmed=false;edgeDwell=0;}
@@ -57,36 +57,34 @@ partial class CommandWindow {
  protected override void OnMouseWheel(MouseEventArgs e){base.OnMouseWheel(e);var p=ToScreenPoint(e);if(QueueWheel(p,e.Delta))return;if(!briefing&&!paused&&!queueOpen&&p.X>=MW&&p.Y>=274){SidebarScroll(-Math.Sign(e.Delta));return;}if(mapReview){RiverWheel(p,e.Delta);return;}if(briefing||paused||p.X<0||p.X>=MW||p.Y<MapTop||p.Y>=MapTop+MH)return;
   var before=WorldOf(p);zoom=Math.Max(MinBattleZoom,Math.Min(MaxBattleZoom,zoom*(float)Math.Pow(1.18,e.Delta/120.0)));var after=WorldOf(p);CenterAt(new PointF(camera.X+before.X-after.X,camera.Y+before.Y-after.Y));Invalidate();}
  void GroundSpace(Graphics g){var origin=ScreenOf(PointF.Empty);using(var m=new Matrix(Axis*zoom,Rise*zoom,-Axis*zoom,Rise*zoom,origin.X,origin.Y))g.MultiplyTransform(m);}
- Campaign fogWorld;int fogRevision;RectangleF[] fogRuns,fogVisibleRuns;PointF fogVisibleCamera;float fogVisibleZoom=-1;
+ Campaign fogWorld;int fogRevision;RectangleF[] fogRuns;Rectangle fogWindow;
  void Shroud(Graphics g){
-  if(fogWorld!=world||fogRevision!=world.FogRevision){
+  // The sea extends fog coordinates into negative land coordinates. Visit only
+  // the inverse-projected viewport, rather than scanning the larger whole map.
+  float extent=((MW*.5f+2)/(Axis*zoom)+(MH*.5f+2)/(Rise*zoom))*.5f+80;
+  var window=Rectangle.FromLTRB(Math.Max(0,world.FogColumn(camera.X-extent)-2),Math.Max(0,world.FogRow(camera.Y-extent)-2),
+   Math.Min(world.MapFogCols,world.FogColumn(camera.X+extent)+3),Math.Min(world.MapFogRows,world.FogRow(camera.Y+extent)+3));
+  if(fogWorld!=world||fogRevision!=world.FogRevision||fogWindow!=window){
    var runs=new List<RectangleF>();var previous=new Dictionary<int,int>();
-   for(int y=0;y<world.MapFogRows;y++){
+   for(int y=window.Top;y<window.Bottom;y++){
     var next=new Dictionary<int,int>();
-    for(int x=0;x<world.MapFogCols;){
-     if(world.Seen(0,x,y)){x++;continue;}int start=x++;while(x<world.MapFogCols&&!world.Seen(0,x,y))x++;
+    for(int x=window.Left;x<window.Right;){
+     if(world.Seen(0,x,y)){x++;continue;}int start=x++;while(x<window.Right&&!world.Seen(0,x,y))x++;
      int key=start*(world.MapFogCols+1)+x,index;
      if(previous.TryGetValue(key,out index)){var r=runs[index];r.Height+=Campaign.FogSize;runs[index]=r;}
-     else{index=runs.Count;runs.Add(new RectangleF(start*Campaign.FogSize,y*Campaign.FogSize,(x-start)*Campaign.FogSize+.45f,Campaign.FogSize+.45f));}
+     else{index=runs.Count;runs.Add(new RectangleF(world.FogOriginX+start*Campaign.FogSize,world.FogOriginY+y*Campaign.FogSize,(x-start)*Campaign.FogSize+.45f,Campaign.FogSize+.45f));}
      next[key]=index;
     }
     previous=next;
    }
-   fogRuns=runs.ToArray();fogWorld=world;fogRevision=world.FogRevision;fogVisibleZoom=-1;
+   fogRuns=runs.ToArray();fogWorld=world;fogRevision=world.FogRevision;fogWindow=window;
   }
-  if(fogVisibleZoom!=zoom||fogVisibleCamera!=camera){
-   // Bound the inverse-projected viewport before sending rectangles to GDI+.
-   // This changes only offscreen work; all fog state and visible edges are shared.
-   float extent=((MW*.5f+2)/(Axis*zoom)+(MH*.5f+2)/(Rise*zoom))*.5f;
-   var visible=new RectangleF(camera.X-extent,camera.Y-extent,extent*2,extent*2);
-   fogVisibleRuns=fogRuns.Where(r=>r.IntersectsWith(visible)).ToArray();fogVisibleCamera=camera;fogVisibleZoom=zoom;
-  }
-  if(fogVisibleRuns.Length>0)using(var brush=new SolidBrush(C("#152323")))g.FillRectangles(brush,fogVisibleRuns);
+  if(fogRuns.Length>0)using(var brush=new SolidBrush(C("#152323")))g.FillRectangles(brush,fogRuns);
  }
  void DrawBattle(Graphics g){
   facilityAt=-1;
   var view=g.Save();g.SetClip(new Rectangle(0,MapTop,MW,MH));
-  if(world.River==null)DrawGroundView(g);else DrawRiverBattleGround(g);var land=g.Save();GroundSpace(g);if(world.River==null)DrawTerrainPlan(g);
+  DrawRiverBattleGround(g);var land=g.Save();GroundSpace(g);if(world.River==null)DrawTerrainPlan(g);
   var mode=g.SmoothingMode;g.SmoothingMode=SmoothingMode.None;Shroud(g);g.SmoothingMode=mode;g.Restore(land);
   DrawOre(g);DrawBeacons(g);
   DrawBuildingScars(g);

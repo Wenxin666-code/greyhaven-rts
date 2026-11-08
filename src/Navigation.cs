@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -29,19 +29,8 @@ public partial class Campaign {
   return Live(side).Any(o=>o.T.Building&&!o.T.Civilian&&o.T.Key!="post"&&
    Math.Max(Math.Max(Footprint(o.T,o.P).Left-r.Right,r.Left-Footprint(o.T,o.P).Right),Math.Max(Footprint(o.T,o.P).Top-r.Bottom,r.Top-Footprint(o.T,o.P).Bottom))<=2*Tile+.01f);
  }
- public bool PlacementCell(RectangleF cell,Piece skip,int side){
-  if(cell.Left<0||cell.Right>MapWidth||cell.Top<(River==null?99:0)||cell.Bottom>MapHeight||!TerrainBuildable(cell))return false;
-  if(skip==null&&!Explored(side,Middle(cell)))return false;
-  if(MapWalls.Any(b=>b.IntersectsWith(cell))||Sites.Any(b=>b.Body.IntersectsWith(cell)))return false;
-  if(Ore.Any(p=>p.Stock>0&&cell.Contains(p.P)))return false;
-  return !Units.Any(o=>o!=skip&&o.Alive&&o.Carrier==null&&(o.T.Building?Footprint(o.T,o.P).IntersectsWith(cell):Inflated(cell,Clearance(o)).Contains(o.P)));
- }
- public bool CanPlace(TypeInfo t,PointF p,Piece skip,int side=0){
-  var r=Footprint(t,p);if(!TerrainBuildable(r)||skip==null&&!InBuildRange(t,r,side))return false;
-  for(float y=r.Top;y<r.Bottom;y+=Tile)for(float x=r.Left;x<r.Right;x+=Tile)
-   if(!PlacementCell(new RectangleF(x,y,Tile,Tile),skip,side))return false;
-  return true;
- }
+ public bool PlacementCell(RectangleF cell,Piece skip,int side){return LocalPlacementBlock(cell,skip,side,null)==PlacementBlock.None;}
+ public bool CanPlace(TypeInfo t,PointF p,Piece skip,int side=0){return AssessPlacement(t,p,skip,side).Valid;}
  static float Clearance(Piece o){return o.T.Clearance;}
  IEnumerable<RectangleF> Obstacles(Piece skip=null){
   foreach(var site in Sites)yield return site.Body;
@@ -49,7 +38,7 @@ public partial class Campaign {
   foreach(var o in Units)if(o!=skip&&o.Alive&&o.T.Building)yield return Footprint(o.T,o.P);
  }
  bool Blocked(PointF p,float pad,Piece skip){
-  return !TerrainOpen(p,pad)||p.X<pad||p.Y<(River==null?99:0)+pad||p.X>MapWidth-pad||p.Y>MapHeight-pad||Obstacles(skip).Any(r=>Inflated(r,pad).Contains(p));
+  return !TerrainOpen(p,pad)||!Battlefield.ContainsFootprint(p,pad)||Obstacles(skip).Any(r=>Inflated(r,pad).Contains(p));
  }
  // Intersect the entire swept segment with the expanded obstacle, including corners.
  static bool Slab(float a,float delta,float lo,float hi,ref float entry,ref float exit){
@@ -60,11 +49,13 @@ public partial class Campaign {
   if(!TerrainLine(a,b,pad))return false;
   foreach(var r in blocks){float lo=0,hi=1;if(Slab(a.X,b.X-a.X,r.Left,r.Right,ref lo,ref hi)&&Slab(a.Y,b.Y-a.Y,r.Top,r.Bottom,ref lo,ref hi))return false;}return true;
  }
- const int Step=15;int N {get{return MapWidth/Step;}} int M {get{return MapHeight/Step;}}
- PointF Center(int i){return new PointF((i%N+.5f)*Step,(i/N+.5f)*Step);}
+ const int Step=15;int N {get{return (MapWidth+MapHeight)/Step;}} int M {get{return N;}}
+ int NavX(float x){return (int)Math.Floor((x-FogOriginX)/Step);}
+ int NavY(float y){return (int)Math.Floor((y-FogOriginY)/Step);}
+ PointF Center(int i){return new PointF(FogOriginX+(i%N+.5f)*Step,FogOriginY+(i/N+.5f)*Step);}
  int Estimate(int a,int b){int dx=Math.Abs(a%N-b%N),dy=Math.Abs(a/N-b/N);return 10*Math.Max(dx,dy)+4*Math.Min(dx,dy);}
  int Anchor(PointF p,bool[] open,RectangleF[] blocks,bool tracks,float pad=0){
-  int cx=(int)p.X/Step,cy=(int)p.Y/Step,best=-1;float d=50;
+  int cx=NavX(p.X),cy=NavY(p.Y),best=-1;float d=50;
   for(int y=Math.Max(0,cy-2);y<=Math.Min(M-1,cy+2);y++)for(int x=Math.Max(0,cx-2);x<=Math.Min(N-1,cx+2);x++){
    int i=y*N+x;float gap=Dist(p,Center(i));if(open[i]&&gap<d&&CanLink(tracks,p,Center(i),blocks,pad)){best=i;d=gap;}
   }return best;
@@ -122,8 +113,8 @@ public partial class Campaign {
   if(temporary!=null){
    // Reuse static terrain and touch only cells covered by current traffic.
    OpenGrid(grid,pad);var open=TemporaryNavigationOpen(grid.Open);
-   foreach(var r in temporary)for(int y=Math.Max(0,(int)(r.Top/Step));y<=Math.Min(M-1,(int)(r.Bottom/Step));y++)
-    for(int x=Math.Max(0,(int)(r.Left/Step));x<=Math.Min(N-1,(int)(r.Right/Step));x++)if(r.Contains(Center(y*N+x)))open[y*N+x]=false;
+   foreach(var r in temporary)for(int y=Math.Max(0,NavY(r.Top));y<=Math.Min(M-1,NavY(r.Bottom));y++)
+    for(int x=Math.Max(0,NavX(r.Left));x<=Math.Min(N-1,NavX(r.Right));x++)if(r.Contains(Center(y*N+x)))open[y*N+x]=false;
    grid=new NavigationGrid{Barriers=grid.Barriers.Concat(temporary).ToArray(),Open=open,LinkStamp=BeginTemporaryNavigation()};
   }
   var blocks=grid.Barriers;var route=new Queue<PointF>();

@@ -26,7 +26,7 @@ partial class CommandWindow {
   if(panning||rightDragging)return new PointerHint(PointerKind.Pan,"拖动视角");
   if(drag&&dragged)return new PointerHint(PointerKind.Select,"");
   var p=WorldOf(mouse);var hit=HitScreen(mouse);
-  if(place!=null)return world.Construction(place)!=null&&world.Construction(place).Ready&&world.Live(0).Any(u=>u.T.Key=="hq")&&world.CanPlace(place,p,null)?new PointerHint(PointerKind.Build,"放置 "+place.Name):new PointerHint(PointerKind.Blocked,"此处不能建造");
+  if(place!=null)return world.Construction(place)!=null&&world.Construction(place).Ready&&world.Live(0).Any(u=>u.T.Key=="hq")&&world.CanPlace(place,p,null)?new PointerHint(PointerKind.Build,"放置 "+place.Name):new PointerHint(PointerKind.Blocked,world.AssessPlacement(place,p,null,0,true).Summary);
   if(structureMode!=StructureMode.None){bool valid=structureMode==StructureMode.Sell?world.CanSell(hit):hit!=null&&hit.Deployed&&hit.Side==0&&hit.T.Building&&(hit.Hp<hit.T.Hp||hit.Repairing);
    return new PointerHint(valid?(structureMode==StructureMode.Sell?PointerKind.Sell:PointerKind.Repair):PointerKind.Blocked,valid?(structureMode==StructureMode.Sell?"出售建筑 · 返还 50% 基础价格":"切换建筑维修"):"此处不能执行建筑工具");}
   if(!attack&&mods==Keys.None&&hit!=null&&selection.Count==1&&selection[0]==hit){

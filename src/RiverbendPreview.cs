@@ -32,7 +32,7 @@ partial class CommandWindow {
   }
  }
  void OpenMapReview(){
-  if(riverMap==null||riverMap.IsIsland!=islandMissionSelected){riverMap=new RiverbendMap(islandMissionSelected);riverViewZoom=-1;}
+  if(riverMap==null||riverMap.IsTraining||riverMap.IsIsland!=islandMissionSelected){riverMap=new RiverbendMap(islandMissionSelected);riverViewZoom=-1;}
   EnsureRiverArt();mapReview=true;briefing=true;missionPicker=false;modelReview=false;rulesOpen=false;mapDragging=false;hits.Clear();RiverFit();riverViewZoom=-1;hudDirty=true;Invalidate();
  }
  void CloseMapReview(){mapReview=false;mapDragging=false;Capture=false;missionPicker=true;hits.Clear();hudDirty=true;Invalidate();}
@@ -42,17 +42,17 @@ partial class CommandWindow {
   float a=key==Keys.Left?-90:key==Keys.Right?90:0,b=key==Keys.Up?-90:key==Keys.Down?90:0;
   if(a!=0||b!=0)RiverPan(a,b);hudDirty=true;Invalidate();
  }
- void RiverPan(float dx,float dy){var p=RiverWorld(new PointF(mapViewport.Width/2+dx,mapViewport.Top+mapViewport.Height/2+dy));mapCenter=new PointF(Math.Max(0,Math.Min(riverMap.WidthCells,p.X)),Math.Max(0,Math.Min(riverMap.HeightCells,p.Y)));hudDirty=true;}
+ void RiverPan(float dx,float dy){var p=RiverWorld(new PointF(mapViewport.Width/2+dx,mapViewport.Top+mapViewport.Height/2+dy));mapCenter=new BattlefieldBounds(riverMap.WidthCells,riverMap.HeightCells).ClampCenter(p,mapViewport.Width/(2*Campaign.Tile*Axis*mapZoom),mapViewport.Height/(2*Campaign.Tile*Rise*mapZoom));hudDirty=true;}
  void RiverWheel(PointF p,int delta){if(!mapViewport.Contains(p))return;var a=RiverWorld(p);mapZoom=Math.Max(.12f,Math.Min(3.1f,mapZoom*(float)Math.Pow(1.18,delta/120f)));var b=RiverWorld(p);mapCenter=new PointF(mapCenter.X+a.X-b.X,mapCenter.Y+a.Y-b.Y);hudDirty=true;Invalidate();}
  PointF[] RiverQuad(float x,float y,float w,float h,float z){return new[]{RiverScreen(x,y,z),RiverScreen(x+w,y,z),RiverScreen(x+w,y+h,z),RiverScreen(x,y+h,z)};}
  static void RiverPoly(Graphics g,PointF[] p,Color c){using(var b=new SolidBrush(c))g.FillPolygon(b,p);}
  void RiverFace(Graphics g,PointF a,PointF b,float depth,Color c){if(depth<=.1f)return;RiverPoly(g,new[]{a,b,new PointF(b.X,b.Y+depth),new PointF(a.X,a.Y+depth)},c);if(mapZoom>.40f){using(var pen=new Pen(Color.FromArgb(85,27,35,29),Math.Max(.4f,mapZoom*.65f)))for(float d=4*mapZoom;d<depth;d+=6*mapZoom)g.DrawLine(pen,a.X,a.Y+d,b.X,b.Y+d);}}
  void DrawRiverCell(Graphics g,int x,int y){
-  var c=riverMap.At(x,y);var p=RiverQuad(x,y,1,1,c.Height);float tile=Campaign.Tile*Axis*mapZoom;
+  var c=riverMap.At(x,y);if(c==null)return;var p=RiverQuad(x,y,1,1,c.Height);float tile=Campaign.Tile*Axis*mapZoom;
   if(p[0].X+tile<riverDrawArea.Left||p[0].X-tile>riverDrawArea.Right||p[0].Y+tile+c.Height*15*mapZoom<riverDrawArea.Top||p[0].Y>riverDrawArea.Bottom+60)return;
   bool wet=c.Ground==RiverbendMap.Surface.Water,road=c.Ground==RiverbendMap.Surface.Road||c.Ground==RiverbendMap.Surface.Bridge||c.Ground==RiverbendMap.Surface.Ramp;
-  Color color=wet?C("#315963"):road?C("#626864"):c.Ground==RiverbendMap.Surface.Square?C("#97998a"):c.Ground==RiverbendMap.Surface.Soil?C("#a29b77"):c.Ground==RiverbendMap.Surface.Rock?C("#858775"):c.Ground==RiverbendMap.Surface.Marsh?C("#617966"):C("#78875b");
-  if(wet){bool bank=new[]{riverMap.At(x-1,y),riverMap.At(x+1,y),riverMap.At(x,y-1),riverMap.At(x,y+1)}.Any(q=>q!=null&&q.Ground!=RiverbendMap.Surface.Water&&q.Ground!=RiverbendMap.Surface.Bridge);color=bank?C("#638a83"):C("#355e68");}
+  Color color=wet?C("#315963"):road?C("#626864"):c.Ground==RiverbendMap.Surface.Square?C("#97998a"):c.Ground==RiverbendMap.Surface.Sand?C("#b6ad8b"):c.Ground==RiverbendMap.Surface.Soil?C("#a29b77"):c.Ground==RiverbendMap.Surface.Rock?C("#858775"):c.Ground==RiverbendMap.Surface.Marsh?C("#617966"):C("#78875b");
+  if(wet)color=C("#355e68");
   var east=riverMap.At(x+1,y);var south=riverMap.At(x,y+1);
   RiverFace(g,p[1],p[2],(c.Height-(east==null?0:east.Height))*15*mapZoom,C("#626653"));
   RiverFace(g,p[2],p[3],(c.Height-(south==null?0:south.Height))*15*mapZoom,C("#777965"));
@@ -60,6 +60,7 @@ partial class CommandWindow {
   if(mapZoom>=.38f){
    int texture=wet?2:road?3:c.Ground==RiverbendMap.Surface.Square?1:c.Ground==RiverbendMap.Surface.Meadow||c.Ground==RiverbendMap.Surface.Marsh?0:c.Ground==RiverbendMap.Surface.Rock?5:4;
    g.FillPolygon(riverTextures[texture],p);
+   if(c.Ground==RiverbendMap.Surface.Sand)RiverPoly(g,p,Color.FromArgb(65,182,173,139));
    if(wet)RiverPoly(g,p,Color.FromArgb(color.R>80?105:35,color));
    if(c.Ground==RiverbendMap.Surface.Marsh)RiverPoly(g,p,Color.FromArgb(64,39,77,58));
   }
@@ -91,11 +92,14 @@ partial class CommandWindow {
  }
  void DrawRiverMap(Graphics g){
   var saved=g.Save();g.IntersectClip(riverDrawArea);Rect(g,riverDrawArea.Left,riverDrawArea.Top,riverDrawArea.Width,riverDrawArea.Height,C("#152629"));
-  var origin=RiverScreen(0,0);foreach(var t in riverTextures){t.ResetTransform();t.TranslateTransform(origin.X,origin.Y);t.ScaleTransform(.32f*mapZoom,.22f*mapZoom);}
+  var origin=RiverScreen(0,0);
+  var sea=new RectangleF(origin.X-riverMap.HeightCells*Campaign.Tile*Axis*mapZoom,origin.Y,(riverMap.WidthCells+riverMap.HeightCells)*Campaign.Tile*Axis*mapZoom,(riverMap.WidthCells+riverMap.HeightCells)*Campaign.Tile*Rise*mapZoom);
+  sea.Intersect(riverDrawArea);if(sea.Width>0&&sea.Height>0){DrawSea(g,sea,origin,mapZoom);g.IntersectClip(sea);}
+  foreach(var t in riverTextures){t.ResetTransform();t.TranslateTransform(origin.X,origin.Y);t.ScaleTransform(.32f*mapZoom,.22f*mapZoom);}
   g.SmoothingMode=SmoothingMode.None;
   // Only inverse-projected visible cells are visited when zoomed in.
   var corners=new[]{RiverWorld(new PointF(riverDrawArea.Left,riverDrawArea.Top-80)),RiverWorld(new PointF(riverDrawArea.Right,riverDrawArea.Top-80)),RiverWorld(new PointF(riverDrawArea.Left,riverDrawArea.Bottom+120)),RiverWorld(new PointF(riverDrawArea.Right,riverDrawArea.Bottom+120))};
-  int x0=Math.Max(0,(int)Math.Floor(corners.Min(p=>p.X))-10),x1=Math.Min(riverMap.WidthCells-1,(int)Math.Ceiling(corners.Max(p=>p.X))+10),y0=Math.Max(0,(int)Math.Floor(corners.Min(p=>p.Y))-10),y1=Math.Min(riverMap.HeightCells-1,(int)Math.Ceiling(corners.Max(p=>p.Y))+10);
+  var domain=riverMap.TerrainBounds;int x0=Math.Max(domain.Left,(int)Math.Floor(corners.Min(p=>p.X))-10),x1=Math.Min(domain.Right-1,(int)Math.Ceiling(corners.Max(p=>p.X))+10),y0=Math.Max(domain.Top,(int)Math.Floor(corners.Min(p=>p.Y))-10),y1=Math.Min(domain.Bottom-1,(int)Math.Ceiling(corners.Max(p=>p.Y))+10);
   for(int depth=x0+y0;depth<=x1+y1;depth++)for(int x=x0;x<=x1;x++){int y=depth-x;if(y>=y0&&y<=y1)DrawRiverCell(g,x,y);}
   g.SmoothingMode=SmoothingMode.AntiAlias;
   foreach(var bridge in riverMap.Bridges){
@@ -106,7 +110,7 @@ partial class CommandWindow {
   }
   if(!riverBattleRender)foreach(var ore in riverMap.Ore){var p=RiverScreen(ore.X+.5f,ore.Y+.5f,riverMap.At(ore.X,ore.Y).Height);if(!riverDrawArea.Contains(p))continue;float z=mapZoom*5;RiverPoly(g,new[]{new PointF(p.X-z,p.Y),new PointF(p.X-z*.4f,p.Y-z*1.4f),new PointF(p.X+z*.5f,p.Y-z*.8f),new PointF(p.X+z,p.Y),new PointF(p.X,p.Y+z*.4f)},C("#b89d53"));Line(g,p.X-z*.4f,p.Y-z*1.4f,p.X,p.Y,C("#e1c878"),Math.Max(.4f,mapZoom));}
   for(int depth=x0+y0;depth<=x1+y1;depth++){
-   for(int x=x0;x<=x1;x++){int y=depth-x;if(y>=y0&&y<=y1&&riverMap.At(x,y).Tree)DrawRiverTree(g,x,y);}
+   for(int x=x0;x<=x1;x++){int y=depth-x;if(y>=y0&&y<=y1&&riverMap.At(x,y)!=null&&riverMap.At(x,y).Tree)DrawRiverTree(g,x,y);}
    if(!riverBattleRender)foreach(var house in riverMap.Houses)if(house.Lot.Right+house.Lot.Bottom==depth)DrawRiverHouse(g,house);
   }
   if(mapLabels&&!riverBattleRender){
@@ -161,7 +165,7 @@ partial class CommandWindow {
   mapReview=false;briefing=false;paused=false;selection.Clear();selection.Add(world.Units[0]);CenterAt(world.Home(0));zoom=DefaultZoom;edgeArmed=true;hits.Clear();hudDirty=true;
  }
  void DrawRiverBattleGround(Graphics g){
-  riverBattleRender=true;riverMap=world.River;mapCenter=new PointF(camera.X/Campaign.Tile,camera.Y/Campaign.Tile);mapZoom=zoom;
+  riverBattleRender=true;riverMap=world.Terrain;EnsureRiverArt();mapCenter=new PointF(camera.X/Campaign.Tile,camera.Y/Campaign.Tile);mapZoom=zoom;
   try{DrawRiverCached(g);}finally{riverBattleRender=false;}
  }
 }

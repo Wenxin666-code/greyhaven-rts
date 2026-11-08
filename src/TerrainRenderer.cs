@@ -40,7 +40,8 @@ partial class CommandWindow {
    (int)Math.Ceiling((Campaign.Width+Campaign.Height)*Rise*TerrainDensity)+2,PixelFormat.Format32bppPArgb)){
   using(var g=Graphics.FromImage(map))
   using(var m=new Matrix(Axis*TerrainDensity,Rise*TerrainDensity,-Axis*TerrainDensity,Rise*TerrainDensity,Campaign.Height*Axis*TerrainDensity,0)){
-   g.Clear(C("#132122"));g.Transform=m;g.InterpolationMode=InterpolationMode.Bilinear;g.DrawImage(ground,0,0,ground.Width,ground.Height);
+   DrawSea(g,new RectangleF(0,0,map.Width,map.Height),new PointF(Campaign.Height*Axis*TerrainDensity,0),TerrainDensity);
+   g.Transform=m;g.InterpolationMode=InterpolationMode.Bilinear;g.DrawImage(ground,0,0,ground.Width,ground.Height);
   }
    // GDI+ resamples a large source expensively even when only a small source
    // rectangle is requested. Independent tiles bound that work to the viewport.
