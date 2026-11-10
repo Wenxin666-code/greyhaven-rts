@@ -6,7 +6,8 @@ using System.Drawing.Imaging;
 using System.Linq;
 namespace Greyhaven {
 partial class CommandWindow {
- const int RiverTileSize=256,RiverTileGutter=3;
+ const int RiverTileGutter=3;
+ int RiverTileSize {get{return riverMap!=null&&riverMap.IsRelay?128:256;}}
  const long RiverTileBudget=64L*1024*1024;
  sealed class RiverGroundTile {public Bitmap Image;public int Used;}
  readonly Dictionary<Point,RiverGroundTile> riverGroundTiles=new Dictionary<Point,RiverGroundTile>();

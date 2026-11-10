@@ -13,6 +13,12 @@ public partial class Campaign {
   for(int i=0;i<result.Open.Length;i++){var p=Center(i);result.Open[i]=Battlefield.ContainsFootprint(p,pad)&&TerrainOpen(p,pad);}
   terrainNavigation.Add(pad,result);return result;
  }
+ internal void PrepareBattleNavigation(){
+  // Pay the immutable terrain scan once while entering a mission, rather than
+  // on the first order for each chassis type during play. Building/traffic
+  // barriers remain dynamic and use the normal invalidation path.
+  foreach(var type in Types)if(!type.Building)TerrainNavigation(type.Clearance);
+ }
  // Traffic grids live only for a synchronous route call. Reuse their large
  // arrays and stamp link entries, leaving persistent building grids untouched.
  bool[] temporaryNavigationOpen;ushort[] temporaryNavigationLinks;int[] temporaryNavigationStamps;int temporaryNavigationEpoch;
@@ -32,11 +38,11 @@ public partial class Campaign {
   ushort entry=transient&&temporaryNavigationStamps[from]!=grid.LinkStamp?(ushort)0:links[from];if((entry&known)!=0)return (entry&value)!=0;
   var a=Center(from);var b=Center(to);bool valid=true;
   {
-   var terrain=TerrainNavigation(pad);int edge=terrain.Links[from];
+   var terrain=grid.Terrain??(grid.Terrain=TerrainNavigation(pad));int edge=terrain.Links[from];
    if((edge&known)==0){bool open=TerrainLine(a,b,pad);edge|=known;if(open)edge|=value;terrain.Links[from]=(ushort)edge;}
    valid=(edge&value)!=0;
   }
-  if(valid)foreach(var r in grid.Barriers){float lo=0,hi=1;if(Slab(a.X,b.X-a.X,r.Left,r.Right,ref lo,ref hi)&&Slab(a.Y,b.Y-a.Y,r.Top,r.Bottom,ref lo,ref hi)){valid=false;break;}}
+  if(valid)valid=BarrierLinkClear(grid,from,to,a,b);
   entry|=(ushort)known;if(valid)entry|=(ushort)value;links[from]=entry;if(transient)temporaryNavigationStamps[from]=grid.LinkStamp;return valid;
  }
  sealed class NavHeap {

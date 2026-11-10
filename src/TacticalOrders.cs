@@ -1,17 +1,17 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Linq;
 using System.Collections.Generic;
 namespace Greyhaven {
 public partial class Campaign {
  // Commands own their destination. Opportunistic fire must not overwrite it.
- static void ClearMission(Piece o){o.PendingDeploy=false;o.SupportTarget=null;o.Entering=null;o.RouteRetryAt=0;o.NoProgressFor=0;o.StalledFor=0;
+ static void ClearMission(Piece o){o.OreSearchToken++;o.OreSearching=false;o.RallySource=null;o.RallySlot=0;o.PendingDeploy=false;o.SupportTarget=null;o.SupportAutomatic=false;o.SupportScanAt=0;o.Entering=null;o.RouteRetryAt=0;o.NoProgressFor=0;o.StalledFor=0;o.DepartingDock=null;o.DockAccessAt=0;
   o.GuardHome=null;o.Escort=null;o.GuardTravelling=false;o.GuardReturning=false;
   o.Waypoints.Clear();o.WaypointIndex=0;o.PatrolStart=0;o.Patrol=false;o.ForceMoving=false;
  }
  public static float ScanRange(Piece o){
-  if(o.T.Building)return o.T.Range;
-  return o.GuardHome.HasValue||o.Advancing?o.T.LockRange:o.T.Range;
+  if(o.T.Building||o.Entrenched)return ReferenceBalance.Range(o);
+  return o.GuardHome.HasValue||o.Advancing?ReferenceBalance.LockRange(o):ReferenceBalance.Range(o);
  }
  public void Guard(Piece o){
   if(!o.Deployed)return;Halt(o);o.GuardHome=o.P;o.ScanIn=0;
@@ -21,7 +21,7 @@ public partial class Campaign {
  }
  public bool EscortUnit(Piece o,Piece friend){
   if(!o.Deployed||o.T.Building||friend==null||!friend.Alive||friend.Side!=o.Side||friend==o)return false;
-  Halt(o);o.Escort=friend;
+  Halt(o);ReleaseInfantry(o);o.Escort=friend;
   double angle=o.Id*Math.PI*.763932;float radius=friend.T.Building?Radius(friend.T)+38:45;
   o.EscortOffset=new PointF((float)Math.Cos(angle)*radius,(float)Math.Sin(angle)*radius);
   o.GuardHome=new PointF(friend.P.X+o.EscortOffset.X,friend.P.Y+o.EscortOffset.Y);o.Replan=0;return true;
@@ -40,6 +40,7 @@ public partial class Campaign {
   o.Waypoints.AddRange(points);o.Patrol=patrol&&points.Length>1;o.PatrolStart=Math.Max(0,Math.Min(points.Length-1,loopStart));return true;
  }
  void MissionTick(Piece o){
+  if(o.RallySource!=null&&o.Path.Count==0&&o.Target==null)ContinueRally(o);
   if(o.Escort!=null){
    if(!o.Escort.Alive||o.Escort.Carrier!=null){o.Escort=null;o.GuardHome=o.P;}
    else o.GuardHome=new PointF(o.Escort.P.X+o.EscortOffset.X,o.Escort.P.Y+o.EscortOffset.Y);
@@ -61,9 +62,10 @@ public partial class Campaign {
   if(o.Path.Count==0)o.ForceMoving=false;
  }
  bool GuardAllows(Piece o,Piece target){
-  return !o.GuardHome.HasValue||Dist(o.GuardHome.Value,TargetPoint(o.GuardHome.Value,target))<=o.T.LockRange;
+  return !o.GuardHome.HasValue||Dist(o.GuardHome.Value,TargetPoint(o.GuardHome.Value,target))<=ReferenceBalance.LockRange(o);
  }
  void ReturnToMission(Piece o){
+  if(o.Entrenched)return;
   if(o.GuardHome.HasValue&&!o.T.Building){o.GuardReturning=true;o.Replan=0;Route(o,o.GuardHome.Value);}
   else if(o.ResumeMarch)Route(o,o.Goal);
  }

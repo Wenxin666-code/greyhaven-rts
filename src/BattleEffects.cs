@@ -57,7 +57,8 @@ partial class CommandWindow {
   var t=Campaign.Info(s.Weapon);var p=ScreenOf(s.A);float x=0,y=0,z=0,width=1,anchor=188f/320;
   switch(s.Weapon){
    case "squad":x=.13f;y=1.277f;z=.89f;width=2.7f;anchor=.91f;break;
-   case "at":x=.26f;y=1.54f;z=.84f;width=2.7f;anchor=.91f;break;
+   case "sniper":x=.13f;y=1.277f;z=1.089f;width=2.7f;anchor=.91f;break;
+   case "at":x=s.Rocket?.26f:.13f;y=s.Rocket?1.54f:1.277f;z=s.Rocket?.73f:.89f;width=2.7f;anchor=.91f;break;
    case "tank":y=1.92f;z=3.802f;width=9.25f;break;
    case "ifv":x=-.27f;y=2.27f;z=1.755f;width=7.5f;break;
    case "arty":y=3.16f;z=3.36f;width=9.2f;break;
@@ -68,13 +69,22 @@ partial class CommandWindow {
   }
   // Use precisely the same view quantization as the body sprite.
   float heading=s.Weapon=="tank"?((float)Math.Round(s.Heading*4)/4+14)%16:((int)Math.Round(s.Heading)+14)%16;
+  if(t.Foot){
+   y-=.34f*s.Stance;z+=.05f*s.Stance;
+   float angle,py,pz;
+   if(s.Weapon=="at"&&s.Rocket){angle=.12f*(1-s.Aim);py=1.54f-.34f*s.Stance;pz=.19f+.05f*s.Stance;}
+   else{angle=.43f-.455f*s.Aim;py=1.25f-.34f*s.Stance;pz=.20f+.05f*s.Stance;}
+   float dy=y-py,dz=z-pz,co=(float)Math.Cos(angle),si=(float)Math.Sin(angle);
+   y=py+dy*co-dz*si+(s.Weapon=="at"&&s.Rocket?.02f:.29f)*s.Aim;
+   z=pz+dy*si+dz*co-.02f*s.Aim;
+  }
   if(t.Foot)heading=(int)heading/2*2;
   float a=heading*(float)Math.PI/8,c=(float)Math.Cos(a),sn=(float)Math.Sin(a),rx=x*c+z*sn,rz=z*c-x*sn;
   var box=t.Foot?SoldierBox(p,t.Size*zoom):VehicleRect(t,p,t.Size*zoom);
   return new PointF(box.X+box.Width*(.5f+rx/width),box.Y+box.Height*(anchor+(rz*.5f-y*.8660254f)/width));
  }
  void MuzzleFlash(Graphics g,Shot s,float age){
-  bool cannon=s.Weapon=="tank"||s.Weapon=="arty",rocket=s.Weapon=="at";
+  bool cannon=s.Weapon=="tank"||s.Weapon=="arty",rocket=s.Rocket;
   float duration=cannon?.10f:rocket?.14f:.045f;
   if(!cannon&&!rocket){if(age>.14f)return;age%=.055f;}
   if(age>duration)return;var p=Muzzle(s);var target=ScreenOf(s.B);target.Y-=s.ImpactLift*zoom;
@@ -86,7 +96,7 @@ partial class CommandWindow {
  }
  void ShotImpact(Graphics g,Shot s){
   if(!world.Explored(0,s.B))return;float age=world.VisualTime-s.Born;var p=ScreenOf(s.B);p.Y-=s.ImpactLift*zoom;
-  bool explosive=s.Weapon=="at"||s.Weapon=="tank"||s.Weapon=="arty";
+  bool explosive=s.Rocket||s.Weapon=="tank"||s.Weapon=="arty";
   if(explosive){Effect(g,"blast",p,(s.Weapon=="arty"?48:s.Weapon=="tank"?35:29)*zoom,age/.75f);Effect(g,"smoke",p,38*zoom,(age-.12f)/1.0f);}
   else Effect(g,s.HitFoot?"dust":"spark",p,(s.HitFoot?12:17)*zoom,age/.30f);
  }
@@ -107,7 +117,7 @@ partial class CommandWindow {
  void WeaponResidue(Graphics g,Shot shot,float age){
   if(age<0||age>.40f)return;var p=Muzzle(shot);
   if((shot.Weapon=="tank"||shot.Weapon=="arty")&&age>.035f)Effect(g,"smoke",p,15*zoom,(age-.035f)/.55f);
-  if(shot.Weapon=="squad"||shot.Weapon=="ifv"){
+  if(shot.Weapon=="squad"||shot.Weapon=="sniper"||shot.Weapon=="at"&&!shot.Rocket||shot.Weapon=="ifv"&&!shot.Rocket){
    float t=age/.4f,a=shot.Heading*(float)Math.PI/8,x=p.X+(float)Math.Cos(a)*(2+9*t)*zoom,y=p.Y+(float)Math.Sin(a)*(2+9*t)*zoom*.5f-7*zoom*(float)Math.Sin(t*Math.PI)+6*zoom*t*t;
    var st=g.Save();g.TranslateTransform(x,y);g.RotateTransform(t*330);Rect(g,-zoom,-zoom*.4f,2*zoom,.8f*zoom,Color.FromArgb((int)(225*(1-t)),194,164,94));g.Restore(st);
   }

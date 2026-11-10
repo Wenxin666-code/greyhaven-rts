@@ -1,0 +1,19 @@
+{
+  "date": "2026-11-10T08:36:12.9179644+08:00",
+  "head": "6a2b4566eb5449a4a34a6c4e23944e63a0db640a",
+  "githubUploaded": false,
+  "backup": "D:\\游戏制作\\未命名项目\\.cache\\veterancy-before-20261110-083608",
+  "files": 22,
+  "exeSha256": "147BBC61E47EA9001573DE02F2413AD0F1E2E95D2B285778265180BCCAEB7FAD",
+  "exeBytes": 208138240,
+  "installedChecks": [
+    "AdjacencyVeterancyChecks"
+  ],
+  "stagedChecks": [
+    "BalanceChecks",
+    "DefenseChecks",
+    "PerformanceAndIFVChecks + ThirdMissionChecks",
+    "AdjacencyVeterancyInterfaceChecks",
+    "OriginalControlChecks with native resources and keyboard fixture"
+  ]
+}

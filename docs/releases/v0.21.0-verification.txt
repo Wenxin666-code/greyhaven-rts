@@ -1,0 +1,130 @@
+v0.21.0 独立源码专项记录。首段包含旧进攻场景兵力不足的失败，修订测试数据后从节奏专项续跑，结果见第二段。历史一揽子套件的旧速度比例断言另见本版 JSON 记录。
+
+--- verification-core-and-tempo-fixture.log ---
+PASS infantry integration: 148 assertions
+PASS adjacency: all six sides, seven build types, eight directions, exact 2/4 empty-cell limits, touching, invalid/enemy/dead anchors.
+PASS experience: lethal credit, price-weighted 3x/6x thresholds, no promotion heal, cap, buildings, crushing, no friendly/civilian/untrainable credit.
+PASS carrier experience: IFV owner, no passenger overflow, killed passenger value, individual garrison credit and surviving evacuees.
+PASS abilities: per-type veteran ROF, inherited/non-stacking modifiers, elite weapons, unchanged sight and rank-aware repair IFV.
+PASS healing: 14-frame / 1 HP pulses, elite-only plus native miner, moving/combat eligibility, max/death/limbo limits, no money, partition consistency, actual game update.
+PASS IFV: one passenger, GI/GGI/engineer modes, actual damage, range, guard, repair, unload/cooldown, destruction; tanks cannot carry.
+PASS deferred navigation: bounded exploration and retryable exit search respect manual orders.
+Third terrain: 300x200, six separated starts, all 33 house doors, multiple biomes and a single 6-cell-wide island gate passed; island ore cells=194
+Navigation acceleration: 28800 exact swept connections, three footprints, rasterized obstacles and building invalidation passed.
+Third opening: real infantry, tank and miner crossed sole gate; player deploy, paid construction and first ore income passed.
+PASS: numeric references, time/distance conversion, armor roles, burst timing/cancel, dead zone reposition, 128-angle actual range boundary, sight, movement, power, paid parallel production, ore conservation and repair IFV.
+Story AI: tutorial checkpoint, fog-limited introductions, paid armour budgeting, separate base/field/attack roles, physical bridge deployment, return to base, local garrison and relay isolation passed.
+Territorial AI: standing guards, surplus-only departures, staging, return anchors, refinery access, stale-order cancellation and casualty withdrawal passed.
+Relay support: exact 50% threshold, one scaled grant, paid tank production, retained notice, recapture/overshoot, defeat and destruction checks passed.
+Relay terrain: full radar domain, 14 houses, 528000 ore; all three vehicle types can route through A/B/C/R/L.
+Relay objectives: capture, saved progress, surrender, destruction priority and passenger capability checks passed.
+Relay opening 329s: player receipts=3000, enemy receipts=14000, enemy production orders=18; finite ore conserved.
+Relay AI: produced engineer retook station by 273.2s; 1 counterattack(s), 4 home guards, saved progress 263.2s.
+Relay logistics denial: 360s hold wins with enemy survivors; no free engineer reinforcement.
+Relay defended hold fixture: result=won, counterattacks=2, enemy combat losses=8, player survivors=16, progress=360.0s.
+Relay physical routes: IFV completed western approach; engineer walked from the player start and entered the 3x3 station.
+Dock reservation: distant arrivals do not block the head; empty truck leaves an exhausted-field entrance.
+Starter delivery: the included empty miner clears the entrance before looking for ore.
+Refinery target: stable through temporary queues, reselected after destruction or a permanently sealed entrance.
+Loaded batch: 1 refineries / 4 trucks delivered 4000 in 66.6 game seconds, zero target switches/overlaps.
+Loaded batch: 1 refineries / 8 trucks delivered 8000 in 126.2 game seconds, zero target switches/overlaps.
+Loaded batch: 2 refineries / 4 trucks delivered 4000 in 66.1 game seconds, zero target switches/overlaps.
+Loaded batch: 2 refineries / 8 trucks delivered 8000 in 132.7 game seconds, zero target switches/overlaps.
+Third mission 240s: receipts=24000 cycles=3/3/3/3/3/3/3/3 conservation error=0.000
+Indexed obstacles: 30000 links match original full scan, including cached repeats.
+Incremental exploration matches full scans across movement, stationary units, capture, sight changes and completion.
+Territorial AI: standing guards, surplus-only departures, staging, return anchors, refinery access, stale-order cancellation and casualty withdrawal passed.
+Turret engagement: target HP 275 / 300, turret HP 400, target distance 108, enemy range 120, sees target True, turret at {X=588, Y=588}, target at {X=708, Y=588}
+Defence: 4/2-cell placement, no turret expansion, reference sentry fire, artillery counter, five paid AI defence plans, independent construction sites and recruitment reservation passed.
+Clock: 1/2/3/4x at 30/60/144 render Hz have identical time, paid production and movement; bounded catch-up preserves short stalls.
+System.Exception: surplus attack must not draw standing guards
+   在 Greyhaven.Campaign.CheckPressureRules()
+   在 MatchTempoChecks.Main(String[] args)
+
+--- verification-remaining.log ---
+Clock: 1/2/3/4x at 30/60/144 render Hz have identical time, paid production and movement; bounded catch-up preserves short stalls.
+AI pressure: equal money, no player targeting preference, nearby opposition, early paid barracks, permanent guard reservation and surplus team launch and paid vehicle production passed.
+Native pace: normal 2x, tutorial 1x, pause, real-time match clock, rate-aware ETAs, four menu buttons and restart reset passed.
+Offscreen damaged-building shadows are clipped before resolving their art; visible shadow bounds are shared unchanged.
+Six-faction 2x + native 1920x1080 scrolling: 336 samples, median 3.4ms, p95 12.0ms, max 13.8ms, >33ms 0; living entities 120, game time 279.9. Simulation median/p95 0.2/0.5ms; rendering median/p95 3.2/11.6ms.
+Six-faction measured-time loop: 7.93 game seconds / 3.97 active real seconds = 2.00x; 127 frames, interval median 31.4ms p95 32.1ms.
+Direct factory armor, progressive unit payment and earned veterancy labels without new combat multipliers passed.
+Native right mouse: click cancel, drag direction, held scrolling, command/selection preservation and capture release passed.
+85 default bindings, groups 0-9, Shift merge, Alt/double-tap focus, keypad5, F toggle, combatant filter, M/N and F5/Tab passed.
+Planning toolbar/held Z, two-group staging, second-node patrol, waypoint Delete, local beacon and text editing passed.
+Native projected radar: selected left-order, empty left-focus and right-focus preserving orders passed.
+Deployment-only D, explicit transport loading, cheer, rank selection, no portrait/upgrade buttons and full-height battlefield passed.
+Shift+S capture, editable key bindings, old-key release, conflict detection, save/load and cancellation passed.
+Original control audit and native UI captures passed.
+Third terrain: 300x200, six separated starts, all 33 house doors, multiple biomes and a single 6-cell-wide island gate passed; island ore cells=194
+Navigation acceleration: 28800 exact swept connections, three footprints, rasterized obstacles and building invalidation passed.
+Third opening: real infantry, tank and miner crossed sole gate; player deploy, paid construction and first ore income passed.
+Six-faction funds/fog/surrender, fair starts, concurrent recruitment, threat memory, immediate base defense and hidden-unit isolation passed.
+Third native 1920x1080 pan: median 15.1ms, p95 17.9ms; bounded visible terrain cache 26.4MiB.
+Native mission picker, third preview/play, six colors, radar/satellite and second/training entry passed.
+River at 59s: 敌方一 cash=4361 miners=0 refineries=0 factories=0 orders=0 squads=0 raids=0 target=2 | 敌方二 cash=4364 miners=0 refineries=0 factories=0 orders=0 squads=0 raids=0 target=1
+River at 119s: 敌方一 cash=2933 miners=0 refineries=0 factories=0 orders=0 squads=0 raids=0 target=2 | 敌方二 cash=2935 miners=0 refineries=0 factories=0 orders=0 squads=0 raids=0 target=1
+River at 180s: 敌方一 cash=1538 miners=1 refineries=1 factories=0 orders=0 squads=0 raids=0 target=2 | 敌方二 cash=1540 miners=1 refineries=1 factories=0 orders=0 squads=0 raids=0 target=1
+River at 240s: 敌方一 cash=1313 miners=1 refineries=1 factories=0 orders=2 squads=0 raids=0 target=2 | 敌方二 cash=111 miners=1 refineries=1 factories=0 orders=0 squads=0 raids=0 target=1
+River at 300s: 敌方一 cash=1580 miners=1 refineries=1 factories=1 orders=5 squads=0 raids=0 target=2 | 敌方二 cash=650 miners=1 refineries=1 factories=1 orders=0 squads=0 raids=0 target=1
+River at 360s: 敌方一 cash=1161 miners=2 refineries=1 factories=1 orders=5 squads=0 raids=0 target=2 | 敌方二 cash=1368 miners=1 refineries=1 factories=1 orders=2 squads=0 raids=0 target=1
+River at 420s: 敌方一 cash=2733 miners=2 refineries=1 factories=1 orders=5 squads=0 raids=0 target=2 | 敌方二 cash=558 miners=1 refineries=1 factories=1 orders=3 squads=0 raids=0 target=1
+River at 480s: 敌方一 cash=3134 miners=3 refineries=2 factories=1 orders=6 squads=0 raids=0 target=2 | 敌方二 cash=711 miners=1 refineries=1 factories=1 orders=4 squads=0 raids=0 target=1
+River at 540s: 敌方一 cash=2202 miners=4 refineries=2 factories=2 orders=11 squads=0 raids=0 target=2 | 敌方二 cash=847 miners=1 refineries=1 factories=1 orders=5 squads=0 raids=0 target=1
+River at 600s: 敌方一 cash=1211 miners=4 refineries=2 factories=2 orders=13 squads=1 raids=1 target=2 | 敌方二 cash=428 miners=2 refineries=1 factories=1 orders=5 squads=0 raids=0 target=1
+River at 659s: 敌方一 cash=1616 miners=4 refineries=2 factories=2 orders=18 squads=1 raids=1 target=2 | 敌方二 cash=1300 miners=3 refineries=2 factories=1 orders=5 squads=0 raids=0 target=1
+River at 719s: 敌方一 cash=1461 miners=4 refineries=2 factories=2 orders=25 squads=2 raids=2 target=2 | 敌方二 cash=4741 miners=3 refineries=2 factories=1 orders=6 squads=0 raids=0 target=1
+River at 779s: 敌方一 cash=1663 miners=4 refineries=2 factories=2 orders=33 squads=3 raids=2 target=2 | 敌方二 cash=2793 miners=4 refineries=2 factories=2 orders=19 squads=0 raids=0 target=1
+River at 839s: 敌方一 cash=1890 miners=4 refineries=2 factories=2 orders=38 squads=5 raids=3 target=2 | 敌方二 cash=1661 miners=4 refineries=2 factories=2 orders=27 squads=1 raids=0 target=1
+River at 899s: 敌方一 cash=2410 miners=4 refineries=2 factories=2 orders=45 squads=5 raids=3 target=2 | 敌方二 cash=1741 miners=4 refineries=2 factories=2 orders=37 squads=2 raids=0 target=1
+Second mission AI development passed; simulation seconds=899, wall ms=1534, max single step ms=74.6
+Island at 59s: 敌方一 cash=4361 miners=0 refineries=0 factories=0 orders=0 squads=0 raids=0 target=2 | 敌方二 cash=4364 miners=0 refineries=0 factories=0 orders=0 squads=0 raids=0 target=3 | 敌方三 cash=4366 miners=0 refineries=0 factories=0 orders=0 squads=0 raids=0 target=2 | 敌方四 cash=4369 miners=0 refineries=0 factories=0 orders=0 squads=0 raids=0 target=5 | 敌方五 cash=4371 miners=0 refineries=0 factories=0 orders=0 squads=0 raids=0 target=4
+Island at 119s: 敌方一 cash=2933 miners=0 refineries=0 factories=0 orders=0 squads=0 raids=0 target=2 | 敌方二 cash=2935 miners=0 refineries=0 factories=0 orders=0 squads=0 raids=0 target=3 | 敌方三 cash=2938 miners=0 refineries=0 factories=0 orders=0 squads=0 raids=0 target=2 | 敌方四 cash=2940 miners=0 refineries=0 factories=0 orders=0 squads=0 raids=0 target=5 | 敌方五 cash=2942 miners=0 refineries=0 factories=0 orders=0 squads=0 raids=0 target=4
+Island at 180s: 敌方一 cash=2538 miners=1 refineries=1 factories=0 orders=0 squads=0 raids=0 target=2 | 敌方二 cash=2540 miners=1 refineries=1 factories=0 orders=0 squads=0 raids=0 target=3 | 敌方三 cash=2542 miners=1 refineries=1 factories=0 orders=0 squads=0 raids=0 target=2 | 敌方四 cash=2545 miners=1 refineries=1 factories=0 orders=0 squads=0 raids=0 target=5 | 敌方五 cash=2547 miners=1 refineries=1 factories=0 orders=0 squads=0 raids=0 target=4
+Island at 240s: 敌方一 cash=2489 miners=1 refineries=1 factories=0 orders=5 squads=0 raids=0 target=2 | 敌方二 cash=2494 miners=1 refineries=1 factories=0 orders=5 squads=0 raids=0 target=3 | 敌方三 cash=2499 miners=1 refineries=1 factories=0 orders=5 squads=0 raids=0 target=2 | 敌方四 cash=2408 miners=1 refineries=1 factories=0 orders=5 squads=0 raids=0 target=5 | 敌方五 cash=2395 miners=1 refineries=1 factories=0 orders=5 squads=0 raids=0 target=4
+Island at 300s: 敌方一 cash=3383 miners=1 refineries=1 factories=1 orders=7 squads=1 raids=1 target=2 | 敌方二 cash=2602 miners=1 refineries=1 factories=1 orders=5 squads=0 raids=0 target=3 | 敌方三 cash=2623 miners=1 refineries=1 factories=1 orders=5 squads=0 raids=0 target=2 | 敌方四 cash=2959 miners=1 refineries=1 factories=1 orders=7 squads=0 raids=0 target=5 | 敌方五 cash=3116 miners=1 refineries=1 factories=1 orders=7 squads=1 raids=1 target=4
+Island at 360s: 敌方一 cash=1501 miners=2 refineries=1 factories=2 orders=9 squads=1 raids=1 target=2 | 敌方二 cash=2205 miners=1 refineries=1 factories=2 orders=9 squads=0 raids=0 target=3 | 敌方三 cash=2290 miners=1 refineries=1 factories=2 orders=9 squads=1 raids=1 target=2 | 敌方四 cash=2220 miners=2 refineries=1 factories=2 orders=8 squads=0 raids=0 target=5 | 敌方五 cash=2342 miners=2 refineries=1 factories=2 orders=9 squads=1 raids=1 target=4
+Island at 420s: 敌方一 cash=2176 miners=2 refineries=1 factories=2 orders=9 squads=2 raids=2 target=2 | 敌方二 cash=1940 miners=2 refineries=1 factories=2 orders=9 squads=1 raids=1 target=1 | 敌方三 cash=2596 miners=2 refineries=1 factories=2 orders=9 squads=1 raids=1 target=2 | 敌方四 cash=3211 miners=2 refineries=1 factories=2 orders=10 squads=0 raids=0 target=5 | 敌方五 cash=3873 miners=2 refineries=1 factories=2 orders=10 squads=1 raids=1 target=4
+Island at 480s: 敌方一 cash=2611 miners=3 refineries=2 factories=2 orders=17 squads=2 raids=2 target=2 | 敌方二 cash=3443 miners=3 refineries=2 factories=2 orders=15 squads=1 raids=1 target=3 | 敌方三 cash=2647 miners=3 refineries=2 factories=2 orders=12 squads=2 raids=2 target=2 | 敌方四 cash=1764 miners=3 refineries=2 factories=2 orders=18 squads=0 raids=0 target=5 | 敌方五 cash=3358 miners=3 refineries=2 factories=2 orders=20 squads=2 raids=2 target=4
+Island at 540s: 敌方一 cash=2192 miners=4 refineries=2 factories=2 orders=23 squads=2 raids=2 target=2 | 敌方二 cash=2124 miners=4 refineries=2 factories=2 orders=24 squads=1 raids=1 target=3 | 敌方三 cash=1906 miners=4 refineries=2 factories=2 orders=19 squads=2 raids=2 target=2 | 敌方四 cash=2175 miners=3 refineries=2 factories=2 orders=25 squads=0 raids=0 target=5 | 敌方五 cash=3017 miners=3 refineries=2 factories=2 orders=22 squads=2 raids=2 target=4
+Island at 600s: 敌方一 cash=3254 miners=4 refineries=2 factories=2 orders=30 squads=3 raids=3 target=2 | 敌方二 cash=2654 miners=4 refineries=2 factories=2 orders=35 squads=2 raids=2 target=3 | 敌方三 cash=1951 miners=4 refineries=2 factories=2 orders=25 squads=3 raids=3 target=2 | 敌方四 cash=3421 miners=4 refineries=2 factories=2 orders=37 squads=1 raids=1 target=5 | 敌方五 cash=1889 miners=4 refineries=2 factories=2 orders=28 squads=4 raids=3 target=4
+Island at 659s: 敌方一 cash=2979 miners=4 refineries=2 factories=2 orders=40 squads=4 raids=3 target=2 | 敌方二 cash=1992 miners=4 refineries=2 factories=2 orders=43 squads=3 raids=2 target=3 | 敌方三 cash=1675 miners=4 refineries=2 factories=2 orders=32 squads=4 raids=4 target=2 | 敌方四 cash=5363 miners=4 refineries=2 factories=2 orders=45 squads=2 raids=1 target=5 | 敌方五 cash=2425 miners=4 refineries=2 factories=2 orders=40 squads=5 raids=3 target=4
+Island at 719s: 敌方一 cash=4101 miners=4 refineries=2 factories=2 orders=47 squads=7 raids=4 target=2 | 敌方二 cash=1085 miners=4 refineries=2 factories=2 orders=46 squads=4 raids=3 target=1 | 敌方三 cash=1834 miners=4 refineries=2 factories=2 orders=36 squads=5 raids=4 target=2 | 敌方四 cash=6968 miners=4 refineries=2 factories=2 orders=54 squads=2 raids=1 target=5 | 敌方五 cash=1011 miners=4 refineries=2 factories=2 orders=44 squads=6 raids=3 target=4
+Island at 779s: 敌方一 cash=6204 miners=4 refineries=2 factories=2 orders=48 squads=7 raids=4 target=2 | 敌方二 cash=1473 miners=4 refineries=2 factories=2 orders=52 squads=4 raids=3 target=3 | 敌方三 cash=1123 miners=4 refineries=2 factories=2 orders=42 squads=7 raids=4 target=2 | 敌方四 cash=8987 miners=4 refineries=2 factories=2 orders=57 squads=2 raids=1 target=5 | 敌方五 cash=2869 miners=4 refineries=2 factories=2 orders=50 squads=8 raids=4 target=4
+Island at 839s: 敌方一 cash=8733 miners=4 refineries=2 factories=2 orders=53 squads=7 raids=4 target=2 | 敌方二 cash=389 miners=4 refineries=2 factories=2 orders=52 squads=4 raids=3 target=1 | 敌方三 cash=540 miners=4 refineries=2 factories=2 orders=49 squads=9 raids=5 target=2 | 敌方四 cash=9573 miners=4 refineries=2 factories=2 orders=60 squads=2 raids=1 target=5 | 敌方五 cash=4550 miners=4 refineries=2 factories=2 orders=52 squads=9 raids=4 target=4
+Island at 899s: 敌方一 cash=9444 miners=4 refineries=2 factories=2 orders=59 squads=8 raids=4 target=2 | 敌方二 cash=2033 miners=4 refineries=2 factories=2 orders=62 squads=4 raids=3 target=3 | 敌方三 cash=3697 miners=4 refineries=2 factories=2 orders=50 squads=10 raids=5 target=2 | 敌方四 cash=9364 miners=4 refineries=2 factories=2 orders=68 squads=2 raids=1 target=5 | 敌方五 cash=7762 miners=4 refineries=2 factories=2 orders=58 squads=9 raids=4 target=4
+Third mission AI development passed; simulation seconds=899, wall ms=14746, max single step ms=105.2
+factory, faction 0: actual output after the same reference production cycles with 1 / 2 / 3 facilities = 2 / 4 / 6 units.
+factory, faction 1: actual output after the same reference production cycles with 1 / 2 / 3 facilities = 2 / 4 / 6 units.
+factory, faction 2: actual output after the same reference production cycles with 1 / 2 / 3 facilities = 2 / 4 / 6 units.
+barracks, faction 0: actual output after the same reference production cycles with 1 / 2 / 3 facilities = 4 / 8 / 12 units.
+barracks, faction 1: actual output after the same reference production cycles with 1 / 2 / 3 facilities = 4 / 8 / 12 units.
+barracks, faction 2: actual output after the same reference production cycles with 1 / 2 / 3 facilities = 4 / 8 / 12 units.
+Parallel production: completion/backlog, independent pause, blocked outlet, combat kill, capture, sell, exact costs, low power, three factions and infantry passed.
+Native infantry UI: two barracks, automatic dispatch and independent pause/resume passed.
+Native production UI: automatic dispatch, local pause/resume/cancel, priority isolation, totals, all three individual queues and rendering passed.
+Default zoom rigid debris area: 770 opaque pixels; no persistent mesh / collision object.
+432 deterministic trajectories, 1024 rigid poses, arbitrary faction tint, impact/bounce/cleanup passed; longest debris 1.160s.
+Three explosion effect layers only, warm median 1.14ms; p95 2.30ms; color frames 871/1280.
+hq: rigid build stages, three upright damaged skins, arbitrary faction alpha and no retained ruins passed.
+power: rigid build stages, three upright damaged skins, arbitrary faction alpha and no retained ruins passed.
+barracks: rigid build stages, three upright damaged skins, arbitrary faction alpha and no retained ruins passed.
+factory: rigid build stages, three upright damaged skins, arbitrary faction alpha and no retained ruins passed.
+radar: rigid build stages, three upright damaged skins, arbitrary faction alpha and no retained ruins passed.
+post: rigid build stages, three upright damaged skins, arbitrary faction alpha and no retained ruins passed.
+refinery: rigid build stages, three upright damaged skins, arbitrary faction alpha and no retained ruins passed.
+satellite: rigid build stages, three upright damaged skins, arbitrary faction alpha and no retained ruins passed.
+residence: rigid build stages, three upright damaged skins, arbitrary faction alpha and no retained ruins passed.
+shop: rigid build stages, three upright damaged skins, arbitrary faction alpha and no retained ruins passed.
+municipal: rigid build stages, three upright damaged skins, arbitrary faction alpha and no retained ruins passed.
+bunker: rigid build stages, three upright damaged skins, arbitrary faction alpha and no retained ruins passed.
+Standing damage, repair recovery, burn-before-blast timing, cleared wrecks and decorative craters passed.
+River tile/reference zoom 1.05: differing samples 0.000%
+River tile/reference zoom 1.55: differing samples 0.000%
+River tile/reference zoom 2.4: differing samples 0.000%
+River tile overlaps, terrain detail, three tactical zooms, 64 MiB eviction and new-mission invalidation passed.
+Fog culling preserves the visible concealment at three zooms and camera positions.
+
+FullName                                                           Length
+--------                                                           ------
+D:\游戏制作\未命名项目\.cache\release-v0210\source\断线前沿.exe 288412672

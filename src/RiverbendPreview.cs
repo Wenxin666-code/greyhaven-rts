@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -32,7 +32,7 @@ partial class CommandWindow {
   }
  }
  void OpenMapReview(){
-  if(riverMap==null||riverMap.IsTraining||riverMap.IsIsland!=islandMissionSelected){riverMap=new RiverbendMap(islandMissionSelected);riverViewZoom=-1;}
+  if(riverMap==null||riverMap.IsTraining||riverMap.IsIsland!=islandMissionSelected||riverMap.IsRelay!=relayMissionSelected){riverMap=relayMissionSelected?RiverbendMap.Relay():new RiverbendMap(islandMissionSelected);riverViewZoom=-1;}
   EnsureRiverArt();mapReview=true;briefing=true;missionPicker=false;modelReview=false;rulesOpen=false;mapDragging=false;hits.Clear();RiverFit();riverViewZoom=-1;hudDirty=true;Invalidate();
  }
  void CloseMapReview(){mapReview=false;mapDragging=false;Capture=false;missionPicker=true;hits.Clear();hudDirty=true;Invalidate();}
@@ -98,8 +98,12 @@ partial class CommandWindow {
   foreach(var t in riverTextures){t.ResetTransform();t.TranslateTransform(origin.X,origin.Y);t.ScaleTransform(.32f*mapZoom,.22f*mapZoom);}
   g.SmoothingMode=SmoothingMode.None;
   // Only inverse-projected visible cells are visited when zoomed in.
-  var corners=new[]{RiverWorld(new PointF(riverDrawArea.Left,riverDrawArea.Top-80)),RiverWorld(new PointF(riverDrawArea.Right,riverDrawArea.Top-80)),RiverWorld(new PointF(riverDrawArea.Left,riverDrawArea.Bottom+120)),RiverWorld(new PointF(riverDrawArea.Right,riverDrawArea.Bottom+120))};
-  var domain=riverMap.TerrainBounds;int x0=Math.Max(domain.Left,(int)Math.Floor(corners.Min(p=>p.X))-10),x1=Math.Min(domain.Right-1,(int)Math.Ceiling(corners.Max(p=>p.X))+10),y0=Math.Max(domain.Top,(int)Math.Floor(corners.Min(p=>p.Y))-10),y1=Math.Min(domain.Bottom-1,(int)Math.Ceiling(corners.Max(p=>p.Y))+10);
+  // Account for the maximum tree/shadow overhang and height-three cliffs in
+  // projected pixels. Ten extra rows on all sides multiplied tiny cache-tile
+  // redraws into thousands of irrelevant cells.
+  float marginX=riverBattleRender?30*mapZoom+2:0,marginTop=riverBattleRender?12*mapZoom+2:80,marginBottom=riverBattleRender?80*mapZoom+2:120;int extra=riverBattleRender?1:10;
+  var corners=new[]{RiverWorld(new PointF(riverDrawArea.Left-marginX,riverDrawArea.Top-marginTop)),RiverWorld(new PointF(riverDrawArea.Right+marginX,riverDrawArea.Top-marginTop)),RiverWorld(new PointF(riverDrawArea.Left-marginX,riverDrawArea.Bottom+marginBottom)),RiverWorld(new PointF(riverDrawArea.Right+marginX,riverDrawArea.Bottom+marginBottom))};
+  var domain=riverMap.TerrainBounds;int x0=Math.Max(domain.Left,(int)Math.Floor(corners.Min(p=>p.X))-extra),x1=Math.Min(domain.Right-1,(int)Math.Ceiling(corners.Max(p=>p.X))+extra),y0=Math.Max(domain.Top,(int)Math.Floor(corners.Min(p=>p.Y))-extra),y1=Math.Min(domain.Bottom-1,(int)Math.Ceiling(corners.Max(p=>p.Y))+extra);
   for(int depth=x0+y0;depth<=x1+y1;depth++)for(int x=x0;x<=x1;x++){int y=depth-x;if(y>=y0&&y<=y1)DrawRiverCell(g,x,y);}
   g.SmoothingMode=SmoothingMode.AntiAlias;
   foreach(var bridge in riverMap.Bridges){
@@ -119,8 +123,13 @@ partial class CommandWindow {
     Rect(g,p.X-42,p.Y-10,84,23,Color.FromArgb(215,20,32,33));Txt(g,label.Name,p.X-35,p.Y-7,12,color,true);
    }
   }
+  if(riverMap.IsRelay&&!riverBattleRender){
+   var station=RiverbendMap.RelayCell(53,21);var point=RiverScreen(station.X+.5f,station.Y+.5f,2);
+   var box=BuildingRect(new RectangleF(0,0,3*Campaign.Tile,3*Campaign.Tile),point,mapZoom);
+   if(box.IntersectsWith(riverDrawArea)){DrawGroundShadow(g,"relay",B08Source(),box,false,8);DrawStamp(g,"relay",B08Source(),box,UnitColor(1));}
+  }
   // Scale witnesses, explicitly staged in the preview, never combat entities.
-  if(mapZoom>.65f&&!riverBattleRender){
+  if(mapZoom>.65f&&!riverBattleRender&&!riverMap.IsRelay){
    var p=RiverScreen(riverMap.IsIsland?92:92,riverMap.IsIsland?50:76);DrawLive(g,Campaign.Info("engineer"),0,14,p,Campaign.Info("engineer").Size*mapZoom,1);
    p=RiverScreen(94,riverMap.IsIsland?51:77);DrawLive(g,Campaign.Info("squad"),0,14,p,Campaign.Info("squad").Size*mapZoom,1);
    p=RiverScreen(97,riverMap.IsIsland?51:77);DrawLive(g,Campaign.Info("tank"),0,14,p,Campaign.Info("tank").Size*mapZoom,1);
@@ -128,17 +137,17 @@ partial class CommandWindow {
   g.Restore(saved);
  }
  void DrawMapReview(Graphics g){
-  DrawRiverCached(g);Metal(g,0,0,W,55);Emblem(g,28,25,11);Txt(g,riverMap.Title,53,10,25,pale,true);Txt(g,"关卡地形预览  /  "+riverMap.WidthCells+" × "+riverMap.HeightCells+" 格",174,19,14,gold,true);
+  DrawRiverCached(g);Metal(g,0,0,W,55);Emblem(g,28,25,11);Txt(g,riverMap.Title,53,10,25,pale,true);Txt(g,"关卡地形预览  /  "+riverMap.WidthCells+" × "+riverMap.HeightCells+" 格",270,19,14,gold,true);
   Button(g,W-194,9,177,36,"返回关卡选择",CloseMapReview);
   Metal(g,W-212,55,212,H-100);float x=W-197;
-  Txt(g,"战区总览",x,76,22,pale,true);Txt(g,riverMap.IsIsland?"六方交战 · 第二关面积 2.6 倍":"面积约为旧地图 2.6 倍",x,111,13,dim);
+  Txt(g,"战区总览",x,76,22,pale,true);Txt(g,riverMap.IsRelay?"山地争夺 · 通信恢复行动":riverMap.IsIsland?"六方交战 · 单一堤桥出入口":"面积约为旧地图 2.6 倍",x,111,13,dim);
   Button(g,x,150,180,38,"全图   [Home]",()=>{RiverFit();hudDirty=true;});
-  Button(g,x,202,180,38,riverMap.IsIsland?"资源岛与唯一堤桥":"老街与中央桥",()=>{if(riverMap.IsIsland)RiverFocus(64,42,.55f);else RiverFocus(96,75,1.55f);});
-  Button(g,x,254,180,38,"东部高地与坡道",()=>{if(riverMap.IsIsland)RiverFocus(281,153,.80f);else RiverFocus(165,76,.80f);});
-  Button(g,x,306,180,38,riverMap.IsIsland?"中央河道与居民区":"南桥与河口湿地",()=>{if(riverMap.IsIsland)RiverFocus(211,117,.65f);else RiverFocus(111,123,1.15f);});
+  Button(g,x,202,180,38,riverMap.IsRelay?"西南前进基地":riverMap.IsIsland?"资源岛与唯一堤桥":"老街与中央桥",()=>{if(riverMap.IsRelay)FocusRelay(15,82);else if(riverMap.IsIsland)RiverFocus(64,42,.55f);else RiverFocus(96,75,1.55f);});
+  Button(g,x,254,180,38,riverMap.IsRelay?"北岭中继站":"东部高地与坡道",()=>{if(riverMap.IsRelay)FocusRelay(53,21);else if(riverMap.IsIsland)RiverFocus(240,137,.80f);else RiverFocus(165,76,.80f);});
+  Button(g,x,306,180,38,riverMap.IsRelay?"东侧补给基地":riverMap.IsIsland?"中央河道与居民区":"南桥与河口湿地",()=>{if(riverMap.IsRelay)FocusRelay(84,42);else if(riverMap.IsIsland)RiverFocus(187,111,.65f);else RiverFocus(111,123,1.15f);});
   Button(g,x,358,180,38,mapLabels?"地点标注：开 [L]":"地点标注：关 [L]",()=>{mapLabels=!mapLabels;hudDirty=true;});
   Txt(g,"地形图例",x,430,18,gold,true);
-  var names=riverMap.IsIsland?new[]{"海域 / 河湖：不可通行","西北资源岛：唯一堤桥","高地 / 坡道 / 林带 / 湿地","中立房屋：40 栋","五个独立敌方阵营","岛内三片矿区 · 大陆矿田"}:new[]{"河流 / 湖泊：不可通行","三座桥梁：跨河通道","陡崖：阻挡 · 坡道通行","林带：需绕行","中立房屋：28 栋","金色矿区：10 处"};
+  var names=riverMap.IsRelay?new[]{"湖水 / 溪流：不可通行","主公路 / 西侧林道 / 东路","山岭 / 坡道 / 林带 / 矿田","中立房屋："+riverMap.Houses.Count+" 栋","敌方基地与北岭守军","六片有限矿区 · 每格 2400"}:riverMap.IsIsland?new[]{"海域 / 河湖：不可通行","西北资源岛：唯一堤桥","高地 / 坡道 / 林带 / 湿地","中立房屋："+riverMap.Houses.Count+" 栋","五个独立敌方阵营","岛内三片矿区 · 大陆矿田"}:new[]{"河流 / 湖泊：不可通行","三座桥梁：跨河通道","陡崖：阻挡 · 坡道通行","林带：需绕行","中立房屋："+riverMap.Houses.Count+" 栋","金色矿区：10 处"};
   for(int i=0;i<names.Length;i++)Txt(g,names[i],x,467+i*27,13,dim);
   Txt(g,"房屋驻防规则",x,650,17,gold,true);Txt(g,"工兵占领后换色",x,680,13,dim);Txt(g,"驻防 4 / 6 / 8 名步兵",x,704,13,dim);Txt(g,"毁楼后从出口撤出",x,728,13,dim);
   Metal(g,0,H-45,W,45);Txt(g,"滚轮缩放  ·  左键／右键／中键拖动  ·  方向键平移  ·  Esc 返回",18,H-31,14,pale);
@@ -158,11 +167,13 @@ partial class CommandWindow {
   var saved=g.Save();g.IntersectClip(mapViewport);g.ResetTransform();g.CompositingMode=CompositingMode.SourceCopy;g.DrawImageUnscaled(riverView,(int)Math.Round(ox+(riverDrawArea.X+dx)*scale),(int)Math.Round(oy+(riverDrawArea.Y+dy)*scale));g.Restore(saved);
   if(riverBattleRender)WarmRiverGroundTiles();
  }
+ void FocusRelay(float u,float v){var p=RiverbendMap.RelayGrid(u,v);RiverFocus(p.X,p.Y,1.1f);}
+ void StartRelayMission(){StartTerrainMission(false,true);}
  void StartRiverMission(){StartTerrainMission(false);}
  void StartIslandMission(){StartTerrainMission(true);}
- void StartTerrainMission(bool island){
-  Restart();world=new Campaign(false,false,true,island);riverMap=world.River;EnsureRiverArt();riverViewZoom=-1;ClearRiverGroundCache();
-  mapReview=false;briefing=false;paused=false;selection.Clear();selection.Add(world.Units[0]);CenterAt(world.Home(0));zoom=DefaultZoom;edgeArmed=true;hits.Clear();hudDirty=true;
+ void StartTerrainMission(bool island,bool relay=false){
+  Restart();world=new Campaign(false,false,true,island,relay);world.PrepareBattleNavigation();riverMap=world.River;EnsureRiverArt();riverViewZoom=-1;ClearRiverGroundCache();
+  mapReview=false;briefing=false;paused=false;selection.Clear();selection.Add(world.Units.First(o=>o.Alive&&o.Side==0&&o.T.Key=="mcv"));CenterAt(world.Home(0));zoom=DefaultZoom;if(relay)PrepareRelayArt();edgeArmed=true;hits.Clear();hudDirty=true;
  }
  void DrawRiverBattleGround(Graphics g){
   riverBattleRender=true;riverMap=world.Terrain;EnsureRiverArt();mapCenter=new PointF(camera.X/Campaign.Tile,camera.Y/Campaign.Tile);mapZoom=zoom;

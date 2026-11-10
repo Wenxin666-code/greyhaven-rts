@@ -1,0 +1,18 @@
+{
+  "date": "2026-11-10T08:05:14.0645552+08:00",
+  "head": "6a2b4566eb5449a4a34a6c4e23944e63a0db640a",
+  "githubUploaded": false,
+  "backup": "D:\\游戏制作\\未命名项目\\.cache\\performance-before-20261110-080346",
+  "files": 49,
+  "exeSha256": "54795010E0EA3717CC9FE2CDB6F71220B194B8F21FDE10D1306AA308CD18928B",
+  "exeBytes": 208135168,
+  "checks": [
+    "PerformanceAndIFVChecks",
+    "PerformanceInterfaceChecks",
+    "BalanceChecks",
+    "MinerDeliveryChecks",
+    "CampaignStoryChecks",
+    "RelayMissionChecks",
+    "ParallelProductionChecks"
+  ]
+}

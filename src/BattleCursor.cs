@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
@@ -30,8 +30,9 @@ partial class CommandWindow {
   if(structureMode!=StructureMode.None){bool valid=structureMode==StructureMode.Sell?world.CanSell(hit):hit!=null&&hit.Deployed&&hit.Side==0&&hit.T.Building&&(hit.Hp<hit.T.Hp||hit.Repairing);
    return new PointerHint(valid?(structureMode==StructureMode.Sell?PointerKind.Sell:PointerKind.Repair):PointerKind.Blocked,valid?(structureMode==StructureMode.Sell?"出售建筑 · 返还 50% 基础价格":"切换建筑维修"):"此处不能执行建筑工具");}
   if(!attack&&mods==Keys.None&&hit!=null&&selection.Count==1&&selection[0]==hit){
+   if(Campaign.CanDeployInfantry(hit))return new PointerHint(PointerKind.Deploy,hit.Entrenched?"收起阵地 · 左键或 D":"部署阵地 · 左键或 D");
    if(hit.T.Key=="mcv")return new PointerHint(world.CanDeploy(hit)?PointerKind.Deploy:PointerKind.Blocked,world.CanDeploy(hit)?"展开基地 · 左键或 D":"空间不足，无法展开");
-   if(hit.Deployed&&(hit.T.Civilian||hit.T.Key=="ifv")&&world.HouseCount(hit)>0)return new PointerHint(PointerKind.Deploy,"卸载／撤出 · 左键或 D");
+   if(hit.Deployed&&(hit.T.Garrison||hit.T.Key=="ifv")&&world.HouseCount(hit)>0)return new PointerHint(PointerKind.Deploy,"卸载／撤出 · 左键或 D");
   }
   if(!attack&&mods==Keys.None&&hit==null&&selection.Count==1&&selection[0].T.Key=="hq")return new PointerHint(world.CanRelocate(selection[0],p)?PointerKind.Move:PointerKind.Blocked,"收起基地并移动");
   if(beaconMode)return new PointerHint(PointerKind.Waypoint,"放置战场标记");
@@ -42,7 +43,7 @@ partial class CommandWindow {
   }
   if((mods&Keys.Alt)!=0)return MovementHint(p,PointerKind.ForceMove,"强制移动");
   bool advance=(mods&(Keys.Control|Keys.Shift))==(Keys.Control|Keys.Shift);
-  if((mods&Keys.Control)!=0&&!advance)return selection.Any(u=>u.Deployed&&world.Armed(u))&&p.X>=0&&p.Y>=0&&p.X<world.MapWidth&&p.Y<world.MapHeight?new PointerHint(PointerKind.Attack,"强制开火"):new PointerHint(PointerKind.Blocked,"无法强制开火");
+  if((mods&Keys.Control)!=0&&!advance)return selection.Any(u=>u.Deployed&&world.Armed(u))&&world.Battlefield.Contains(p)?new PointerHint(PointerKind.Attack,Campaign.IsRelayStation(hit)?"关键设施 · 强制摧毁将导致失败":"强制开火"):new PointerHint(PointerKind.Blocked,"无法强制开火");
   bool miners=selection.Count>0&&selection.All(u=>u.Deployed&&u.T.Key=="miner");
   if(!attack&&mods==Keys.None&&miners){
    if(hit!=null&&hit.Side==0&&hit.Deployed&&hit.T.Key=="refinery")return MovementHint(Campaign.DockPoint(hit),PointerKind.Unload,"返厂卸矿");
@@ -50,12 +51,13 @@ partial class CommandWindow {
   }
   if(!attack&&mods==Keys.None&&hit!=null){
    if(selection.Any(u=>world.CanEngineer(u,hit)))return new PointerHint(hit.Side==0?PointerKind.Repair:PointerKind.Unload,hit.Side==0?"进入维修 · 消耗工兵":"进入占领 · 消耗工兵");
-   if(selection.Any(u=>world.CanBoard(u,hit)))return new PointerHint(PointerKind.Unload,"步兵登车 · 工兵使战车变为维修车");
+   if(selection.Any(u=>world.CanBoard(u,hit)))return new PointerHint(PointerKind.Unload,"步兵登车 · 机枪／反装甲导弹／维修模式");
    if(selection.Any(u=>world.CanRepairVehicle(u,hit)))return new PointerHint(PointerKind.Repair,"维修车辆");
   }
-  if(!attack&&!advance&&hit!=null&&hit.T.Civilian&&(hit.Side<0||hit.Side==0)&&selection.Any(u=>u.T.Foot))return selection.Any(u=>world.CanEnterHouse(u,hit))?new PointerHint(PointerKind.Unload,hit.Side<0?"进入并占领房屋":"进驻房屋"):new PointerHint(PointerKind.Blocked,hit.Side<0?"需要空闲工兵":"房屋已满或单位不能驻防");
+  if(!attack&&!advance&&hit!=null&&hit.T.Garrison&&(hit.Side<0||hit.Side==0)&&selection.Any(u=>u.T.Foot))return selection.Any(u=>world.CanEnterHouse(u,hit))?new PointerHint(PointerKind.Unload,hit.Side<0?"进入并占领房屋":"进驻房屋"):new PointerHint(PointerKind.Blocked,hit.Side<0?"需要空闲工兵":hit.T.Key=="bunker"?"碉堡只接受步枪兵 · 最多 5 人":"房屋已满或单位不能驻防");
   if(!attack&&!advance&&hit!=null&&hit.Side==0)return new PointerHint(PointerKind.Select,"选择 "+hit.T.Name);
   if(selection.Count==0)return new PointerHint(PointerKind.Arrow,"");
+  if(Campaign.IsRelayStation(hit))return new PointerHint(PointerKind.Blocked,"任务设施 · 需工兵占领");
   if(hit!=null&&hit.Side>0)return selection.Any(u=>u.Deployed&&world.Armed(u))?new PointerHint(PointerKind.Attack,"攻击 "+hit.T.Name):new PointerHint(PointerKind.Blocked,"所选单位没有武器");
   p=ApproachSite(mouse,p);
   if(selection.Count==1&&selection[0].T.Building)return world.CanRallyTo(selection[0],p)?new PointerHint(PointerKind.Rally,"设置集结点"):new PointerHint(PointerKind.Blocked,"无法设置集结点");

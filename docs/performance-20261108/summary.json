@@ -1,0 +1,109 @@
+{
+  "date": "2026-11-08",
+  "published_base": "v0.20.0",
+  "baseline": "current local game immediately before this performance task, including unpublished turret and territorial AI changes",
+  "simulation": {
+    "requested_seconds": 600,
+    "actual_seconds": 599.942,
+    "step": 0.03333333333333333,
+    "protocol": "same process, alternate execution order every update; passive paid player development; five active mutually hostile AI",
+    "before": {
+      "samples": 18000,
+      "mean_ms": 2.1184586444444444,
+      "median_ms": 1.2659500000000001,
+      "p95_ms": 5.7255,
+      "p99_ms": 15.6747,
+      "max_ms": 260.7632,
+      "over_50ms": 50
+    },
+    "after": {
+      "samples": 18000,
+      "mean_ms": 1.1867473277777778,
+      "median_ms": 0.98,
+      "p95_ms": 3.1249,
+      "p99_ms": 6.5154,
+      "max_ms": 257.9817,
+      "over_50ms": 13
+    },
+    "matching_state_samples": 9,
+    "state_samples": 9
+  },
+  "render": {
+    "baseline": {
+      "idle": {
+        "samples": 120,
+        "mean_ms": 9.486293333333334,
+        "median_ms": 8.51435,
+        "p95_ms": 12.9039,
+        "p99_ms": 15.218,
+        "max_ms": 15.7494,
+        "over_50ms": 0
+      },
+      "scroll": {
+        "samples": 120,
+        "mean_ms": 10.345040833333334,
+        "median_ms": 8.9514,
+        "p95_ms": 17.5854,
+        "p99_ms": 18.7257,
+        "max_ms": 19.2899,
+        "over_50ms": 0
+      },
+      "cold-pan": {
+        "samples": 120,
+        "mean_ms": 40.73795916666667,
+        "median_ms": 21.97255,
+        "p95_ms": 39.9409,
+        "p99_ms": 572.5542,
+        "max_ms": 585.2076,
+        "over_50ms": 5
+      },
+      "first_view_ms": 1175.4323,
+      "camera_jumps_ms": [
+        8.5981,
+        780.2125,
+        570.381,
+        572.5542,
+        585.2076,
+        526.777
+      ]
+    },
+    "proposed": {
+      "idle": {
+        "samples": 120,
+        "mean_ms": 10.176001666666666,
+        "median_ms": 8.6593,
+        "p95_ms": 17.1191,
+        "p99_ms": 19.4827,
+        "max_ms": 21.0804,
+        "over_50ms": 0
+      },
+      "scroll": {
+        "samples": 120,
+        "mean_ms": 10.6050025,
+        "median_ms": 9.407499999999999,
+        "p95_ms": 18.4277,
+        "p99_ms": 20.4742,
+        "max_ms": 22.9965,
+        "over_50ms": 0
+      },
+      "cold-pan": {
+        "samples": 120,
+        "mean_ms": 40.296349166666666,
+        "median_ms": 21.4927,
+        "p95_ms": 34.7097,
+        "p99_ms": 571.766,
+        "max_ms": 588.397,
+        "over_50ms": 5
+      },
+      "first_view_ms": 1298.2891,
+      "camera_jumps_ms": [
+        8.0751,
+        790.6695,
+        571.766,
+        588.397,
+        565.413,
+        514.9109
+      ]
+    }
+  }
+}

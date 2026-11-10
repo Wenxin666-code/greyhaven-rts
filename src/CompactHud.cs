@@ -9,7 +9,7 @@ partial class CommandWindow {
   Txt(g,"军费",x+2,11,13,dim,true);Txt(g,"$ "+world.Funds[0],x+40,6,23,gold,true);
   Button(g,x,44,72,29,"任务目标",()=>{paused=true;help=true;});Button(g,x+80,44,72,29,"选项 Esc",OpenOptions);
   Rect(g,x,86,SideWidth,104,ink);DrawRadar(g,x+2);
-  int available=world.Power(0);Rect(g,MW+2,199,3,Math.Min(120,35+Math.Abs(available)*4),available<0?red:teal);
+  int available=world.Power(0);Rect(g,MW+2,199,3,Math.Min(120,35+Math.Abs(available)*.2f),available<0?red:teal);
   Button(g,x,197,72,29,"维修 [K]",()=>StructureTool(StructureMode.Repair),structureMode==StructureMode.Repair);Button(g,x+80,197,72,29,"出售 [L]",()=>StructureTool(StructureMode.Sell),structureMode==StructureMode.Sell);
   Button(g,x,234,36,31,"建筑",()=>ProductionTab(4),!army&&productionFilter!=1&&!queueOpen);
   Button(g,x+39,234,36,31,"防御",()=>ProductionTab(1),productionFilter==1&&!queueOpen);
@@ -46,9 +46,12 @@ partial class CommandWindow {
   int col=(int)(mouse.X-MW-SideInset)/80,row=(int)(mouse.Y-274)/75;
   var cards=ProductionCards();int index=(row+sidebarRow)*2+col;
   if(col<0||col>1||index>=cards.Length)return;
-  var t=cards[index];string reason=t.Building?world.ConstructionReason(t):world.Require(t,0);float x=MW-250,y=Math.Min(H-82,mouse.Y+12);
-  Plate(g,new RectangleF(x,y,238,64),panel,gold);Txt(g,t.Name+"  $"+t.Price,x+12,y+8,16,pale,true);
+  var t=cards[index];string reason=t.Building?world.ConstructionReason(t):world.Require(t,0);float x=MW-332,y=Math.Min(H-154,mouse.Y+12);
+  Plate(g,new RectangleF(x,y,320,140),panel,gold);Txt(g,t.Name+"  $"+t.Price,x+12,y+8,16,pale,true);
   Txt(g,reason??(t.Building?"左键生产／放置 · 右键暂停／取消":"自动分配排产 · 右键暂停／取消"),x+12,y+35,13,reason==null?teal:gold);
+  Txt(g,"生命 "+t.Hp+"   视野 "+t.SightCells+" 格",x+12,y+60,13,pale);
+  Txt(g,t.Key=="bunker"?"容纳 5 名步枪兵 · 驻军射程 6 格":t.Key=="at"?"机枪 4 格 · D 部署导弹 8 格":t.Key=="squad"?"机枪 4 格 · D 部署阵地 5 格":t.Hit>0?"射程 "+(t.Range/(float)Campaign.Tile).ToString("0.#")+" 格   伤害 "+t.Hit+(t.Weapon.Burst>1?" × "+t.Weapon.Burst:"")+"（护甲前）":t.Energy!=0?"电力 "+t.Energy.ToString("+#;-#"):"非攻击单位",x+12,y+82,13,pale);
+  Txt(g,(t.Hit>0?"间隔 "+(t.Reload/Math.Max(.1f,speed)).ToString("0.##")+" 秒   ":"")+(!t.Building?"移速 "+(t.Speed/Campaign.Tile*Math.Max(.1f,speed)).ToString("0.##")+" 格/秒":"生产 "+(t.Seconds/Math.Max(.1f,speed)).ToString("0.#")+" 秒"),x+12,y+106,12,dim);
  }
  void DrawQueue(Graphics g,float x){
   var list=Producers();if(list.Count==0){Txt(g,"展开指挥部后查看排产",x,284,12,dim);return;}

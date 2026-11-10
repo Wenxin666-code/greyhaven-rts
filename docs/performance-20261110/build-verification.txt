@@ -1,0 +1,61 @@
+**********************
+PowerShell transcript start
+Start time: 20261110080347
+Username: WENXIN\23930
+RunAs User: WENXIN\23930
+Configuration Name:
+Machine: WENXIN (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\Users\23930\.cache\codex-runtimes\codex-primary-runtime\dependencies\native\powershell\pwsh.dll -Command try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}
+& '.cache\performance-island-ifv-20261109\install.ps1'
+Process ID: 5588
+PSVersion: 7.6.5
+PSEdition: Core
+GitCommitId: 7.6.5
+OS: Microsoft Windows 10.0.26200
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+FullName                               Length
+--------                               ------
+D:\游戏制作\未命名项目\断线前沿.exe 208135168
+{
+  "date": "2026-11-10T08:05:14.0645552+08:00",
+  "head": "6a2b4566eb5449a4a34a6c4e23944e63a0db640a",
+  "githubUploaded": false,
+  "backup": "D:\\游戏制作\\未命名项目\\.cache\\performance-before-20261110-080346",
+  "files": 49,
+  "exeSha256": "54795010E0EA3717CC9FE2CDB6F71220B194B8F21FDE10D1306AA308CD18928B",
+  "exeBytes": 208135168,
+  "checks": [
+    "PerformanceAndIFVChecks",
+    "PerformanceInterfaceChecks",
+    "BalanceChecks",
+    "MinerDeliveryChecks",
+    "CampaignStoryChecks",
+    "RelayMissionChecks",
+    "ParallelProductionChecks"
+  ]
+}
+**********************
+PowerShell transcript end
+End time: 20261110080514
+**********************

@@ -1,0 +1,120 @@
+{
+  "date": "2026-11-08",
+  "released_base": "v0.20.0",
+  "status": "local_unpublished",
+  "baseline": {
+    "requested_game_seconds": 900,
+    "simulated_game_seconds": 899.93,
+    "step": 0.1,
+    "mode": "passive",
+    "won": false,
+    "lost": false,
+    "wall_seconds": 330.39,
+    "first_elimination": [
+      -1.0,
+      -1.0,
+      335.01,
+      845.24,
+      672.48,
+      -1.0
+    ],
+    "unit_deaths": [
+      0,
+      146,
+      60,
+      230,
+      159,
+      168
+    ],
+    "lost_value": [
+      0,
+      18070,
+      8910,
+      31530,
+      22125,
+      21940
+    ]
+  },
+  "final": {
+    "requested_game_seconds": 1800,
+    "simulated_game_seconds": 1799.71,
+    "step": 0.1,
+    "mode": "passive",
+    "won": false,
+    "lost": false,
+    "wall_seconds": 1006.46,
+    "first_elimination": [
+      -1.0,
+      -1.0,
+      533.12,
+      -1.0,
+      -1.0,
+      -1.0
+    ],
+    "unit_deaths": [
+      0,
+      223,
+      82,
+      301,
+      284,
+      261
+    ],
+    "lost_value": [
+      0,
+      29600,
+      12125,
+      44905,
+      39085,
+      32240
+    ]
+  },
+  "comparison": [
+    {
+      "game_minute": 5,
+      "baseline_active": 5,
+      "baseline_operational_bases": 4,
+      "new_active": 5,
+      "new_operational_bases": 5
+    },
+    {
+      "game_minute": 10,
+      "baseline_active": 4,
+      "baseline_operational_bases": 4,
+      "new_active": 4,
+      "new_operational_bases": 4
+    },
+    {
+      "game_minute": 15,
+      "baseline_active": 2,
+      "baseline_operational_bases": 2,
+      "new_active": 4,
+      "new_operational_bases": 4
+    }
+  ],
+  "final_sample_seconds": 1785.01,
+  "final_active_ai": 4,
+  "final_operational_ai_bases": 2,
+  "combat_unit_losses": [
+    0,
+    217,
+    56,
+    286,
+    224,
+    254
+  ],
+  "combat_unit_replacement_value": [
+    0,
+    29030,
+    6365,
+    42720,
+    28040,
+    31575
+  ],
+  "caveats": [
+    "One deterministic initial map and passive-player development protocol; not a statistical guarantee.",
+    "Uses actual campaign economy, production, movement, combat and surrender with headless 0.1-game-second steps; default live step is 1/30.",
+    "Player develops and guards through ordinary paid commands, with no proactive attacks or special survival protection.",
+    "Elimination and loss of economic/production base are measured separately.",
+    "Combat loss totals exclude consumed engineers and civilian structures; total replacement value is not the cost of a specific siege."
+  ]
+}

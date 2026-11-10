@@ -1,0 +1,9 @@
+{
+  "local_only": true,
+  "executable": "断线前沿.exe",
+  "bytes": 269669888,
+  "sha256": "607f76698c49fa6f3358feb2bf8c9b0f2b71d3d537587b6962751d4ffaa4b1d8",
+  "infantry_assertions": 138,
+  "native_art_ui_checks": "passed",
+  "preview": "步兵行军瞄准开火.mp4"
+}

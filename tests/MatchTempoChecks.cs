@@ -41,14 +41,17 @@ public partial class Campaign {
  static void AssertTempo(bool condition,string message){if(!condition)throw new Exception(message);}
  internal static void CheckPressureRules(){
   var w=new Campaign(false,false,true,true);var b=w.Brain(3);
-  for(int side=0;side<w.FactionCount;side++)AssertTempo(w.Funds[side]==1150,"asymmetric starting money");
+  for(int side=0;side<w.FactionCount;side++)AssertTempo(w.Funds[side]==ReferenceBalance.StartingCredits,"asymmetric starting money");
   b.LastDispatch[0]=30;b.LastDispatch[1]=20;b.LastDispatch[2]=10;b.LastDispatch[4]=40;b.LastDispatch[5]=50;
-  AssertTempo(w.AiRaidOpponent(3,b)==2,"raids must cover least-pressured opponent, not force player");b.LastDispatch[2]=60;AssertTempo(w.AiRaidOpponent(3,b)==1,"coverage rotation");
-  w.Units.Clear();w.Ore.Clear();var home=w.Home(3);w.Spawn("mcv",0,w.Home(0).X,w.Home(0).Y);w.Spawn("hq",3,home.X,home.Y);w.Spawn("power",3,home.X+100,home.Y-60);w.Spawn("refinery",3,home.X+80,home.Y+140);w.Funds[3]=400;
+  AssertTempo(w.AiRaidOpponent(3,b)==2,"raids must cover least-pressured opponent, not force player");b.LastDispatch[2]=60;AssertTempo(w.AiRaidOpponent(3,b)==2,"neglected distant factions must not override nearby threats");
+  w.Units.Clear();w.Ore.Clear();var home=w.Home(3);w.Spawn("mcv",0,w.Home(0).X,w.Home(0).Y);w.Spawn("hq",3,home.X,home.Y);w.Spawn("power",3,home.X+100,home.Y-60);w.Spawn("refinery",3,home.X+80,home.Y+140);w.Funds[3]=2000;
   AssertTempo(w.OreReceipts[3]==0,"early military test setup");w.AiConstruction(3,b,new Piece[0]);AssertTempo(w.Construction(Campaign.Info("barracks"),3)!=null,"barracks must not wait for first cash receipt");
   w.Units.Clear();w.Spawn("hq",3,home.X,home.Y);w.Spawn("mcv",0,w.Home(0).X,w.Home(0).Y);w.Time=220;b.Wings.Clear();b.NextPush=190;b.NextRaid=99999;
   var troops=new[]{w.Spawn("tank",3,home.X+200,home.Y),w.Spawn("ifv",3,home.X+230,home.Y)};w.Reveal();w.SmartTactics(3,false);
-  AssertTempo(b.Wings.Any(wing=>wing.Units.Length==2)&&troops.All(p=>w.aiMovesPending.Contains(p)),"underfilled team waits forever");
+  AssertTempo(b.Wings.Count==0&&troops.All(p=>b.HomeGuard.Contains(p)),"understrength base must retain its guards");
+  // Supply both the separate four-unit field post and a real surplus attack wing.
+  for(int i=0;i<20;i++)w.Spawn(i%3==0?"tank":"squad",3,home.X-120+i%6*24,home.Y-96+i/6*24);w.SmartTactics(3,false);
+  AssertTempo(b.Wings.Count>0&&b.Wings.All(team=>team.Units.All(p=>!b.HomeGuard.Contains(p))),"surplus attack must not draw standing guards");
   var wingAt=b.Wings.Last();wingAt.OrderedAt=w.Time;AssertTempo(b.LastDispatch[0]==w.Time,"dispatch not recorded");
   var gate=w.Spawn("factory",3,home.X+350,home.Y+200);w.Funds[3]=10000;w.Train(Info("tank"),3,gate);w.UnitTick(gate,1,true);
   AssertTempo(gate.Work>0&&gate.WorkPaid>0&&w.Funds[3]<10000,"AI production bypasses payment");
@@ -66,7 +69,7 @@ public partial class Campaign {
   var pursue=new Campaign(true);pursue.Units.Clear();var hunter=pursue.Spawn("squad",0,400,1100);var target=pursue.Spawn("squad",1,600,1100);hunter.Target=target;
   hunter.Path.Enqueue(new PointF(450,1500));hunter.Path.Enqueue(new PointF(500,1100));AssertTempo(!pursue.ChaseRouteNeedsUpdate(hunter,target),"small target movement discarded long detour");
   target.P=new PointF(900,1100);AssertTempo(pursue.ChaseRouteNeedsUpdate(hunter,target),"large target movement did not refresh chase");hunter.Path.Clear();hunter.Path.Enqueue(new PointF(500,1100));target.P=new PointF(600,1100);AssertTempo(pursue.ChaseRouteNeedsUpdate(hunter,target),"near firing position became unresponsive");
-  Console.WriteLine("AI pressure: equal money, no player targeting preference, coverage rotation, early paid barracks, two-unit timeout launch and paid vehicle production passed.");
+  Console.WriteLine("AI pressure: equal money, no player targeting preference, nearby opposition, early paid barracks, permanent guard reservation and surplus team launch and paid vehicle production passed.");
  }
 }
 partial class CommandWindow {

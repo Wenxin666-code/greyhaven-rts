@@ -1,0 +1,115 @@
+敌方一 cash=1893 miners=4 refineries=2 factories=2 orders=63 squads=7 raids=2 target=2 reserve=350 budget=900
+hq 5 p={X=7692, Y=744} queue= work=0 hp=1000
+residence 55 p={X=7656, Y=1752} queue= work=0 hp=550
+residence 56 p={X=7800, Y=1752} queue= work=0 hp=60
+residence 57 p={X=7944, Y=1752} queue= work=0 hp=550
+power 66 p={X=7776, Y=672} queue= work=0 hp=750
+power 72 p={X=7776, Y=744} queue= work=0 hp=750
+refinery 78 p={X=7584, Y=840} queue= work=0 hp=1000
+miner 84 p={X=7538.179, Y=957.8206} queue= work=0 hp=1000
+barracks 90 p={X=7776, Y=792} queue=squad work=7.099996 hp=500
+post 100 p={X=7524, Y=900} queue= work=0 hp=400
+factory 120 p={X=7692, Y=888} queue=arty work=26.70007 hp=1000
+factory 132 p={X=7860, Y=864} queue=arty work=11.80001 hp=1000
+miner 141 p={X=7603.657, Y=982.3427} queue= work=0 hp=1000
+post 147 p={X=7692, Y=972} queue= work=0 hp=400
+barracks 149 p={X=7752, Y=864} queue=squad work=7.099996 hp=500
+refinery 165 p={X=7488, Y=744} queue= work=0 hp=1000
+miner 167 p={X=7644, Y=928.5938} queue= work=0 hp=1000
+post 181 p={X=7860, Y=948} queue= work=0 hp=400
+miner 207 p={X=7596, Y=878.5214} queue= work=0 hp=1000
+post 215 p={X=7428, Y=804} queue= work=0 hp=400
+post 237 p={X=7692, Y=828} queue= work=0 hp=400
+post 267 p={X=7812, Y=756} queue= work=0 hp=400
+field deployments=1 active=4 point={X=6408, Y=936} returning=False
+敌方二 cash=1085 miners=4 refineries=2 factories=2 orders=67 squads=3 raids=2 target=1 reserve=350 budget=12
+hq 9 p={X=7812, Y=2760} queue= work=0 hp=1000
+power 67 p={X=7896, Y=2688} queue= work=0 hp=750
+power 73 p={X=7896, Y=2760} queue= work=0 hp=750
+refinery 79 p={X=7800, Y=2856} queue= work=0 hp=1000
+miner 85 p={X=7695.142, Y=2991.141} queue= work=0 hp=1000
+barracks 91 p={X=7896, Y=2808} queue=engineer work=2.999999 hp=500
+post 101 p={X=7788, Y=2796} queue= work=0 hp=400
+factory 121 p={X=7860, Y=2856} queue= work=0 hp=1000
+factory 133 p={X=7956, Y=2928} queue= work=0 hp=1000
+miner 145 p={X=7663.778, Y=2896.221} queue= work=0 hp=1000
+post 150 p={X=7932, Y=2772} queue= work=0 hp=400
+barracks 158 p={X=7896, Y=2904} queue= work=0 hp=500
+post 164 p={X=7860, Y=2628} queue= work=0 hp=54.5
+refinery 173 p={X=7704, Y=2856} queue= work=0 hp=1000
+miner 176 p={X=7668, Y=2968.5} queue= work=0 hp=1000
+post 193 p={X=7932, Y=3012} queue= work=0 hp=400
+radar 211 p={X=7848, Y=2808} queue= work=0 hp=600
+post 213 p={X=7740, Y=2700} queue= work=0 hp=400
+miner 219 p={X=7691.438, Y=2964} queue= work=0 hp=1000
+post 231 p={X=7788, Y=2988} queue= work=0 hp=400
+post 357 p={X=7956, Y=2628} queue= work=0 hp=400
+field deployments=1 active=0 point={X=7560, Y=2856} returning=False
+敌方三 cash=36300 miners=4 refineries=2 factories=2 orders=44 squads=7 raids=3 target=2 reserve=350 budget=29500
+hq 13 p={X=7596, Y=5016} queue= work=0 hp=1000
+residence 48 p={X=6624, Y=4944} queue= work=0 hp=550
+power 68 p={X=7680, Y=4944} queue= work=0 hp=750
+power 74 p={X=7680, Y=5016} queue= work=0 hp=750
+refinery 80 p={X=7488, Y=5112} queue= work=0 hp=1000
+miner 86 p={X=7432.9, Y=5203.1} queue= work=0 hp=1000
+barracks 92 p={X=7680, Y=5064} queue= work=0 hp=500
+post 102 p={X=7500, Y=5028} queue= work=0 hp=400
+factory 123 p={X=7596, Y=5160} queue=arty/ifv/tank/ifv/ifv/tank/ifv/arty/ifv/tank work=31.5 hp=1000
+factory 134 p={X=7668, Y=5160} queue=ifv/ifv work=25.2 hp=1000
+miner 140 p={X=7416.884, Y=5180.713} queue= work=0 hp=1000
+post 144 p={X=7596, Y=5076} queue= work=0 hp=400
+barracks 151 p={X=7656, Y=5208} queue= work=0 hp=500
+refinery 166 p={X=7584, Y=5232} queue= work=0 hp=1000
+miner 168 p={X=7523.146, Y=5196.854} queue= work=0 hp=1000
+post 182 p={X=7692, Y=4908} queue= work=0 hp=400
+post 202 p={X=7572, Y=5196} queue= work=0 hp=400
+miner 214 p={X=7596, Y=5196} queue= work=0 hp=1000
+post 221 p={X=7692, Y=5124} queue= work=0 hp=400
+radar 222 p={X=7632, Y=5064} queue= work=0 hp=600
+post 244 p={X=7668, Y=5268} queue= work=0 hp=400
+satellite 302 p={X=7488, Y=5064} queue= work=0 hp=1000
+field deployments=1 active=4 point={X=6408, Y=5112} returning=False
+敌方四 cash=11980 miners=4 refineries=2 factories=2 orders=44 squads=3 raids=1 target=5 reserve=350 budget=11550
+hq 17 p={X=4596, Y=5112} queue= work=0 hp=1000
+residence 54 p={X=4464, Y=4560} queue= work=0 hp=550
+power 69 p={X=4680, Y=5040} queue= work=0 hp=750
+power 75 p={X=4680, Y=5112} queue= work=0 hp=750
+refinery 81 p={X=4584, Y=5208} queue= work=0 hp=1000
+miner 87 p={X=4524, Y=5347.781} queue= work=0 hp=1000
+barracks 93 p={X=4680, Y=5160} queue=at work=16.8 hp=500
+post 103 p={X=4572, Y=5148} queue= work=0 hp=400
+factory 125 p={X=4644, Y=5208} queue= work=0 hp=1000
+factory 135 p={X=4740, Y=5280} queue= work=0 hp=1000
+miner 146 p={X=4419, Y=5352} queue= work=0 hp=1000
+post 152 p={X=4764, Y=5028} queue= work=0 hp=400
+barracks 159 p={X=4680, Y=5256} queue= work=0 hp=500
+refinery 174 p={X=4488, Y=5208} queue= work=0 hp=1000
+miner 177 p={X=4537.594, Y=5316} queue= work=0 hp=1000
+post 194 p={X=4716, Y=5196} queue= work=0 hp=400
+post 217 p={X=4668, Y=5292} queue= work=0 hp=400
+miner 228 p={X=4507.291, Y=5251.291} queue= work=0 hp=1000
+post 232 p={X=4476, Y=5124} queue= work=0 hp=400
+post 250 p={X=4812, Y=5124} queue= work=0 hp=400
+radar 366 p={X=4632, Y=5160} queue= work=0 hp=600
+field deployments=2 active=0 point={X=4608, Y=4632} returning=False
+敌方五 cash=4090 miners=4 refineries=2 factories=2 orders=51 squads=10 raids=4 target=4 reserve=350 budget=2900
+hq 21 p={X=3924, Y=2520} queue= work=0 hp=1000
+power 70 p={X=4008, Y=2448} queue= work=0 hp=750
+power 76 p={X=4008, Y=2520} queue= work=0 hp=750
+refinery 82 p={X=3912, Y=2616} queue= work=0 hp=1000
+miner 88 p={X=3858.101, Y=2693.899} queue= work=0 hp=1000
+barracks 94 p={X=4008, Y=2568} queue= work=0 hp=500
+post 104 p={X=3900, Y=2748} queue= work=0 hp=400
+factory 127 p={X=3972, Y=2616} queue= work=0 hp=1000
+factory 136 p={X=4092, Y=2640} queue= work=0 hp=1000
+miner 148 p={X=3763.742, Y=2738.258} queue= work=0 hp=1000
+post 153 p={X=3996, Y=2652} queue= work=0 hp=400
+barracks 160 p={X=4080, Y=2712} queue= work=0 hp=500
+refinery 175 p={X=3816, Y=2616} queue= work=0 hp=1000
+miner 178 p={X=3863.966, Y=2762.096} queue= work=0 hp=1000
+post 195 p={X=3924, Y=2580} queue= work=0 hp=400
+post 218 p={X=4044, Y=2532} queue= work=0 hp=400
+miner 223 p={X=3835.781, Y=2797.5} queue= work=0 hp=1000
+post 256 p={X=3756, Y=2676} queue= work=0 hp=400
+post 269 p={X=3972, Y=2460} queue= work=0 hp=400
+field deployments=1 active=4 point={X=4056.508, Y=3043.102} returning=False

@@ -1,0 +1,28 @@
+{
+  "squad": {
+    "rigidError": 2.2976500146931755e-8,
+    "endpointError": 5.972094663188382e-8,
+    "maxFrameTravel": 0.2257436914257587,
+    "reverse": "identical",
+    "frames": 33
+  },
+  "at": {
+    "rigidError": 9.326307276458223e-8,
+    "endpointError": 6.032785304152089e-8,
+    "maxFrameTravel": 0.3083389636538713,
+    "reverse": "identical",
+    "frames": 33
+  },
+  "squad-walking": {
+    "rigidError": 6.765468407721187e-9,
+    "frames": 12
+  },
+  "sniper-walking": {
+    "rigidError": 7.262987586353908e-9,
+    "frames": 12
+  },
+  "at-walking": {
+    "rigidError": 6.765468407721187e-9,
+    "frames": 12
+  }
+}

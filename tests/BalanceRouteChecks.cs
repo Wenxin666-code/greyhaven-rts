@@ -1,0 +1,1 @@
+﻿using System;using Greyhaven;class BalanceRouteChecks {static int Main(){try{Campaign.CheckRelayPhysicalRoutes();Campaign.CheckParallelProduction();return 0;}catch(Exception e){Console.Error.WriteLine(e);return 1;}}}

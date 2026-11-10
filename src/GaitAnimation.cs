@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Collections.Generic;
@@ -14,7 +14,7 @@ namespace Greyhaven {partial class CommandWindow {
   painted[id]=result;gaitRasterNodes[id]=gaitRasterOrder.AddLast(id);return id;
  }
  void DrawGaitBlend(Graphics g,Piece o,PointF p,float size,int view,int frame,float amount){
-  var full=GaitBox(p,size);var crop=GaitV09.Crop(o.T.Key,view);var color=UnitColor(o.Side);int level=Math.Max(0,Math.Min(8,(int)Math.Round(amount*8))),width=Math.Max(1,(int)Math.Round(full.Width*PixelScale));
+  var full=GaitBox(p,size);var crop=InfantryGaitCrop(o.T.Key,view);var color=UnitColor(o.Side);int level=Math.Max(0,Math.Min(8,(int)Math.Round(amount*8))),width=Math.Max(1,(int)Math.Round(full.Width*PixelScale));
   string suffix=o.T.Key+"/"+view+"/"+color.ToArgb()+"/"+width,walk="gait/"+o.T.Key+"/"+view+"/"+frame;
   string stand=GaitRaster("gait-raster/stand/"+suffix,()=>{var b=new Bitmap(width,width,PixelFormat.Format32bppPArgb);using(var target=Graphics.FromImage(b)){float w=width*2.7f/3;DrawLayeredSource(target,o.T.Key,SourceCell(o.T,0,view*2),new RectangleF((width-w)/2,(width-w)*.91f,w,w),color);}return b;});
   string step=GaitRaster("gait-raster/walk/"+suffix+"/"+frame,()=>{var b=new Bitmap(width,width,PixelFormat.Format32bppPArgb);using(var target=Graphics.FromImage(b))DrawLayeredSource(target,walk,new Rectangle(Point.Empty,crop.Size),new RectangleF(width*crop.X/(float)GaitV09.Cell,width*crop.Y/(float)GaitV09.Cell,width*crop.Width/(float)GaitV09.Cell,width*crop.Height/(float)GaitV09.Cell),color);return b;});
@@ -24,6 +24,8 @@ namespace Greyhaven {partial class CommandWindow {
   });DrawStamp(g,blended,new Rectangle(0,0,width,width),full);
  }
  void DrawFootGait(Graphics g,Piece o,PointF p,float size){
+  if(CombatPose(o)){DrawInfantryCombat(g,o,p,size);return;}
+  if(o.Stance>0){DrawInfantryStance(g,o.T.Key,(o.Dir+14)%16/2,o.Stance,p,size,UnitColor(o.Side));return;}
   if(gaitWorld!=world){gaitWorld=world;footMotion.Clear();}
   FootMotion motion;if(!footMotion.TryGetValue(o.Id,out motion)){if(footMotion.Count>2048)footMotion.Clear();footMotion[o.Id]=motion=new FootMotion();}
   float now=world.Time;bool moving=now-o.MovedAt<.065f;
@@ -35,6 +37,6 @@ namespace Greyhaven {partial class CommandWindow {
    else DrawStamp(g,o.T.Key,SourceCell(o.T,0,dir),SoldierBox(p,size),UnitColor(o.Side));return;
   }
   if(amount<.999f){DrawGaitBlend(g,o,p,size,dir/2,motion.Frame,amount);return;}
-  int view=dir/2;var crop=GaitV09.Crop(o.T.Key,view);var full=GaitBox(p,size);var box=new RectangleF(full.X+full.Width*crop.X/GaitV09.Cell,full.Y+full.Height*crop.Y/GaitV09.Cell,full.Width*crop.Width/GaitV09.Cell,full.Height*crop.Height/GaitV09.Cell);string key="gait/"+o.T.Key+"/"+view+"/"+motion.Frame;DrawStamp(g,key,new Rectangle(Point.Empty,crop.Size),box,UnitColor(o.Side));
+  int view=dir/2;var crop=InfantryGaitCrop(o.T.Key,view);var full=GaitBox(p,size);var box=new RectangleF(full.X+full.Width*crop.X/GaitV09.Cell,full.Y+full.Height*crop.Y/GaitV09.Cell,full.Width*crop.Width/GaitV09.Cell,full.Height*crop.Height/GaitV09.Cell);string key="gait/"+o.T.Key+"/"+view+"/"+motion.Frame;DrawStamp(g,key,new Rectangle(Point.Empty,crop.Size),box,UnitColor(o.Side));
  }
 }}

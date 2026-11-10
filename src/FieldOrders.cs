@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Drawing;
@@ -10,14 +10,14 @@ public class March {
  public PointF Forward;
  float Progress(Piece o){PointF start;if(!Starts.TryGetValue(o,out start))return 0;return (o.P.X-start.X)*Forward.X+(o.P.Y-start.Y)*Forward.Y;}
  public float Speed(Piece unit){
-  float slow=unit.T.Speed;var progressValues=new List<float>();float own=Progress(unit);
+  float slow=ReferenceBalance.Speed(unit);var progressValues=new List<float>();float own=Progress(unit);
   foreach(var m in Members){
    if(m.Formation!=this||!m.Deployed||m.Path.Count==0||m.Target!=null||m.TrafficBlocked>.35f||m.StalledFor>.4f||m.NoProgressFor>.6f||m.FollowingWait>.3f)continue;
-   slow=Math.Min(slow,m.T.Speed);if(Campaign.Dist(m.P,unit.P)<180)progressValues.Add(Progress(m));
+   slow=Math.Min(slow,ReferenceBalance.Speed(m));if(Campaign.Dist(m.P,unit.P)<180)progressValues.Add(Progress(m));
   }
-  if(progressValues.Count==0||unit.StalledFor>.4f)return unit.T.Speed;
+  if(progressValues.Count==0||unit.StalledFor>.4f)return ReferenceBalance.Speed(unit);
   progressValues.Sort();float median=progressValues[progressValues.Count/2],ahead=own-median;
-  if(ahead< -24)return unit.T.Speed;
+  if(ahead< -24)return ReferenceBalance.Speed(unit);
   // Cohesion follows the moving cohort, never its most delayed member.
   return slow*Math.Max(.85f,Math.Min(1,1-(ahead-24)/160));
  }
@@ -27,18 +27,31 @@ public partial class Campaign {
  readonly bool[,,] discovered;
  public int MapFogCols {get{return (MapWidth+MapHeight)/FogSize+1;}} public int MapFogRows {get{return MapFogCols;}}
  public int FogRevision {get;private set;}
- void Discover(int side,int x,int y){if(!discovered[side,x,y]){discovered[side,x,y]=true;if(side==0)FogRevision++;}}
+ const int VisionChunk=16;
+ int[,,] exploredChunks;
+ void Discover(int side,int x,int y){if(!discovered[side,x,y]){discovered[side,x,y]=true;if(exploredChunks==null)exploredChunks=new int[MaxFactions,(MapFogCols+VisionChunk-1)/VisionChunk,(MapFogRows+VisionChunk-1)/VisionChunk];exploredChunks[side,x/VisionChunk,y/VisionChunk]++;if(side==0)FogRevision++;}}
  float visionTimer;
  public bool Seen(int side,int x,int y){return x>=0&&y>=0&&side>=0&&side<MaxFactions&&x<MapFogCols&&y<MapFogRows&&(satelliteVision[side]||discovered[side,x,y]);}
  public bool Explored(int side,PointF p){return Battlefield.Contains(p)&&Seen(side,FogColumn(p.X),FogRow(p.Y));}
  void Reveal(){
   UpdateSatellites();
+  int columns=MapFogCols,rows=MapFogRows;float originX=FogOriginX,originY=FogOriginY;
   foreach(var o in Units){if(!o.Deployed||o.Side<0)continue;float r=Sight(o);
-   for(int y=Math.Max(0,FogRow(o.P.Y-r));y<=Math.Min(MapFogRows-1,FogRow(o.P.Y+r));y++)
-    for(int x=Math.Max(0,FogColumn(o.P.X-r));x<=Math.Min(MapFogCols-1,FogColumn(o.P.X+r));x++){
-     if(discovered[o.Side,x,y])continue;float dx=FogOriginX+(x+.5f)*FogSize-o.P.X,dy=FogOriginY+(y+.5f)*FogSize-o.P.Y;
-     if(dx*dx+dy*dy<=r*r)Discover(o.Side,x,y);
-    }
+   // Exploration is permanent. An unchanged footprint, or a fully explored
+   // chunk, cannot reveal new cells. A capture/type/movement change invalidates
+   // the per-unit memo immediately; no discovery interval or radius changes.
+   if(o.VisionSide==o.Side&&o.VisionPosition==o.P&&o.VisionRadius==r)continue;
+   o.VisionSide=o.Side;o.VisionPosition=o.P;o.VisionRadius=r;
+   int left=Math.Max(0,FogColumn(o.P.X-r)),right=Math.Min(columns-1,FogColumn(o.P.X+r));
+   int top=Math.Max(0,FogRow(o.P.Y-r)),bottom=Math.Min(rows-1,FogRow(o.P.Y+r));
+   for(int cy=top/VisionChunk;cy<=bottom/VisionChunk;cy++)for(int cx=left/VisionChunk;cx<=right/VisionChunk;cx++){
+    if(exploredChunks!=null&&exploredChunks[o.Side,cx,cy]==VisionChunk*VisionChunk)continue;
+    for(int y=Math.Max(top,cy*VisionChunk);y<=Math.Min(bottom,(cy+1)*VisionChunk-1);y++)
+     for(int x=Math.Max(left,cx*VisionChunk);x<=Math.Min(right,(cx+1)*VisionChunk-1);x++){
+      if(discovered[o.Side,x,y])continue;float dx=originX+(x+.5f)*FogSize-o.P.X,dy=originY+(y+.5f)*FogSize-o.P.Y;
+      if(dx*dx+dy*dy<=r*r)Discover(o.Side,x,y);
+     }
+   }
   }
  }
  // Match nearby destinations to the current layout instead of forcing units
@@ -69,14 +82,25 @@ public partial class Campaign {
   src.Rally=dest;Radio=src.T.Name+"的集结点已设置。";return true;
  }
  void RallyNewUnit(Piece source,Piece unit){
-  var gate=Gate(Footprint(source.T,source.P));var yard=new PointF(Campaign.Middle(ExitApron(source.T,Footprint(source.T,source.P))).X,gate.Bottom+Tile);
-  foreach(var center in source.Rally.HasValue?new[]{source.Rally.Value,yard}:new[]{yard}){
-   for(int i=0;i<65;i++){int col=i%7;int lateral=(col+1)/2*(col%2==1?-1:1);
-    var slot=new PointF(center.X+lateral*(unit.T.Foot?Tile/2:Tile),center.Y+(i/7)*(unit.T.Foot?Tile/2:Tile));
-    if(Units.Any(o=>o!=unit&&o.Deployed&&!o.T.Building&&(TrafficContact(unit.T,slot,o.T,o.P)||o.Path.Count>0&&TrafficContact(unit.T,slot,o.T,o.Path.Last()))))continue;
-    if(Move(unit,slot,false))return;
-   }
+  if(unit.RallySource==null){unit.RallySource=source;unit.RallySlot=0;unit.RallyRetryAt=0;}
+  ContinueRally(unit);
+ }
+ void ContinueRally(Piece unit){
+  var source=unit.RallySource;
+  if(source==null||!source.Deployed||source.Side!=unit.Side||!unit.Deployed){unit.RallySource=null;return;}
+  if(Time<unit.RallyRetryAt)return;
+  unit.RallyRetryAt=Time+.6f+(unit.Id%5)*.04f;
+  var gate=Gate(Footprint(source.T,source.P));var yard=new PointF(Middle(ExitApron(source.T,Footprint(source.T,source.P))).X,gate.Bottom+Tile);
+  var centers=source.Rally.HasValue?new[]{source.Rally.Value,yard}:new[]{yard};int attempts=0;
+  // Resume blocked exit searches over several updates, and never replace a
+  // player's order. Completing a production queue cannot plan 130 routes/frame.
+  while(unit.RallySlot<65*centers.Length&&attempts<3){
+   int index=unit.RallySlot++,i=index%65,col=i%7,lateral=(col+1)/2*(col%2==1?-1:1);var center=centers[index/65];
+   var slot=new PointF(center.X+lateral*(unit.T.Foot?Tile/2:Tile),center.Y+(i/7)*(unit.T.Foot?Tile/2:Tile));
+   if(Units.Any(o=>o!=unit&&o.Deployed&&!o.T.Building&&(TrafficContact(unit.T,slot,o.T,o.P)||o.Path.Count>0&&TrafficContact(unit.T,slot,o.T,o.Path.Last()))))continue;
+   attempts++;if(Move(unit,slot,false))return;
   }
+  if(unit.RallySlot>=65*centers.Length){unit.RallySlot=0;unit.RallyRetryAt=Time+2;}
  }
  PointF Avoid(Piece o,PointF next){
   RecoverFootTraffic(o);

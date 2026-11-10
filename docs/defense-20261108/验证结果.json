@@ -1,0 +1,164 @@
+{
+  "date": "2026-11-08",
+  "base_release": "v0.20.0",
+  "status": "passed",
+  "github_uploaded": false,
+  "checks": [
+    "4/2-cell building adjacency",
+    "turret not a build anchor",
+    "autonomous firing outside tank reach",
+    "artillery range advantage",
+    "five enemy factions paid construction",
+    "separate building/defence placement plans",
+    "road bridge ramp avoidance",
+    "no free construction at zero funds",
+    "defence recruitment budget reservation",
+    "native range preview"
+  ],
+  "scope": "Focused defence checks only; no full game or terrain regression",
+  "rule_source": {
+    "url": "https://raw.githubusercontent.com/CnCNet/cncnet-yr-client-package/e4b5712df96ec3acb05ddbda9fe2ba63e30576ab/game-assets/ra2mode.pack/rulesmd.ini",
+    "sha256": "010af82ebf5b4df28920e38e88cfe9bc945e7cdc764298caab037fc00fbd013b",
+    "sections": {
+      "GAPILL": {
+        "Strength": "400",
+        "Prerequisite": "BARRACKS,GACNST",
+        "Adjacent": "4",
+        "Sight": "7",
+        "Cost": "500",
+        "BaseNormal": "no",
+        "Power": "0",
+        "Primary": "Vulcan2",
+        "IsBaseDefense": "yes"
+      },
+      "NALASR": {
+        "Strength": "400",
+        "Prerequisite": "BARRACKS,NACNST",
+        "Adjacent": "4",
+        "Sight": "7",
+        "Cost": "500",
+        "BaseNormal": "no",
+        "Power": "0",
+        "Primary": "Vulcan",
+        "Powered": "yes",
+        "IsBaseDefense": "yes"
+      },
+      "NATESL": {},
+      "ATESLA": {
+        "Prerequisite": "POWER,RADAR,GACNST",
+        "Strength": "600",
+        "Adjacent": "2",
+        "Sight": "8",
+        "Cost": "1500",
+        "Power": "-75",
+        "Primary": "PrismShot",
+        "IsBaseDefense": "yes",
+        "BaseNormal": "no",
+        "Powered": "yes"
+      },
+      "GTGCAN": {
+        "Strength": "900",
+        "Prerequisite": "RADAR,GACNST",
+        "Adjacent": "2",
+        "Sight": "10",
+        "Cost": "2000",
+        "Power": "-100",
+        "Primary": "GrandCannonWeapon",
+        "Powered": "yes",
+        "BaseNormal": "no"
+      },
+      "GACNST": {
+        "Strength": "1000",
+        "Adjacent": "2",
+        "Sight": "8",
+        "Cost": "3000",
+        "Power": "0"
+      },
+      "GAPOWR": {
+        "Prerequisite": "GACNST",
+        "Strength": "750",
+        "Adjacent": "2",
+        "Sight": "4",
+        "Cost": "800",
+        "Power": "200"
+      },
+      "GAPILE": {
+        "Prerequisite": "POWER,GACNST",
+        "Strength": "500",
+        "Adjacent": "2",
+        "Sight": "5",
+        "Cost": "500",
+        "Power": "-10"
+      },
+      "GAWEAP": {
+        "Prerequisite": "PROC,GAPILE,GACNST",
+        "Strength": "1000",
+        "Sight": "4",
+        "Adjacent": "2",
+        "Cost": "2000",
+        "Power": "-25"
+      },
+      "NASAM": {
+        "Strength": "900",
+        "Prerequisite": "BARRACKS,GACNST",
+        "Adjacent": "4",
+        "Sight": "10",
+        "Cost": "1000",
+        "BaseNormal": "no",
+        "Power": "-50",
+        "Primary": "RedEye2",
+        "IsBaseDefense": "yes",
+        "Powered": "yes"
+      },
+      "GunTur": {},
+      "Vulcan2": {
+        "Damage": "50",
+        "ROF": "26",
+        "Range": "5.5",
+        "Warhead": "SA"
+      },
+      "LaserFire": {
+        "Damage": "250",
+        "ROF": "120",
+        "Range": "10.5",
+        "Warhead": "Super"
+      },
+      "PrismShot": {
+        "Damage": "120",
+        "ROF": "60",
+        "Range": "8",
+        "Warhead": "PrismWarhead"
+      },
+      "GrandCannonWeapon": {
+        "Damage": "150",
+        "ROF": "120",
+        "Range": "15",
+        "Warhead": "GrandCannonWH"
+      }
+    },
+    "general": {
+      "BaseBias": "2",
+      "BaseDefenseDelay": ".25",
+      "UseMinDefenseRule": "yes",
+      "AIIonCannonBaseDefenseValue": "35,35,35",
+      "AlliedBaseDefenseCounts": "25,20,6",
+      "SovietBaseDefenseCounts": "25,22,6",
+      "AIPickWallDefensePercent": "50,25,10",
+      "BaseUnit": "AMCV,SMCV"
+    }
+  },
+  "stats": {
+    "hp": 720,
+    "hit": 30,
+    "reload_seconds": 0.9,
+    "range_world": 168,
+    "range_cells": 7,
+    "sight_world": 192,
+    "price": 235,
+    "foundation": [
+      1,
+      1
+    ],
+    "adjacent_cells": 4
+  }
+}

@@ -1,0 +1,23 @@
+Dock reservation: distant arrivals do not block the head; empty truck leaves an exhausted-field entrance.
+Starter delivery: the included empty miner clears the entrance before looking for ore.
+Refinery target: stable through temporary queues, reselected after destruction or a permanently sealed entrance.
+Loaded batch: 1 refineries / 4 trucks delivered 720 in 24.5 game seconds, zero target switches/overlaps.
+Loaded batch: 1 refineries / 8 trucks delivered 1440 in 54.5 game seconds, zero target switches/overlaps.
+Loaded batch: 2 refineries / 4 trucks delivered 720 in 29.0 game seconds, zero target switches/overlaps.
+Loaded batch: 2 refineries / 8 trucks delivered 1440 in 61.9 game seconds, zero target switches/overlaps.
+Third mission 240s: receipts=11340 cycles=8/8/7/7/8/8/9/8 conservation error=0.000
+Ore fixture choice True / {X=450, Y=930}
+Ore route: same-bank vein selected beyond six detour candidates, 33ms.
+Refinery selection: direct free-bay approach, no distant reservation and statically sealed-bay rejection passed.
+Busy ore: reachable temporary occupancy waits; statically sealed ore does not stall unrelated miners.
+Five-second steady movement: miner 240.0, tank 360.0 world units.
+Rectangular battlefield: procedural sea, shifted fog, coastal reveal and faction isolation passed.
+Near-mine selection, stale-target removal, ore conservation, depletion and occupied-cell rejection passed.
+Territorial AI: standing guards, surplus-only departures, staging, return anchors, refinery access, stale-order cancellation and casualty withdrawal passed.
+Six-faction funds/fog/surrender, fair starts, concurrent recruitment, threat memory, immediate base defense and hidden-unit isolation passed.
+Third opening: real infantry, tank and miner crossed sole gate; player deploy, paid construction and first ore income passed.
+AI pressure: equal money, no player targeting preference, nearby opposition, early paid barracks, permanent guard reservation and surplus team launch and paid vehicle production passed.
+Rear firing around six tanks at 20 Hz: 18/18
+Blocked mixed convoy at 20 Hz: median travel 463.2 in 10 seconds
+Rear firing around six tanks at 60 Hz: 18/18
+Blocked mixed convoy at 60 Hz: median travel 463.1 in 10 seconds

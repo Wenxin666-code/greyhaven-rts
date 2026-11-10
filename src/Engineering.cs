@@ -1,13 +1,13 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Linq;
 namespace Greyhaven {
 public partial class Campaign {
- public bool RepairVehicle(Piece car){return car!=null&&car.Alive&&car.T.Key=="ifv"&&Units.Any(u=>u.Alive&&u.T.Key=="engineer"&&u.Carrier==car);}
- public bool Armed(Piece u){return u!=null&&u.T.Hit>0&&!RepairVehicle(u);}
+ public bool RepairVehicle(Piece car){return car!=null&&car.Alive&&car.T.Key=="ifv"&&car.Passenger!=null&&car.Passenger.Alive&&car.Passenger.T.Key=="engineer";}
+ public bool Armed(Piece u){return u!=null&&ReferenceBalance.Weapon(u)!=null;}
  public bool CanEngineer(Piece unit,Piece target){
   return unit!=null&&unit.Deployed&&unit.T.Key=="engineer"&&target!=null&&target.Alive&&target.T.Building&&target.Ready>=1&&target.Packing<=0&&
-   (target.Side==unit.Side?target.Hp<target.T.Hp:target.T.Key!="post"&&(!target.T.Civilian||HouseCount(target)==0));
+   (target.Side==unit.Side?target.Hp<target.T.Hp:!target.T.Defense&&(!target.T.Civilian||HouseCount(target)==0));
  }
  public bool EngineerOrder(Piece unit,Piece target){
   if(!CanEngineer(unit,target))return false;
@@ -36,26 +36,36 @@ public partial class Campaign {
  }
  bool TickBoard(Piece foot){
   var car=foot.Entering;if(!CanBoard(foot,car)){Halt(foot);return false;}
-  if(Dist(foot.P,car.P)<34){Halt(foot);foot.Carrier=car;foot.P=car.P;if(RepairVehicle(car))Halt(car);return true;}
+  if(Dist(foot.P,car.P)<34){Halt(foot);foot.Carrier=car;foot.P=car.P;if(RepairVehicle(car))Halt(car);if(car.Side==0)Radio="步兵战车："+ReferenceBalance.IFVRole(car)+"。";return true;}
   if(foot.RouteRetryAt<=Time){foot.RouteRetryAt=Time+1;PointF p;if(Exit(car,foot.T,out p))PlanRoute(foot,p,MineTraffic(foot,p));}return false;
  }
  public bool CanRepairVehicle(Piece car,Piece target){return RepairVehicle(car)&&target!=car&&target!=null&&target.Deployed&&target.Side==car.Side&&!target.T.Building&&!target.T.Foot&&target.Hp<target.T.Hp;}
  public bool RepairOrder(Piece car,Piece target){if(!CanRepairVehicle(car,target))return false;Halt(car);car.SupportTarget=target;return true;}
+ float RepairSearchRange(Piece car){return car.GuardHome.HasValue?3.6f*Tile:1.8f*Tile;}
+ bool RepairGuardAllows(Piece car,Piece target){return Dist(car.GuardHome??car.P,target.P)<=RepairSearchRange(car);}
  bool TickRepairVehicle(Piece car,float dt){
-  if(!RepairVehicle(car)){car.SupportTarget=null;return false;}
-  car.Target=null;car.FirePoint=null;
+  if(!RepairVehicle(car)){car.SupportTarget=null;car.SupportAutomatic=false;return false;}
+  car.Target=null;car.FirePoint=null;car.BurstRemaining=0;
   var target=car.SupportTarget;
-  if(target!=null&&!CanRepairVehicle(car,target)){car.SupportTarget=null;car.Path.Clear();target=null;}
-  // Idle repair vehicles assist locally; a move command is never stolen.
-  if(target==null&&car.Path.Count==0)target=Live(car.Side).Where(u=>CanRepairVehicle(car,u)&&Dist(car.P,u.P)<96).OrderBy(u=>Dist(car.P,u.P)).FirstOrDefault();
+  if(target!=null&&(!CanRepairVehicle(car,target)||car.SupportAutomatic&&!RepairGuardAllows(car,target))){
+   bool back=car.SupportAutomatic&&car.GuardHome.HasValue;car.SupportTarget=null;car.SupportAutomatic=false;car.Path.Clear();target=null;
+   if(back){car.GuardReturning=true;car.Replan=0;Route(car,car.GuardHome.Value);}
+  }
+  // Ordinary movement owns the vehicle. Explicit G / escort may seek nearby
+  // damaged vehicles, and returns to its anchor after the repair completes.
+  if(target==null&&!car.GuardTravelling&&!car.GuardReturning&&(car.Path.Count==0||car.Escort!=null)&&Time>=car.SupportScanAt){
+   car.SupportScanAt=Time+.2f;
+   target=Live(car.Side).Where(u=>CanRepairVehicle(car,u)&&RepairGuardAllows(car,u)&&Dist(car.P,u.P)<=RepairSearchRange(car)).OrderBy(u=>Dist(car.P,u.P)).FirstOrDefault();
+   if(target!=null){car.SupportTarget=target;car.SupportAutomatic=true;}
+  }
   if(target==null)return false;
   if(Dist(car.P,target.P)>1.8f*Tile){
    if(car.RouteRetryAt<=Time){car.RouteRetryAt=Time+1;var aim=target.P;
     for(int i=0;i<16;i++){double a=Math.Atan2(car.P.Y-aim.Y,car.P.X-aim.X)+i*Math.PI/8;var p=new PointF(aim.X+(float)Math.Cos(a)*36,aim.Y+(float)Math.Sin(a)*36);if(PlanRoute(car,p,MineTraffic(car,p)))break;}}
-   car.SupportTarget=target;return false;
+   return false;
   }
   car.Path.Clear();Face(car,target.P,dt);
-  if(car.Cool<=0){target.Hp=Math.Min(target.T.Hp,target.Hp+25);car.Cool=1.3f;car.RepairAt=VisualTime;car.RepairPoint=target.P;}
+  if(car.Cool<=0){target.Hp=Math.Min(target.T.Hp,target.Hp+ReferenceBalance.RepairAmount(car));car.Cool=ReferenceBalance.Reload(car,ReferenceBalance.WRepair);car.RepairAt=VisualTime;car.RepairPoint=target.P;}
   return true;
  }
 }

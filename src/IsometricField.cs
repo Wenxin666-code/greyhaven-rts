@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -95,15 +95,16 @@ partial class CommandWindow {
    var harborBox=BuildingRect(world.Harbor.Body,ScreenOf(Campaign.Middle(world.Harbor.Body)),zoom);
    DrawGroundShadow(g,"harbormaster",new Rectangle(0,0,FrameSize,FrameSize),harborBox,false,8);
   }
-  if(showRanges&&selection.Count==1){
+  if(selection.Count==1&&selection[0].T.Key=="bunker"){var b=selection[0];DrawDefenseRange(g,b.P,ReferenceBalance.WUCPara.Range,true);}
+  if(selection.Count==1&&(showRanges||selection[0].T.Key=="post")){
    var u=selection[0];
    if(u.Deployed&&u.T.Hit>0){
     var p=ScreenOf(u.P);var anchor=ScreenOf(u.GuardHome??u.P);float r=Campaign.ScanRange(u)*zoom*(float)Math.Sqrt(2);
-    PixelRing(g,anchor,Axis*r,Rise*r,Color.FromArgb(118,teal));
-    float reach=u.T.Range*zoom*(float)Math.Sqrt(2);
-    PixelRing(g,p,Axis*reach,Rise*reach,Color.FromArgb(145,gold));
+    if(showRanges&&Campaign.ScanRange(u)>ReferenceBalance.Range(u))PixelRing(g,anchor,Axis*r,Rise*r,Color.FromArgb(118,teal));
+    float reach=ReferenceBalance.Range(u)*zoom*(float)Math.Sqrt(2);
+    if(u.T.Key=="post")DrawDefenseRange(g,u.P,ReferenceBalance.Range(u),true);else PixelRing(g,p,Axis*reach,Rise*reach,Color.FromArgb(145,gold));
     Txt(g,"射程",p.X+Axis*reach+3,p.Y-16,10,gold);
-    if(Campaign.ScanRange(u)>u.T.Range)Txt(g,u.GuardHome.HasValue?"警戒":"搜索",anchor.X+Axis*r+3,anchor.Y+2,10,teal);
+    if(Campaign.ScanRange(u)>ReferenceBalance.Range(u))Txt(g,u.GuardHome.HasValue?"警戒":"搜索",anchor.X+Axis*r+3,anchor.Y+2,10,teal);
    }
   }
   bool drawHarbor=world.Harbor!=null&&world.Explored(0,Campaign.Middle(world.Harbor.Body));
@@ -125,7 +126,7 @@ partial class CommandWindow {
   var hovered=HitScreen(mouse);
   foreach(var o in world.Units.Where(u=>u.Alive&&u.Carrier==null&&world.Visible(u)))
    if(selection.Contains(o)||o==hovered||o.Hp<o.T.Hp||o.Ready<1)DrawUnitHealth(g,o,ScreenOf(o.P),o.T.Size*zoom);
-  foreach(var house in world.Units.Where(u=>u.Alive&&u.T.Civilian&&world.Visible(u))){
+  foreach(var house in world.Units.Where(u=>u.Alive&&u.T.Garrison&&world.Visible(u))){
    var p=ScreenOf(house.P);if(p.X< -80||p.X>MW+80||p.Y<MapTop-35||p.Y>MapTop+MH+35)continue;var capturing=world.Units.FirstOrDefault(u=>u.Alive&&u.Carrier==house&&u.Capturing);
    if(capturing!=null){Rect(g,p.X-23,p.Y+8,46,5,ink);Rect(g,p.X-22,p.Y+9,44*Math.Min(1,capturing.CaptureWork/3),3,Team(capturing.Side));}
    else if(house.Side<0&&(selection.Any(u=>u.T.Key=="engineer")||house==hovered))Txt(g,"中立 · 可占领",p.X-32,p.Y+7,11,pale,true);
@@ -138,7 +139,7 @@ partial class CommandWindow {
    Txt(g,site.Name,p.X-29,y+1,14,pale,true);
   }
   DrawShotTrails(g);
-  DrawPreselection(g);DrawPlannedPaths(g);
+  DrawPreselection(g);DrawPlannedPaths(g);DrawRelayObjective(g);
   if(markedPoint.HasValue&&world.Time-markTime<2.5f){
    var enemy=markedEnemy;if(enemy==null||enemy.Alive&&world.Visible(enemy)){
     var q=ScreenOf(enemy==null?markedPoint.Value:enemy.P);var c=markHostile?red:teal;

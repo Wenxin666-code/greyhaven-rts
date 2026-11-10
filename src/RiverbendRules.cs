@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Linq;
 namespace Greyhaven {
@@ -11,7 +11,8 @@ public partial class Campaign {
  RectangleF[] MapWalls {get{return River==null?YardWalls:EmptyTerrain;}}
  public PointF Home(int side){if(River==null)return side==0?new PointF(152,514):EnemyHome;var p=River.Starts[side];return new PointF((p.X+.5f)*Tile,(p.Y+.5f)*Tile);}
  void SetupRiverbend(){
-  Ore.Clear();foreach(var p in River.Ore)Ore.Add(new OrePatch((p.X+.5f)*Tile,(p.Y+.5f)*Tile,480));
+  if(RelayMission){SetupRelayMission();return;}
+  Ore.Clear();foreach(var p in River.Ore)Ore.Add(new OrePatch((p.X+.5f)*Tile,(p.Y+.5f)*Tile,2400));
   for(int side=0;side<FactionCount;side++){
    var home=Home(side);Spawn("mcv",side,home.X,home.Y);Spawn("squad",side,home.X+48,home.Y-48);Spawn("squad",side,home.X+72,home.Y-48);Spawn("engineer",side,home.X,home.Y-48);
   }
@@ -51,13 +52,13 @@ public partial class Campaign {
    if(height.HasValue&&Math.Abs(height.Value-c.Height)>.05f)return false;height=c.Height;
   }return true;
  }
- public int HouseCapacity(Piece house){return house.T.Key=="municipal"?8:house.T.Key=="shop"?6:4;}
+ public int HouseCapacity(Piece house){return house.T.Key=="bunker"?5:house.T.Key=="municipal"?8:house.T.Key=="shop"?6:4;}
  public int HouseCount(Piece house){return Units.Count(u=>u.Alive&&u.Carrier==house);}
  public bool CanEnterHouse(Piece unit,Piece house){
   if(unit!=null&&unit.T.Key=="engineer")return CanEngineer(unit,house);
-  if(house==null||!house.Alive||!house.T.Civilian||unit==null||!unit.Deployed||!unit.T.Foot)return false;
+  if(house==null||!house.Alive||!house.T.Garrison||unit==null||!unit.Deployed||!unit.T.Foot)return false;
   if(house.Side<0)return unit.T.Key=="engineer"&&!Units.Any(u=>u.Alive&&u!=unit&&(u.Carrier==house||u.Entering==house));
-  return house.Side==unit.Side&&unit.T.Key!="engineer"&&Units.Count(u=>u.Alive&&(u.Carrier==house||u.Entering==house))<HouseCapacity(house);
+  return house.Ready>=1&&house.Packing<=0&&house.Side==unit.Side&&unit.T.Key!="engineer"&&unit.T.Key!="sniper"&&(house.T.Key!="bunker"||unit.T.Key=="squad")&&Units.Count(u=>u.Alive&&(u.Carrier==house||u.Entering==house))<HouseCapacity(house);
  }
  public bool EnterHouse(Piece unit,Piece house){
   if(unit!=null&&unit.T.Key=="engineer")return EngineerOrder(unit,house);
@@ -68,7 +69,7 @@ public partial class Campaign {
   if(unit.Entering!=null&&unit.Entering.T.Key=="ifv")return TickBoard(unit);
   if(unit.Entering!=null&&unit.T.Key=="engineer")return TickEngineerEntry(unit,dt);
   var house=unit.Entering;if(house==null)return false;
-  if(!house.Alive||!CanEnterHouse(unit,house)&&!(house.Side==unit.Side&&unit.T.Key!="engineer"&&HouseCount(house)<HouseCapacity(house))){unit.Entering=null;unit.Path.Clear();return false;}
+  if(!house.Deployed||house.Side!=unit.Side||unit.T.Key=="sniper"||(house.T.Key=="bunker"&&unit.T.Key!="squad")||HouseCount(house)>=HouseCapacity(house)){unit.Entering=null;unit.Path.Clear();return false;}
   var door=Middle(ExitApron(house.T,Footprint(house.T,house.P)));
   if(Dist(unit.P,door)>14){if(unit.Path.Count==0&&unit.Replan<=0){unit.Replan=1;Route(unit,door);}return false;}
   unit.Path.Clear();unit.Target=null;unit.Entering=null;unit.Carrier=house;unit.P=house.P;unit.Capturing=house.Side<0;unit.CaptureWork=0;return true;
@@ -81,13 +82,15 @@ public partial class Campaign {
    unit.Carrier=null;unit.P=p;unit.Capturing=false;unit.CaptureWork=0;Halt(unit);return true;
   }return false;
  }
- public void EvacuateHouse(Piece house){foreach(var u in Units.Where(u=>u.Alive&&u.Carrier==house).ToArray())ExitHouseUnit(u,house);}
+ public void EvacuateHouse(Piece house){foreach(var u in Units.Where(u=>u.Alive&&u.Carrier==house).ToArray()){
+   if(!ExitHouseUnit(u,house)&&!house.Alive){u.Carrier=null;u.P=house.P;Halt(u);}
+  }}
  void TickGarrison(Piece unit,float dt){
   var house=unit.Carrier;if(!house.Alive){ExitHouseUnit(unit,house);return;}
   if(unit.T.Key=="engineer"){ExitHouseUnit(unit,house);return;}
-  unit.Cool-=dt;if(unit.Cool>0)return;
-  float range=unit.T.Range+40;
-  var enemy=Units.Where(e=>e.Alive&&e.Side>=0&&e.Side!=unit.Side&&e.Carrier==null&&VisibleTo(unit.Side,e)&&Dist(TargetPoint(e.P,house),TargetPoint(house.P,e))<=range).OrderBy(e=>Dist(e.P,house.P)).FirstOrDefault();
+  unit.Cool-=dt;TickBurst(unit,dt);if(unit.Cool>0)return;
+  float range=ReferenceBalance.Weapon(unit).Range;
+  var enemy=Units.Where(e=>e.Alive&&e.Side>=0&&e.Side!=unit.Side&&e.Carrier==null&&UsefulTarget(unit,e)&&VisibleTo(unit.Side,e)&&WeaponDistance(unit,e)<=range).OrderBy(e=>Dist(e.P,house.P)).FirstOrDefault();
   if(enemy==null)return;Fire(unit,enemy);var shot=Shots.Last();shot.Garrison=true;shot.SourceId=house.Id;shot.A=TargetPoint(enemy.P,house);shot.A=new PointF(shot.A.X+(house.P.X-shot.A.X)*.12f,shot.A.Y+(house.P.Y-shot.A.Y)*.12f);
  }
  void EnemyHousing(int side){

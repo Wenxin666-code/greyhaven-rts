@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Linq;
 using System.Collections.Generic;
@@ -9,7 +9,7 @@ partial class CommandWindow {
  Piece pressedUnit,followUnit;bool resolvingPress,zHeld,showRanges;
  readonly Dictionary<Piece,List<PointF>> planned=new Dictionary<Piece,List<PointF>>();
  readonly HashSet<Piece> plannedLoops=new HashSet<Piece>();
- void ResetClassicInput(){showRanges=false;showGrid=false;commandRules=false;productionFilter=4;structureMode=StructureMode.None;pressedUnit=null;followUnit=null;resolvingPress=false;zHeld=false;planned.Clear();plannedLoops.Clear();}
+ void ResetClassicInput(){showRanges=false;showGrid=false;commandRules=false;veterancyRules=false;productionFilter=4;structureMode=StructureMode.None;pressedUnit=null;followUnit=null;resolvingPress=false;zHeld=false;planned.Clear();plannedLoops.Clear();}
  RectangleF PickBox(Piece u){
   var feet=ScreenOf(u.P);float size=u.T.Size*zoom;
   if(u.T.Building)return BuildingRect(Campaign.Footprint(u.T,u.P),feet,zoom);
@@ -19,6 +19,7 @@ partial class CommandWindow {
   return new RectangleF(feet.X-vw/2,feet.Y-vh*.70f,vw,vh);
  }
  Piece PickUnit(PointF point){
+  if(point.X<0||point.X>=MW||point.Y<MapTop||point.Y>=MapTop+MH)return null;
   var all=world.Units.Where(o=>o.Alive&&o.Carrier==null&&world.Visible(o)).ToArray();
   // Pick small mobiles before a building's broad footprint. Exact painted
   // pixels outrank forgiving margins, then use distance instead of draw order.
@@ -35,7 +36,7 @@ partial class CommandWindow {
   if(drag||panning||place!=null||briefing||paused||mouse.X<0||mouse.X>=MW||mouse.Y<MapTop||mouse.Y>=H||hits.Any(h=>h.Box.Contains(mouse)))return;
   var u=HitScreen(mouse);if(u==null)return;var r=PickBox(u);r.Inflate(3,3);var c=u.Side<0?pale:u.Side==0?teal:Team(u.Side);
   PixelCorners(g,r,c);
-  Txt(g,(u.Side<0?"中立 · 工兵可占领 ":u.Side==0?"我方 ":"敌方 "+u.Side+" ")+u.T.Name,mouse.X+12,mouse.Y-22,12,c,true);
+  Txt(g,(u.Side<0?"中立 · 工兵可占领 ":u.Side==0?"我方 ":"敌方 "+u.Side+" ")+u.T.Name+(u.T.Key=="ifv"?" · "+ReferenceBalance.IFVRole(u):""),mouse.X+12,mouse.Y-22,12,c,true);
  }
  void GuardSelection(){foreach(var u in selection)world.Guard(u);attack=false;world.Radio="警戒此处：迎敌后返回驻守位置。";}
  bool ClassicKey(KeyEventArgs e){
@@ -70,8 +71,9 @@ partial class CommandWindow {
   world.Radio=failed>0?failed+" 个单位的首个路径点不可达。":"部队按规划路线出发。";planned.Clear();plannedLoops.Clear();patrolStarts.Clear();waypointOwner=null;waypointSelected=-1;
  }
  TypeInfo[] ProductionCards(){
+  if(world.Live(0).Any(u=>u.T.Key=="barracks"))seenCameos.Add("sniper");
   foreach(var type in Campaign.Types){string reason=world.Require(type,0);if(reason==null||reason.Contains("队列已满")||world.Construction(type)!=null)seenCameos.Add(type.Key);}
-  return Campaign.Types.Where(t=>seenCameos.Contains(t.Key)&&(army?!t.Building:t.Building&&t.Key!="hq")).Where(t=>productionFilter==1?t.Key=="post":productionFilter==2?t.Foot:productionFilter==3?!t.Foot:productionFilter==4?t.Key!="post":true).ToArray();
+  return Campaign.Types.Where(t=>seenCameos.Contains(t.Key)&&(army?!t.Building:t.Building&&t.Key!="hq")).Where(t=>productionFilter==1?t.Defense:productionFilter==2?t.Foot:productionFilter==3?!t.Foot:productionFilter==4?!t.Defense:true).ToArray();
  }
  void DrawPlannedPaths(Graphics g){
   foreach(var pair in planned){var points=new[]{pair.Key.P}.Concat(pair.Value).Select(ScreenOf).ToArray();if(points.Length<2)continue;

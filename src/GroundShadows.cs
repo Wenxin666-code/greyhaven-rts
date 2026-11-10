@@ -38,16 +38,20 @@ partial class CommandWindow {
  RectangleF GroundShadowArea(RectangleF body){return new RectangleF(body.X-body.Width*ShadowMargin/ShadowBody,body.Y-body.Height*ShadowMargin/ShadowBody,body.Width*ShadowCanvas/ShadowBody,body.Height*ShadowCanvas/ShadowBody);}
  void DrawGroundShadow(Graphics g,string key,Rectangle source,RectangleF body,bool foot,int stage){
   var box=GroundShadowArea(body);
+  if(drawingClient&&(box.Right<0||box.Left>W||box.Bottom<0||box.Top>H))return;
   if(!g.IsVisible(box))return;
   DrawStamp(g,GroundShadow(key,source,foot,stage),new Rectangle(0,0,ShadowCanvas,ShadowCanvas),box);
  }
  void DrawGroundShadow(Graphics g,Piece o,PointF ground,float size){
   if(o.T.Foot){
    if(!o.Alive)return; // A fallen body already rests on the ground.
-   DrawGroundShadow(g,o.T.Key,SourceCell(o.T,0,(o.Dir+14)%16),SoldierBox(ground,size),true,8);
+   if(o.Stance>0){string key=EnsureB08("stance/"+o.T.Key+"/"+(o.Dir+14)%16/2+"/"+(int)Math.Round(o.Stance*32));DrawGroundShadow(g,key,new Rectangle(0,0,384,384),GaitBox(ground,size),true,8);}
+   else DrawGroundShadow(g,o.T.Key,SourceCell(o.T,0,(o.Dir+14)%16),SoldierBox(ground,size),true,8);
   }else if(o.T.Building){
    if(!o.Alive&&o.Dead>=TerminalWreckAt)return;
    var body=BuildingRect(Campaign.Footprint(o.T,o.P),ground,size/o.T.Size);
+   var shadow=GroundShadowArea(body);
+   if(drawingClient&&(shadow.Right<0||shadow.Left>W||shadow.Bottom<0||shadow.Top>H))return;
    // Cull before resolving a damaged/construction frame, not after decoding it.
    if(!g.IsVisible(GroundShadowArea(body)))return;
    Rectangle source;var key=BuildingVisual(o,out source);

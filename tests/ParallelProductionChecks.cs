@@ -34,13 +34,13 @@ public partial class Campaign {
    for(int count=1;count<=3;count++){
     var w=ParallelWorld(count,side,producer);for(int i=0;i<count*4;i++)AssertParallel(w.Train(measured,side,null),"parallel order accepted");
     AssertParallel(ParallelFactories(w,side,producer).All(p=>p.Queue.Count==4),"even automatic dispatch");
-    ParallelAdvance(w,16);int delivered=w.Live(side).Count(p=>p.T==measured);results[count-1]=delivered;
+    ParallelAdvance(w,perFactory*measured.Seconds+.3f);int delivered=w.Live(side).Count(p=>p.T==measured);results[count-1]=delivered;
     AssertParallel(delivered==count*perFactory,"real independent output: "+producer+" / "+side+" / "+count+" facilities: "+delivered);
     AssertParallel(w.Funds[side]+delivered*measured.Price+ParallelFactories(w,side,producer).Sum(p=>p.WorkPaid)==100000,"parallel cost conservation");
    }
-   Console.WriteLine("{0}, faction {1}: actual 16-second output with 1 / 2 / 3 facilities = {2} / {3} / {4} units.",producer,side,results[0],results[1],results[2]);
+   Console.WriteLine("{0}, faction {1}: actual output after the same reference production cycles with 1 / 2 / 3 facilities = {2} / {3} / {4} units.",producer,side,results[0],results[1],results[2]);
   }
-  {var w=ParallelWorld(2,0,"barracks");for(int i=0;i<8;i++)w.Train(Info("squad"),0,null);ParallelAdvance(w,8);
+  {var w=ParallelWorld(2,0,"barracks");for(int i=0;i<8;i++)w.Train(Info("squad"),0,null);ParallelAdvance(w,Info("squad").Seconds*2+.3f);
    AssertParallel(w.InfantryDelivered==4,"barracks also have real parallel lines");}
   {var w=ParallelWorld(1);var a=ParallelFactories(w)[0];for(int i=0;i<6;i++)w.Train(type,0,null);ParallelAdvance(w,1);
    float work=a.Work;int paid=a.WorkPaid;var b=w.Spawn("factory",0,800,700);b.Ready=.95f;b.Assembly=true;
@@ -53,7 +53,7 @@ public partial class Campaign {
    f[0].ProductionPaused=false;w.Train(type,0,null);f[0].Work=type.Seconds;f[0].WorkPaid=type.Price;
    var door=Middle(ExitApron(f[0].T,Footprint(f[0].T,f[0].P)));var blocker=w.Spawn("tank",1,door.X,door.Y);blocker.Cool=100;
    var exit=door;AssertParallel(!w.ExitClear(f[0],type,exit),"deliberately blocked outlet");
-   for(int i=0;i<160;i++)foreach(var p in w.Units.ToArray())if(p!=blocker)w.UnitTick(p,.05f,true);
+   for(int i=0;i<(type.Seconds+.3f)*20;i++)foreach(var p in w.Units.ToArray())if(p!=blocker)w.UnitTick(p,.05f,true);
    AssertParallel(f[0].Queue.Count==1&&f[1].Queue.Count==0&&w.Live(0).Count(p=>p.T==type)==1,"blocked outlet never stalls another factory");}
   {var w=ParallelWorld(2);var f=ParallelFactories(w);for(int i=0;i<4;i++)w.Train(type,0,null);ParallelAdvance(w,1);
    float work=f[1].Work;int paid=f[1].WorkPaid,cash=w.Funds[0],lostPaid=f[0].WorkPaid;f[0].Hp=0;w.Kill(f[0]);
@@ -74,7 +74,7 @@ public partial class Campaign {
    w.Funds[0]=1000;ParallelAdvance(w,1);AssertParallel(f.Select((p,i)=>p.Work>progress[i]).All(v=>v),"both lines resume after funds return");
    foreach(var power in w.Live(0).Where(p=>p.T.Key=="power"))power.Hp=0;
    var before=f.Select(p=>p.Work).ToArray();ParallelAdvance(w,1);
-   AssertParallel(f.Select((p,i)=>Math.Abs(p.Work-before[i]-.45f)<.001f).All(v=>v),"low power applies equally without extra factory multiplier");}
+   AssertParallel(f.Select((p,i)=>Math.Abs(p.Work-before[i]-.5f)<.001f).All(v=>v),"low power applies equally without extra factory multiplier");}
   {var w=ParallelWorld(2);var f=ParallelFactories(w);for(int i=0;i<60;i++)AssertParallel(w.Train(type,0,null),"two independent full queues");
    AssertParallel(f.All(p=>p.Queue.Count==30)&&!w.Train(type,0,null),"30 orders per building, not per faction");
    w.UnitTick(f[0],1,true);int cash=w.Funds[0],paid=f[0].WorkPaid;var original=f[1].Queue.ToArray();f[0].Hp=0;w.Kill(f[0]);

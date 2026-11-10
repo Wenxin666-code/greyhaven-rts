@@ -1,0 +1,283 @@
+{
+  "url": "https://github.com/CnCNet/cncnet-yr-client-package/blob/e4b5712df96ec3acb05ddbda9fe2ba63e30576ab/game-assets/cncnet.pack/rulesmd.ini",
+  "sha256": "f33edabdced41e7448ae2c82b68f46b39f64e172a8bf40dd9e0188f677b5a4fe",
+  "mapping": {
+    "hq": "GACNST",
+    "power": "GAPOWR",
+    "barracks": "GAPILE",
+    "factory": "GAWEAP",
+    "radar": "GAAIRC",
+    "satellite": "GASPYSAT",
+    "post": "NALASR",
+    "squad": "E1",
+    "at": "GGI",
+    "engineer": "ENGINEER",
+    "ifv": "FV",
+    "tank": "MTNK",
+    "arty": "HOWI",
+    "mcv": "AMCV",
+    "refinery": "GAREFN",
+    "miner": "HARV"
+  },
+  "units": {
+    "hq": {
+      "Strength": "1000",
+      "Armor": "concrete",
+      "Sight": "8",
+      "Cost": "3000",
+      "Power": "0"
+    },
+    "power": {
+      "Strength": "750",
+      "Armor": "wood",
+      "Sight": "4",
+      "Cost": "800",
+      "Power": "200"
+    },
+    "barracks": {
+      "Strength": "500",
+      "Armor": "steel",
+      "Sight": "5",
+      "Cost": "500",
+      "Power": "-10"
+    },
+    "factory": {
+      "Strength": "1000",
+      "Armor": "wood",
+      "Sight": "4",
+      "Cost": "2000",
+      "Power": "-25"
+    },
+    "radar": {
+      "Strength": "600",
+      "Armor": "steel",
+      "Sight": "5",
+      "Cost": "1000",
+      "Power": "-50"
+    },
+    "satellite": {
+      "Strength": "1000",
+      "Armor": "wood",
+      "Sight": "5",
+      "Cost": "1500",
+      "Power": "-100"
+    },
+    "post": {
+      "Strength": "400",
+      "Armor": "steel",
+      "Sight": "7",
+      "Cost": "500",
+      "Power": "0",
+      "Primary": "Vulcan"
+    },
+    "squad": {
+      "Primary": "M60",
+      "Secondary": "Para",
+      "Strength": "125",
+      "Armor": "none",
+      "Sight": "5",
+      "Speed": "4",
+      "Cost": "200",
+      "VeteranAbilities": "STRONGER,FIREPOWER,ROF,SIGHT,FASTER",
+      "EliteAbilities": "SELF_HEAL,STRONGER,FIREPOWER,ROF",
+      "ElitePrimary": "M60E"
+    },
+    "at": {
+      "Primary": "M60",
+      "Secondary": "MissileLauncher",
+      "Strength": "100",
+      "Armor": "none",
+      "Sight": "6",
+      "Speed": "3",
+      "Cost": "400",
+      "VeteranAbilities": "STRONGER,FIREPOWER,ROF,SIGHT,FASTER",
+      "EliteAbilities": "SELF_HEAL,STRONGER,FIREPOWER,ROF",
+      "ElitePrimary": "M60E"
+    },
+    "engineer": {
+      "Primary": "DefuseKit",
+      "Secondary": "VirtualScanner",
+      "Strength": "75",
+      "Armor": "none",
+      "Sight": "4",
+      "Speed": "4",
+      "Cost": "500"
+    },
+    "ifv": {
+      "Primary": "HoverMissile",
+      "Strength": "200",
+      "Armor": "light",
+      "Sight": "8",
+      "Speed": "10",
+      "Cost": "600",
+      "VeteranAbilities": "STRONGER,FIREPOWER,SIGHT,FASTER",
+      "EliteAbilities": "SELF_HEAL,STRONGER,FIREPOWER,ROF",
+      "ElitePrimary": "HoverMissileE"
+    },
+    "tank": {
+      "Primary": "105mm",
+      "Strength": "300",
+      "Armor": "heavy",
+      "Sight": "8",
+      "Speed": "7",
+      "Cost": "700",
+      "VeteranAbilities": "STRONGER,FIREPOWER,SIGHT,FASTER",
+      "EliteAbilities": "SELF_HEAL,STRONGER,FIREPOWER,ROF",
+      "ElitePrimary": "105mmE"
+    },
+    "arty": {
+      "Primary": "HowitzerGun",
+      "Strength": "200",
+      "Armor": "light",
+      "Sight": "8",
+      "Speed": "5",
+      "Cost": "750",
+      "VeteranAbilities": "STRONGER,FIREPOWER,SIGHT,FASTER",
+      "EliteAbilities": "SELF_HEAL,STRONGER,FIREPOWER,ROF"
+    },
+    "mcv": {
+      "Strength": "1000",
+      "Armor": "heavy",
+      "Sight": "6",
+      "Speed": "4",
+      "Cost": "3000"
+    },
+    "refinery": {
+      "Strength": "1000",
+      "Armor": "wood",
+      "Sight": "6",
+      "Cost": "2000",
+      "Power": "-50",
+      "Storage": "200"
+    },
+    "miner": {
+      "Strength": "1000",
+      "Armor": "medium",
+      "Primary": "20mmRapid",
+      "Sight": "4",
+      "Speed": "4",
+      "Storage": "40",
+      "Cost": "1400",
+      "VeteranAbilities": "STRONGER,FIREPOWER,SIGHT,FASTER",
+      "EliteAbilities": "SELF_HEAL,STRONGER,FIREPOWER,ROF",
+      "ElitePrimary": "20mmRapidE"
+    }
+  },
+  "weapons": {
+    "M60": {
+      "Damage": "15",
+      "ROF": "20",
+      "Range": "4",
+      "Warhead": "SA"
+    },
+    "M60E": {
+      "Damage": "25",
+      "ROF": "20",
+      "Range": "4",
+      "Warhead": "SA"
+    },
+    "MissileLauncher": {
+      "Damage": "40",
+      "ROF": "40",
+      "Range": "8",
+      "Burst": "1",
+      "Warhead": "GUARDWH",
+      "MinimumRange": "1"
+    },
+    "MissileLauncherE": {
+      "Damage": "50",
+      "ROF": "20",
+      "Range": "8",
+      "Burst": "1",
+      "Warhead": "GUARDWH",
+      "MinimumRange": "1"
+    },
+    "HoverMissile": {
+      "Damage": "25",
+      "ROF": "50",
+      "Range": "6",
+      "Burst": "2",
+      "Warhead": "HE",
+      "MinimumRange": "1"
+    },
+    "HoverMissileE": {
+      "Damage": "80",
+      "ROF": "50",
+      "Range": "6",
+      "Burst": "4",
+      "Warhead": "HE",
+      "MinimumRange": "1"
+    },
+    "105mm": {
+      "Damage": "65",
+      "ROF": "60",
+      "Range": "5",
+      "Warhead": "AP"
+    },
+    "105mmE": {
+      "Damage": "65",
+      "ROF": "50",
+      "Range": "5",
+      "Warhead": "GRIZAPE",
+      "Burst": "2"
+    },
+    "HowitzerGun": {
+      "Damage": "75",
+      "ROF": "100",
+      "Range": "12",
+      "MinimumRange": "2",
+      "Warhead": "HowitzerWH"
+    },
+    "Vulcan": {
+      "Damage": "50",
+      "ROF": "26",
+      "Range": "5.5",
+      "Warhead": "SA"
+    },
+    "UCPara": {
+      "Damage": "30",
+      "ROF": "15",
+      "Range": "6",
+      "Warhead": "SSAB"
+    },
+    "UCElitePara": {
+      "Damage": "40",
+      "ROF": "15",
+      "Range": "6",
+      "Warhead": "SSAB"
+    }
+  },
+  "warheads": {
+    "HowitzerWH": {
+      "CellSpread": ".5",
+      "PercentAtMax": ".5",
+      "Verses": "100%,90%,80%,60%,40%,40%,50%,40%,25%,80%,100%"
+    },
+    "HE": {
+      "CellSpread": ".5",
+      "PercentAtMax": ".5",
+      "Verses": "100%,100%,100%,70%,70%,35%,75%,40%,20%,80%,100%"
+    },
+    "GUARDWH": {
+      "Verses": "20%,20%,20%,100%,50%,100%,10%,10%,10%,100%,100%",
+      "CellSpread": ".5",
+      "PercentAtMax": ".5"
+    },
+    "SSAB": {
+      "Verses": "100%,80%,80%,50%,25%,25%,75%,30%,20%,100%,100%"
+    },
+    "AP": {
+      "CellSpread": ".3",
+      "PercentAtMax": ".5",
+      "Verses": "25%,25%,15%,75%,100%,100%,65%,45%,60%,60%,100%"
+    },
+    "GRIZAPE": {
+      "CellSpread": ".3",
+      "PercentAtMax": ".5",
+      "Verses": "100%,100%,100%,100%,100%,100%,65%,45%,60%,60%,100%"
+    },
+    "SA": {
+      "Verses": "100%,80%,80%,50%,25%,25%,75%,50%,25%,100%,100%"
+    }
+  }
+}

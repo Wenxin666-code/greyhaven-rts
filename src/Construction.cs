@@ -10,7 +10,7 @@ public partial class Campaign {
  public const float AssemblySeconds=1.2f,BaseDeploySeconds=AssemblySeconds;
  public static float AssemblyDuration(Piece o){return o.T.Key=="hq"&&o.BaseTransition?BaseDeploySeconds:AssemblySeconds;}
  readonly ConstructionJob[,] construction=new ConstructionJob[MaxFactions,2];
- public static int BuildCategory(TypeInfo t){return t.Key=="post"?1:0;}
+ public static int BuildCategory(TypeInfo t){return t.Defense?1:0;}
  public ConstructionJob Construction(int side,int category){return construction[side,category];}
  public ConstructionJob Construction(TypeInfo t,int side=0){var job=Construction(side,BuildCategory(t));return job!=null&&job.Type==t?job:null;}
  public string ConstructionReason(TypeInfo t,int side=0){
@@ -19,7 +19,7 @@ public partial class Campaign {
   return Require(t,side);
  }
  public bool StartConstruction(TypeInfo t,int side=0){
-  if(!t.Building||t.Key=="hq"||t.Civilian)return false;
+  if(!t.Building||t.Key=="hq"||t.Key=="relay"||t.Civilian)return false;
   var own=Construction(t,side);if(own!=null){own.Paused=false;return true;}
   var reason=ConstructionReason(t,side);if(reason!=null){if(side==0)Radio=reason;return false;}
   construction[side,BuildCategory(t)]=new ConstructionJob{Type=t};
@@ -76,9 +76,9 @@ public partial class Campaign {
   float health=o.Hp/o.T.Hp;o.T=Info("mcv");o.Hp=Math.Max(1,health*o.T.Hp);o.Ready=1;o.Assembly=false;o.BaseTransition=false;Changed();
   var target=o.Relocation;o.Relocation=null;if(target.HasValue&&!Move(o,target.Value,false)&&o.Side==0)Radio="基地已收起，前路临时受阻，请重新指定目的地。";
  }
- public bool CanSell(Piece o){return o!=null&&o.Deployed&&o.Side==0&&o.T.Building&&!o.T.Civilian;}
+ public bool CanSell(Piece o){return o!=null&&o.Deployed&&o.Side==0&&o.T.Building&&!o.T.Civilian&&!IsRelayStation(o);}
  public bool Sell(Piece o){
-  if(!CanSell(o))return false;TransferProduction(o);int value=o.T.Key=="hq"?Info("mcv").Price:o.T.Price;
+  if(!CanSell(o))return false;if(o.T.Garrison){EvacuateHouse(o);if(HouseCount(o)>0){Radio="出口受阻，请先撤出驻军再出售。";return false;}}TransferProduction(o);int value=o.T.Key=="hq"?Info("mcv").Price:o.T.Price;
   Funds[o.Side]+=(int)(value*.5f);o.Repairing=false;o.Selling=true;o.BaseTransition=false;o.Packing=AssemblySeconds;Halt(o);Changed();Radio="正在出售"+o.T.Name+"。";return true;
  }
  public bool ToggleRepair(Piece o){

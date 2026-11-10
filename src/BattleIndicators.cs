@@ -23,6 +23,8 @@ partial class CommandWindow {
   var source=t.Key=="tank"?TankCell(0,TankFrame(unit)):SourceCell(t,unit.Side,dir);
   var box=t.Building?BuildingRect(Campaign.Footprint(t,unit.P),p,zoom):t.Foot?SoldierBox(SoldierFeet(unit,p,zoom,world.Time),size):VehicleRect(t,p,size);
   var key=t.Building?BuildingVisual(unit,out source):LiveArtKey(unit);
+  if(CombatPose(unit)){key=EnsureB08(CombatFrame(unit));var crop=CombatCrop(key);source=new Rectangle(Point.Empty,crop.Size);box=FootCropBox(GaitBox(p,size),crop);}
+  else if(t.Foot&&unit.Alive&&unit.Stance>0){key=EnsureB08("stance/"+t.Key+"/"+dir/2+"/"+(int)Math.Round(unit.Stance*32));source=new Rectangle(0,0,384,384);box=GaitBox(p,size);}
   var ink=SpriteInk(key,source);
   var result=new RectangleF(box.X+ink.X*box.Width/source.Width,box.Y+ink.Y*box.Height/source.Height,ink.Width*box.Width/source.Width,ink.Height*box.Height/source.Height);
   return result;

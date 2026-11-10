@@ -36,7 +36,7 @@ partial class CommandWindow {
  }
  void CenterSelection(){var own=selection.Where(p=>p.Alive).ToArray();if(own.Length>0){followUnit=null;CenterAt(new PointF(own.Average(p=>p.P.X),own.Average(p=>p.P.Y)));}}
  void StopSelection(){foreach(var unit in selection)world.Halt(unit);markedPoint=null;markedEnemy=null;attack=false;world.Radio="所选部队已停止。";}
- bool CanDeploySelection(Piece o){return o.Deployed&&(o.T.Key=="mcv"||o.T.Key=="hq"||o.T.Civilian&&world.HouseCount(o)>0||o.T.Key=="ifv"&&world.Units.Any(p=>p.Alive&&p.Carrier==o));}
+ bool CanDeploySelection(Piece o){return o.Deployed&&(o.T.DeployableFoot||o.T.Key=="mcv"||o.T.Key=="hq"||o.T.Garrison&&world.HouseCount(o)>0||o.T.Key=="ifv"&&world.Units.Any(p=>p.Alive&&p.Carrier==o));}
  void DeploySelection(){foreach(var o in selection.ToArray()){if(o.T.Key=="hq")world.Relocate(o,o.P);else DeployClick(o);}}
  int GroupNumber(Keys key){int n=(int)key-(int)Keys.D0;return n>=0&&n<=9?(n==0?10:n):-1;}
  int lastTeam;double lastTeamAt=-100;

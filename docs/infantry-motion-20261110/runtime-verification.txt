@@ -1,0 +1,9 @@
+PASS infantry integration: 148 assertions
+sniper paint coverage sampled: 1742 / 7676
+at paint coverage sampled: 2112 / 9390
+bunker paint coverage sampled: 3691 / 6150
+PASS native infantry UI / models / construction / damage / controls / faction tint / distinct action frames
+
+FullName                               Length
+--------                               ------
+D:\游戏制作\未命名项目\断线前沿.exe 288412672

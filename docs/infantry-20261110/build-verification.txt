@@ -1,0 +1,20 @@
+PASS infantry integration: 117 assertions
+sniper paint coverage sampled: 1712 / 7768
+at paint coverage sampled: 2220 / 7845
+bunker paint coverage sampled: 3691 / 6150
+PASS native infantry UI / models / construction / damage / controls / faction tint
+Turret engagement: target HP 275 / 300, turret HP 400, target distance 108, enemy range 120, sees target True, turret at {X=588, Y=588}, target at {X=708, Y=588}
+Defence: 4/2-cell placement, no turret expansion, reference sentry fire, artillery counter, five paid AI defence plans, independent construction sites and recruitment reservation passed.
+factory, faction 0: actual output after the same reference production cycles with 1 / 2 / 3 facilities = 2 / 4 / 6 units.
+factory, faction 1: actual output after the same reference production cycles with 1 / 2 / 3 facilities = 2 / 4 / 6 units.
+factory, faction 2: actual output after the same reference production cycles with 1 / 2 / 3 facilities = 2 / 4 / 6 units.
+barracks, faction 0: actual output after the same reference production cycles with 1 / 2 / 3 facilities = 4 / 8 / 12 units.
+barracks, faction 1: actual output after the same reference production cycles with 1 / 2 / 3 facilities = 4 / 8 / 12 units.
+barracks, faction 2: actual output after the same reference production cycles with 1 / 2 / 3 facilities = 4 / 8 / 12 units.
+Parallel production: completion/backlog, independent pause, blocked outlet, combat kill, capture, sell, exact costs, low power, three factions and infantry passed.
+Native infantry UI: two barracks, automatic dispatch and independent pause/resume passed.
+Native production UI: automatic dispatch, local pause/resume/cancel, priority isolation, totals, all three individual queues and rendering passed.
+
+FullName                               Length
+--------                               ------
+D:\游戏制作\未命名项目\断线前沿.exe 242547712

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Diagnostics;
@@ -10,7 +10,7 @@ class ThirdMissionChecks {
  [STAThread]static int Main(string[] args){try{
   Campaign.CheckThirdTerrain();Campaign.CheckNavigationAcceleration();Campaign.CheckThirdOpening();Campaign.CheckSmartAiRules();
   using(var f=new CommandWindow())f.CheckThirdInterface(args.Length>0?args[0]:null);
-  Campaign.CheckAiDevelopment(false,360);Campaign.CheckAiDevelopment(true,420);
+  Campaign.CheckAiDevelopment(false,900);Campaign.CheckAiDevelopment(true,900);
   return 0;
  }catch(Exception e){Console.Error.WriteLine(e);return 1;}}
 }
@@ -18,19 +18,19 @@ namespace Greyhaven {
 public partial class Campaign {
  static void ThirdAssert(bool ok,string message){if(!ok)throw new Exception(message);}
  internal static void CheckThirdTerrain(){
-  var m=new RiverbendMap(true);ThirdAssert(m.WidthCells==360&&m.HeightCells==240&&m.Starts.Length==6,"third map dimensions/factions");
-  ThirdAssert(m.Cells.Length>new RiverbendMap().Cells.Length*2.5,"larger map");
+  var m=new RiverbendMap(true);ThirdAssert(m.WidthCells==300&&m.HeightCells==200&&m.Starts.Length==6,"third map dimensions/factions");
+  ThirdAssert(m.Cells.Length>new RiverbendMap().Cells.Length*1.8,"larger map");
   for(int side=1;side<6;side++){
    ThirdAssert(m.Connected(m.Starts[0],m.Starts[side]),"disconnected faction "+side);
    ThirdAssert(m.Starts.Skip(1).All(p=>p.X>=112||p.Y>=94),"enemies must be outside resource island");
-   for(int other=side+1;other<6;other++)ThirdAssert(Dist(new PointF(m.Starts[side].X,m.Starts[side].Y),new PointF(m.Starts[other].X,m.Starts[other].Y))>70,"crowded enemy starts");
+   for(int other=side+1;other<6;other++)ThirdAssert(Dist(new PointF(m.Starts[side].X,m.Starts[side].Y),new PointF(m.Starts[other].X,m.Starts[other].Y))>60,"crowded enemy starts");
   }
   int resources=m.Ore.Count(p=>p.X<90&&p.Y<90);ThirdAssert(resources>=170,"island resource reserve too small: "+resources);
   foreach(var h in m.Houses){ThirdAssert(m.Walkable(h.Door.X,h.Door.Y)&&m.Connected(m.Starts[0],h.Door),"house door unreachable: "+h.Name+" "+h.Door);}
   foreach(var surface in new[]{RiverbendMap.Surface.Water,RiverbendMap.Surface.Marsh,RiverbendMap.Surface.Ramp,RiverbendMap.Surface.Rock,RiverbendMap.Surface.Bridge})ThirdAssert(m.Cells.Any(c=>c.Ground==surface),"missing diverse terrain "+surface);
   var gate=m.IslandGate;for(int y=gate.Top;y<gate.Bottom;y++)for(int x=gate.Left;x<gate.Right;x++)m.At(x,y).Ground=RiverbendMap.Surface.Water;
   for(int side=1;side<6;side++)ThirdAssert(!m.Connected(m.Starts[0],m.Starts[side]),"hidden second island exit "+side);
-  Console.WriteLine("Third terrain: 360x240, six separated starts, all 40 house doors, multiple biomes and a single 6-cell-wide island gate passed; island ore cells="+resources);
+  Console.WriteLine("Third terrain: 300x200, six separated starts, all 33 house doors, multiple biomes and a single 6-cell-wide island gate passed; island ore cells="+resources);
  }
  internal static void CheckNavigationAcceleration(){
   var w=new Campaign(false,false,true,true);var rng=new Random(5729);int checkedEdges=0;
@@ -58,25 +58,25 @@ public partial class Campaign {
    var point=new PointF(126*Tile,50*Tile+i*24);var path=units[i].Path.ToArray();int population=w.Units.Count;
    ThirdAssert(w.CanMoveTo(units[i],point)&&w.CanMoveTo(units[i],point),"cached third-mission movement preview");
    ThirdAssert(w.Units.Count==population&&units[i].Path.SequenceEqual(path),"hover query changed unit orders or population");
-   ThirdAssert(!w.CanMoveTo(units[i],new PointF(102*Tile,30*Tile)),"sea must show unreachable");
+   ThirdAssert(!w.CanMoveTo(units[i],new PointF(90*Tile,35*Tile)),"sea must show unreachable");
    ThirdAssert(w.Move(units[i],point,false),"island gate route for "+units[i].T.Key);
   }
-  for(int tick=0;tick<1800;tick++)w.Tick(.05f);
+  for(int tick=0;tick<7200;tick++)w.Tick(.05f);
   ThirdAssert(units.All(p=>Dist(p.P,p.Goal)<12),"a real unit failed to leave the island via the gate");
-  w=new Campaign(true,false,true,true);w.Funds[0]=1150;var mcv=w.Live(0).First(p=>p.T.Key=="mcv");ThirdAssert(w.Deploy(mcv),"third opening deployment");for(int i=0;i<40;i++)w.Tick(.1f);
+  w=new Campaign(true,false,true,true);w.Funds[0]=ReferenceBalance.StartingCredits;var mcv=w.Live(0).First(p=>p.T.Key=="mcv");ThirdAssert(w.Deploy(mcv),"third opening deployment");for(int i=0;i<40;i++)w.Tick(.1f);
   foreach(string key in new[]{"power","refinery"}){
    var type=Info(key);PointF site;ThirdAssert(w.AiBuildSite(0,type,w.Home(0),out site),"player has room for "+key);
-   ThirdAssert(w.StartConstruction(type),"player construction "+key);for(int i=0;i<190;i++)w.Tick(.1f);
+   ThirdAssert(w.StartConstruction(type),"player construction "+key);for(int i=0;i<(int)Math.Ceiling(type.Seconds*10)+20;i++)w.Tick(.1f);
    ThirdAssert(w.PlaceConstruction(type,site,0),"player placement "+key);for(int i=0;i<15;i++)w.Tick(.1f);
   }
-  for(int i=0;i<900&&w.OreReceipts[0]==0;i++)w.Tick(.1f);
+  for(int i=0;i<2400&&w.OreReceipts[0]==0;i++)w.Tick(.1f);
   ThirdAssert(w.OreReceipts[0]>0&&w.Live(0).Any(p=>p.T.Key=="miner"),"resource island must support a real paid player economy");
-  ThirdAssert(w.Funds[0]==1150-Info("power").Price-Info("refinery").Price+w.OreReceipts[0],"normal starting funds and player income conservation");
+  ThirdAssert(w.Funds[0]==ReferenceBalance.StartingCredits-Info("power").Price-Info("refinery").Price+w.OreReceipts[0],"normal starting funds and player income conservation");
   Console.WriteLine("Third opening: real infantry, tank and miner crossed sole gate; player deploy, paid construction and first ore income passed.");
  }
  internal static void CheckSmartAiRules(){
   var w=new Campaign(false,false,true,true);ThirdAssert(w.FactionCount==6,"six-faction simulation");
-  for(int s=0;s<6;s++)ThirdAssert(w.Funds[s]==1150&&w.Live(s).Count()==4&&w.Explored(s,w.Home(s)),"fair start, fog and funds "+s);
+  for(int s=0;s<6;s++)ThirdAssert(w.Funds[s]==ReferenceBalance.StartingCredits&&w.Live(s).Count()==4&&w.Explored(s,w.Home(s)),"fair start, fog and funds "+s);
   foreach(var u in w.Units.Where(p=>p.Side==1||p.Side==2).ToArray())u.Hp=0;
   w.CheckEnemySurrender(4);ThirdAssert(!w.Won&&w.Remaining(5)>0,"fifth enemy must prevent premature victory");
   w=new Campaign(false,false,true,true);w.Units.Clear();w.Ore.Clear();w.Spawn("mcv",0,900,700);w.Spawn("mcv",5,7600,4500);
@@ -136,7 +136,7 @@ partial class CommandWindow {
    }
    timings.Sort();if(riverGroundBytes>RiverTileBudget)throw new Exception("third terrain cache exceeds memory bound");
    Console.WriteLine("Third native 1920x1080 pan: median {0:F1}ms, p95 {1:F1}ms; bounded visible terrain cache {2:F1}MiB.",timings[24],timings[45],riverGroundBytes/1048576.0);
-   if(folder!=null)world.River.Export(Path.Combine(Path.GetDirectoryName(folder),"maps","island-fortress-v01.json"));
+   if(folder!=null)world.River.Export(Path.Combine(Path.GetDirectoryName(folder),"maps","island-fortress-v02.json"));
    StartRiverMission();if(world.IslandMission||world.FactionCount!=3)throw new Exception("second mission changed shape");
    LaunchMission();if(!world.Tutorial||world.FactionCount!=2)throw new Exception("training changed");
   }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -26,8 +26,8 @@ public partial class Campaign {
  public static RectangleF Gate(RectangleF body){return new RectangleF(body.Left,body.Bottom,body.Width,Tile);}
  public static readonly RectangleF[] YardWalls={new RectangleF(842,214,74,8),new RectangleF(962,214,77,8),new RectangleF(1094,214,70,8)};
  public bool InBuildRange(TypeInfo t,RectangleF r,int side){
-  return Live(side).Any(o=>o.T.Building&&!o.T.Civilian&&o.T.Key!="post"&&
-   Math.Max(Math.Max(Footprint(o.T,o.P).Left-r.Right,r.Left-Footprint(o.T,o.P).Right),Math.Max(Footprint(o.T,o.P).Top-r.Bottom,r.Top-Footprint(o.T,o.P).Bottom))<=2*Tile+.01f);
+  return Live(side).Any(o=>o.T.Building&&!o.T.Civilian&&!o.T.Defense&&!IsRelayStation(o)&&
+   Math.Max(Math.Max(Footprint(o.T,o.P).Left-r.Right,r.Left-Footprint(o.T,o.P).Right),Math.Max(Footprint(o.T,o.P).Top-r.Bottom,r.Top-Footprint(o.T,o.P).Bottom))<=BuildAdjacentCells(t)*Tile+.01f);
  }
  public bool PlacementCell(RectangleF cell,Piece skip,int side){return LocalPlacementBlock(cell,skip,side,null)==PlacementBlock.None;}
  public bool CanPlace(TypeInfo t,PointF p,Piece skip,int side=0){return AssessPlacement(t,p,skip,side).Valid;}
@@ -46,8 +46,8 @@ public partial class Campaign {
   float p=(lo-a)/delta,q=(hi-a)/delta;entry=Math.Max(entry,Math.Min(p,q));exit=Math.Min(exit,Math.Max(p,q));return entry<=exit;
  }
  bool Clear(PointF a,PointF b,RectangleF[] blocks,float pad=0){
-  if(!TerrainLine(a,b,pad))return false;
-  foreach(var r in blocks){float lo=0,hi=1;if(Slab(a.X,b.X-a.X,r.Left,r.Right,ref lo,ref hi)&&Slab(a.Y,b.Y-a.Y,r.Top,r.Bottom,ref lo,ref hi))return false;}return true;
+  float left=Math.Min(a.X,b.X),right=Math.Max(a.X,b.X),top=Math.Min(a.Y,b.Y),bottom=Math.Max(a.Y,b.Y);
+  foreach(var r in blocks){if(r.Right<left||r.Left>right||r.Bottom<top||r.Top>bottom)continue;float lo=0,hi=1;if(Slab(a.X,b.X-a.X,r.Left,r.Right,ref lo,ref hi)&&Slab(a.Y,b.Y-a.Y,r.Top,r.Bottom,ref lo,ref hi))return false;}return TerrainLine(a,b,pad);
  }
  const int Step=15;int N {get{return (MapWidth+MapHeight)/Step;}} int M {get{return N;}}
  int NavX(float x){return (int)Math.Floor((x-FogOriginX)/Step);}
@@ -61,7 +61,7 @@ public partial class Campaign {
   }return best;
  }
  int topology;
- sealed class NavigationGrid {public RectangleF[] Barriers;public bool[] Open;public int[] Regions;public ushort[] Links;public Dictionary<long,bool> Reachability;public int LinkStamp;}
+ sealed class NavigationGrid {public RectangleF[] Barriers;public bool[] Open;public int[] Regions;public ushort[] Links;public Dictionary<long,bool> Reachability;public int LinkStamp;public NavigationBarriers LocalBarriers;public TerrainNav Terrain;}
  readonly Dictionary<float,NavigationGrid> grids=new Dictionary<float,NavigationGrid>();
  void Changed(){topology++;grids.Clear();}
  NavigationGrid Grid(float pad){

@@ -1,0 +1,46 @@
+敌方一 cash=250 miners=4 refineries=2 factories=2 orders=38 squads=7 raids=5 target=2 reserve=70 budget=63
+hq 5 p={X=4860, Y=744} queue= work=0 hp=1550
+power 42 p={X=4944, Y=672} queue= work=0 hp=470
+refinery 45 p={X=4992, Y=720} queue= work=0 hp=720
+miner 48 p={X=5100, Y=592.0003} queue= work=0 hp=310
+barracks 51 p={X=4944, Y=768} queue= work=0 hp=650
+factory 57 p={X=4860, Y=840} queue=ifv work=3.899998 hp=980
+post 64 p={X=4980, Y=852} queue= work=0 hp=720
+post 73 p={X=4908, Y=732} queue= work=0 hp=720
+power 75 p={X=4944, Y=720} queue= work=0 hp=470
+miner 78 p={X=5047.5, Y=787.5} queue= work=0 hp=310
+refinery 94 p={X=5040, Y=720} queue= work=0 hp=720
+miner 95 p={X=5094, Y=828} queue= work=0 hp=310
+post 101 p={X=5028, Y=684} queue= work=0 hp=720
+miner 104 p={X=5092.627, Y=757.373} queue= work=0 hp=310
+post 108 p={X=4860, Y=924} queue= work=0 hp=720
+power 122 p={X=4800, Y=744} queue= work=0 hp=470
+power 127 p={X=4800, Y=792} queue= work=0 hp=470
+factory 137 p={X=4980, Y=936} queue=tank work=11.10001 hp=980
+post 142 p={X=4764, Y=828} queue= work=0 hp=720
+post 154 p={X=4980, Y=1020} queue= work=0 hp=682
+barracks 167 p={X=4944, Y=864} queue= work=0 hp=650
+field deployments=2 active=4 point={X=3291.553, Y=870.5193} returning=False
+敌方二 cash=115 miners=4 refineries=2 factories=2 orders=81 squads=11 raids=4 target=1 reserve=70 budget=45
+hq 9 p={X=4788, Y=3288} queue= work=0 hp=1550
+power 43 p={X=4896, Y=3192} queue= work=0 hp=470
+refinery 46 p={X=4968, Y=3264} queue= work=0 hp=720
+miner 49 p={X=5094, Y=3314.811} queue= work=0 hp=310
+barracks 52 p={X=4872, Y=3288} queue= work=0 hp=650
+factory 58 p={X=4788, Y=3384} queue= work=0 hp=980
+post 61 p={X=4956, Y=3180} queue= work=0 hp=720
+post 67 p={X=4788, Y=3252} queue= work=0 hp=720
+miner 69 p={X=5052, Y=3228} queue= work=0 hp=310
+power 70 p={X=4872, Y=3240} queue= work=0 hp=470
+refinery 76 p={X=5040, Y=3192} queue= work=0 hp=720
+miner 77 p={X=5170.399, Y=3300} queue= work=0 hp=310
+miner 80 p={X=5010, Y=3300} queue= work=0 hp=310
+post 81 p={X=5028, Y=3060} queue= work=0 hp=720
+post 86 p={X=5100, Y=3180} queue= work=0 hp=720
+power 97 p={X=4824, Y=3240} queue= work=0 hp=470
+power 99 p={X=4728, Y=3288} queue= work=0 hp=470
+factory 106 p={X=4884, Y=3456} queue= work=0 hp=980
+barracks 111 p={X=4896, Y=3384} queue= work=0 hp=650
+post 118 p={X=4860, Y=3372} queue= work=0 hp=720
+post 125 p={X=5004, Y=3468} queue= work=0 hp=720
+field deployments=1 active=4 point={X=3171.553, Y=2982.519} returning=False

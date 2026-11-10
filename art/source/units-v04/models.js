@@ -168,6 +168,7 @@ window.UnitMaster=(()=>{
    for(const s of [-1,1])pouch(s*.14,.935,-.16,.105,.13,.07);
    const shoulderX=heavy?.30:.25;
    for(const s of [-1,1]){
+    const armStart=root.children.length;
     const a=[s*shoulderX,1.40,0],b=engineer?[s*.32,1.16,.015]:heavy?[s*.33,1.30,.25]:[s*.33,1.16,.15];
     const c=engineer?[s*.35,.985,.09]:heavy?(s<0?[.08,1.44,.48]:[.27,1.46,.32]):s<0?[.035,1.22,.48]:[.15,1.25,.29];
     cloth(b,a,[[0,.079],[.12,.085],[.24,.078],[.36,.091],[.5,.097],[.63,.092],[.80,.102],[1,.100]],'paint',.98,.058);
@@ -183,6 +184,7 @@ window.UnitMaster=(()=>{
     if(engineer)cloth(new T.Vector3(...b).lerp(new T.Vector3(...a),.03).toArray(),new T.Vector3(...b).lerp(new T.Vector3(...a),.20).toArray(),[[0,.09],[.3,.095],[.7,.094],[1,.09]],'seam');
     oval(...c,.058,.068,.05,'webbing');for(let j=0;j<4;j++){const finger=oval(c[0]-.036+j*.023,c[1]-.025,c[2]+.032,.011,.033,.018,'webbing');finger.rotation.x=-.4;}
     if(heavy){const q=pad(s*.185,1.46,-.015,.12,.15,.175,'paint');q.rotation.z=-s*.26;}
+    for(const mesh of root.children.slice(armStart))mesh.userData.armSide=s;
    }
    cyl(.063,.14,0,1.51,0,'skin');
    // Ring-sculpted skull, cheekbones, tapered jaw, nose, ears, eyes and chin.
@@ -241,16 +243,18 @@ window.UnitMaster=(()=>{
    }
    if(key==='squad'){
     // Compact weapon with receiver, stock, magazine, handguard, optic and rail.
+    const rifleStart=root.children.length;
     pad(.13,1.25,.37,.07,.105,.30,'steel');pad(.13,1.24,.15,.085,.11,.19,'dark');
     beam([.13,1.277,.47],[.13,1.277,.82],.021,'steel');cyl(.03,.07,.13,1.277,.85,'dark','z');
     pad(.13,1.17,.37,.055,.13,.085,'dark');pad(.13,1.25,.58,.08,.085,.20,'dark');for(let j=0;j<6;j++)box(.09,.012,.012,.13,1.30,.5+j*.026,'steel');
     cyl(.022,.12,.13,1.355,.36,'glass','z');pad(.13,1.326,.36,.025,.04,.075,'dark');
+    for(const o of root.children.slice(rifleStart)){o.userData.weaponRole='rifle';o.userData.rigidEquipment=true;}
     pad(0,1.24,-.233,.27,.29,.13,'paint');handle(0,1.40,-.23,.11);pouch(.24,.92,-.05,.10,.13,.11);
     // Slim rifleman: segmented magazine carrier, radio and compact pack.
     for(let i=0;i<3;i++){pad(-.085+i*.085,1.10,.245,.063,.135,.03,'webbing');pad(-.085+i*.085,1.151,.265,.052,.023,.012,'seam');}
     for(const s of [-1,1])bar([s*.09,1.12,-.307],[s*.09,1.35,-.307],.015,.013,'webbing');
     pad(0,1.25,-.311,.14,.08,.017,'fabricPaint');
-    pad(.13,1.25,.405,.079,.06,.065,'armor');for(let j=0;j<4;j++)box(.084,.009,.009,.13,1.292,.52+j*.034,'edge');
+    const detailStart=root.children.length;pad(.13,1.25,.405,.079,.06,.065,'armor');for(let j=0;j<4;j++)box(.084,.009,.009,.13,1.292,.52+j*.034,'edge');for(const o of root.children.slice(detailStart)){o.userData.weaponRole='rifle';o.userData.rigidEquipment=true;}
    }else if(heavy){
     cyl(.091,1.04,.26,1.54,.19,'steel','z');for(const z of [-.35,.0,.48,.72])cyl(.112,.06,.26,1.54,z,z===.48?'yellow':'armor','z');
     cyl(.135,.10,.26,1.54,.78,'steel','z');cyl(.098,.012,.26,1.54,.837,'dark','z');cyl(.13,.13,.26,1.54,-.38,'armor','z');

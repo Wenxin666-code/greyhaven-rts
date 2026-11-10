@@ -1,0 +1,12 @@
+1 miner=77 pos={X=6444, Y=903.2813} cargo=0 mining=True path=1 goal={X=0, Y=0} blocked=0 dock=none patch={X=6444, Y=948} evading=False
+2 miner=78 pos={X=6561.753, Y=2769.372} cargo=1000 mining=True path=2 goal={X=0, Y=0} blocked=0 dock=72 patch={X=6516, Y=2820} evading=False
+3 miner=79 pos={X=6417.421, Y=4401.704} cargo=1000 mining=True path=2 goal={X=0, Y=0} blocked=0 dock=73 patch={X=6372, Y=4452} evading=False
+4 miner=80 pos={X=4050.299, Y=4482.862} cargo=0 mining=True path=2 goal={X=0, Y=0} blocked=0 dock=none patch=none evading=False
+5 miner=81 pos={X=3569.019, Y=2651.668} cargo=1000 mining=True path=2 goal={X=0, Y=0} blocked=0 dock=75 patch={X=3564, Y=2652} evading=False
+2 structure=9 type=hq pos={X=6564, Y=2616} lot={X=6528,Y=2592,Width=72,Height=48} exit={X=6564, Y=2652}
+2 structure=60 type=power pos={X=6648, Y=2544} lot={X=6624,Y=2520,Width=48,Height=48} exit={X=6660, Y=2580}
+2 structure=66 type=power pos={X=6648, Y=2616} lot={X=6624,Y=2592,Width=48,Height=48} exit={X=6660, Y=2652}
+2 structure=72 type=refinery pos={X=6552, Y=2712} lot={X=6528,Y=2688,Width=48,Height=48} exit={X=6564, Y=2748}
+2 structure=84 type=barracks pos={X=6648, Y=2664} lot={X=6624,Y=2640,Width=48,Height=48} exit={X=6660, Y=2700}
+2 structure=95 type=post pos={X=6540, Y=2844} lot={X=6528,Y=2832,Width=24,Height=24} exit={X=6540, Y=2868}
+2 structure=118 type=factory pos={X=6612, Y=2712} lot={X=6576,Y=2688,Width=72,Height=48} exit={X=6612, Y=2748}

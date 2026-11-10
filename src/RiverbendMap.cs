@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
@@ -11,7 +11,7 @@ namespace Greyhaven {
 public sealed partial class RiverbendMap {
  public const int Columns=220,Rows=150;
  public readonly int WidthCells,HeightCells;public readonly bool IsIsland;public readonly Point[] Starts;
- public string Title {get{return IsTraining?"野外训练":IsIsland?"孤岛要塞":"河湾镇";}}
+ public string Title {get{return IsRelay?"雾脊中继站":IsTraining?"野外训练":IsIsland?"孤岛要塞":"河湾镇";}}
  public enum Surface { Meadow,Soil,Rock,Marsh,Water,Road,Bridge,Square,Ramp,Sand }
  public sealed class Cell {public Surface Ground;public float Height;public bool Tree;public int Variation;}
  public sealed class House {
@@ -31,9 +31,10 @@ public sealed partial class RiverbendMap {
  static double Ellipse(int x,int y,float cx,float cy,float rx,float ry){return Math.Pow((x-cx)/rx,2)+Math.Pow((y-cy)/ry,2);}
  static int Hash(int x,int y){unchecked{uint q=(uint)(x*73856093^y*19349663^71423);q^=q>>13;q*=1274126177;return (int)(q&0x7fffffff);}}
  public RiverbendMap(bool island=false):this(island,false,null){}
- RiverbendMap(bool island,bool training,IEnumerable<PointF> minerals){
-  IsIsland=island;IsTraining=training;WidthCells=training?Campaign.Width/Campaign.Tile:island?360:Columns;HeightCells=training?Campaign.Height/Campaign.Tile:island?240:Rows;Cells=new Cell[WidthCells*HeightCells];
-  Starts=training?new[]{new Point(6,21),new Point((int)(Campaign.EnemyHome.X/Campaign.Tile),(int)(Campaign.EnemyHome.Y/Campaign.Tile))}:island?new[]{new Point(36,30),new Point(320,31),new Point(325,115),new Point(316,209),new Point(191,213),new Point(163,105)}:new[]{WestStart,EastStart,SouthStart};
+ RiverbendMap(bool island,bool training,IEnumerable<PointF> minerals,bool relay=false){
+  IsRelay=relay;IsIsland=island;IsTraining=training;WidthCells=relay?240:training?Campaign.Width/Campaign.Tile:island?300:Columns;HeightCells=relay?180:training?Campaign.Height/Campaign.Tile:island?200:Rows;Cells=new Cell[WidthCells*HeightCells];
+  Starts=relay?new[]{RelayCell(15,82),RelayCell(84,42)}:training?new[]{new Point(6,21),new Point((int)(Campaign.EnemyHome.X/Campaign.Tile),(int)(Campaign.EnemyHome.Y/Campaign.Tile))}:island?new[]{new Point(36,30),IslandCell(320,31),IslandCell(325,115),IslandCell(316,209),IslandCell(191,213),IslandCell(163,105)}:new[]{WestStart,EastStart,SouthStart};
+  if(relay){GenerateRelay();return;}
   if(training){GenerateTraining(minerals);PrepareCoastline();return;}
   if(island){GenerateIsland();PrepareCoastline();return;}
   for(int y=0;y<HeightCells;y++)for(int x=0;x<WidthCells;x++){
@@ -114,7 +115,7 @@ public sealed partial class RiverbendMap {
   return false;
  }
  public void Export(string path){
-  if(IsIsland){ExportIsland(path);return;}
+  if(IsRelay){ExportRelay(path);return;}if(IsIsland){ExportIsland(path);return;}
   var s=new StringBuilder("{\n  \"id\":\"riverbend-v01\",\"status\":\"playable\",\"columns\":220,\"rows\":150,\"cellWorldSize\":24,\n  \"surfaceLegend\":[\"meadow\",\"soil\",\"rock\",\"marsh\",\"water\",\"road\",\"bridge\",\"square\",\"ramp\",\"sand\"],\n  \"cells\":[\n");
   for(int i=0;i<Cells.Length;i++){var c=Cells[i];if(i>0)s.Append(',');if(i%WidthCells==0)s.Append('\n');s.Append('[').Append((int)c.Ground).Append(',').Append(c.Height.ToString("0.000",CultureInfo.InvariantCulture)).Append(',').Append(c.Tree?1:0).Append(']');}
   s.Append("\n],\"houses\":[\n");for(int i=0;i<Houses.Count;i++){var h=Houses[i];if(i>0)s.Append(",\n");s.Append("{\"kind\":\"").Append(h.Kind).Append("\",\"lot\":[").Append(h.Lot.X).Append(',').Append(h.Lot.Y).Append(',').Append(h.Lot.Width).Append(',').Append(h.Lot.Height).Append("],\"capacity\":").Append(h.Capacity).Append(",\"initialOwner\":null,\"engineerCapture\":true,\"evacuateOnDestruction\":true}");}

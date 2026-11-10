@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 namespace Greyhaven {
 public partial class Campaign {
@@ -11,7 +11,7 @@ public partial class Campaign {
   if(p.Side==0){LastOrder=p;Radio=p.T.Name+" #"+p.Id+" 已设为优先接单设施；其他设施继续生产。";}return true;
  }
  public float ProductionRate(Piece p){
-  float power=Power(p.Side)<0?.45f:1;
+  float power=PowerProductionRate(p.Side);
   // Construction still uses its existing shared building/defence categories.
   // Units instead have one real production line per barracks/vehicle factory.
   return p.T.Key=="hq"?power/(float)Math.Pow(.8,Math.Max(0,Live(p.Side).Count(u=>u.T==p.T)-1)):power;

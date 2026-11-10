@@ -1,0 +1,34 @@
+PASS: numeric references, time/distance conversion, armor roles, burst timing/cancel, dead zone reposition, 128-angle actual range boundary, sight, movement, power, paid parallel production, ore conservation and repair IFV.
+Story AI: tutorial checkpoint, fog-limited introductions, paid armour budgeting, separate base/field/attack roles, physical bridge deployment, return to base, local garrison and relay isolation passed.
+Territorial AI: standing guards, surplus-only departures, staging, return anchors, refinery access, stale-order cancellation and casualty withdrawal passed.
+Relay support: exact 50% threshold, one scaled grant, paid tank production, retained notice, recapture/overshoot, defeat and destruction checks passed.
+Relay terrain: full radar domain, 14 houses, 528000 ore; all three vehicle types can route through A/B/C/R/L.
+Relay objectives: capture, saved progress, surrender, destruction priority and passenger capability checks passed.
+Relay opening 329s: player receipts=3000, enemy receipts=14000, enemy production orders=18; finite ore conserved.
+Relay AI: produced engineer retook station by 273.1s; 1 counterattack(s), 4 home guards, saved progress 263.1s.
+Relay logistics denial: 360s hold wins with enemy survivors; no free engineer reinforcement.
+Relay defended hold fixture: result=won, counterattacks=2, enemy combat losses=8, player survivors=16, progress=360.0s.
+Relay physical routes: IFV completed western approach; engineer walked from the player start and entered the 3x3 station.
+Dock reservation: distant arrivals do not block the head; empty truck leaves an exhausted-field entrance.
+Starter delivery: the included empty miner clears the entrance before looking for ore.
+Refinery target: stable through temporary queues, reselected after destruction or a permanently sealed entrance.
+Loaded batch: 1 refineries / 4 trucks delivered 4000 in 66.6 game seconds, zero target switches/overlaps.
+Loaded batch: 1 refineries / 8 trucks delivered 8000 in 126.2 game seconds, zero target switches/overlaps.
+Loaded batch: 2 refineries / 4 trucks delivered 4000 in 66.1 game seconds, zero target switches/overlaps.
+Loaded batch: 2 refineries / 8 trucks delivered 8000 in 132.7 game seconds, zero target switches/overlaps.
+Third mission 240s: receipts=24000 cycles=3/3/3/2/3/3/4/3 conservation error=0.000
+Turret engagement: target HP 275 / 300, turret HP 400, target distance 108, enemy range 120, sees target True, turret at {X=588, Y=588}, target at {X=708, Y=588}
+Defence: 4/2-cell placement, no turret expansion, reference sentry fire, artillery counter, five paid AI defence plans, independent construction sites and recruitment reservation passed.
+factory, faction 0: actual output after the same reference production cycles with 1 / 2 / 3 facilities = 2 / 4 / 6 units.
+factory, faction 1: actual output after the same reference production cycles with 1 / 2 / 3 facilities = 2 / 4 / 6 units.
+factory, faction 2: actual output after the same reference production cycles with 1 / 2 / 3 facilities = 2 / 4 / 6 units.
+barracks, faction 0: actual output after the same reference production cycles with 1 / 2 / 3 facilities = 4 / 8 / 12 units.
+barracks, faction 1: actual output after the same reference production cycles with 1 / 2 / 3 facilities = 4 / 8 / 12 units.
+barracks, faction 2: actual output after the same reference production cycles with 1 / 2 / 3 facilities = 4 / 8 / 12 units.
+Parallel production: completion/backlog, independent pause, blocked outlet, combat kill, capture, sell, exact costs, low power, three factions and infantry passed.
+Native infantry UI: two barracks, automatic dispatch and independent pause/resume passed.
+Native production UI: automatic dispatch, local pause/resume/cancel, priority isolation, totals, all three individual queues and rendering passed.
+
+FullName                               Length
+--------                               ------
+D:\游戏制作\未命名项目\断线前沿.exe 208131584

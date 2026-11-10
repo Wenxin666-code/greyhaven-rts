@@ -1,0 +1,21 @@
+{
+  "focused_checks": "passed",
+  "navigation_random_links": 30000,
+  "navigation_existing_links": 28800,
+  "terrain_reference_views": 24,
+  "terrain_reference_pixel_differences": 0,
+  "tile_reference_scales": [
+    1.05,
+    1.55,
+    2.4
+  ],
+  "tile_reference_error": 0,
+  "cache_budget_mib": 64,
+  "full_art_suite_run": false,
+  "native_frame_snapshots": {
+    "idle": "186c6d49ce282bb7feacfb7fa08d804df9eee1410f84101e10141660c045ae0d",
+    "scroll": "42ce9236eab6e2a070f899ad613e089dbe672262a629b0abcfa3a6eb0c2de45b",
+    "cold-pan": "30e22c3e5ec0a9b677f295a1a3fe7a00ab820d023ffe48fbf0e10d7ffc54f8ca"
+  },
+  "standalone_measure_script_60_seconds": "passed"
+}

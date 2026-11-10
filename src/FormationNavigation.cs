@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Drawing;
 using System.Collections.Generic;
@@ -19,7 +19,7 @@ public partial class Campaign {
    if(ahead<=0||lateral>Math.Min(Tile*.42f,Clearance(unit)+Clearance(lead)))continue;
    // Ease into a short 4-unit following buffer, never an extra full cell.
    float room=Math.Max(0,ahead-Tile);
-   speed=Math.Min(speed,Math.Min(room/Math.Max(.001f,dt),lead.T.Speed*Math.Min(1,room/4)));
+   speed=Math.Min(speed,Math.Min(room/Math.Max(.001f,dt),ReferenceBalance.Speed(lead)*Math.Min(1,room/4)));
   }
   unit.FollowingWait=speed<requested*.1f?unit.FollowingWait+dt:0;
   // Near a turn or another vehicle's destination, release the comfort gap and

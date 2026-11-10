@@ -25,12 +25,16 @@ partial class CommandWindow {
  void DrawRadar(Graphics g,float x){
   if(!RadarOnline()){Txt(g,"雷达离线",x+32,119,15,dim,true);Txt(g,world.Live(0).Any(o=>o.T.Key=="radar")?"恢复供电后启用":"建造雷达站后启用",x+13,148,10,dim);return;}
   RefreshProjectedRadar();var state=g.Save();g.IntersectClip(new RectangleF(x,88,148,100));g.DrawImage(projectedRadar,new RectangleF(x,88,148,100));
-  foreach(var ore in world.Ore)if(ore.Stock>0&&world.Explored(0,ore.P)){var p=RadarPoint(ore.P);Rect(g,x+p.X,88+p.Y,1.5f,1.5f,gold);}
+  var oreMarks=new System.Collections.Generic.List<RectangleF>();
+  foreach(var ore in world.Ore)if(ore.Stock>0&&world.Explored(0,ore.P)){var p=RadarPoint(ore.P);oreMarks.Add(new RectangleF(x+p.X,88+p.Y,1.5f,1.5f));}
+  if(oreMarks.Count>0)using(var oreBrush=new SolidBrush(gold))g.FillRectangles(oreBrush,oreMarks.ToArray());
   foreach(var o in world.Units.Where(o=>o.Alive&&o.Carrier==null&&world.Visible(o))){var p=RadarPoint(o.P);float size=o.T.Building?2.5f:1.8f;Rect(g,x+p.X-size/2,88+p.Y-size/2,size,size,Team(o.Side));}
   if(world.LastEvent.HasValue&&world.Time-world.EventTime<5){var p=RadarPoint(world.LastEvent.Value);using(var pen=new Pen(gold,1))g.DrawRectangle(pen,x+p.X-3,88+p.Y-3,6,6);}
   var center=RadarPoint(camera);float span=world.MapWidth+world.MapHeight;
   float width=MW/zoom/Axis*148/span,height=MH/zoom/Rise*100/span;
   using(var pen=new Pen(pale,1))g.DrawRectangle(pen,x+center.X-width/2,88+center.Y-height/2,width,height);
+  // Mission intelligence is a coordinate, not reconnaissance or an online-radar bypass.
+  if(world.RelayMission&&world.RelayStation!=null){var p=RadarPoint(world.RelayStation.P);PixelCorners(g,new RectangleF(x+p.X-4,88+p.Y-4,8,8),gold);}
   g.Restore(state);
   hits.Add(new HitBox{Id="radar-map",Box=new RectangleF(x,88,148,100),Run=()=>RadarAction(RadarWorldPoint(new PointF(mouse.X-x,mouse.Y-88)),false),Right=()=>RadarAction(RadarWorldPoint(new PointF(mouse.X-x,mouse.Y-88)),true)});
  }

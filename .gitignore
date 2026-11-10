@@ -17,3 +17,10 @@ __pycache__/
 
 # Regenerable frames; model sources, materials and runtime packs are tracked.
 /art/source/**/frames/
+/docs/infantry-20261110/animation-frames/
+/docs/infantry-motion-20261110/preview-frames/
+
+# Diagnostic keyframes; keep the curated contact sheet and video.
+/docs/infantry-motion-20261110/at-*.png
+/docs/infantry-motion-20261110/squad-*.png
+/docs/infantry-motion-20261110/sniper-*.png

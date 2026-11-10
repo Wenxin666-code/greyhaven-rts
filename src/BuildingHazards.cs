@@ -72,8 +72,9 @@ namespace Greyhaven {partial class CommandWindow {
   var box=new RectangleF(anchor.X-size*.5f,anchor.Y-size*109/128,size,size);if(!g.IsVisible(box))return;EnsureHazard(kind);int frame=(int)(Math.Max(0,clock)*24)%96;
   DrawStamp(g,"hazard/"+kind,new Rectangle(frame%8*128,frame/8*128,128,128),box);
  }
+ static readonly PointF[] RelayFireSites={new PointF(182,207),new PointF(124,187),new PointF(218,164)};
  void BuildingFireFx(Graphics g,string key,RectangleF box,float time,int damage,float growth=1,float ready=1){
-  if(damage<=0)return;PointF[] sites;if(!StructuralV10.FireSites.TryGetValue(key,out sites))return;
+  if(damage<=0)return;PointF[] sites;if(!StructuralV10.FireSites.TryGetValue(key,out sites)){if(key!="relay"&&key!="bunker")return;sites=key=="bunker"?new[]{new PointF(150,199),new PointF(211,203),new PointF(120,176)}:RelayFireSites;}
   var spec=BuildingV08.Specs[key];float z=box.Width*LotSpan/(FrameSize*(spec.Width+spec.Depth)*Campaign.Tile*Axis);
   if(ready<1){var site=new PointF(160,214);StructuralSite[][] construction;if(StructuralV10.Sites.TryGetValue(key,out construction))foreach(var candidate in construction[0])if(candidate.Time<=ready)site=candidate.Point;sites=new[]{site};}
   int count=Math.Min(sites.Length,damage==1?1:damage==2?2:sites.Length);

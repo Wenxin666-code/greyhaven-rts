@@ -32,11 +32,11 @@ partial class CommandWindow {
  }
  void DrawDiplomacy(Graphics g){
   Plate(g,new RectangleF(280,134,910,535),panel,gold);Txt(g,"阵营信息",312,158,30,pale,true);Txt(g,"本关阵营关系固定；各敌方互相敌对。",314,205,16,dim);
-  for(int side=0;side<world.FactionCount;side++){float y=250+side*50;Rect(g,315,y+8,19,19,UnitColor(side));Txt(g,Campaign.FactionName(side),352,y+7,19,pale,true);Txt(g,side==0?"我方":world.HasSurrendered(side)?"已投降":world.Remaining(side)==0?"已歼灭":"敌对 · 关卡锁定",607,y+8,16,dim);}
+  for(int side=0;side<world.FactionCount;side++){float y=250+side*50;Rect(g,315,y+8,19,19,UnitColor(side));Txt(g,world.StoryFactionName(side),352,y+7,19,pale,true);Txt(g,side==0?"我方":world.HasSurrendered(side)?"已投降":world.Remaining(side)==0?"已歼灭":"互相敌对",607,y+8,16,dim);Txt(g,world.StoryFactionTask(side),787,y+10,14,dim);}
   Button(g,935,601,205,39,"返回战场 [Tab]",()=>diplomacyOpen=false,true);
  }
  void SidebarScroll(int direction){int rows=(ProductionCards().Length+1)/2;sidebarRow=Math.Max(0,Math.Min(Math.Max(0,rows-6),sidebarRow+direction));hudDirty=true;}
- void DrawStatusMessage(Graphics g){if(world.Radio.Length>0)Txt(g,world.Radio.Length>78?world.Radio.Substring(0,78):world.Radio,14,12,14,gold,true);}
+ void DrawStatusMessage(Graphics g){string message=world.Time<world.StoryNoticeUntil?world.StoryNotice:world.Radio;if(!String.IsNullOrEmpty(message))Txt(g,message.Length>78?message.Substring(0,78):message,14,12,14,gold,true);}
  void DrawSelectionPips(Graphics g,Piece unit,PointF p){
   if(!selection.Contains(unit)||!unit.Alive)return;
   if(unit.Rank>0){float x=p.X-8,y=p.Y-5;for(int i=0;i<unit.Rank;i++){Line(g,x,y-i*5,x+4,y-i*5-3,gold);Line(g,x+4,y-i*5-3,x+8,y-i*5,gold);}}

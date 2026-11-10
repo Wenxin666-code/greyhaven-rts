@@ -1,5 +1,5 @@
-[CmdletBinding()]
-param([switch]$HaulVerify,[switch]$HaulPreview,[switch]$TempoVerify,[switch]$TempoPreview,[switch]$ControlsVerify,[switch]$ControlsPreview,[switch]$IslandPreview,[switch]$AiVerify,[switch]$ProductionVerify,[switch]$BlastVerify,[switch]$BlastPreview,[switch]$StructurePreview,[switch]$MotionPreview,[switch]$BuildingPreview,[switch]$ScrollVerify,[switch]$ScrollPreview,[switch]$QueuePreview,[switch]$Test,[switch]$MeasureFrames,[switch]$MeasureScroll,[switch]$ModelPreview,[switch]$SpacingPreview,[switch]$PresentationPreview,[switch]$TrafficPreview,[switch]$AnimationPreview,[switch]$MapPreview,[switch]$RiverPreview,[switch]$PathingPreview,[switch]$EconomyPreview,[switch]$ConstructionPreview,[switch]$InterfacePreview,[string]$DriveFrames,[string]$OreFrames)
+﻿[CmdletBinding()]
+param([switch]$InfantryVerify,[switch]$InfantryPreview,[switch]$VeterancyVerify,[switch]$VeterancyPreview,[switch]$PerformanceIFVVerify,[switch]$PerformanceIFVPreview,[switch]$NativePerformance,[int]$PerformanceWarmup=580,[switch]$BalanceVerify,[switch]$BalancePreview,[switch]$StoryVerify,[switch]$StoryPreview,[switch]$RelayVerify,[switch]$RelayPreview,[switch]$MinerVerify,[switch]$PerformanceVerify,[switch]$TerritoryVerify,[switch]$DefenseVerify,[switch]$DefensePreview,[switch]$HaulVerify,[switch]$HaulPreview,[switch]$TempoVerify,[switch]$TempoPreview,[switch]$ControlsVerify,[switch]$ControlsPreview,[switch]$IslandPreview,[switch]$AiVerify,[switch]$ProductionVerify,[switch]$BlastVerify,[switch]$BlastPreview,[switch]$StructurePreview,[switch]$MotionPreview,[switch]$BuildingPreview,[switch]$ScrollVerify,[switch]$ScrollPreview,[switch]$QueuePreview,[switch]$Test,[switch]$MeasureFrames,[switch]$MeasureScroll,[switch]$ModelPreview,[switch]$SpacingPreview,[switch]$PresentationPreview,[switch]$TrafficPreview,[switch]$AnimationPreview,[switch]$MapPreview,[switch]$RiverPreview,[switch]$PathingPreview,[switch]$EconomyPreview,[switch]$ConstructionPreview,[switch]$InterfacePreview,[string]$DriveFrames,[string]$OreFrames)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
@@ -25,6 +25,10 @@ foreach ($layer in @('base','paint','wreck')) {
 }
 $images += @(Get-ChildItem -LiteralPath (Join-Path $art 'console') -Filter '*.png' | Where-Object { $_.Name -ne 'portraits.png' })
 $resources = @($images | ForEach-Object { '/resource:' + $_.FullName + ',Greyhaven.Art.' + $_.Name })
+$infantryPack=Get-Item -LiteralPath (Join-Path $art "infantry-v12/packed/infantry-v12.pak")
+$resources += "/resource:" + $infantryPack.FullName + ",Greyhaven.Art.infantry-v12.pak"
+$relayPack=Get-Item -LiteralPath (Join-Path $art 'relay-v01/packed/relay-v01.pak')
+$resources += '/resource:' + $relayPack.FullName + ',Greyhaven.Art.relay-v01.pak'
 $pack=Get-Item -LiteralPath (Join-Path $art 'buildings-v09/packed/buildings-v09.pak')
 $resources += '/resource:' + $pack.FullName + ',Greyhaven.Art.buildings-v09.pak'
 $structurePack=Get-Item -LiteralPath (Join-Path $art 'buildings-v10/packed/structures-v10.pak')
@@ -41,9 +45,144 @@ foreach($effect in @('blast-cloud-source','blast-cloud','debris-base','debris-pa
 }
 $resources += '/resource:' + (Join-Path $art 'isometric/ground.png') + ',Greyhaven.Art.materials.png'
 $options = @('/nologo','/optimize+','/platform:x64','/codepage:65001',('/win32manifest:' + (Join-Path $root 'src/game.manifest')),'/r:System.Windows.Forms.dll','/r:System.Drawing.dll',('/win32icon:' + (Join-Path $root 'art/command.ico')))
+if ($InfantryVerify -or $InfantryPreview -or $Test) {
+ foreach($main in @($(if($InfantryVerify -or $Test){'InfantryChecks'}),$(if($InfantryPreview){'InfantryInterfaceChecks'}))) {
+  if(-not $main){continue}
+  $check=Join-Path ([IO.Path]::GetTempPath()) ('greyhaven-infantry-'+[guid]::NewGuid()+'.exe')
+  try {
+   & $compiler @options "/out:$check" "/main:$main" @resources @source (Join-Path $root ('tests/'+$main+'.cs'))
+   if($LASTEXITCODE){throw '步兵专项编译失败'}
+   & $check (Join-Path $root 'docs/infantry-20261110')
+   if($LASTEXITCODE){throw '步兵专项验证失败'}
+  } finally {if(Test-Path -LiteralPath $check){Remove-Item -LiteralPath $check}}
+ }
+}
 $exe = Join-Path $root '断线前沿.exe'
 & $compiler @options /target:winexe "/out:$exe" @resources @source
 if ($LASTEXITCODE) { throw '构建失败，请先关闭正在运行的游戏。' }
+if ($VeterancyVerify -or $VeterancyPreview -or $Test) {
+ $output=Join-Path $root 'docs/veterancy-20261110'
+ [IO.Directory]::CreateDirectory($output)|Out-Null
+ foreach($checkMain in @($(if($VeterancyVerify -or $Test){'AdjacencyVeterancyChecks'}),$(if($VeterancyPreview){'AdjacencyVeterancyInterfaceChecks'}))){
+  if(-not $checkMain){continue}
+  $check=Join-Path ([IO.Path]::GetTempPath()) ('greyhaven-veterancy-'+[guid]::NewGuid()+'.exe')
+  $checkResources=@();if($checkMain -eq 'AdjacencyVeterancyInterfaceChecks'){$checkResources=$resources}
+  try{
+   & $compiler @options "/out:$check" "/main:$checkMain" @checkResources @source (Join-Path $root ('tests/'+$checkMain+'.cs'))
+   if($LASTEXITCODE){throw '晋升与扩建检查编译失败'}
+   & $check $output
+   if($LASTEXITCODE){throw '晋升与扩建检查未通过'}
+  }finally{if(Test-Path -LiteralPath $check){Remove-Item -LiteralPath $check}}
+ }
+}
+if ($PerformanceIFVVerify -or $PerformanceIFVPreview -or $NativePerformance) {
+ $output=Join-Path $root 'docs/performance-20261110'
+ [IO.Directory]::CreateDirectory($output)|Out-Null
+ foreach($checkMain in @($(if($PerformanceIFVVerify){'PerformanceAndIFVChecks'}),$(if($PerformanceIFVPreview){'PerformanceInterfaceChecks'}),$(if($NativePerformance){'PerformanceNativeChecks'}))){
+  if(-not $checkMain){continue}
+  $check=Join-Path ([IO.Path]::GetTempPath()) ('greyhaven-performance-'+[guid]::NewGuid()+'.exe')
+  $testFiles=@((Join-Path $root ('tests/'+$checkMain+'.cs')))
+  if($checkMain -eq 'PerformanceAndIFVChecks'){$testFiles+=Join-Path $root 'tests/ThirdMissionChecks.cs'}
+  if($checkMain -eq 'PerformanceInterfaceChecks'){$testFiles+=Join-Path $root 'tests/ParallelProductionChecks.cs'}
+  if($checkMain -eq 'PerformanceNativeChecks'){$testFiles+=Join-Path $root 'tests/AiStandoffSimulation.cs'}
+  try{
+   & $compiler @options "/out:$check" "/main:$checkMain" @resources @source @testFiles
+   if($LASTEXITCODE){throw '性能与载员检查编译失败'}
+   & $check (Join-Path $output $checkMain) $PerformanceWarmup
+   if($LASTEXITCODE){throw '性能与载员检查未通过'}
+  }finally{if(Test-Path -LiteralPath $check){Remove-Item -LiteralPath $check}}
+ }
+}
+if ($BalanceVerify -or $Test) {
+ $check=Join-Path ([IO.Path]::GetTempPath()) ("greyhaven-balance-{0}.exe" -f [guid]::NewGuid())
+ try {
+  & $compiler @options "/out:$check" /main:BalanceChecks @source (Join-Path $root 'tests/BalanceChecks.cs')
+  if($LASTEXITCODE){throw '数值检查编译失败'}
+  & $check (Join-Path $root 'docs/balance-20261109')
+  if($LASTEXITCODE){throw '数值检查未通过'}
+ }finally{if(Test-Path -LiteralPath $check){Remove-Item -LiteralPath $check}}
+}
+if ($BalancePreview) {
+ $check=Join-Path ([IO.Path]::GetTempPath()) ("greyhaven-balance-ui-{0}.exe" -f [guid]::NewGuid())
+ try {
+  & $compiler @options "/out:$check" /main:BalanceInterfaceChecks @resources @source (Join-Path $root 'tests/BalanceInterfaceChecks.cs')
+  if($LASTEXITCODE){throw '数值界面编译失败'}
+  & $check (Join-Path $root 'docs/balance-20261109')
+  if($LASTEXITCODE){throw '数值界面检查未通过'}
+ }finally{if(Test-Path -LiteralPath $check){Remove-Item -LiteralPath $check}}
+}
+if ($StoryVerify -or $Test) {
+ $storyCheck=Join-Path ([IO.Path]::GetTempPath()) ("greyhaven-story-{0}.exe" -f [guid]::NewGuid())
+ try {
+  & $compiler @options "/out:$storyCheck" /main:CampaignStoryChecks @source (Join-Path $root 'tests/CampaignStoryChecks.cs') (Join-Path $root 'tests/TerritorialAiChecks.cs')
+  if($LASTEXITCODE){throw '战役行为检查编译失败'}
+  & $storyCheck
+  if($LASTEXITCODE){throw '战役行为检查未通过'}
+ }finally{if(Test-Path -LiteralPath $storyCheck){Remove-Item -LiteralPath $storyCheck}}
+}
+if ($StoryPreview) {
+ $storyCheck=Join-Path ([IO.Path]::GetTempPath()) ("greyhaven-story-ui-{0}.exe" -f [guid]::NewGuid())
+ try {
+  & $compiler @options "/out:$storyCheck" /main:CampaignStoryInterfaceChecks @resources @source (Join-Path $root 'tests/CampaignStoryInterfaceChecks.cs')
+  if($LASTEXITCODE){throw '战役界面检查编译失败'}
+  & $storyCheck (Join-Path $root 'docs/story-ai-20261109')
+  if($LASTEXITCODE){throw '战役界面检查未通过'}
+ }finally{if(Test-Path -LiteralPath $storyCheck){Remove-Item -LiteralPath $storyCheck}}
+}
+if ($RelayVerify -or $Test) {
+ $relayCheck=Join-Path ([IO.Path]::GetTempPath()) ("greyhaven-relay-{0}.exe" -f [guid]::NewGuid())
+ try {
+  & $compiler @options "/out:$relayCheck" /main:RelayMissionChecks @source (Join-Path $root 'tests/RelayMissionChecks.cs') (Join-Path $root 'tests/RelaySimulationChecks.cs')
+  if($LASTEXITCODE){throw '第四关检查编译失败'}
+  & $relayCheck
+  if($LASTEXITCODE){throw '第四关检查未通过'}
+ }finally{if(Test-Path -LiteralPath $relayCheck){Remove-Item -LiteralPath $relayCheck}}
+}
+if ($RelayPreview) {
+ $relayCheck=Join-Path ([IO.Path]::GetTempPath()) ("greyhaven-relay-ui-{0}.exe" -f [guid]::NewGuid())
+ try {
+  & $compiler @options "/out:$relayCheck" /main:RelayInterfaceChecks @resources @source (Join-Path $root 'tests/RelayInterfaceChecks.cs')
+  if($LASTEXITCODE){throw '第四关预览编译失败'}
+  & $relayCheck (Join-Path $root 'docs/relay-20261109')
+  if($LASTEXITCODE){throw '第四关界面检查未通过'}
+ }finally{if(Test-Path -LiteralPath $relayCheck){Remove-Item -LiteralPath $relayCheck}}
+}
+if ($MinerVerify -or $Test) {
+ $minerCheck=Join-Path ([IO.Path]::GetTempPath()) ("greyhaven-miner-{0}.exe" -f [guid]::NewGuid())
+ try {
+  & $compiler @options "/out:$minerCheck" /main:MinerDeliveryChecks @source (Join-Path $root 'tests/MinerDeliveryChecks.cs')
+  if($LASTEXITCODE){throw '矿车返厂检查编译失败'}
+  & $minerCheck
+  if($LASTEXITCODE){throw '矿车返厂检查未通过'}
+ }finally{if(Test-Path -LiteralPath $minerCheck){Remove-Item -LiteralPath $minerCheck}}
+}
+if ($PerformanceVerify -or $Test) {
+ $performanceCheck=Join-Path ([IO.Path]::GetTempPath()) ("greyhaven-performance-{0}.exe" -f [guid]::NewGuid())
+ try {
+  & $compiler @options "/out:$performanceCheck" /main:PerformanceChecks @source (Join-Path $root 'tests/PerformanceChecks.cs')
+  if($LASTEXITCODE){throw '性能等价检查编译失败'}
+  & $performanceCheck
+  if($LASTEXITCODE){throw '性能等价检查未通过'}
+ }finally{if(Test-Path -LiteralPath $performanceCheck){Remove-Item -LiteralPath $performanceCheck}}
+}
+if ($TerritoryVerify -or $Test) {
+ $territoryCheck=Join-Path ([IO.Path]::GetTempPath()) ("greyhaven-territory-{0}.exe" -f [guid]::NewGuid())
+ try {
+  & $compiler @options "/out:$territoryCheck" /main:TerritorialAiChecks @resources @source (Join-Path $root 'tests/TerritorialAiChecks.cs')
+  if($LASTEXITCODE){throw '基地守备与出击检查编译失败'}
+  & $territoryCheck
+  if($LASTEXITCODE){throw '基地守备与出击检查未通过'}
+ }finally{if(Test-Path -LiteralPath $territoryCheck){Remove-Item -LiteralPath $territoryCheck}}
+}
+if ($DefenseVerify -or $DefensePreview -or $Test) {
+ $defenseCheck=Join-Path ([IO.Path]::GetTempPath()) ("greyhaven-defense-{0}.exe" -f [guid]::NewGuid())
+ try {
+  & $compiler @options "/out:$defenseCheck" /main:DefenseChecks @resources @source (Join-Path $root 'tests/DefenseChecks.cs')
+  if($LASTEXITCODE){throw '防御检查编译失败'}
+  if($DefensePreview){& $defenseCheck (Join-Path $root 'docs/defense-20261108')}else{& $defenseCheck}
+  if($LASTEXITCODE){throw '防御检查未通过'}
+ }finally{if(Test-Path -LiteralPath $defenseCheck){Remove-Item -LiteralPath $defenseCheck}}
+}
 if ($HaulVerify -or $HaulPreview -or $Test) {
  $haulCheck=Join-Path ([IO.Path]::GetTempPath()) ("greyhaven-haul-{0}.exe" -f [guid]::NewGuid())
  try {

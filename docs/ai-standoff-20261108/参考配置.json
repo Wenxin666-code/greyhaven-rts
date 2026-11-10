@@ -1,0 +1,17 @@
+{
+  "tree": "https://api.github.com/repos/CnCNet/cncnet-yr-client-package/git/trees/e4b5712df96ec3acb05ddbda9fe2ba63e30576ab?recursive=1",
+  "matches": [
+    "game-assets/cncnet.pack/aimd.ini"
+  ],
+  "saved": [
+    {
+      "url": "https://raw.githubusercontent.com/CnCNet/cncnet-yr-client-package/e4b5712df96ec3acb05ddbda9fe2ba63e30576ab/game-assets/cncnet.pack/aimd.ini",
+      "sha256": "08ed525b0b9aa47fce2090d9467c7b8cd4021777a0624fd7435acdb8c6399d11",
+      "file": "aimd.ini"
+    }
+  ],
+  "rules": {
+    "url": "https://github.com/CnCNet/cncnet-yr-client-package/blob/e4b5712df96ec3acb05ddbda9fe2ba63e30576ab/game-assets/ra2mode.pack/rulesmd.ini",
+    "sha256": "010af82ebf5b4df28920e38e88cfe9bc945e7cdc764298caab037fc00fbd013b"
+  }
+}

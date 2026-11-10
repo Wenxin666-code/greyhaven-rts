@@ -4,8 +4,8 @@ using System.Windows.Forms;
 namespace Greyhaven {
 partial class CommandWindow {
  bool modelReview,modelSpin=true,modelPower=true;float modelAngle=56;Color modelColor=Color.FromArgb(62,133,190);
- int modelUnit=4,modelBuildingMode;float modelClock,modelMotorTime,modelLastClock;string modelMachineKey;bool modelLoaded,modelBuildings,modelWalking;
- static readonly string[] buildingRoster={"hq","power","barracks","factory","radar","post","refinery","satellite","residence","shop","municipal"};
+ int modelUnit=4,modelBuildingMode;float modelClock,modelMotorTime,modelLastClock;string modelMachineKey;bool modelLoaded,modelBuildings,modelWalking,modelEntrenched,modelAiming;
+ static readonly string[] buildingRoster={"hq","power","barracks","factory","radar","post","refinery","satellite","residence","shop","municipal","bunker"};
  void OpenModelReview(){modelReview=true;modelBuildings=false;modelUnit=4;modelLoaded=false;modelSpin=true;modelAngle=56;modelColor=UnitColor(0);hits.Clear();hudDirty=true;Invalidate();}
  Rectangle ReviewFrame(TypeInfo t){return t.Key=="tank"?TankCell(0,(int)modelAngle%64):SourceCell(t,0,t.Foot?((int)Math.Round(modelAngle/8)%8)*2:(int)Math.Round(modelAngle/4)%16);}
  void CloseModelReview(){modelReview=false;hits.Clear();ClearStampCache();hudDirty=true;}
@@ -15,8 +15,18 @@ partial class CommandWindow {
   if(!modelBuildings&&(key==Keys.Left||key==Keys.Right)){modelSpin=false;modelAngle=(modelAngle+(key==Keys.Left?63:1))%64;}
   hudDirty=true;Invalidate();
  }
+ void DrawCombatPreview(Graphics g,TypeInfo t,RectangleF standing){
+  int view=(int)Math.Round(modelAngle/8)%8;float w=standing.Width*3/2.7f;var box=new RectangleF(standing.X+(standing.Width-w)/2,standing.Y+(standing.Width-w)*.91f,w,w);
+  float cycle=modelClock%2.0f;int frame=cycle<.4f?(int)(cycle/.4f*8):cycle<.9f?8:cycle<1.25f?9+Math.Min(7,(int)((cycle-.9f)/.35f*8)):cycle<1.6f?8:Math.Max(0,(int)((2-cycle)/.4f*8));
+  DrawCombatStamp(g,"combat/"+t.Key+(modelEntrenched?"-deployed":"")+"/"+view+"/"+frame,box,modelColor);
+ }
+ void DrawStancePreview(Graphics g,TypeInfo t,RectangleF standing){
+  int view=(int)Math.Round(modelAngle/8)%8;float w=standing.Width*3/2.7f;var box=new RectangleF(standing.X+(standing.Width-w)/2,standing.Y+(standing.Width-w)*.91f,w,w);
+  float cycle=modelClock%3.8f;float q=cycle<1.1f?cycle/1.1f:cycle<1.9f?1:cycle<3?(3-cycle)/1.1f:0;
+  DrawStamp(g,"stance/"+t.Key+"/"+view+"/"+(int)Math.Round(q*32),new Rectangle(0,0,384,384),box,modelColor);
+ }
  void DrawGaitPreview(Graphics g,TypeInfo t,RectangleF standing){
-  int view=(int)Math.Round(modelAngle/8)%8,frame=(int)(modelClock*24)%GaitV09.Frames;float w=standing.Width*3/2.7f;var full=new RectangleF(standing.X+(standing.Width-w)/2,standing.Y+(standing.Width-w)*.91f,w,w);var crop=GaitV09.Crop(t.Key,view);var box=new RectangleF(full.X+full.Width*crop.X/GaitV09.Cell,full.Y+full.Height*crop.Y/GaitV09.Cell,full.Width*crop.Width/GaitV09.Cell,full.Height*crop.Height/GaitV09.Cell);DrawStamp(g,"gait/"+t.Key+"/"+view+"/"+frame,new Rectangle(Point.Empty,crop.Size),box,modelColor);
+  int view=(int)Math.Round(modelAngle/8)%8,frame=(int)(modelClock*24)%GaitV09.Frames;float w=standing.Width*3/2.7f;var full=new RectangleF(standing.X+(standing.Width-w)/2,standing.Y+(standing.Width-w)*.91f,w,w);var crop=InfantryGaitCrop(t.Key,view);var box=new RectangleF(full.X+full.Width*crop.X/GaitV09.Cell,full.Y+full.Height*crop.Y/GaitV09.Cell,full.Width*crop.Width/GaitV09.Cell,full.Height*crop.Height/GaitV09.Cell);DrawStamp(g,"gait/"+t.Key+"/"+view+"/"+frame,new Rectangle(Point.Empty,crop.Size),box,modelColor);
  }
  void DrawModelBuilding(Graphics g,string key,RectangleF box,bool effects=true){
   if(modelMachineKey!=key||modelClock<modelLastClock){modelMachineKey=key;modelMotorTime=0;}if(modelPower)modelMotorTime+=Math.Max(0,modelClock-modelLastClock);modelLastClock=modelClock;
@@ -44,7 +54,7 @@ partial class CommandWindow {
   Button(g,990,119,175,43,"部队模型",()=>{modelBuildings=false;modelUnit=4;modelSpin=true;ClearStampCache();},!modelBuildings);
   Button(g,1180,119,175,43,"建筑模型",()=>{modelBuildings=true;modelUnit=0;modelSpin=true;modelClock=0;modelBuildingMode=0;ClearStampCache();},modelBuildings);
   for(int i=0;i<keys.Length;i++){
-   int n=i;Button(g,65+(modelBuildings?i%6*148:i*111),182+(modelBuildings?i/6*45:0),modelBuildings?140:104,40,Campaign.Info(keys[i]).Name,()=>{modelUnit=n;modelLoaded=false;modelClock=0;ClearStampCache();},i==modelUnit);
+   int n=i;Button(g,65+(modelBuildings?i%6*148:i*98),182+(modelBuildings?i/6*45:0),modelBuildings?140:92,40,Campaign.Info(keys[i]).Name,()=>{modelUnit=n;modelLoaded=false;modelEntrenched=false;modelAiming=false;modelClock=0;ClearStampCache();},i==modelUnit);
   }
   var pad=new RectangleF(65,modelBuildings?274:235,884,modelBuildings?362:401);Rect(g,pad.X,pad.Y,pad.Width,pad.Height,C("#263137"));
   // Quiet floor axes make the ground projection legible without distracting terrain.
@@ -55,10 +65,10 @@ partial class CommandWindow {
   }
   g.Restore(floor);
   var crop=ReviewFrame(t);var box=t.Building?ModelBuildingBox(t,pad):t.Foot?new RectangleF(300,215,395,395):new RectangleF(210,172,600,600);
-  if(t.Building)DrawModelBuilding(g,t.Key,box);else if(t.Foot&&modelWalking)DrawGaitPreview(g,t,box);else DrawStamp(g,artKey,crop,box,modelColor);
+  if(t.Building)DrawModelBuilding(g,t.Key,box);else if(modelAiming&&t.Key!="engineer"&&t.Foot)DrawCombatPreview(g,t,box);else if(t.DeployableFoot&&modelEntrenched)DrawStancePreview(g,t,box);else if(t.Foot&&modelWalking)DrawGaitPreview(g,t,box);else DrawStamp(g,artKey,crop,box,modelColor);
   Txt(g,modelBuildings?"占地 "+t.FoundationWidth+" × "+t.FoundationHeight+" 格 · 固定战场朝向":"同一模型的完整转向视图",83,606,15,dim);
   if(!modelBuildings){
-  Button(g,69,653,140,43,modelSpin?(modelWalking&&t.Foot?"暂停动画":"暂停转动"):(modelWalking&&t.Foot?"播放动画":"自动转动"),()=>modelSpin=!modelSpin);
+  Button(g,69,653,140,43,modelSpin?((modelWalking||modelEntrenched||modelAiming)&&t.Foot?"暂停动画":"暂停转动"):((modelWalking||modelEntrenched||modelAiming)&&t.Foot?"播放动画":"自动转动"),()=>modelSpin=!modelSpin);
   Button(g,224,653,100,43,"‹ 左转",()=>{modelSpin=false;modelAngle=(modelAngle+63)%64;});
   Button(g,339,653,100,43,"右转 ›",()=>{modelSpin=false;modelAngle=(modelAngle+1)%64;});
   }
@@ -88,11 +98,13 @@ partial class CommandWindow {
    DrawModelBuilding(g,t.Key,BuildingRect(Campaign.Footprint(t,PointF.Empty),new PointF(1180,668),DefaultZoom),false);
    Txt(g,"默认镜头 · 原有占格比例",1090,706,13,dim);
   }else{
-  if(t.Foot&&modelWalking){DrawGaitPreview(g,t,SoldierBox(new PointF(1048,619),t.Size*DefaultZoom));DrawGaitPreview(g,t,SoldierBox(new PointF(1213,619),t.Size*2.4f));}else{
+  if(modelAiming&&t.Foot&&t.Key!="engineer"){DrawCombatPreview(g,t,SoldierBox(new PointF(1048,619),t.Size*DefaultZoom));DrawCombatPreview(g,t,SoldierBox(new PointF(1213,619),t.Size*2.4f));}else if(t.DeployableFoot&&modelEntrenched){DrawStancePreview(g,t,SoldierBox(new PointF(1048,619),t.Size*DefaultZoom));DrawStancePreview(g,t,SoldierBox(new PointF(1213,619),t.Size*2.4f));}else if(t.Foot&&modelWalking){DrawGaitPreview(g,t,SoldierBox(new PointF(1048,619),t.Size*DefaultZoom));DrawGaitPreview(g,t,SoldierBox(new PointF(1213,619),t.Size*2.4f));}else{
   DrawStamp(g,artKey,crop,t.Foot?SoldierBox(new PointF(1048,619),t.Size*DefaultZoom):VehicleRect(t,new PointF(1048,619),t.Size*DefaultZoom),modelColor);
   DrawStamp(g,artKey,crop,t.Foot?SoldierBox(new PointF(1213,619),t.Size*2.4f):VehicleRect(t,new PointF(1213,619),t.Size*2.4f),modelColor);
   }
-  if(t.Foot)Button(g,660,653,180,43,modelWalking?"查看站立":"查看行走",()=>{modelWalking=!modelWalking;modelClock=0;});
+  if(t.DeployableFoot)Button(g,988,518,185,28,modelEntrenched?"停止部署演示":"部署／收起演示",()=>{modelEntrenched=!modelEntrenched;modelSpin=true;modelClock=0;modelWalking=false;modelAiming=false;});
+  if(t.Foot&&t.Key!="engineer")Button(g,848,653,100,43,modelAiming?"停止瞄准":"瞄准开火",()=>{modelAiming=!modelAiming;modelWalking=false;modelClock=0;});
+  if(t.Foot)Button(g,660,653,180,43,modelWalking?"查看站立":"查看行走",()=>{modelWalking=!modelWalking;modelEntrenched=false;modelAiming=false;modelClock=0;});
   if(t.Key=="miner")Button(g,660,653,180,43,modelLoaded?"切换空载":"切换满载",()=>modelLoaded=!modelLoaded);
   Txt(g,"默认镜头",1015,635,13,dim);Txt(g,"放大镜头",1180,650,13,dim);
   }

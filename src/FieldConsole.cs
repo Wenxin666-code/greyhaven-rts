@@ -7,7 +7,7 @@ namespace Greyhaven {
 partial class CommandWindow {
  bool queueOpen;int queueIndex,queuePage,queuePageSource;
  void StartMission(bool tutorial,bool easy){
-  Restart();ResetMatchClock(tutorial);world=new Campaign(tutorial,easy);selection.Clear();selection.Add(world.Units[0]);briefing=false;edgeArmed=true;
+  Restart();ResetMatchClock(tutorial);world=new Campaign(tutorial,easy);world.PrepareBattleNavigation();selection.Clear();selection.Add(world.Units[0]);briefing=false;edgeArmed=true;
  }
  void DrawTiles(Graphics g,RectangleF r,Color color,bool lines){
   Rect(g,r.X,r.Y,r.Width,r.Height,Color.FromArgb(lines?38:48,color));

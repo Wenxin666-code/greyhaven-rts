@@ -9,8 +9,12 @@ namespace Greyhaven {
 // Decode only frames currently needed by the viewport; never allocate full atlases.
 internal sealed class IndexedSpritePack {
  readonly string resource;readonly Dictionary<string,Tuple<long,int>> index=new Dictionary<string,Tuple<long,int>>();readonly long start;
- Stream Open(){return typeof(IndexedSpritePack).Assembly.GetManifestResourceStream("Greyhaven.Art."+resource);}
- internal IndexedSpritePack(string name){resource=name;using(var stream=Open())using(var reader=new BinaryReader(stream)){
+ readonly byte[] cached;
+ Stream Open(){return cached!=null?new MemoryStream(cached,false):typeof(IndexedSpritePack).Assembly.GetManifestResourceStream("Greyhaven.Art."+resource);}
+ internal IndexedSpritePack(string name):this(name,false){}
+ internal IndexedSpritePack(string name,bool keepSmallPack){resource=name;
+  if(keepSmallPack)using(var stream=Open())if(stream.Length<=8L*1024*1024)using(var memory=new MemoryStream()){stream.CopyTo(memory);cached=memory.ToArray();}
+  using(var stream=Open())using(var reader=new BinaryReader(stream)){
   if(System.Text.Encoding.ASCII.GetString(reader.ReadBytes(8))!="GHBLD008")throw new InvalidDataException(resource);
   int count=reader.ReadInt32();if(count<1||count>20000)throw new InvalidDataException(resource);
   for(int i=0;i<count;i++){int length=reader.ReadUInt16();string key=System.Text.Encoding.UTF8.GetString(reader.ReadBytes(length));long offset=reader.ReadInt64();int bytes=reader.ReadInt32();if(offset<0||bytes<0)throw new InvalidDataException(key);index.Add(key,Tuple.Create(offset,bytes));}
@@ -25,11 +29,14 @@ internal sealed class IndexedSpritePack {
 // Stable indexed format; V10 structural transitions overlay unchanged V09 idle art.
 internal static partial class BuildingV08 {
  internal const int Frames=72,PartialFrames=48,IdleFrames=96,IdleFps=24,DoorFrames=16,DeployFrames=96;
+ static readonly IndexedSpritePack infantry=new IndexedSpritePack("infantry-v12.pak");
+ static string InfantryAlias(string key){return key=="at-base"?"at-mobile-base":key=="at-paint"?"at-mobile-paint":key.StartsWith("gait/at/",StringComparison.Ordinal)?key.Replace("gait/at/","gait/at-mobile/"):key;}
+ static readonly IndexedSpritePack relay=new IndexedSpritePack("relay-v01.pak",true);
  static readonly IndexedSpritePack buildings=new IndexedSpritePack("buildings-v09.pak"),structures=new IndexedSpritePack("structures-v10.pak"),walking=new IndexedSpritePack("gait-v09.pak");
- internal static bool Has(string name){return structures.Has(name)||buildings.Has(name)||name.StartsWith("gait/",StringComparison.Ordinal)&&walking.Has(name);}
- internal static Bitmap Read(string name){return name.StartsWith("gait/",StringComparison.Ordinal)?walking.Read(name):structures.Has(name)?structures.Read(name):buildings.Read(name);}
+ internal static bool Has(string name){return infantry.Has(InfantryAlias(name))||relay.Has(name)||structures.Has(name)||buildings.Has(name)||name.StartsWith("gait/",StringComparison.Ordinal)&&walking.Has(name);}
+ internal static Bitmap Read(string name){return infantry.Has(InfantryAlias(name))?infantry.Read(InfantryAlias(name)):relay.Has(name)?relay.Read(name):name.StartsWith("gait/",StringComparison.Ordinal)?walking.Read(name):structures.Has(name)?structures.Read(name):buildings.Read(name);}
  internal static bool IsBuilding(string key){return Specs.ContainsKey(key);}
- internal static bool Contribution(string key){return IsBuilding(key)||key=="debris-v11"||key.StartsWith("b08/",StringComparison.Ordinal)||key.StartsWith("gait/",StringComparison.Ordinal);}
+ internal static bool Contribution(string key){return IsBuilding(key)||key.StartsWith("combat/",StringComparison.Ordinal)||key=="squad"||key=="sniper"||key=="at"||key.StartsWith("stance/",StringComparison.Ordinal)||key=="debris-v11"||key.StartsWith("b08/",StringComparison.Ordinal)||key.StartsWith("gait/",StringComparison.Ordinal);}
 }
 partial class CommandWindow {
  const long BuildingFrameBudget=64L*1024*1024;

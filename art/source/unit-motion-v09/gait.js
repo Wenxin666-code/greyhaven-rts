@@ -19,7 +19,7 @@ window.GaitBake=(()=>{
  function rotate(v,pivot,angle,target){const y=v.y-pivot.y,z=v.z-pivot.z,c=Math.cos(angle),s=Math.sin(angle);return new T.Vector3(v.x-pivot.x+target.x,y*c-z*s+target.y,y*s+z*c+target.z);}
  function pose(phase,view){const c=current,legs={};legs[-1]=solve(-1,phase);legs[1]=solve(1,phase);const v=new T.Vector3();
   for(const part of c.mesh){const pos=part.o.geometry.attributes.position;for(let i=0;i<pos.count;i++){v.fromArray(part.world,i*3);let transformed;
-    if(v.y>.91)transformed=v.clone().add(new T.Vector3(.008*Math.sin(phase*Math.PI*2),-.025+.01*Math.cos(phase*Math.PI*4),0));
+    if(part.o.userData.fieldPanel!==undefined||part.o.userData.rigidEquipment||part.o.userData.armSide||v.y>.91)transformed=v.clone().add(new T.Vector3(.008*Math.sin(phase*Math.PI*2),-.025+.01*Math.cos(phase*Math.PI*4),0));
     else{const leg=legs[v.x<0?-1:1];if(v.y<.19)transformed=rotate(v,leg.ankle,0,leg.newAnkle);else{const upper=rotate(v,leg.hip,leg.upper,leg.newHip),lower=rotate(v,leg.ankle,leg.lower,leg.newAnkle);transformed=lower.lerp(upper,smooth((v.y-.45)/.16));}}
     transformed.applyMatrix4(part.inverse);pos.setXYZ(i,transformed.x,transformed.y,transformed.z);
    }pos.needsUpdate=true;part.o.geometry.computeVertexNormals();}
@@ -29,5 +29,5 @@ window.GaitBake=(()=>{
   renderer.render(c.scene,c.camera);const canvas=document.createElement('canvas');canvas.width=canvas.height=N;canvas.getContext('2d').drawImage(renderer.domElement,0,0,N,N);for(const p of c.mesh)p.o.material=p.material;temporary.forEach(m=>m.dispose());return canvas.toDataURL();
  }
  function frame(view,index){pose(index/12,view);return {base:image(false),paint:image(true)};}
- return {open,frame,dispose};
+ return {open,frame,dispose,model:(view,index)=>{pose(index/12,view);return current.root;}};
 })();

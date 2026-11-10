@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Collections.Generic;
@@ -55,7 +55,7 @@ namespace Greyhaven {partial class CommandWindow {
  }
  Campaign facilityWorld;float facilityAt=-1;readonly bool[] facilityPower=new bool[Campaign.MaxFactions];
  bool FacilityOperating(Piece o){
-  if(o.Side<0||o.T.Key=="power")return true;
+  if(o.Side<0||o.T.Key=="power"||Campaign.IsRelayStation(o))return true;
   if(facilityWorld!=world||facilityAt!=world.VisualTime){facilityWorld=world;facilityAt=world.VisualTime;for(int i=0;i<Campaign.MaxFactions;i++)facilityPower[i]=world.Power(i)>=0;}
   return o.Side<Campaign.MaxFactions&&facilityPower[o.Side];
  }

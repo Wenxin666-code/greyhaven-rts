@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-10",
+  "status": "local-only; not committed or uploaded",
+  "executable": "D:\\游戏制作\\未命名项目\\断线前沿.exe",
+  "sha256": "00cbbb6054e1c6e4fa05b90296da5be34c8ecca1b29b20c3dcdd6f40650ff8a8",
+  "bytes": 288412672,
+  "stance_frames_per_direction": 33,
+  "directions": 8,
+  "stance_seconds": 1.1,
+  "checks": {
+    "infantry_assertions": 148,
+    "native_preview_and_tint": "passed",
+    "rigid_weapon_and_reversible_geometry": "passed"
+  },
+  "preview": "部署与收起-修订.mp4"
+}

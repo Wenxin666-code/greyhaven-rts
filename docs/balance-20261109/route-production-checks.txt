@@ -1,0 +1,8 @@
+Relay physical routes: IFV completed western approach; engineer walked from the player start and entered the 3x3 station.
+factory, faction 0: actual output after the same reference production cycles with 1 / 2 / 3 facilities = 2 / 4 / 6 units.
+factory, faction 1: actual output after the same reference production cycles with 1 / 2 / 3 facilities = 2 / 4 / 6 units.
+factory, faction 2: actual output after the same reference production cycles with 1 / 2 / 3 facilities = 2 / 4 / 6 units.
+barracks, faction 0: actual output after the same reference production cycles with 1 / 2 / 3 facilities = 4 / 8 / 12 units.
+barracks, faction 1: actual output after the same reference production cycles with 1 / 2 / 3 facilities = 4 / 8 / 12 units.
+barracks, faction 2: actual output after the same reference production cycles with 1 / 2 / 3 facilities = 4 / 8 / 12 units.
+Parallel production: completion/backlog, independent pause, blocked outlet, combat kill, capture, sell, exact costs, low power, three factions and infantry passed.

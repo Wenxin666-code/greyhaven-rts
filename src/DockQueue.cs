@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Linq;
 namespace Greyhaven {
@@ -11,13 +11,13 @@ public partial class Campaign {
    // This also avoids committing to the closest building on the wrong bank.
    if(!PlanRoute(truck,gate,null))continue;
    float distance=0;var previous=truck.P;foreach(var p in truck.Path){distance+=Dist(previous,p);previous=p;}
-   int ahead=Units.Count(u=>u!=truck&&u.Deployed&&u.Side==truck.Side&&u.Returning&&u.Dock==candidate&&
-    (u.DockReserved||EarlierDock(u,truck)&&Dist(u.P,gate)<180));
-   float cost=distance/Math.Max(1,truck.T.Speed)+ahead*1.6f;
+   // Choose the shortest reachable haul once per load. A normal unloading
+   // queue is not a reason to send a loaded truck to a more distant refinery.
+   float cost=distance;
    if(cost<bestCost){best=candidate;bestCost=cost;bestRoute=truck.Path.ToArray();}
   }
   truck.Path=saved;truck.RouteVersion=savedVersion;if(best==null)return false;
-  truck.Dock=best;truck.DockReserved=false;truck.DockRetryAfter=0;truck.DockBlockedFor=0;truck.Unload=0;
+  truck.Dock=best;truck.DockReserved=false;truck.DockRetryAfter=0;truck.DockBlockedFor=0;truck.DockAccessAt=0;truck.Unload=0;
   truck.Path=new System.Collections.Generic.Queue<PointF>(bestRoute);truck.WorkPoint=DockPoint(best);truck.RouteVersion=topology;return true;
  }
  static bool EarlierDock(Piece a,Piece b){return a.DockTicket<b.DockTicket||a.DockTicket==b.DockTicket&&a.Id<b.Id;}
@@ -25,7 +25,7 @@ public partial class Campaign {
  string DockStatus(Piece truck){
   if(!Live(truck.Side).Any(o=>o.T.Key=="refinery"))return "缺少精炼厂";
   if(truck.Dock==null)return "安排返厂";
-  if(truck.DockBlockedFor>=2)return "通路受阻 · 重寻路线/精炼厂";
+  if(truck.DockBlockedFor>=2)return "入口暂时受阻 · 等待让行";
   if(truck.DockReserved)return "驶入卸矿位";
   if(truck.DockRetryAfter>Time)return "卸矿通道受阻";
   return Dist(truck.P,DockPoint(truck.Dock))>140?"返厂排队":"卸矿排队第 "+DockPosition(truck)+" 位";
@@ -53,13 +53,13 @@ public partial class Campaign {
   }
   if(truck.DockReserved&&Dist(truck.P,truck.WorkPoint)<1&&Dist(truck.WorkPoint,DockPoint(plant))<.05f){
    truck.Path.Clear();plant.Door=1;truck.Unload+=dt;
-   if(truck.Unload>=1.6f){
+   if(truck.Unload>=ReferenceBalance.UnloadSeconds){
     int receipt=(int)Math.Round(truck.Cargo);Funds[truck.Side]+=receipt;OreReceipts[truck.Side]+=receipt;plant.LastReceipt=receipt;plant.ReceiptAt=Time;
-    truck.Cargo=0;truck.Unload=0;truck.Dock=null;truck.DockReserved=false;truck.DockTicket=0;truck.Returning=false;truck.Dispatch=0;truck.DockRetryAfter=0;truck.DockBlockedFor=0;truck.Patch=null;truck.OrderedOre=null;
+    truck.Cargo=0;truck.Unload=0;truck.Dock=null;truck.DockReserved=false;truck.DockTicket=0;truck.Returning=false;truck.Dispatch=0;truck.DockRetryAfter=0;truck.DockBlockedFor=0;truck.Patch=null;truck.OrderedOre=null;truck.DepartingDock=plant;
    }return;
   }
   if(truck.Dispatch>0)return;truck.Dispatch=.5f;
-  if(truck.DockBlockedFor>=2&&AlternateDock(truck,plant))return;
+  if(truck.DockBlockedFor>=2&&Time>=truck.DockAccessAt){truck.DockAccessAt=Time+3;if(AlternateDock(truck,plant))return;}
   bool near=Dist(truck.P,DockPoint(plant))<140,free=DockFree(truck,plant);
   if(near&&!truck.DockReserved&&!free){
    if(truck.Path.Count>0&&Dist(truck.Path.Last(),DockPoint(plant))<.05f)truck.Path.Clear();
@@ -91,6 +91,10 @@ public partial class Campaign {
   }
  }
  bool AlternateDock(Piece truck,Piece failed){
+  // Distinguish a closed road/building entrance from a temporary vehicle queue.
+  // Probe without moving the real truck or replacing its current waiting path.
+  var probe=new Piece{T=truck.T,Side=truck.Side,Hp=truck.Hp,P=truck.P};
+  if(PlanRoute(probe,DockPoint(failed),null))return false;
   return ChooseRefinery(truck,failed);
  }
 }

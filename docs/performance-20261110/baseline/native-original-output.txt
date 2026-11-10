@@ -1,0 +1,1 @@
+﻿{"game_seconds":6.465,"real_seconds":9.719,"actual_rate":0.665,"frames":25,"frame_p95_ms":358.806,"simulation_p95_ms":238.525,"draw_p95_ms":135.068,"alive":252,"warm_seconds":F2}

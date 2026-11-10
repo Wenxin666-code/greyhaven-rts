@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Drawing;
 namespace Greyhaven {
@@ -9,7 +9,7 @@ public partial class Campaign {
  }
  PointF TrackStep(Piece o,PointF waypoint,PointF next,float dt){
   if(Dist(o.P,waypoint)<.001f)return waypoint;
-  if(o.ForceMoving&&o.T.Key=="tank")foreach(var victim in Units.Where(u=>u.Deployed&&u.Side!=o.Side&&u.T.Foot&&TrafficContact(o.T,next,u.T,u.P)).ToArray())Kill(victim);
+  if(o.ForceMoving&&o.T.Key=="tank")foreach(var victim in Units.Where(u=>u.Deployed&&u.Side!=o.Side&&u.T.Foot&&Crushable(u)&&TrafficContact(o.T,next,u.T,u.P)).ToArray())CombatKill(victim,o);
   var obstacle=Units.FirstOrDefault(u=>u!=o&&u.Deployed&&!u.T.Building&&TrafficContact(o.T,next,u.T,u.P)&&Dist(u.P,next)<Dist(u.P,o.P));
   if(obstacle==null){o.TrafficBlocked=0;return next;}
   o.TrafficBlocked+=dt;
@@ -35,19 +35,19 @@ public partial class Campaign {
  }
  public static RectangleF UnloadingLane(RectangleF lot){return new RectangleF(lot.Left+(float)Math.Floor(lot.Width/Tile/2)*Tile,lot.Bottom,Tile,Tile);}
  bool ParkingAllowed(int side,PointF p){return true;}
- public void Halt(Piece o){o.Entering=null;ClearMission(o);o.Mining=false;o.Dock=null;o.DockReserved=false;o.DockTicket=0;o.DockRetryAfter=0;o.DockBlockedFor=0;o.Unload=0;o.Path.Clear();o.FirePoint=null;o.Target=null;o.Contact=ContactOrder.None;o.ResumeMarch=false;o.Formation=null;o.Advancing=false;}
+ public void Halt(Piece o){o.BurstRemaining=0;o.BurstTarget=null;o.Entering=null;ClearMission(o);o.Mining=false;o.Dock=null;o.DockReserved=false;o.DockTicket=0;o.DockRetryAfter=0;o.DockBlockedFor=0;o.Unload=0;o.Path.Clear();o.FirePoint=null;o.Target=null;o.Contact=ContactOrder.None;o.ResumeMarch=false;o.Formation=null;o.Advancing=false;}
  public bool Suppress(Piece o,PointF p){
   if(!o.Deployed||!Armed(o)||!Battlefield.Contains(p))return false;
   Halt(o);o.FirePoint=p;o.Replan=0;return true;
  }
  bool GroundFireTick(Piece o,float dt){
-  var p=o.FirePoint.Value;if(Dist(o.P,p)>o.T.Range){
-   if(o.Replan<=0&&!o.T.Building){ApproachPoint(o,p);o.Replan=1.8f;}return false;
+  if(ChangingStance(o))return true;var p=o.FirePoint.Value;if(Dist(o.P,p)>ReferenceBalance.Range(o)||Dist(o.P,p)<MinimumRange(o)){
+   if(o.Replan<=0&&!o.T.Building&&!o.Entrenched){ApproachPoint(o,p);o.Replan=1.8f;}return false;
   }
   if(!o.T.Building)Face(o,p,dt);
-  if(o.Cool<=0){
+  if(o.Cool<=0&&ReadyToAimFire(o)){
    var hit=Units.Where(e=>e!=o&&e.Deployed&&Dist(e.P,p)<(e.T.Building?Radius(e.T):14)).OrderBy(e=>Dist(e.P,p)).FirstOrDefault();
-   if(hit!=null)Fire(o,hit);else{o.Cool=o.T.Reload;RecordShot(o,p,null);}
+   if(hit!=null&&CanShootAt(o,hit))Fire(o,hit);else FireGround(o,p);
   }return true;
  }
 }

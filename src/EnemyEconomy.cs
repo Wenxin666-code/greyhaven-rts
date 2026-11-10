@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Linq;
 
@@ -56,12 +56,13 @@ public partial class Campaign {
   // Field the first squad, then reserve funds for the factory before buying more.
   if(enemyTurns[side]==0){if(Train(Info("squad"),side,null))enemyTurns[side]++;return;}
   if(!EnemyFacility(side,"factory",EnemySite(side,0,100)))return;
-  if(Time>240&&(Funds[side]>1100||Construction(side,0)!=null)&&!Live(side).Any(u=>u.T.Key=="satellite")){
+  AiFortify(side,Brain(side),AiKnown(side));
+  if(Time>240&&(Funds[side]>5500||Construction(side,0)!=null)&&!Live(side).Any(u=>u.T.Key=="satellite")){
    if(!EnemyFacility(side,"radar",EnemySite(side,-96,40)))return;
-   if(Power(side)<6&&!Units.Any(u=>u.Alive&&u.Side==side&&u.T.Key=="power"&&u.Ready<1)){
+   if(Power(side)<100&&!Units.Any(u=>u.Alive&&u.Side==side&&u.T.Key=="power"&&u.Ready<1)){
     var p=EnemySite(side,-84,-96);for(int i=0;i<20;i++){var site=new PointF(p.X+i%5*Tile,p.Y+i/5*Tile);if(CanPlace(Info("power"),site,null,side)){BuildFor(Info("power"),site,side);break;}}return;
    }
-   if(Power(side)>=6)EnemyFacility(side,"satellite",EnemySite(side,-96,120));
+   if(Power(side)>=100)EnemyFacility(side,"satellite",EnemySite(side,-96,120));
   }
   if(Time<enemyClocks[side])return;
   string[] order={"ifv","at","tank","squad","engineer","arty"};

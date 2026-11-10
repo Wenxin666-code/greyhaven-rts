@@ -1,0 +1,2834 @@
+{
+  "version": "v0.21.0",
+  "release_date": "2026-11-10",
+  "previous_release": "v0.20.0",
+  "base_commit": "6a2b4566eb5449a4a34a6c4e23944e63a0db640a",
+  "prepared_at_utc": "2026-11-10T03:05:46Z",
+  "build": {
+    "commands": [
+      "scripts/build.ps1 -InfantryVerify -VeterancyVerify -PerformanceIFVVerify -BalanceVerify -StoryVerify -RelayVerify -MinerVerify -PerformanceVerify -TerritoryVerify -DefenseVerify -TempoVerify -ControlsVerify -AiVerify -ProductionVerify -BlastVerify -ScrollVerify",
+      "scripts/build.ps1 -TempoVerify -ControlsVerify -AiVerify -ProductionVerify -BlastVerify -ScrollVerify"
+    ],
+    "result": "Current feature suites passed collectively; resumed at tempo after correcting its test scenario.",
+    "file_version": "0.21.0.0",
+    "clean_source": true,
+    "local_caches_and_frames_required": false
+  },
+  "validation": {
+    "release_checks": "infantry, adjacency, veterancy, IFV, balance, campaign story, relay objectives and physical routes, miners, performance invariants, territorial AI, defense, tempo, controls, third mission, parallel production, building blast effects and scroll caches",
+    "infantry_assertions": 148,
+    "latest_art_evidence": [
+      "docs/infantry-motion-20261110/rig-verification.json",
+      "docs/infantry-motion-20261110/runtime-verification.txt",
+      "docs/infantry-motion-20261110/部署与收起-修订.mp4"
+    ],
+    "historical_performance": "Previously recorded hardware/scenario measurements; no claim of newly repeating all performance runs or campaign balance simulations.",
+    "fixture_update": "Balance test now waits StanceSeconds instead of a hard-coded one second. The tempo scenario now supplies units for both the new independent field post and a surplus attack wing; its previous count was consumed by standing and field guards. No production behavior changed.",
+    "legacy_full_suite": {
+      "result": "not passed; stopped at stale miner/tank ratio assertion",
+      "reason": "HaulAndBoundsChecks still pins the v0.20.0 2/3 speed ratio, whereas the current unified numeric checks independently pin miner 14.0625 and tank 23.90625. Later legacy suites were not claimed as passed.",
+      "earlier_fixture_failure": "BalanceChecks hard-coded one-second deploy wait was corrected to StanceSeconds."
+    }
+  },
+  "artifact": {
+    "name": "Greyhaven-v0.21.0.exe",
+    "bytes": 288412672,
+    "sha256": "6d2023c60f68718e42f39b312bbe82fb71930d26f35de7bcb246338bdc1f0f0a"
+  },
+  "source_inputs": [
+    {
+      "path": "art/README.md",
+      "sha256": "7830d7f50a9cee3d88702e131b5745bc714555a71b450425f8394e7c07ceea8c"
+    },
+    {
+      "path": "art/archive/unit-art-history-20261106/README.md",
+      "sha256": "f6200f416a5add04b35f63eccf7fdd233c8b6ee6f8f67603bedb7f716b569ffa"
+    },
+    {
+      "path": "art/archive/unit-art-history-20261106/manifest.json",
+      "sha256": "5364b9a5212aabe0f20e9c2f8b0416e7d3db891aeae95fb875afa7bda446d695"
+    },
+    {
+      "path": "art/archive/unit-art-history-20261106/旧版单位素材.zip",
+      "sha256": "7404b23831d509d32c3155d29b50c6cb60985823e395b877792dfc533a79b9a4"
+    },
+    {
+      "path": "art/command.ico",
+      "sha256": "df59ca09e32d93b3d02f1c03f5b64008203cfc4aaba9e98aa9473a04c293bd39"
+    },
+    {
+      "path": "art/review/animation-v01/README.md",
+      "sha256": "1660a44e676459b465e68079d417b17fd7c7344eb29871d69fca693c82049d06"
+    },
+    {
+      "path": "art/review/animation-v01/build-detail.png",
+      "sha256": "73f2a0f868a44ca8efbbb8d65e92495ffaac359563e0a51d851a829123a778b2"
+    },
+    {
+      "path": "art/review/animation-v01/index.html",
+      "sha256": "54c35d17c89ac3763fd97d460ecd0d39cf68b76f3c2d23972384947a1b67fb52"
+    },
+    {
+      "path": "art/review/animation-v01/preview.css",
+      "sha256": "b81abea45bb6f473fe34e67ef69f6cb46158f9f5deb27d77985fdf6d94869791"
+    },
+    {
+      "path": "art/review/animation-v01/preview.js",
+      "sha256": "70693dce0c0202feb6fc4f12f2a769930ecebf095e2f1e027809b8042b89f6af"
+    },
+    {
+      "path": "art/review/animation-v01/prompts.json",
+      "sha256": "779c6329a59f444b2d96c090a32743235446b769bdad1957a2e4b529f8641821"
+    },
+    {
+      "path": "art/review/animation-v01/refinement-prompts.json",
+      "sha256": "059b31e5e4927a7138c3046b48912f008e19f149b7ebb89de66e0b4fee817986"
+    },
+    {
+      "path": "art/review/animation-v01/ruin-detail.png",
+      "sha256": "6d888f8111ff39dce5889e316894514978f58470a0cb3e05068942521c504008"
+    },
+    {
+      "path": "art/review/animation-v01/sheets/build.png",
+      "sha256": "efba839b27919f14be3d40477b98cb1f6d2d198668c5dc73b261a6771116a94e"
+    },
+    {
+      "path": "art/review/animation-v01/sheets/fall.png",
+      "sha256": "4476f8bc410afdb064e494e9a5c4c49852b50a6a97ca860dc9825d8d958e16b6"
+    },
+    {
+      "path": "art/review/animation-v01/sheets/fire.png",
+      "sha256": "be041a39673bebfc81e2b9f36fa44e046a87d665b2625269bfdf705766941789"
+    },
+    {
+      "path": "art/review/animation-v01/sheets/repair-v2.png",
+      "sha256": "74cce67bbcfbe06e66fed4fa9da7d94cd07a00fe314a0e066c074f83f7ce2b9c"
+    },
+    {
+      "path": "art/review/animation-v01/sheets/repair.png",
+      "sha256": "749f462b7ff4e02af33a2302c1edd563803aa2d9c548a25af12c7502070321cd"
+    },
+    {
+      "path": "art/review/animation-v01/sheets/ruin-v2.png",
+      "sha256": "9890c02d372f3889a6802823540f6598afed0730e84dace10e545b0ce45d07fb"
+    },
+    {
+      "path": "art/review/animation-v01/sheets/ruin.png",
+      "sha256": "54a05225812fed3fb26b30d864749dbc53ab6177665907e63f77c204349024a6"
+    },
+    {
+      "path": "art/review/animation-v01/sheets/tank.png",
+      "sha256": "9f38fdd3bddcf498aaa7c9db654475290a2aead9b04a6c0b2527518e4c72e2bd"
+    },
+    {
+      "path": "art/review/animation-v01/sheets/walk.png",
+      "sha256": "451b96aa45550bd2fae430825550279b39fba8d661e93ab14c1e89ae8e1d940d"
+    },
+    {
+      "path": "art/review/animation-v01/walk-detail.png",
+      "sha256": "f08db8997497cc7e2a45ae7c09286cd38e85d0e02221b8b5a94e3ecebd667617"
+    },
+    {
+      "path": "art/review/animation-v01/动画总览.mp4",
+      "sha256": "0b0235836e63612c1f85b6e95a2ab2f210a1c1f459d4f523b83ffa40f193a98e"
+    },
+    {
+      "path": "art/review/animation-v01/动画总览.webp",
+      "sha256": "aae1d4e3a88a85dd9cfd5bb77c2f1ec00fb1d37c58bb176eddf67293a6b0f9a7"
+    },
+    {
+      "path": "art/review/animation-v01/坦克开炮.webp",
+      "sha256": "b8711bd32708acd965d4a2ec2858ee0aeed8b21e2e615f2c65d4e6f7f5dc76e3"
+    },
+    {
+      "path": "art/review/animation-v01/士兵倒地.webp",
+      "sha256": "7a1a60d06e318a3196e6a34b2f34f8de8c5b2b31612a0eba9f7f8219050dff68"
+    },
+    {
+      "path": "art/review/animation-v01/士兵射击.webp",
+      "sha256": "bf3582b0d7bccb1bace7a8baa4cdfa374079295103bae634031d913454b9271b"
+    },
+    {
+      "path": "art/review/animation-v01/士兵行进.webp",
+      "sha256": "c25508f241f26bcaa7d171e660623a502a3b137c0c88eb7b21ea9ea4922d0b68"
+    },
+    {
+      "path": "art/review/animation-v01/工兵维修.webp",
+      "sha256": "464fc9f46d03d84fd5bf9af0b3597e05da2ece2e3f1f45d02ec833fdfcb6f35a"
+    },
+    {
+      "path": "art/review/animation-v01/建筑损毁.webp",
+      "sha256": "a2c6996507e1e5e3946e10cc96fcb3ba5293e4273cfe6d39a2f9c1f196afafe0"
+    },
+    {
+      "path": "art/review/animation-v01/建筑搭建.webp",
+      "sha256": "86385390c9dfecc241b53155468af5ee61b267dc2a9acc4b048864761b2aab8f"
+    },
+    {
+      "path": "art/review/animation-v01/验收页.png",
+      "sha256": "9d85946103390d8f8b6844e830df968c794ff0ea1da1fb398e95fbaecbb8d6b3"
+    },
+    {
+      "path": "art/review/blast-v11/index.html",
+      "sha256": "bac1afd285fe3d478e9b25b120da6cb2802294c76e6e44cd593ead3ed1bdcf5b"
+    },
+    {
+      "path": "art/review/blast-v11/validation.json",
+      "sha256": "3f3cea08755f85653127abecccf20692761266e0c1c26eeeb6c607539b779ce8"
+    },
+    {
+      "path": "art/review/buildings-v07/README.md",
+      "sha256": "e6ef491d2b6409b929e1f634bf89bd4392c085edc8836c980e8ea93fcf91561f"
+    },
+    {
+      "path": "art/review/buildings-v07/barracks.png",
+      "sha256": "6ff1306b7a7cdafc0af4036c031d94f3500952b45ea911c0ac8ca4c3c1b64658"
+    },
+    {
+      "path": "art/review/buildings-v07/drafts/municipal.png",
+      "sha256": "53099623e4d43c665a78a6eef88e0b97ee0e297572dc7a9b2cffc0901eb77472"
+    },
+    {
+      "path": "art/review/buildings-v07/drafts/residence.png",
+      "sha256": "84fed50728c89cbf28b232c9d7bb60b95c6f2f598f239d7d9a52752faba4e057"
+    },
+    {
+      "path": "art/review/buildings-v07/drafts/shop.png",
+      "sha256": "de1fca8890bf7085c374daef72bc94a2a8b45b5a3cdda6105ad6e1eb4be0a6ea"
+    },
+    {
+      "path": "art/review/buildings-v07/factory.png",
+      "sha256": "b3bf913c9e84976b00bb3e82611a9fc5fb59101af465b73e2e532f9668fc7214"
+    },
+    {
+      "path": "art/review/buildings-v07/hq.png",
+      "sha256": "ef3dc7c87e59df7fedd052117650da4f92bde86ebb472ca0cc6e71de9f9bd0a4"
+    },
+    {
+      "path": "art/review/buildings-v07/index.html",
+      "sha256": "a8a29390a8011a48e102c85dd3c8e6103137b868d55cdbde3016743e6f74173d"
+    },
+    {
+      "path": "art/review/buildings-v07/municipal.png",
+      "sha256": "7f79cd00d84e21971a68a668d4c3e80ea6c45927637415ddae54fb73dca4c2a9"
+    },
+    {
+      "path": "art/review/buildings-v07/post.png",
+      "sha256": "e7a1fa3063a1bb307b6589a5b91d043c8da5a769623023da7444a8abd2eacf46"
+    },
+    {
+      "path": "art/review/buildings-v07/power.png",
+      "sha256": "1da148282e0d0a45dd020b0c63a355372f333da3513e8d9efb93a61e61e7b998"
+    },
+    {
+      "path": "art/review/buildings-v07/prompts.json",
+      "sha256": "139de1188f80c2d3ee4d4dadf7380149f7c4db5d9f85790cab119d7d9a04ec35"
+    },
+    {
+      "path": "art/review/buildings-v07/radar.png",
+      "sha256": "22225d5681587c8e33ca02adda6cf80365c0cd70a0c349be28060460a402d1de"
+    },
+    {
+      "path": "art/review/buildings-v07/refinery.png",
+      "sha256": "7365c5cb975785e57a1114ebfd8e66859cbedefbbedb4552aa9bc2e22e0b382f"
+    },
+    {
+      "path": "art/review/buildings-v07/residence.png",
+      "sha256": "abcf89c52cd272cf6597efcc3d2860620e305c62bc962136feab165bc59e059a"
+    },
+    {
+      "path": "art/review/buildings-v07/satellite.png",
+      "sha256": "b9d50eb68568cfe36efbe91dac865f493b6acaebd885efce26c451b7bc75f68a"
+    },
+    {
+      "path": "art/review/buildings-v07/shop.png",
+      "sha256": "762d546715a13b223800f310ae77a12174a810fa1157ef7c6157adc27839d6df"
+    },
+    {
+      "path": "art/review/buildings-v08/index.html",
+      "sha256": "e9f52620288ff1816778af45851b260e1ad6641202b31d774c3ebd1db3f4b7e4"
+    },
+    {
+      "path": "art/review/buildings-v08/validation.json",
+      "sha256": "d5b477445c68480d1c480961501f5ab395e49ec23b6a3125f398ea68078ac0e0"
+    },
+    {
+      "path": "art/review/buildings-v09/index.html",
+      "sha256": "b73a7fca038aa62515df009b7588bf6dab5d31920cbddec4dcf63f5429810741"
+    },
+    {
+      "path": "art/review/buildings-v09/validation.json",
+      "sha256": "2da8f2c80c1efee2d2d2c8e4d0a209c0de80f9633e27cb347da47d246c7d52e3"
+    },
+    {
+      "path": "art/review/buildings-v10/index.html",
+      "sha256": "6863ac0f15de2647b2a1c8b3812404eaf9dbac9051f14666769f193106192a4a"
+    },
+    {
+      "path": "art/review/buildings-v10/validation.json",
+      "sha256": "8546656f2c5194f7a7c74e6585df6a9c50ef1401f765b7f105c3c65d2368f47b"
+    },
+    {
+      "path": "art/review/index.html",
+      "sha256": "cdc24e0ff7ff5faf8c6f7eb6eb3337bb0e74569ac6abbe27048986ab407ce32d"
+    },
+    {
+      "path": "art/review/port.css",
+      "sha256": "1bb081342da1c6f24597ce946645a259bec932d0889354b8b90c502acd9a61a7"
+    },
+    {
+      "path": "art/review/port.js",
+      "sha256": "25fe7dfeb62ffe60a8139e842470295b04c6000e8233a3c53ab1af37621c9663"
+    },
+    {
+      "path": "art/review/unit-redesign-v04/README.md",
+      "sha256": "d795297d6ab21237622056580009747749eeb9ef85b03ecf781f4c46cd470a96"
+    },
+    {
+      "path": "art/review/unit-redesign-v04/prompts.json",
+      "sha256": "58ec2914f50fba46a2a763e2076cc3f4c1120779e39b28c4ca9460ac3d884498"
+    },
+    {
+      "path": "art/review/unit-redesign-v04/步兵轮廓重设计.png",
+      "sha256": "8297791d24a8c9642f78f28ad7294719d2130919fe3dce6a0d6df3d8831b5486"
+    },
+    {
+      "path": "art/review/unit-redesign-v04/载具轮廓重设计.png",
+      "sha256": "cc20961cdf3ffce098816101fbba4e7c9021af43ba7ec2d0eef08edf4acc2b65"
+    },
+    {
+      "path": "art/review/unit-style-v02/README.md",
+      "sha256": "6f832fcc0606f34d8ef1d370f7ff57a43db1ad9ee9985b99e16a91e9c9969329"
+    },
+    {
+      "path": "art/review/unit-style-v02/prompts.json",
+      "sha256": "b0e4506d121fdec87911854970b1996851d21928b09033242466cdbf32c142c6"
+    },
+    {
+      "path": "art/review/unit-style-v02/步兵风格蓝本.png",
+      "sha256": "b02afee169e37741c451adf52732d455aae9612e347c34bc26e87ca8a940c69a"
+    },
+    {
+      "path": "art/review/unit-style-v02/载具风格蓝本.png",
+      "sha256": "6ff027f1cd09b9f7735875484854ef2f7a1dbf7416a38d5e95e72e90f6fef8d8"
+    },
+    {
+      "path": "art/review/v01.html",
+      "sha256": "103d8ecb5bcb23a9e67b6d3bdda78b2edeee0a01b3ee41c1381600397ceb1c7b"
+    },
+    {
+      "path": "art/review/港区演练.png",
+      "sha256": "bac9ce0b05ca7a55c6b680114342e4e5a4857de5e87f3ca85e7e09550f9757cf"
+    },
+    {
+      "path": "art/source/aligned/README.md",
+      "sha256": "c8b82c287a90dfe872058b233a75f97fd1c320546cd982cbf5ccc42b81513040"
+    },
+    {
+      "path": "art/source/aligned/bake.html",
+      "sha256": "9947f5459599be6639e0e2f97ab3f7e9e0288026ca49e77b0b48a7350b58d74d"
+    },
+    {
+      "path": "art/source/aligned/bake.js",
+      "sha256": "8f7336b1c63b14cc10bc39a4b5b712cd381d6e0c65e23e0b2fa7e7be3ee35b39"
+    },
+    {
+      "path": "art/source/aligned/chassis.js",
+      "sha256": "b99275d902d2e75ad9f8f137e8cf1c881031333a1df2265f6ff8908b3b239378"
+    },
+    {
+      "path": "art/source/aligned/layout.py",
+      "sha256": "f2a0e1dfef66da6c0f838c7d0504fe57690c0c9bbcb7984f0237eda23a27edd6"
+    },
+    {
+      "path": "art/source/aligned/ore-models.js",
+      "sha256": "9eb2cf1c40fd45b15475067b7edaa98e90c168ecc5250f8372f20002c5cd25ae"
+    },
+    {
+      "path": "art/source/aligned/pack_support.py",
+      "sha256": "4fadf16272c20f027141f5a1e7bd6964f89ae8acfb6a4edeb194208d6875f6fe"
+    },
+    {
+      "path": "art/source/aligned/packed/iso-arty.png",
+      "sha256": "0daf110ccdb192114f41a20ea2148cca7786c3ee587103cd4a07e5f2fdd78e18"
+    },
+    {
+      "path": "art/source/aligned/packed/iso-barracks.png",
+      "sha256": "b54d3c23a66b691f22ec660a03bd7ed972514b310c89a838c1b86edd4c4d8222"
+    },
+    {
+      "path": "art/source/aligned/packed/iso-factory.png",
+      "sha256": "f088a44f6a2064bfbead21101d66a0cba59c6ab0c66eeaa7bd058df5318abd68"
+    },
+    {
+      "path": "art/source/aligned/packed/iso-harbormaster.png",
+      "sha256": "cab574b653f1a140cc2c3f3d4a6b54edd9bd27aee2c382f44cfa7496433dc5f2"
+    },
+    {
+      "path": "art/source/aligned/packed/iso-hq.png",
+      "sha256": "fb889dec3df172e535303b013405d2d3bac051448e1f128e5985ef258b17104a"
+    },
+    {
+      "path": "art/source/aligned/packed/iso-ifv.png",
+      "sha256": "11d8efce2807616f8f94ac178ffc056f0906a638c48e49494312f41d22c4a2b0"
+    },
+    {
+      "path": "art/source/aligned/packed/iso-mcv.png",
+      "sha256": "b79a18ed5b4597ad4da40d34cf65f711b1dd908edcba6f105b0eff869c613783"
+    },
+    {
+      "path": "art/source/aligned/packed/iso-miner-full.png",
+      "sha256": "ea4c032db6edf002fe5a70e00c39d44352493d301746c54fa6538262ccf7f22b"
+    },
+    {
+      "path": "art/source/aligned/packed/iso-miner.png",
+      "sha256": "a570297c3619712fb8532f5c8f0a8f2dcb2c1faab9b584171f5c50d1c73b4c1b"
+    },
+    {
+      "path": "art/source/aligned/packed/iso-post.png",
+      "sha256": "720c0158f458125ccbb53a20561a3c9503ad5335ea80b9155af11ed3b5a76f9c"
+    },
+    {
+      "path": "art/source/aligned/packed/iso-power.png",
+      "sha256": "92e4f6486152e76b8926de916d8a20c304bb7118d685aa824835be5d76ad28e3"
+    },
+    {
+      "path": "art/source/aligned/packed/iso-radar.png",
+      "sha256": "ec7af2b7cc2c43e644f6c30d091ecd1bd5f3c645a821ecaa3892d150c9322a7b"
+    },
+    {
+      "path": "art/source/aligned/packed/iso-refinery.png",
+      "sha256": "2117f58fee98c73e1c8b369fbc807d001601a231d3f06f0eb8e2e94c05486291"
+    },
+    {
+      "path": "art/source/aligned/packed/iso-refining.png",
+      "sha256": "41dd5b9d34174099844442a85d3ea72c4911556f89d6772fd8defad0e0c15744"
+    },
+    {
+      "path": "art/source/aligned/packed/iso-tank.png",
+      "sha256": "b115c27b8182ad7c55f8759e3533fabeec305e5260592c37deade7c5a952a91c"
+    },
+    {
+      "path": "art/source/aligned/relief.js",
+      "sha256": "104f5bc9e572c75c6c4db4df78140cf94de944c5eac94024eee0f4a8b32a8482"
+    },
+    {
+      "path": "art/source/aligned/support-cardinals.png",
+      "sha256": "f6fbda492f0dbf14ca21973cde41d34c992070166fa362576003c18c9c26a208"
+    },
+    {
+      "path": "art/source/aligned/support.js",
+      "sha256": "3851f1fd2549aa06bfbd9bf5e5e03f0a9cf9a36efacf7de6d98a71a6c15d0ecb"
+    },
+    {
+      "path": "art/source/aligned/tank-bearing-check.csv",
+      "sha256": "bf47c56395edbf1277cddb42ad549ee74364f7896b6339e9e1b638a947cf879c"
+    },
+    {
+      "path": "art/source/aligned/tank-drive.js",
+      "sha256": "0aa5dab7e2d14e5fb55b8e6dd2605d47a755a2f77c06f0ceb7c3b27adc6c8f3f"
+    },
+    {
+      "path": "art/source/aligned/vehicles.py",
+      "sha256": "35600460354349564c5e64d3da58cf44f093a8bcce2bbc88d035ea7d5071c7ec"
+    },
+    {
+      "path": "art/source/aligned/views-arty.png",
+      "sha256": "a4c085a6a7eadefcedf9b6df44c4883bf54e4563f6111600721cf2fb1300abc3"
+    },
+    {
+      "path": "art/source/aligned/views-mcv.png",
+      "sha256": "ecf1fcf2bd9c1e2ef2537c7b1104d821ee798b3ba8f90677430ef48bdfed0db7"
+    },
+    {
+      "path": "art/source/animation-v06/README.md",
+      "sha256": "071f000ee252916385f803dac42a7e0d01cb4e540bc62e15d792091f0a13de98"
+    },
+    {
+      "path": "art/source/animation-v06/building-audit.json",
+      "sha256": "513a3420abb3e72c8c2019f816cae5b967fd83a0ed413e3d563c7632baf401bf"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-barracks-build-paint.png",
+      "sha256": "18b1910dbef0cbd9e1828a65e6ff784e15a15b4bc819339071a43c73a6c8eedc"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-barracks-build.png",
+      "sha256": "91e2e94b991a302b5c322fd95738a6466ebdc50e6457f49356cfc7b88fac03c1"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-barracks-collapse-paint.png",
+      "sha256": "2dd1bfba79d8a6a2c5444f397d69847973a353b147441b8db284f75f554b4c1d"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-barracks-collapse.png",
+      "sha256": "99e6a52539c950bc9e5976f4ccb76e0f13f54af9e0b9b2d30795b22703a36f68"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-factory-build-paint.png",
+      "sha256": "6e8db0abd3c754a64ecc43ce9156d40f31569f9483a9323b99169582b5c54c9c"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-factory-build.png",
+      "sha256": "674ead956959ab1af10e7be9a03c54fae80f7e3a564f2a6d3f9f64e83e824431"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-factory-collapse-paint.png",
+      "sha256": "871a9a8487c415a6b1a5536ed2910f16ab0f02c54aa72076df6014c9816693f0"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-factory-collapse.png",
+      "sha256": "f532dc005921e04c0fecd041e0ed4a4fea725b700eb3321e7185dbf3bfff5983"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-hq-build-paint.png",
+      "sha256": "d76e1b051818d3797047098d18cde16c997b826c3b5fdcb86adaa3ff59a62f62"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-hq-build.png",
+      "sha256": "5827c2bc1109b87a71c20bf1db0761e6f8f345d8e66583121e376f4d2d2e4ab6"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-hq-collapse-paint.png",
+      "sha256": "9d6b441e7f51f6d987538bb90a046af43b2c8c5a928bee6e3fd7e5260f01af98"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-hq-collapse.png",
+      "sha256": "b48029e032a55ab2439e10b79198adb0f77a93a436a163bcf9181865180f2fd0"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-post-build-paint.png",
+      "sha256": "ba910decf81deebd3c1169b2c6f4607eb3e85152ae3c72244458db18f2ce63f9"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-post-build.png",
+      "sha256": "0d40557a930485628bd6c0097e020165587dc384a494f5bf7ce31944b0d575ae"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-post-collapse-paint.png",
+      "sha256": "749154d04464ef541315c1eea9396904688be3328df248121b399bd2653f9d1e"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-post-collapse.png",
+      "sha256": "af74402e01f33e0697fc800511fa585fb4779772f60c80b41c68e5548408b444"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-power-build-paint.png",
+      "sha256": "240450b7edd0f9a412f2aff04548107c00288bf71915e21c7dafcdd7b92943c2"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-power-build.png",
+      "sha256": "8eafa2414ffdd33d9ec55869a4c899b14d58b5749988ee07b93b25f331db3dcb"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-power-collapse-paint.png",
+      "sha256": "5f089c4e1cf3fa0efdf2a5676c82f9a97d8b7aba7605f54b591cce4431cf1c8b"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-power-collapse.png",
+      "sha256": "9e5631678134b58fb6b8e580c1893fd970464cd0c9924a797afd056113f048f8"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-radar-build-paint.png",
+      "sha256": "89a5da4395363435b62301e88f295a29a89101fbdf1a1f9d57121c4a096eab0a"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-radar-build.png",
+      "sha256": "fab98d2ad4e967d17bf27d1c60901748aabb351c88aa3cd819c78f9cbd7d1e04"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-radar-collapse-paint.png",
+      "sha256": "7032d326a9e95771cc3f3ee4d412cec8419cbd2b0d112e3e95f71fb549f0109c"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-radar-collapse.png",
+      "sha256": "c2952c0b3d16e0bd933aaa37590b367938c7fe7b5e062395d8fede1d150c7ce0"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-refinery-build-paint.png",
+      "sha256": "0c88ffa62b22ad23a35b20aa97e67ae8d21c4c2b80209fc7fa41a535b35ba3db"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-refinery-build.png",
+      "sha256": "49831fa180ef598926e86434efbdaa73e5418afe4485edb6a6f9312e34b480e5"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-refinery-collapse-paint.png",
+      "sha256": "d448ad923d9e5a02298d6e1e8f0f94daeef486b1669d55539c4358a2ee9f530b"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-refinery-collapse.png",
+      "sha256": "9f4656e01d2fbf569c845f9493d7b16ef19dd3e3551bdd237720dbf5c0144218"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-satellite-build-paint.png",
+      "sha256": "999e3e36d85ef4e7dd934b99459920010a0ad7eead99819a45c8a1abc4ec93b9"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-satellite-build.png",
+      "sha256": "19066990c693fe75f7e71e84fa523c311b3725d59c2b44c0501e4fc352cdf88b"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-satellite-collapse-paint.png",
+      "sha256": "5eab733dbac011cf36565437a5e94c9e75b0b8ec1d56d75993fa27983d83c473"
+    },
+    {
+      "path": "art/source/animation-v06/packed/anim-satellite-collapse.png",
+      "sha256": "c283fbf6242babf30c70f11fbc405382897e8c85047bc4d49ab950cc41e1b4f3"
+    },
+    {
+      "path": "art/source/blast-v11/README.md",
+      "sha256": "1d4c770a14e1357a873555c6e0e947268c6e5532c4a6de8081cc0977b1895f61"
+    },
+    {
+      "path": "art/source/blast-v11/blast-cloud-source-v11.png",
+      "sha256": "2fb2a1278993358a709a78a7af1d71afd6ba60a31e0912dc0ad79af7e9f2c07f"
+    },
+    {
+      "path": "art/source/blast-v11/blast-cloud-v11.png",
+      "sha256": "017c87fde7d2344fa4df0ad9ed7feacbd1977a64e26da174e529acc52a1c5a43"
+    },
+    {
+      "path": "art/source/blast-v11/debris-base-v11.png",
+      "sha256": "7c0877cad93667764c86a6ccd2d240ce6825fb95d57572ffb0ec1dc5818747af"
+    },
+    {
+      "path": "art/source/blast-v11/debris-paint-v11.png",
+      "sha256": "51db4f5bbb498b7bfe729c70658c22ab16f377c893254fd863878147f820c4c4"
+    },
+    {
+      "path": "art/source/blast-v11/generation.json",
+      "sha256": "138ec3cbf42500f2e9b04dfcd9102b1d3da5325a688dd42778991a9e308b0996"
+    },
+    {
+      "path": "art/source/buildings-v05/README.md",
+      "sha256": "b954240ff88cd38fa5c2e087f796d4b0134142c6a66179dabc373ca8052d89e3"
+    },
+    {
+      "path": "art/source/buildings-v05/animation.js",
+      "sha256": "322b61e70048ae718080cfdba3a03b423cc8c254621fb42843158cdba91789b3"
+    },
+    {
+      "path": "art/source/buildings-v05/audit.json",
+      "sha256": "282a8e1232dbf4ed93a842a8634932cbed04bffda33c75c5ae8e8dd00871f3f6"
+    },
+    {
+      "path": "art/source/buildings-v05/bake.js",
+      "sha256": "e07d41a139812bf18311759655f9ab39360854b96b37f4e084268abb27bb1c16"
+    },
+    {
+      "path": "art/source/buildings-v05/index.html",
+      "sha256": "0cbf051ca0f2bb2d52f7a424a06c9fa1f0dda5320f03c382c6932e792a06b643"
+    },
+    {
+      "path": "art/source/buildings-v05/models.js",
+      "sha256": "1a90d449383e2aa86140ad273e0488b7e47f60b3ef4a0b36a532632fa2dd9b2f"
+    },
+    {
+      "path": "art/source/buildings-v05/models/barracks.json",
+      "sha256": "3f78d0b456d5b04c026941c130ea638380ceb841e92a1c9764caef96d3ee60e0"
+    },
+    {
+      "path": "art/source/buildings-v05/models/factory.json",
+      "sha256": "8d024c9d5db441e7bf26d217f2191ea3a9ed391f4486d61034d6a85fc7f912ad"
+    },
+    {
+      "path": "art/source/buildings-v05/models/harbormaster.json",
+      "sha256": "de4d7510bab8121bda0404f7d5304d3ea479763d82cd052a0e2755adb93b2506"
+    },
+    {
+      "path": "art/source/buildings-v05/models/hq.json",
+      "sha256": "7e2e2c22a41b83f6115b740fc0f6dc2c11164e71299e754981daa9eced18ac9a"
+    },
+    {
+      "path": "art/source/buildings-v05/models/municipal.json",
+      "sha256": "6fbfb53b1342c679b6acf1214486f70dc5ebaccc92798396292abafc8718fa5c"
+    },
+    {
+      "path": "art/source/buildings-v05/models/post.json",
+      "sha256": "899fba01b5f363302194f7b788bd321920308d987d4db3015c4f3b94d9096e5b"
+    },
+    {
+      "path": "art/source/buildings-v05/models/power.json",
+      "sha256": "3f8d3c666209315214ded97839e05cccdd8378227fdb724c3f6d98ad15ea4f78"
+    },
+    {
+      "path": "art/source/buildings-v05/models/radar.json",
+      "sha256": "77b149d52fb2d3534c14f369a3cdd366a8f41ff48cba65f2cb2f8bc25121ca27"
+    },
+    {
+      "path": "art/source/buildings-v05/models/refinery.json",
+      "sha256": "714d9de7413db63bb006c8d2f2d4bd589858a565c30e49c45e7274ea11f38a83"
+    },
+    {
+      "path": "art/source/buildings-v05/models/residence.json",
+      "sha256": "937586e37fd7fffc8a117f5f8c4e1899e24ab5bf09003a54751df64cb2db8a56"
+    },
+    {
+      "path": "art/source/buildings-v05/models/satellite.json",
+      "sha256": "cdd4108705873daaada037fe9a9922fb7adb62e435cad78451d0221b807bf656"
+    },
+    {
+      "path": "art/source/buildings-v05/models/shop.json",
+      "sha256": "7d294088dfe8611e213ca1fa4db2e43f5560b9fb5c4fc10f0c412b1957f36d6f"
+    },
+    {
+      "path": "art/source/buildings-v05/packed/iso-barracks-paint.png",
+      "sha256": "83fa3aabfb541e9c1ff3b8471bdccf2c7de85aa18bf4774d7d7a2ed69d17af33"
+    },
+    {
+      "path": "art/source/buildings-v05/packed/iso-barracks.png",
+      "sha256": "2dec28034972d93da7b7260619e3b2d5e6e1e1fd6f822d56c39f4968a5d20fcd"
+    },
+    {
+      "path": "art/source/buildings-v05/packed/iso-factory-paint.png",
+      "sha256": "f5723ad146a13274b593a24a34736d509cae6145cbf0a6594b1de5e3ea4884c8"
+    },
+    {
+      "path": "art/source/buildings-v05/packed/iso-factory.png",
+      "sha256": "137a779a13494dd2fbd95c5921a663033908ff4fcdf73bb5b9139a080c7c55c2"
+    },
+    {
+      "path": "art/source/buildings-v05/packed/iso-harbormaster-paint.png",
+      "sha256": "0bdc2a8fe43ef593a4e8f7af70e1325d65d5ce0771b5e38504140119e9619e86"
+    },
+    {
+      "path": "art/source/buildings-v05/packed/iso-harbormaster.png",
+      "sha256": "02279b8dc8c5a651cc8a3998101e0d135cbb00756c042053cfe655ca51cac52e"
+    },
+    {
+      "path": "art/source/buildings-v05/packed/iso-hq-paint.png",
+      "sha256": "3a9c9c80bd887fa3c2d5f3c88eca5f451b51c018fcaa7ec3d34c793496ecfbb0"
+    },
+    {
+      "path": "art/source/buildings-v05/packed/iso-hq.png",
+      "sha256": "c2edcdd61e2ea8a79dee38ecc750b8a1dc88b58ce8e5628e9684da435d69b9e8"
+    },
+    {
+      "path": "art/source/buildings-v05/packed/iso-municipal-paint.png",
+      "sha256": "01ec9260bafd9b9156bae76085b8825e567a92942c0f1321da74fc5982d25474"
+    },
+    {
+      "path": "art/source/buildings-v05/packed/iso-municipal.png",
+      "sha256": "05eed32cadc95244a5b94be9f5dd33062e1601aa7822a1faa62ba79df33100d1"
+    },
+    {
+      "path": "art/source/buildings-v05/packed/iso-post-paint.png",
+      "sha256": "047be95a40ddd9b4cbeae19476f09e0f4586e41390bf97adb709e30f158c632d"
+    },
+    {
+      "path": "art/source/buildings-v05/packed/iso-post.png",
+      "sha256": "e3e6a9d23414ecdd013b585c267245e9ab1d18709004f5da70846bb2c85befba"
+    },
+    {
+      "path": "art/source/buildings-v05/packed/iso-power-paint.png",
+      "sha256": "6d9ee6d834047fe4a02c181fa3a373074d98dba6d288bfdd6f4a81ec22bb0838"
+    },
+    {
+      "path": "art/source/buildings-v05/packed/iso-power.png",
+      "sha256": "5226a74606c238a753583f2bed840a5016cd624fbebf182af8319b1c3a491321"
+    },
+    {
+      "path": "art/source/buildings-v05/packed/iso-radar-paint.png",
+      "sha256": "d43e207d8e6c7bf5babc4df6c9e7130f74be94eb8253e32a7096c4e9e4f5d286"
+    },
+    {
+      "path": "art/source/buildings-v05/packed/iso-radar.png",
+      "sha256": "c391b10e3226b2fd5b43b9196dd255b20f28107d05f39cf1d491a5106fc47793"
+    },
+    {
+      "path": "art/source/buildings-v05/packed/iso-refinery-paint.png",
+      "sha256": "f24dd0880e9e496395a5586108c0c57ef03c49d890b7da7ee08faff9bcaaa189"
+    },
+    {
+      "path": "art/source/buildings-v05/packed/iso-refinery.png",
+      "sha256": "6de6128084d69d638c6c6188ac7194384d4a1d9eeb5244a6f086ecb1eaf1143a"
+    },
+    {
+      "path": "art/source/buildings-v05/packed/iso-refining-paint.png",
+      "sha256": "9307dfb3514dbbbb0de87cfb5317185acb4fd9210f54e7077d43dbbc11c8526c"
+    },
+    {
+      "path": "art/source/buildings-v05/packed/iso-refining.png",
+      "sha256": "aa9837dc91007a590c35889335ff04cb1e3cff9537d7391f2d5bfb04c17c9e83"
+    },
+    {
+      "path": "art/source/buildings-v05/packed/iso-residence-paint.png",
+      "sha256": "f45c1f37a3ac7884f4e430f5f76e3933f987bd5174da807d88127fa2f168ec4f"
+    },
+    {
+      "path": "art/source/buildings-v05/packed/iso-residence.png",
+      "sha256": "c92f9013afcbd6f6557cf4581e43a0c22136e1a20c39d3c021872cbfd2adba2e"
+    },
+    {
+      "path": "art/source/buildings-v05/packed/iso-satellite-paint.png",
+      "sha256": "c4584ac44110610c43e4551648bbccd92bafee230827ebcb18d1543877ed7a8f"
+    },
+    {
+      "path": "art/source/buildings-v05/packed/iso-satellite.png",
+      "sha256": "8eee2fb09e088cf9de44c1fe8d9fcfa34c858e2275a36f17542c363cc521873f"
+    },
+    {
+      "path": "art/source/buildings-v05/packed/iso-shop-paint.png",
+      "sha256": "659bc7721b3e439f2733c80c3ac97ef5d2c345cd3112691da7d9e14f9d2384fe"
+    },
+    {
+      "path": "art/source/buildings-v05/packed/iso-shop.png",
+      "sha256": "3f192b6fc4556e18f917c38d3443e21075d977b82051e3401fbea132f41c0089"
+    },
+    {
+      "path": "art/source/buildings-v08/README.md",
+      "sha256": "86a2373e50f3fc6446c4ce5a9babf74fa4b463e57d15382af5781704917c732c"
+    },
+    {
+      "path": "art/source/buildings-v08/bake.js",
+      "sha256": "ec7c8f5f19df72f09ad6cd8da3fa96bc2c737287784eb0d42c136dd874d38fb3"
+    },
+    {
+      "path": "art/source/buildings-v08/index.html",
+      "sha256": "4ba3f39cead8aa21ec41132586225c932228a58790f22ff69e04d169047c9b36"
+    },
+    {
+      "path": "art/source/buildings-v08/kit.js",
+      "sha256": "04d1407f2c7e961ddacd00e0f1b089e30cf42ff21d9f6eeb56c158d623b13a99"
+    },
+    {
+      "path": "art/source/buildings-v08/materials/cast-concrete.png",
+      "sha256": "2eba0b62f1fb64ddafbb2a9641b5f9ec863df710b354b48791e3df4daf2a14ad"
+    },
+    {
+      "path": "art/source/buildings-v08/materials/coated-armor.png",
+      "sha256": "ace377384b6c7ace71763a8e6b26e9343c8e71b3b34dcfed25c08f1bea8e2940"
+    },
+    {
+      "path": "art/source/buildings-v08/materials/prompts.json",
+      "sha256": "23801a8c10cae60d03ead23a9128222c770b93930c64050ebe9ff18e3093a338"
+    },
+    {
+      "path": "art/source/buildings-v08/models.js",
+      "sha256": "c88c6258b11c88cf04eb21e3afa9575d88d0c71273205fc9e93b6bb4a8d81ef9"
+    },
+    {
+      "path": "art/source/buildings-v08/models/barracks.json",
+      "sha256": "ccbd23ad8385c3e3180c68354f69cda00fdae163449dcf482690b7a257863cf1"
+    },
+    {
+      "path": "art/source/buildings-v08/models/factory.json",
+      "sha256": "5351a811a564246540b8cd76f18fd4303e958c559a0d8622e9672a385d876a95"
+    },
+    {
+      "path": "art/source/buildings-v08/models/hq.json",
+      "sha256": "193e7d4e09c2bf9879fe6ddb805dff1d64f45be559a4d0c77ccc246aa6fef9f5"
+    },
+    {
+      "path": "art/source/buildings-v08/models/municipal.json",
+      "sha256": "55426b01c569946a924c9c6f3bfe43bd7d25184b7768206a279741fa53f404fd"
+    },
+    {
+      "path": "art/source/buildings-v08/models/post.json",
+      "sha256": "b3685400121eeede9e7f46311c88db1497f57d6bd486b20478d2a24d14b1f36b"
+    },
+    {
+      "path": "art/source/buildings-v08/models/power.json",
+      "sha256": "253b22f334b5e9034fe201065167d96331dec392f78cc1c7c72db0b00a53e46e"
+    },
+    {
+      "path": "art/source/buildings-v08/models/radar.json",
+      "sha256": "d84e64c37b2a5aea4350831ac0ef642d10c313c05c0f680ebd122a1cf87328f2"
+    },
+    {
+      "path": "art/source/buildings-v08/models/refinery.json",
+      "sha256": "f0919b5651ce953e7294bf1ad5b0600c1569b40628253bc1368f1b4a0f3d18f6"
+    },
+    {
+      "path": "art/source/buildings-v08/models/residence.json",
+      "sha256": "f21a07c107d2cb2a25253dde5c4842bf991262b66d6c50417967d8a164932f55"
+    },
+    {
+      "path": "art/source/buildings-v08/models/satellite.json",
+      "sha256": "901aa7fa1dc21472636be97e2c528ec94d4d5d52e3e628d465eca1ef2685b09d"
+    },
+    {
+      "path": "art/source/buildings-v08/models/shop.json",
+      "sha256": "8484ecf95dd065a2d680c135edcf5637d6ade8de77a68763953995537a2f07d9"
+    },
+    {
+      "path": "art/source/buildings-v08/packed/buildings-v08.pak",
+      "sha256": "8e37e9e376ae87b22d9f3e1c3bcb4fabf0de37e4912f0173373a871e67907c9d"
+    },
+    {
+      "path": "art/source/buildings-v08/packed/manifest.json",
+      "sha256": "f2a800740fa4de8a1455f0ab045d4c938ed320ffec83c6a53f92ebcfdb83ff05"
+    },
+    {
+      "path": "art/source/buildings-v08/review/barracks-0.png",
+      "sha256": "9239554daed388f8b46285b793c3ece539eafe94c42cd94e8fe3f081a93234d1"
+    },
+    {
+      "path": "art/source/buildings-v08/review/barracks-180.png",
+      "sha256": "29287d5664ed158ab0646528998de0630ff34652ad5c0a67b355e9bea71b5640"
+    },
+    {
+      "path": "art/source/buildings-v08/review/barracks-270.png",
+      "sha256": "85bf63d24f04fb4ede1da775ce2ff1fa9f2eabd18a96647d8839054d573f634f"
+    },
+    {
+      "path": "art/source/buildings-v08/review/barracks-90.png",
+      "sha256": "f2c547ca2dbf3956ced5bc5f85042b6e23f62298dc43ccde11fcb9678e30dc51"
+    },
+    {
+      "path": "art/source/buildings-v08/review/factory-0.png",
+      "sha256": "62fa6f5ff6678dd7ad07e007d9b08c47954dcbffd07c1d822f62bb2f4f488466"
+    },
+    {
+      "path": "art/source/buildings-v08/review/factory-180.png",
+      "sha256": "b0c28e84a56dc1e67d6185a007e6c2b4a957b7fac3af9fe0381ee69d5890ad19"
+    },
+    {
+      "path": "art/source/buildings-v08/review/factory-270.png",
+      "sha256": "4d4f60690e528f4ab986135ecb8a7a1dbee6e6fcae753aa162ddd5c641b3f73a"
+    },
+    {
+      "path": "art/source/buildings-v08/review/factory-90.png",
+      "sha256": "f2cbca83a6c0f98dab90b22b341194523a4496f9f8c2b28960d855434faf4a5d"
+    },
+    {
+      "path": "art/source/buildings-v08/review/hq-0.png",
+      "sha256": "cf9d8ded79f427f13ef1711489f8b67359a81e194d6a60281f2b2386856aafa5"
+    },
+    {
+      "path": "art/source/buildings-v08/review/hq-180.png",
+      "sha256": "5a67502031db56bdb11132662178f9bea82fccb7c21abc7d938c538f689e7212"
+    },
+    {
+      "path": "art/source/buildings-v08/review/hq-270.png",
+      "sha256": "0188017111402342d95552da01cf22724eeffa4515cf72c88b8a61835efb50e7"
+    },
+    {
+      "path": "art/source/buildings-v08/review/hq-90.png",
+      "sha256": "7738a1d5de3be3d85cdfe5f093143059c366bb26b8db41bdd3eab88c8897bc31"
+    },
+    {
+      "path": "art/source/buildings-v08/review/municipal-0.png",
+      "sha256": "0f8019b40849a966c735b7c0e1f20e1e645561bfeada628e9bd0ea460ef475fa"
+    },
+    {
+      "path": "art/source/buildings-v08/review/municipal-180.png",
+      "sha256": "93586162e9de6c8dad89f6a3758939de635bc6c5cfa5aa6b6f7b282b14b688d4"
+    },
+    {
+      "path": "art/source/buildings-v08/review/municipal-270.png",
+      "sha256": "0fff862ba3ad0d1ba6be67db5f4a64556d3e29528ee78f8137be901f89167ac8"
+    },
+    {
+      "path": "art/source/buildings-v08/review/municipal-90.png",
+      "sha256": "95959bd20056cd5bc05650cc85a747e58a6a7b3e99e90df55551f90b856f6a0e"
+    },
+    {
+      "path": "art/source/buildings-v08/review/post-0.png",
+      "sha256": "e54e55d44b2ef3bf73432fa7a798399407bf1d70d589ea0e6a8ce726130cb162"
+    },
+    {
+      "path": "art/source/buildings-v08/review/post-180.png",
+      "sha256": "a6916c683681b5dfa4a76dacd6ea6e84378dfbe75b9e1896675bc447ac0cb0c7"
+    },
+    {
+      "path": "art/source/buildings-v08/review/post-270.png",
+      "sha256": "31a76f4bf8a2fc4684fba0bffaf6124de92f17e2fc5dfc3a70e7f8582d4e543f"
+    },
+    {
+      "path": "art/source/buildings-v08/review/post-90.png",
+      "sha256": "79ff64736aed034137f6e2914a3404172a9c568b77178c0f63bc2b347bd25bdf"
+    },
+    {
+      "path": "art/source/buildings-v08/review/power-0.png",
+      "sha256": "f0873ecff39c8de3a8dec0703a317f76cbd585a4084485c38b3f9925a5e129ee"
+    },
+    {
+      "path": "art/source/buildings-v08/review/power-180.png",
+      "sha256": "e62b79736a79c66a7081928e4f87bf76580b1df32f070a37026f8ce1e5fef424"
+    },
+    {
+      "path": "art/source/buildings-v08/review/power-270.png",
+      "sha256": "7a5f97ba99aca168502fb217d285bee6be1a7e9759a350d7a5d9091e0b4dcdba"
+    },
+    {
+      "path": "art/source/buildings-v08/review/power-90.png",
+      "sha256": "9e6af07c1fbcc1aeee7716eca8986483036db81f50aa594fe270634eb3ba3fd1"
+    },
+    {
+      "path": "art/source/buildings-v08/review/radar-0.png",
+      "sha256": "6226927537fbe0095a18ef42a1263df63e263f7f55f373f23f9396fddaf6df75"
+    },
+    {
+      "path": "art/source/buildings-v08/review/radar-180.png",
+      "sha256": "a954e9d5e22629ed0dc8bc103388eeeefdf794ee6eeeae406ea531df27b9e80b"
+    },
+    {
+      "path": "art/source/buildings-v08/review/radar-270.png",
+      "sha256": "a0d4cfb4f076a2cd04f17190d26eab60fc5d6170c4a8caaa8540423eaa62bd3c"
+    },
+    {
+      "path": "art/source/buildings-v08/review/radar-90.png",
+      "sha256": "19cb23882edc86b3f2a3d80115ac98d7f923028a8963a0f35b88a7ff8c5edd9c"
+    },
+    {
+      "path": "art/source/buildings-v08/review/refinery-0.png",
+      "sha256": "81f48267616146eb7b60b3daabe4628785150cff0088fef5f7f837da841c4d7b"
+    },
+    {
+      "path": "art/source/buildings-v08/review/refinery-180.png",
+      "sha256": "143a205ab7117641e6fec49fce89387cb8cbfadf8841c29a9b9a110f3d927ac0"
+    },
+    {
+      "path": "art/source/buildings-v08/review/refinery-270.png",
+      "sha256": "bde6a6258e4e17a1de035329bb69d835c07edda5b9971ec5d4fa6ea33be984bc"
+    },
+    {
+      "path": "art/source/buildings-v08/review/refinery-90.png",
+      "sha256": "d54e4fbfc7e7c08d96872b60a3c82e36940b15dbe5c26b1aee40b170c3c4d992"
+    },
+    {
+      "path": "art/source/buildings-v08/review/residence-0.png",
+      "sha256": "2cfbd6fba2e66d7b4ce7fe6f3e9b78319366efdbd82c9ab741e8b925ec31d6aa"
+    },
+    {
+      "path": "art/source/buildings-v08/review/residence-180.png",
+      "sha256": "0b02d041a9f6a3474c356bc0f932dcc6ab89b8b6bb58d92ad75c8595cf761b49"
+    },
+    {
+      "path": "art/source/buildings-v08/review/residence-270.png",
+      "sha256": "e2f84c6cc1d6ba2970ee0f0475410f7498c16ad4d660a609e08e54f64e7c663f"
+    },
+    {
+      "path": "art/source/buildings-v08/review/residence-90.png",
+      "sha256": "bee538f4ee17f781bbd44a7e49acaedb10549bcbb781c89840bf61d5a0507a01"
+    },
+    {
+      "path": "art/source/buildings-v08/review/satellite-0.png",
+      "sha256": "4a0b236e3c24e2f749c6dbe72f54d36b4a27b58bdbe530641b9eeac6f8eb31e6"
+    },
+    {
+      "path": "art/source/buildings-v08/review/satellite-180.png",
+      "sha256": "e1016f4ac9bf7372bdab71c05f24755a7e846979f3f18bb127985e4255c2ef72"
+    },
+    {
+      "path": "art/source/buildings-v08/review/satellite-270.png",
+      "sha256": "8bdfc2b4940b9ce159b7cc679a517045590b7aac2ca764ac36e3f99a8538682d"
+    },
+    {
+      "path": "art/source/buildings-v08/review/satellite-90.png",
+      "sha256": "17a32ac88fe842d9d93e2e6abe91058cf60dee4cd84374ae14017fed8e2ce36f"
+    },
+    {
+      "path": "art/source/buildings-v08/review/shop-0.png",
+      "sha256": "88234b5f8750fe78e6c03791d117c10a1830454c312a318c6d6d31662f123a4e"
+    },
+    {
+      "path": "art/source/buildings-v08/review/shop-180.png",
+      "sha256": "193f16f942175d764e3541d4d427142b63b2e092fd0914d854c2503822fb9bc0"
+    },
+    {
+      "path": "art/source/buildings-v08/review/shop-270.png",
+      "sha256": "ac716ba0ad840fde7b67af3bdaa18bc860958df8cf3c496f9502063d4c3ce7a4"
+    },
+    {
+      "path": "art/source/buildings-v08/review/shop-90.png",
+      "sha256": "45cb95c92a830180b1f0e971c13ecb70139407d46d2210b339a331febfe7ff5e"
+    },
+    {
+      "path": "art/source/buildings-v09/README.md",
+      "sha256": "034d04c86c731cdbb2f7ce64ed08d24282e6607903973fb513c914fce8b80760"
+    },
+    {
+      "path": "art/source/buildings-v09/bake.js",
+      "sha256": "784df323dbc88c34fe74f20f93e11f8d8b40627d2a37c59f205b0e0abd93c41c"
+    },
+    {
+      "path": "art/source/buildings-v09/index.html",
+      "sha256": "7701428cbd12080c5f2f89c8cea38d8b235d3436f683a4fa3e0fc67529bdf5ae"
+    },
+    {
+      "path": "art/source/buildings-v09/kit.js",
+      "sha256": "d718134310f94d8c65b0a39dbcfe921c29a8f9af446a5adce6d7a440ffbbbe16"
+    },
+    {
+      "path": "art/source/buildings-v09/materials/cast-concrete.png",
+      "sha256": "2eba0b62f1fb64ddafbb2a9641b5f9ec863df710b354b48791e3df4daf2a14ad"
+    },
+    {
+      "path": "art/source/buildings-v09/materials/coated-armor.png",
+      "sha256": "ace377384b6c7ace71763a8e6b26e9343c8e71b3b34dcfed25c08f1bea8e2940"
+    },
+    {
+      "path": "art/source/buildings-v09/materials/prompts.json",
+      "sha256": "23801a8c10cae60d03ead23a9128222c770b93930c64050ebe9ff18e3093a338"
+    },
+    {
+      "path": "art/source/buildings-v09/models.js",
+      "sha256": "87c73d94d21f758fe7ec5989e4396cddaa09c5f037552e2b71d7c6adac3ccfcc"
+    },
+    {
+      "path": "art/source/buildings-v09/models/barracks.json",
+      "sha256": "5a3ca8b86ce1330b01b560a58a804d557ccc5c90eafef792e378d43820be0ff4"
+    },
+    {
+      "path": "art/source/buildings-v09/models/factory.json",
+      "sha256": "f887a08de5afec3e722086b8ce37f452626529208751348b30adaff2b3ec06ea"
+    },
+    {
+      "path": "art/source/buildings-v09/models/hq.json",
+      "sha256": "63e0c6ab7c347840a270c12d3f88528e02e5bad38b626551c7899981c8932ed9"
+    },
+    {
+      "path": "art/source/buildings-v09/models/municipal.json",
+      "sha256": "b94f3f498d439bba4990d25fdcbdad5f6d46fe191e8c79394b57fbd7de590afa"
+    },
+    {
+      "path": "art/source/buildings-v09/models/post.json",
+      "sha256": "32f82786a617f83008a84ba96a05c913fb2cab89f621726237d3fd8e32070315"
+    },
+    {
+      "path": "art/source/buildings-v09/models/power.json",
+      "sha256": "d9de65edf48cd8c5e5fed39f675570c776f92765a3741078a90a4764cc4ebace"
+    },
+    {
+      "path": "art/source/buildings-v09/models/radar.json",
+      "sha256": "adca7f67b56a2dc7bfafbe77b7a0dbce6f730111a47c7a4858f3d5203e4fcec8"
+    },
+    {
+      "path": "art/source/buildings-v09/models/refinery.json",
+      "sha256": "8a8a59ae0bc014a57ecae2351767a27bd4692237179f90d87098052baa3b8852"
+    },
+    {
+      "path": "art/source/buildings-v09/models/residence.json",
+      "sha256": "c58969d8f12d5a7b9ef3de11ee3b42319265ee7da1a7c4dd0d25916b40f05eab"
+    },
+    {
+      "path": "art/source/buildings-v09/models/satellite.json",
+      "sha256": "1543eb0393e9d8d67fec4449b404e1baeda29ba3cecace3e390b5e7406a4e117"
+    },
+    {
+      "path": "art/source/buildings-v09/models/shop.json",
+      "sha256": "c9a824fb27282645178b26eb455f7fc94ea368a60236503b8831d1435a7a3ee5"
+    },
+    {
+      "path": "art/source/buildings-v09/packed/buildings-v09.pak",
+      "sha256": "247766f74be326579b272151033ace6be15c941ef8fcfcab9d07496ef78503c2"
+    },
+    {
+      "path": "art/source/buildings-v09/packed/manifest.json",
+      "sha256": "04d55d6e12a0e56174e7bd83715069c237e3c83a5b6829d26cd1b06e72e13e39"
+    },
+    {
+      "path": "art/source/buildings-v09/review/barracks-0.png",
+      "sha256": "3e5901ad7e026b1c0a37c650aed19ad4cd558700fbd7e99130634b308f0a204b"
+    },
+    {
+      "path": "art/source/buildings-v09/review/barracks-180.png",
+      "sha256": "cf5c40be6ed4e36b2e07371a2f8c9f857ebd63798a2ab5c74f6b4dfd874c8f3f"
+    },
+    {
+      "path": "art/source/buildings-v09/review/barracks-270.png",
+      "sha256": "56db9f75f46dbca153a76d5c659359bbf11a6c6e754e6ad80ed7d7a8110a43ae"
+    },
+    {
+      "path": "art/source/buildings-v09/review/barracks-90.png",
+      "sha256": "60345cb728d3b7891683ff4db0e399ed126b9e9b1aca49d40a48ae874e427721"
+    },
+    {
+      "path": "art/source/buildings-v09/review/factory-0.png",
+      "sha256": "acccd0a8d3b643db495fa4bb3928c242ddf1aeab4a6f1c3171f1b96bb0ef313e"
+    },
+    {
+      "path": "art/source/buildings-v09/review/factory-180.png",
+      "sha256": "3c7ded933a1bfc6df65950b30288dcb229d070faa1a329d68ddc980d25d82ed9"
+    },
+    {
+      "path": "art/source/buildings-v09/review/factory-270.png",
+      "sha256": "1e76c0143a58e14857f97289f3106b71dd3022b19afc833ebaf58cbdc2046c92"
+    },
+    {
+      "path": "art/source/buildings-v09/review/factory-90.png",
+      "sha256": "e0c184ca56968ee28296cff9b55357151fdc79589ffe00f7aaecda9bb76acdf5"
+    },
+    {
+      "path": "art/source/buildings-v09/review/hq-0.png",
+      "sha256": "8a9e98823ab2bc02dca6a9e9f1ea75c51d1eb746cc51cbdb4c2d34092aa1a85e"
+    },
+    {
+      "path": "art/source/buildings-v09/review/hq-180.png",
+      "sha256": "0615656ddc6352845e3c3979fccb50423741beb7ff5d087b84ef0a3954c8a56f"
+    },
+    {
+      "path": "art/source/buildings-v09/review/hq-270.png",
+      "sha256": "b3706e09d7632f0a5f49f6e97b720ba721b95def4adae81c54982098183489cc"
+    },
+    {
+      "path": "art/source/buildings-v09/review/hq-90.png",
+      "sha256": "b67b9d4cf7d4a008297f3e1dfb43066f69978993eab59e718c7092da6b26513d"
+    },
+    {
+      "path": "art/source/buildings-v09/review/municipal-0.png",
+      "sha256": "0f8019b40849a966c735b7c0e1f20e1e645561bfeada628e9bd0ea460ef475fa"
+    },
+    {
+      "path": "art/source/buildings-v09/review/municipal-180.png",
+      "sha256": "93586162e9de6c8dad89f6a3758939de635bc6c5cfa5aa6b6f7b282b14b688d4"
+    },
+    {
+      "path": "art/source/buildings-v09/review/municipal-270.png",
+      "sha256": "0fff862ba3ad0d1ba6be67db5f4a64556d3e29528ee78f8137be901f89167ac8"
+    },
+    {
+      "path": "art/source/buildings-v09/review/municipal-90.png",
+      "sha256": "95959bd20056cd5bc05650cc85a747e58a6a7b3e99e90df55551f90b856f6a0e"
+    },
+    {
+      "path": "art/source/buildings-v09/review/post-0.png",
+      "sha256": "e54e55d44b2ef3bf73432fa7a798399407bf1d70d589ea0e6a8ce726130cb162"
+    },
+    {
+      "path": "art/source/buildings-v09/review/post-180.png",
+      "sha256": "a6916c683681b5dfa4a76dacd6ea6e84378dfbe75b9e1896675bc447ac0cb0c7"
+    },
+    {
+      "path": "art/source/buildings-v09/review/post-270.png",
+      "sha256": "31a76f4bf8a2fc4684fba0bffaf6124de92f17e2fc5dfc3a70e7f8582d4e543f"
+    },
+    {
+      "path": "art/source/buildings-v09/review/post-90.png",
+      "sha256": "79ff64736aed034137f6e2914a3404172a9c568b77178c0f63bc2b347bd25bdf"
+    },
+    {
+      "path": "art/source/buildings-v09/review/power-0.png",
+      "sha256": "f0873ecff39c8de3a8dec0703a317f76cbd585a4084485c38b3f9925a5e129ee"
+    },
+    {
+      "path": "art/source/buildings-v09/review/power-180.png",
+      "sha256": "e62b79736a79c66a7081928e4f87bf76580b1df32f070a37026f8ce1e5fef424"
+    },
+    {
+      "path": "art/source/buildings-v09/review/power-270.png",
+      "sha256": "7a5f97ba99aca168502fb217d285bee6be1a7e9759a350d7a5d9091e0b4dcdba"
+    },
+    {
+      "path": "art/source/buildings-v09/review/power-90.png",
+      "sha256": "9e6af07c1fbcc1aeee7716eca8986483036db81f50aa594fe270634eb3ba3fd1"
+    },
+    {
+      "path": "art/source/buildings-v09/review/radar-0.png",
+      "sha256": "6226927537fbe0095a18ef42a1263df63e263f7f55f373f23f9396fddaf6df75"
+    },
+    {
+      "path": "art/source/buildings-v09/review/radar-180.png",
+      "sha256": "a954e9d5e22629ed0dc8bc103388eeeefdf794ee6eeeae406ea531df27b9e80b"
+    },
+    {
+      "path": "art/source/buildings-v09/review/radar-270.png",
+      "sha256": "a0d4cfb4f076a2cd04f17190d26eab60fc5d6170c4a8caaa8540423eaa62bd3c"
+    },
+    {
+      "path": "art/source/buildings-v09/review/radar-90.png",
+      "sha256": "19cb23882edc86b3f2a3d80115ac98d7f923028a8963a0f35b88a7ff8c5edd9c"
+    },
+    {
+      "path": "art/source/buildings-v09/review/refinery-0.png",
+      "sha256": "bbb0122e6031ab6f8426665cf6d68ffba450fa248e4f12b12936b69b72c020c8"
+    },
+    {
+      "path": "art/source/buildings-v09/review/refinery-180.png",
+      "sha256": "1d05584244c98bb965f5a155522665e0dbe898f3d244f76ce7d6f29350f0f7c9"
+    },
+    {
+      "path": "art/source/buildings-v09/review/refinery-270.png",
+      "sha256": "1115b3cc54a63771ce13f3b883e9d300c9a3e7bcf74fa52b675c805345218773"
+    },
+    {
+      "path": "art/source/buildings-v09/review/refinery-90.png",
+      "sha256": "d54e4fbfc7e7c08d96872b60a3c82e36940b15dbe5c26b1aee40b170c3c4d992"
+    },
+    {
+      "path": "art/source/buildings-v09/review/residence-0.png",
+      "sha256": "2cfbd6fba2e66d7b4ce7fe6f3e9b78319366efdbd82c9ab741e8b925ec31d6aa"
+    },
+    {
+      "path": "art/source/buildings-v09/review/residence-180.png",
+      "sha256": "0b02d041a9f6a3474c356bc0f932dcc6ab89b8b6bb58d92ad75c8595cf761b49"
+    },
+    {
+      "path": "art/source/buildings-v09/review/residence-270.png",
+      "sha256": "e2f84c6cc1d6ba2970ee0f0475410f7498c16ad4d660a609e08e54f64e7c663f"
+    },
+    {
+      "path": "art/source/buildings-v09/review/residence-90.png",
+      "sha256": "bee538f4ee17f781bbd44a7e49acaedb10549bcbb781c89840bf61d5a0507a01"
+    },
+    {
+      "path": "art/source/buildings-v09/review/satellite-0.png",
+      "sha256": "4a0b236e3c24e2f749c6dbe72f54d36b4a27b58bdbe530641b9eeac6f8eb31e6"
+    },
+    {
+      "path": "art/source/buildings-v09/review/satellite-180.png",
+      "sha256": "e1016f4ac9bf7372bdab71c05f24755a7e846979f3f18bb127985e4255c2ef72"
+    },
+    {
+      "path": "art/source/buildings-v09/review/satellite-270.png",
+      "sha256": "8bdfc2b4940b9ce159b7cc679a517045590b7aac2ca764ac36e3f99a8538682d"
+    },
+    {
+      "path": "art/source/buildings-v09/review/satellite-90.png",
+      "sha256": "17a32ac88fe842d9d93e2e6abe91058cf60dee4cd84374ae14017fed8e2ce36f"
+    },
+    {
+      "path": "art/source/buildings-v09/review/shop-0.png",
+      "sha256": "88234b5f8750fe78e6c03791d117c10a1830454c312a318c6d6d31662f123a4e"
+    },
+    {
+      "path": "art/source/buildings-v09/review/shop-180.png",
+      "sha256": "193f16f942175d764e3541d4d427142b63b2e092fd0914d854c2503822fb9bc0"
+    },
+    {
+      "path": "art/source/buildings-v09/review/shop-270.png",
+      "sha256": "ac716ba0ad840fde7b67af3bdaa18bc860958df8cf3c496f9502063d4c3ce7a4"
+    },
+    {
+      "path": "art/source/buildings-v09/review/shop-90.png",
+      "sha256": "45cb95c92a830180b1f0e971c13ecb70139407d46d2210b339a331febfe7ff5e"
+    },
+    {
+      "path": "art/source/buildings-v10/README.md",
+      "sha256": "e4613ce1df2f7c008c1d3a486d7b96b0e3f0bdf7ae8bf04c6083535f4570f5d0"
+    },
+    {
+      "path": "art/source/buildings-v10/construction.html",
+      "sha256": "654f33ea5ccc352e870e980e73e9b58c524088bc34387e292cd46c436af3f7c3"
+    },
+    {
+      "path": "art/source/buildings-v10/construction.js",
+      "sha256": "b31e9a23e834ae1a50a4d9f8c515291c3b61951a8c1f407aa405b9de207dd54e"
+    },
+    {
+      "path": "art/source/buildings-v10/damage.js",
+      "sha256": "463e645cc63e065ff16a9d57216791d5ebcd98940d3c6fb7e7c30dda45bbba15"
+    },
+    {
+      "path": "art/source/buildings-v10/index.html",
+      "sha256": "ae7efc68f1c5d0b6d72d2fd9607ac29959cff2a6f377a8f2a260c7f7308d0907"
+    },
+    {
+      "path": "art/source/buildings-v10/materials/cast-concrete.png",
+      "sha256": "2eba0b62f1fb64ddafbb2a9641b5f9ec863df710b354b48791e3df4daf2a14ad"
+    },
+    {
+      "path": "art/source/buildings-v10/materials/coated-armor.png",
+      "sha256": "ace377384b6c7ace71763a8e6b26e9343c8e71b3b34dcfed25c08f1bea8e2940"
+    },
+    {
+      "path": "art/source/buildings-v10/materials/hazard-blast-v10.png",
+      "sha256": "28512cbd032f4664810e07dbf417537c25b09ed3e34a90472de0e8e031ef45b5"
+    },
+    {
+      "path": "art/source/buildings-v10/materials/hazard-flame-v10.png",
+      "sha256": "944bc6d688ddab2e6cd6a283082281f405dd985da56d3ebb8f520ccafee70e0a"
+    },
+    {
+      "path": "art/source/buildings-v10/materials/hazard-soot-v10.png",
+      "sha256": "30c66ffcdc631254ebf80e8b6c2896511ddf076ad62fc9da9786d8d4b3c646b8"
+    },
+    {
+      "path": "art/source/buildings-v10/models/barracks.json",
+      "sha256": "35ca6f1b84ccb0ce7552a7782b67a6b54a19a7fea470d0535840c2336f84cada"
+    },
+    {
+      "path": "art/source/buildings-v10/models/factory.json",
+      "sha256": "12f4e3a526df45eba1a43fd53b9435c37d93e37ec7d43f47be1a99fb9ba03475"
+    },
+    {
+      "path": "art/source/buildings-v10/models/hq.json",
+      "sha256": "838610b28f64bfbd85bd9333225ed7bb7fc059ad46da275ed2a1902d73096d0f"
+    },
+    {
+      "path": "art/source/buildings-v10/models/municipal.json",
+      "sha256": "990a117a89810dc59b11556ff8e7716b21f2206c65f137765386c6294f3579b2"
+    },
+    {
+      "path": "art/source/buildings-v10/models/post.json",
+      "sha256": "5f21e7455c91ce36864debb1c3bf4fbfd874fdfd06a98743f5d68a2e1bcefd16"
+    },
+    {
+      "path": "art/source/buildings-v10/models/power.json",
+      "sha256": "7439fff82b2e57ee7d3694d0695a6d9368a2421e00b63dbc25f9685bc1a77048"
+    },
+    {
+      "path": "art/source/buildings-v10/models/radar.json",
+      "sha256": "0d1bb75d4cc6bdbf703ba7748f44d09a03804c2e7acbdb0444559c9cf1c49662"
+    },
+    {
+      "path": "art/source/buildings-v10/models/refinery.json",
+      "sha256": "2f47001af64e1b894bdb91bcde9c0ba61c0973525ca8ca01e6f4f18b2b51ef22"
+    },
+    {
+      "path": "art/source/buildings-v10/models/residence.json",
+      "sha256": "b4b762740ea08d1a9e7b2ffdd528afcf02b483edeb992c8c836f2b5bc05f2b07"
+    },
+    {
+      "path": "art/source/buildings-v10/models/satellite.json",
+      "sha256": "acde7fb37f7cde03797d51088c22bc0c7d9cc92a0436be9c5b1d30bc4b8c6229"
+    },
+    {
+      "path": "art/source/buildings-v10/models/shop.json",
+      "sha256": "a7d896ed72ac0b78d15c58b1da6d189e04184300e5ef87992f65e36d6b2d58c8"
+    },
+    {
+      "path": "art/source/buildings-v10/packed/manifest.json",
+      "sha256": "18715502ce7008f9ca7506067263c30f2e9120b370de87196c42331f1fa4e242"
+    },
+    {
+      "path": "art/source/buildings-v10/packed/structures-v10.pak",
+      "sha256": "75cc4b507842248fea110b62a134b6f75ece7314050cffd0c9c321d2c5603ca0"
+    },
+    {
+      "path": "art/source/buildings-v10/review/factory-structure-audit.json",
+      "sha256": "cb0101d01eaf8d66f5308e86dbd1c5ff3801cafea2f70051d70e104c1973c0f0"
+    },
+    {
+      "path": "art/source/buildings-v10/review/factory-structure-proof.png",
+      "sha256": "d27e734d5d336a5a658b57b53d484d487e585c2fafd4780a9e8c7617068b8a0f"
+    },
+    {
+      "path": "art/source/buildings-v10/review/post-structure-audit.json",
+      "sha256": "d3d985525e098bea878516036d763bb416bcbff103b0088aa6c99950d61da27a"
+    },
+    {
+      "path": "art/source/buildings-v10/review/post-structure-proof.png",
+      "sha256": "b9038f1ccaade50a861767dd5939acbde2ff5fb747cee38a0d07ab4bb1a72b7c"
+    },
+    {
+      "path": "art/source/buildings-v10/review/power-structure-audit.json",
+      "sha256": "2b8155bab06fabe03ad763fd034b996c52950831f288a5a745bbf051528d2df2"
+    },
+    {
+      "path": "art/source/buildings-v10/review/power-structure-proof.png",
+      "sha256": "cbb2d930e38c6fa70264532186d8e76241e419441d4c68a1e3eb31b79f8c4b19"
+    },
+    {
+      "path": "art/source/buildings-v10/review/residence-structure-audit.json",
+      "sha256": "de2f8ac2ab42605f96e461c2a8021a39f171b9c9e2c9d6990f668e511c0d0608"
+    },
+    {
+      "path": "art/source/buildings-v10/review/residence-structure-proof.png",
+      "sha256": "08dc06eabc69340e330cd11bc42d783030c843a89e78ef2a72cb716f13255b3b"
+    },
+    {
+      "path": "art/source/campaign/bake.html",
+      "sha256": "ce7d967bd3127bceabd34f500016821d745d0b0dcfe6d3e638291a41a64993c2"
+    },
+    {
+      "path": "art/source/campaign/models.js",
+      "sha256": "003a3e69ff10896ad41ce367db4619df7bad6876e3097c9bff8071abde8eb31f"
+    },
+    {
+      "path": "art/source/campaign/sprites/arty.png",
+      "sha256": "20f2d08cbe927625fe5cc73a1899ee6d34f9d196f7c92cc1b4501cbc00ec9a94"
+    },
+    {
+      "path": "art/source/campaign/sprites/at.png",
+      "sha256": "cc44c34a1e635cbd7676f2271a3625c35f7d0ea0e81ebce774ae46f4703257d3"
+    },
+    {
+      "path": "art/source/campaign/sprites/barracks.png",
+      "sha256": "76674ab11b50e1dfc2fd643fa890826c81051333cf5aec8d5e0140b3201be053"
+    },
+    {
+      "path": "art/source/campaign/sprites/engineer.png",
+      "sha256": "1d7af8904e420bebb6298ba303d5cabf8003d195d85409ea3ca644dc33a24070"
+    },
+    {
+      "path": "art/source/campaign/sprites/mcv.png",
+      "sha256": "8edcc0be0ec7eddfe6f4dda93a26dd49a34428ec6bbf64583b9389743ed6169d"
+    },
+    {
+      "path": "art/source/campaign/sprites/post.png",
+      "sha256": "b36fc4b15225afe76527e8ce79301e28b0725b8830212a16a76216c442bf27b5"
+    },
+    {
+      "path": "art/source/campaign/sprites/radar.png",
+      "sha256": "e61f4bc64aea8bce2061ce05f50d746455bca95bf09c126ddf010d40292c4019"
+    },
+    {
+      "path": "art/source/campaign/sprites/scout.png",
+      "sha256": "5af1bacd36e50ba6db9ded4144755501d27af513b209a205d4728e5e0a0a72e2"
+    },
+    {
+      "path": "art/source/console/harbor.png",
+      "sha256": "3709a9f77beb9904be913c164dbb86f94a09141d2d352467ee6703b32c7314f7"
+    },
+    {
+      "path": "art/source/console/plate.png",
+      "sha256": "2daf15f8cccb0f6b145ee106e0ec2d4276860e2e0b8f19c22f40f418be1b9b3e"
+    },
+    {
+      "path": "art/source/console/portraits.png",
+      "sha256": "b90695e5730e5fb67382fedb567d3de15f7652511acee4ca166b64beaf9aa3f3"
+    },
+    {
+      "path": "art/source/infantry-v12/README.md",
+      "sha256": "40d679489428b292a22c67b2973c3c41a93665a9b5e42b8ea80964fae3f50881"
+    },
+    {
+      "path": "art/source/infantry-v12/audit.json",
+      "sha256": "f9342d2fc35d7e99baf23e1d3315a4a743aea337db05d4c7ca27583fbff3a0f1"
+    },
+    {
+      "path": "art/source/infantry-v12/bunker.js",
+      "sha256": "9b175876c2424a0b78bdc9f4497f0036cec7b184edddce243adab1a6706b90bc"
+    },
+    {
+      "path": "art/source/infantry-v12/combat-models.js",
+      "sha256": "bb857c3e9d4790585489ad71fa282b9cfd898ba59b7568f7bd688da0acde9189"
+    },
+    {
+      "path": "art/source/infantry-v12/index.html",
+      "sha256": "7d2ee537ec6c98d8429b9ff751d24b1e5ebc3278ddcba3c88f9682f69d116552"
+    },
+    {
+      "path": "art/source/infantry-v12/models.js",
+      "sha256": "2081aec2873c56779a931223090371f869a79835fe63835c730905b37b2e55a6"
+    },
+    {
+      "path": "art/source/infantry-v12/packed/infantry-v12.pak",
+      "sha256": "98c2a3154a13fdea918d23ed8b0b24727164d24cc1974d407ef7d60566e3e061"
+    },
+    {
+      "path": "art/source/infantry-v12/stance.js",
+      "sha256": "f7acfcb829ecb98d3ea942f918b5d185068dc9958ca4277264471ae5c77fb089"
+    },
+    {
+      "path": "art/source/isometric/README.md",
+      "sha256": "875bd80c1bcf758db68867aa1f45a3442c3c0992dc09508a2115c221af0fc0eb"
+    },
+    {
+      "path": "art/source/isometric/buildings.png",
+      "sha256": "0e812335ba14235cb60da436deba42170bf89159fefe3587002a8873b9a9ecd4"
+    },
+    {
+      "path": "art/source/isometric/ground.png",
+      "sha256": "ae9e90db0ac3d838c5a3ef35ee3df1a3c1f981d732c4e868afbb3ddbd7ff49c8"
+    },
+    {
+      "path": "art/source/isometric/ifv.png",
+      "sha256": "30388de358eefe786af53c8dff123cb774b4a7ad961bef00d69fc68c73592c42"
+    },
+    {
+      "path": "art/source/isometric/objectives.png",
+      "sha256": "86b766db1dfcccca9aac6e6145db4d3ba52c2989ec7c3f066d88ee88ee0de55c"
+    },
+    {
+      "path": "art/source/isometric/packed/hd-arty.png",
+      "sha256": "d8c4050ce0026e8455974bab938cfab20b43a07337056187cb179c0bb2a1132e"
+    },
+    {
+      "path": "art/source/isometric/packed/hd-at.png",
+      "sha256": "cde02a6d419a774c590a819fd62b5d004eb30b85b77ec393da9c204bdee3e2e1"
+    },
+    {
+      "path": "art/source/isometric/packed/hd-barracks.png",
+      "sha256": "91822703d1adc538b6f45f579007074db7a54843e6392a1fb49ff21231c27f8f"
+    },
+    {
+      "path": "art/source/isometric/packed/hd-depot.png",
+      "sha256": "45af694e60cb8f0a0704ae56ad900d95026b0ea5bcc95611a825839b98097ae0"
+    },
+    {
+      "path": "art/source/isometric/packed/hd-engineer.png",
+      "sha256": "9746d74011fcf3e3ef4103f26f6cfcc1c7bec2aa8c71b104a39b9d159d1a8a99"
+    },
+    {
+      "path": "art/source/isometric/packed/hd-factory.png",
+      "sha256": "587afd69a0bd55d745936ba34f8b90c9d078fa26f3c898fbd3d054ba67f9c06e"
+    },
+    {
+      "path": "art/source/isometric/packed/hd-freight.png",
+      "sha256": "54bc1c64921aed222a10c77c6e77fbf892bcea4509ca6991301ab9f2ce60d5e4"
+    },
+    {
+      "path": "art/source/isometric/packed/hd-harbormaster.png",
+      "sha256": "ae5f9187d930e7f425c2ed8069d868ea3457ab5f4a99d83bf03810a1a3b3fe13"
+    },
+    {
+      "path": "art/source/isometric/packed/hd-hq.png",
+      "sha256": "6b8c64592e26d3035a6a957b2fa7953ec25ad636b8dd6b46456970a4ad2db76a"
+    },
+    {
+      "path": "art/source/isometric/packed/hd-ifv.png",
+      "sha256": "cbc2f533eb2db19ace5f5d9e20598ee48e7cb880eafbf23c416e5736de9226bd"
+    },
+    {
+      "path": "art/source/isometric/packed/hd-mcv.png",
+      "sha256": "f0fc27234db5640b5118c98c784ee4edf7ccd8e3ea3bee412c9cc5bffe1361e7"
+    },
+    {
+      "path": "art/source/isometric/packed/hd-post.png",
+      "sha256": "8f072cacc139e16fccdecaaf520dd2582ee91b13f90c87040e979ae9615cdb01"
+    },
+    {
+      "path": "art/source/isometric/packed/hd-power.png",
+      "sha256": "9bf5c04022d6fb69dc37a582167bc593e6b983b0cfe763543623f1fcff73748d"
+    },
+    {
+      "path": "art/source/isometric/packed/hd-radar.png",
+      "sha256": "dd84f81bbee365851af54b173b927c61f41c7493d6a8480967dc20d3b7132461"
+    },
+    {
+      "path": "art/source/isometric/packed/hd-squad.png",
+      "sha256": "da39ad444869c63af553903d88138b881f426bb3acfce44cd30a09cab441a649"
+    },
+    {
+      "path": "art/source/isometric/packed/hd-tank.png",
+      "sha256": "2773da7846a87433c8338b0102d722cd424a0fcaf4bbc8eb363b48ee594b4f17"
+    },
+    {
+      "path": "art/source/isometric/support.png",
+      "sha256": "3b3c53c418f07abb89fa37eed33eb3489b338f40184265aca9dd01d047d72856"
+    },
+    {
+      "path": "art/source/isometric/tank.png",
+      "sha256": "26267d9d26311aff3aff50d2c0c3d47ff1b8e0333c98cd75a5be8db40cf413fe"
+    },
+    {
+      "path": "art/source/isometric/troopers.png",
+      "sha256": "f0f9fe98e206f7d34b2facaf36d7fa972062fd8fa342c6f94ac1aa6c98e0abc3"
+    },
+    {
+      "path": "art/source/readable-units/README.md",
+      "sha256": "a01d416b6fc0bc02495e1bbc975de184b6cc28ab1f8342aff190d31682fbc2cc"
+    },
+    {
+      "path": "art/source/readable-units/audit.json",
+      "sha256": "d14ee860d243b19623cd2f41f6bcde6ce3eb7ea1900f5373049ca9ea413adcf9"
+    },
+    {
+      "path": "art/source/readable-units/concept.png",
+      "sha256": "e8b98f86c216203742e4660178111dba05b6c1c386dd0c06a7096d45165cdac4"
+    },
+    {
+      "path": "art/source/readable-units/index.html",
+      "sha256": "6fda3a780e9bce0a7ee7c77440667b022a6db9fc897763a99bc6c75665938875"
+    },
+    {
+      "path": "art/source/readable-units/models.js",
+      "sha256": "f8b9bb15932c75bc8e8f07e71b6875cc8b0539e41de3fab3d50ddff0474ed070"
+    },
+    {
+      "path": "art/source/readable-units/packed/hd-at.png",
+      "sha256": "a5d05dae003109f76673219fa6bf9de21b330113793cbdc707dd0418b23508e6"
+    },
+    {
+      "path": "art/source/readable-units/packed/hd-engineer.png",
+      "sha256": "7ffe543e1701f8d12816ef1d27e3cf2399f8975c7282a058e5770411b40ca371"
+    },
+    {
+      "path": "art/source/readable-units/packed/hd-squad.png",
+      "sha256": "fef5fe162e263a71ae8ae7f9e878286b65f57d08abe0f006ed475a859862a620"
+    },
+    {
+      "path": "art/source/readable-units/packed/iso-arty.png",
+      "sha256": "757a369ac878fe3527300725aa4a437b45cef799d1afb0cd2f4d22e95628ad8d"
+    },
+    {
+      "path": "art/source/readable-units/packed/iso-ifv.png",
+      "sha256": "fd5f172ebd0c114d78f25031041f65bf5101c575da9a5e960424e3390a3e8628"
+    },
+    {
+      "path": "art/source/readable-units/packed/iso-mcv.png",
+      "sha256": "db0c62dc44573bfccb2bacc3cd72abbba1afde1c5ea592e3ead856710ef40194"
+    },
+    {
+      "path": "art/source/readable-units/packed/iso-miner-full.png",
+      "sha256": "14329bd11346a35f2e5de5718049ad2a3d1c5f8b6647f0af764b0451c969e255"
+    },
+    {
+      "path": "art/source/readable-units/packed/iso-miner.png",
+      "sha256": "3e143a255b9e529c8454bf06011b2fce174712f40f1bd6c7505a9820ec870fb6"
+    },
+    {
+      "path": "art/source/readable-units/packed/iso-tank.png",
+      "sha256": "311301d733ffd3a16cbaaf8d394f9993a72624e3efd0f885909bc3418897edf3"
+    },
+    {
+      "path": "art/source/readable-units/prompt.json",
+      "sha256": "23e8096fc02ac2c0737e348b1587a4251a560085bb92669284ed357b7b17a252"
+    },
+    {
+      "path": "art/source/readable-units/render.js",
+      "sha256": "f6cbbd337cda6f3971065ecee14ae26ab37d940462155f51fbacded927f38546"
+    },
+    {
+      "path": "art/source/readable-units/tank-bearing-check.csv",
+      "sha256": "9340813e4a41a9c072b8bdfccf7dd30c185a3b4c3d58a7eecac985bfd10612f6"
+    },
+    {
+      "path": "art/source/readable-units/单位重绘总览.png",
+      "sha256": "033e7fe5ae760e3ba7e79be71e6c122e957bcf8cc518de59b6c0bb8fc878d51e"
+    },
+    {
+      "path": "art/source/relay-v01/audit.json",
+      "sha256": "dbda696d2cbe07fbffe884e27691fdc78286de6a45f24f52e8b114815401c614"
+    },
+    {
+      "path": "art/source/relay-v01/index.html",
+      "sha256": "0c5ae24c3f49bcf95538e28b73e3dd77260556a6242bc16e6a3a55c9a3a24b19"
+    },
+    {
+      "path": "art/source/relay-v01/model.js",
+      "sha256": "ea3bca2ef5bbbed86b50318f708f287d08b58209932c4bfdc2b23a0b38679758"
+    },
+    {
+      "path": "art/source/relay-v01/packed/relay-v01.pak",
+      "sha256": "7e44bc445d190e4d2ee895cec6a1d42402e92fc27e8a2ccd368f42000a943ac8"
+    },
+    {
+      "path": "art/source/relay-v01/review/blue.png",
+      "sha256": "ef50a457cc8cec975027d4d0782d3fafb24dc9e7c56a1fcbcbec39567cf5c307"
+    },
+    {
+      "path": "art/source/relay-v01/review/red.png",
+      "sha256": "3b065b8ff85dfa5d7404b9b9a0abbaaf668262e95cea1a571624b773fea22ae9"
+    },
+    {
+      "path": "art/source/relay-v01/review/violet.png",
+      "sha256": "756cd2cd405c7e50de8a45769a68187797d2bf3c32edb4548b94b9b3bc4db0ef"
+    },
+    {
+      "path": "art/source/relay-v01/review/white.png",
+      "sha256": "3d573c0a85e04b29cf8a1c329f15d868e53184bb40f2f56b6a8642dbeb795cd3"
+    },
+    {
+      "path": "art/source/tank-prototype/README.md",
+      "sha256": "4854195294850bf445910a576a7c03952a8fd0bf1c9e906834f19df47ebb0649"
+    },
+    {
+      "path": "art/source/tank-prototype/audit.json",
+      "sha256": "8fe0d79d675361e02d09c0dadab40109b08e228fef478530a073a3b3747c41f0"
+    },
+    {
+      "path": "art/source/tank-prototype/bake.js",
+      "sha256": "094b3842c6724995da7f258a09a237b93201549b99999b60e7ea8b8d4be8cf19"
+    },
+    {
+      "path": "art/source/tank-prototype/coated-steel.png",
+      "sha256": "775286803bd9a138b803c720e9357916a07b53b2bf8ec5da60d1d33b7ce02def"
+    },
+    {
+      "path": "art/source/tank-prototype/index.html",
+      "sha256": "e99948948bf6cf2fc73625a74212ae5f7fa33565e3ac7be7a94a221add2a1948"
+    },
+    {
+      "path": "art/source/tank-prototype/material-prompt.json",
+      "sha256": "82940c71146140c25a6d377d3961007027449a7268641fabbf8e0a6e95414f94"
+    },
+    {
+      "path": "art/source/tank-prototype/model.js",
+      "sha256": "82a15611305f2aabad2d32a4d49efc89d1e5b55578b79d3fe96b1937f092f326"
+    },
+    {
+      "path": "art/source/tank-prototype/packed/tank-base.png",
+      "sha256": "3f002c72f210c3bec218a0257fc003cb1776baeaf3dde3b4df4cf1a4e9a027ef"
+    },
+    {
+      "path": "art/source/tank-prototype/packed/tank-paint.png",
+      "sha256": "46b94323cf42cd8f3af7a104ce97a673e7951abd280c14ba0bb7a315a82049ab"
+    },
+    {
+      "path": "art/source/tank-prototype/packed/tank-wreck.png",
+      "sha256": "33ff9f5cb2f892e338a38d3ca317b770c79095e3b0c470dbb0315d48b779781e"
+    },
+    {
+      "path": "art/source/tank-prototype/tank-bearing-check.csv",
+      "sha256": "29abfba405fa56b653adf9cbf7e9c894c2b6551a97d42f256ba1f0f6c2379ed8"
+    },
+    {
+      "path": "art/source/tank-prototype/tank-model.json",
+      "sha256": "86b8df77720ee167ff663e4794af7732f2ee340e05681dc9db7fc7efed7a75ca"
+    },
+    {
+      "path": "art/source/unit-motion-v09/README.md",
+      "sha256": "f76965bf7f3add5531d415b8ab5516a45ea7064f13dc07e3759968c88ecbeb43"
+    },
+    {
+      "path": "art/source/unit-motion-v09/gait.js",
+      "sha256": "86ee1a4bdfffdcc9638f1752bdf2d927b09d4787bb89ea515a96f7d2c463f48c"
+    },
+    {
+      "path": "art/source/unit-motion-v09/index.html",
+      "sha256": "74146cefa2a9eccc65c3b0d9d63e48ed422bc883a738b7cb093b3c7996e609c6"
+    },
+    {
+      "path": "art/source/unit-motion-v09/packed/gait-v09.pak",
+      "sha256": "a546ada04e25f292b00ebedfac83cd7f039c8621931a8460be802e0a9aed60c2"
+    },
+    {
+      "path": "art/source/unit-motion-v09/packed/manifest.json",
+      "sha256": "bd2d173f090203d0a49403f3646301478145d131bf6b4793706e0183f69e77fa"
+    },
+    {
+      "path": "art/source/units-v03/README.md",
+      "sha256": "f854a660f2908562a3219572a7b852637bd979ee2a2d859af3cb170abb7624ac"
+    },
+    {
+      "path": "art/source/units-v03/audit.json",
+      "sha256": "99f3ba576ed7d64b00997f12552b19d34908ee5abb5dc5c1042a08efc2e94da6"
+    },
+    {
+      "path": "art/source/units-v03/index.html",
+      "sha256": "8fe6024c022a5e679dcd93c62b53b5064921b4e0fb552277dcefeaee8e23a0d6"
+    },
+    {
+      "path": "art/source/units-v03/models.js",
+      "sha256": "212ac6b2ab3d3fc72f906bac39ee134ad3c01b842bca5b0ed7371086ae69afd6"
+    },
+    {
+      "path": "art/source/units-v03/models/arty.json",
+      "sha256": "b8599ebba385a33852d13508a9464550acb7f54fa40bbef41a9094632fbba714"
+    },
+    {
+      "path": "art/source/units-v03/models/at.json",
+      "sha256": "67fbeb60177ddd1b26fa195cbdeb085b1c93d5362859760e3b3e89d85395a813"
+    },
+    {
+      "path": "art/source/units-v03/models/engineer.json",
+      "sha256": "3ba85f03d6069e265126e19432e19f635d12ff1bd8341940e3e49993a4ea52c8"
+    },
+    {
+      "path": "art/source/units-v03/models/ifv.json",
+      "sha256": "dd71a7684d3471ac6af317350d1270fefbfd92838ace35ccd6b5df1975df4241"
+    },
+    {
+      "path": "art/source/units-v03/models/mcv.json",
+      "sha256": "40b734b1c416e0d4339ba062ac646328128b21116eb31898f9e142ae13a62eee"
+    },
+    {
+      "path": "art/source/units-v03/models/miner-full.json",
+      "sha256": "c78e41471560bbf04756bf719a8004a2cc5714e96d44d42e33f4ea2931146876"
+    },
+    {
+      "path": "art/source/units-v03/models/miner.json",
+      "sha256": "250fb3897ac090f1283a0bf8761ae55b2561030698c0da1672e2bd1d81649158"
+    },
+    {
+      "path": "art/source/units-v03/models/squad.json",
+      "sha256": "0dae069942418a38d41b7e479e3de1ffac5ce5de2e2fb91f80ffe1ae54e50935"
+    },
+    {
+      "path": "art/source/units-v03/packed/arty-base.png",
+      "sha256": "1db3439bdf28090a6f9bfa3bd0d2ae34e14e70e543c9623351e75d04510a9e36"
+    },
+    {
+      "path": "art/source/units-v03/packed/arty-paint.png",
+      "sha256": "97de1a7404e0f70d4f4746e2a92a6ad1dec1eddfdd6e9cff6b8cbd408e3f1761"
+    },
+    {
+      "path": "art/source/units-v03/packed/arty-wreck.png",
+      "sha256": "34ee6d5e31d09679dcc60a77e2947f75a020ca9a7037e3a929800f4c9fd5aad5"
+    },
+    {
+      "path": "art/source/units-v03/packed/at-base.png",
+      "sha256": "724f8a31a4a7f10bc1d10426016abfed067d72aafe1d7183869f74410b3fc55d"
+    },
+    {
+      "path": "art/source/units-v03/packed/at-paint.png",
+      "sha256": "731c5fbdde54c7570deaf42862ec02cc219b6a9a195d66d50fdf33fb402a0cb6"
+    },
+    {
+      "path": "art/source/units-v03/packed/engineer-base.png",
+      "sha256": "08b51c4f7f8dad704d87134480c697292ab8688b5ec3e293eb39571136a07fcb"
+    },
+    {
+      "path": "art/source/units-v03/packed/engineer-paint.png",
+      "sha256": "661a76f0054fa4f812c2cdfb38824eb8b56eecb09390d94bc9e4de3563f33718"
+    },
+    {
+      "path": "art/source/units-v03/packed/ifv-base.png",
+      "sha256": "349a20ae179756144643f276b15184779339a632d80fb7124b343423b1fe39cb"
+    },
+    {
+      "path": "art/source/units-v03/packed/ifv-paint.png",
+      "sha256": "61e68790130edbf4da1bacb640c3338b436678f18b66b2be613db0854cdac1fc"
+    },
+    {
+      "path": "art/source/units-v03/packed/ifv-wreck.png",
+      "sha256": "facab9cdcbb4326d8b87f89327d5a73951c6c611dc307c72ceb19c34055e94cb"
+    },
+    {
+      "path": "art/source/units-v03/packed/mcv-base.png",
+      "sha256": "20c893d1619cf29b896410fc5ab17875f0f0c21488ec7e4c3402ea6d32394f7e"
+    },
+    {
+      "path": "art/source/units-v03/packed/mcv-paint.png",
+      "sha256": "faf1e2b43dcc83ee9a72421c8b56cc5565bfb2bebb8a3608cb03657eda233a15"
+    },
+    {
+      "path": "art/source/units-v03/packed/mcv-wreck.png",
+      "sha256": "9625e775909f9c9d3dc833ce041ee2cbf3d4100dfd179af5818882bfa35ac0b1"
+    },
+    {
+      "path": "art/source/units-v03/packed/miner-base.png",
+      "sha256": "7452f9e52597f6283a1556428b695c7bd8edc12aef66c2a399cc169423b00146"
+    },
+    {
+      "path": "art/source/units-v03/packed/miner-full-base.png",
+      "sha256": "ac4e4d900c83fe7bea0eab823b431f10f6fbb87a145284396147b24136a5e7c3"
+    },
+    {
+      "path": "art/source/units-v03/packed/miner-full-paint.png",
+      "sha256": "c06dab5e19ee69efd66370bf0109608c3acd11801c1b2e3c461020c85aac5d71"
+    },
+    {
+      "path": "art/source/units-v03/packed/miner-full-wreck.png",
+      "sha256": "1c71d8a915a715bba1933a36e399145a749ac740962e55bb40f86a7aec23c5cc"
+    },
+    {
+      "path": "art/source/units-v03/packed/miner-paint.png",
+      "sha256": "daaaf3af1e1c836b86c47ed86ff3f016a029c5513967ac765074ad5699191bdf"
+    },
+    {
+      "path": "art/source/units-v03/packed/miner-wreck.png",
+      "sha256": "1d02225be410d2cff7ad7af83ff3a5fdb96c2fc2ba6213e2c461e3b32d98a2c9"
+    },
+    {
+      "path": "art/source/units-v03/packed/squad-base.png",
+      "sha256": "f8be6d70ce669f3cdc4e3c151a42713a05012074bf6f62a853589633f95498fc"
+    },
+    {
+      "path": "art/source/units-v03/packed/squad-paint.png",
+      "sha256": "b775c0d942d3545a6c8aefa422db19debd69cdef202086892aa8890a4e27e379"
+    },
+    {
+      "path": "art/source/units-v04/README.md",
+      "sha256": "107c4ce3a25d879c9184ca7d7fb80a1d17573c32e0cf993f1cdf06852415a7be"
+    },
+    {
+      "path": "art/source/units-v04/audit.json",
+      "sha256": "b8aabd782e89c6e4425770eee9e28e0ee9b7d9b7e369217ab505e76a0a379e4f"
+    },
+    {
+      "path": "art/source/units-v04/ground-footprints.json",
+      "sha256": "d4482aafa7c4cb53926c5e226774a952d94a7bce932f8f899add2a091c7cc1c4"
+    },
+    {
+      "path": "art/source/units-v04/index.html",
+      "sha256": "928958c1766507a472f9d23f2a54c17df29517026f0cccce866029d6332b69ef"
+    },
+    {
+      "path": "art/source/units-v04/models.js",
+      "sha256": "3ac389994e91f2d98b3b1099d79cc27683c1ec1ca7ae4481f171a5b322f4585c"
+    },
+    {
+      "path": "art/source/units-v04/models/arty.json",
+      "sha256": "9270eea1a94ef616b42e03ba0202af0aaa3c250ba241a21e7edddb32d922cbb2"
+    },
+    {
+      "path": "art/source/units-v04/models/at.json",
+      "sha256": "e371481ff5ea5796fae634f6b2d0d5a9240d07c3f6608c962ef17e9a6d274bf4"
+    },
+    {
+      "path": "art/source/units-v04/models/engineer.json",
+      "sha256": "fac638436bf4801572e2662793ac544743de14a853dca491544daa8f29124e7b"
+    },
+    {
+      "path": "art/source/units-v04/models/ifv-repair.json",
+      "sha256": "58bd55cab50fe334a449250aff1a8879d81426dd89c77357110615d64e470730"
+    },
+    {
+      "path": "art/source/units-v04/models/ifv.json",
+      "sha256": "71ccbf6cae201e7f25a3581a2ee831dca60f88a5bc7403430a31588ad936de3d"
+    },
+    {
+      "path": "art/source/units-v04/models/mcv.json",
+      "sha256": "e53c4cde9c3acf806d7b0b5444cc8567bce8fa7e41cc742ce6c1fd8eae40f919"
+    },
+    {
+      "path": "art/source/units-v04/models/miner-full.json",
+      "sha256": "f7c9f99e6f2becf4b3cd7be0e02282ef35693f0761024b22c5e16b2dcbf22dfd"
+    },
+    {
+      "path": "art/source/units-v04/models/miner.json",
+      "sha256": "c644fa56a0f7c5c0c198cb48e27bd9e41f765db2ae177719365d325bd62cab1d"
+    },
+    {
+      "path": "art/source/units-v04/models/squad.json",
+      "sha256": "e1701a04d1de30034928f64693f417d8611c1b62e433273f15ed226cb628f854"
+    },
+    {
+      "path": "art/source/units-v04/packed/arty-base.png",
+      "sha256": "bbb26d402f01a3a65d0c0818078dc32b828c2e7145f98efbcde6e00df31d8da3"
+    },
+    {
+      "path": "art/source/units-v04/packed/arty-paint.png",
+      "sha256": "9deda6db6de07b8b019a08c2fda6d3571bd2131c19cabeb5c9cf09c69b0beb7a"
+    },
+    {
+      "path": "art/source/units-v04/packed/arty-wreck.png",
+      "sha256": "503460fb2771df67b337c774ce63439fa17252ad6138274ccbc86c3045bb173c"
+    },
+    {
+      "path": "art/source/units-v04/packed/at-base.png",
+      "sha256": "6eee6ae8b94ed4402972a6e923b1be9020194b7a0db00008567061cbd09f6754"
+    },
+    {
+      "path": "art/source/units-v04/packed/at-paint.png",
+      "sha256": "417fe50754debd52ee1498a26bdece5cbd959f2aa54d9ae45eb3766810090624"
+    },
+    {
+      "path": "art/source/units-v04/packed/engineer-base.png",
+      "sha256": "2692735bc00ec391806ce45b8626755fe83f2a6e85ca4de0ecbcd3d8ee3a238c"
+    },
+    {
+      "path": "art/source/units-v04/packed/engineer-paint.png",
+      "sha256": "3665675b427cfb75a565b16b42ac7f93917397faf487132b18de4cf6c574e289"
+    },
+    {
+      "path": "art/source/units-v04/packed/ifv-base.png",
+      "sha256": "484821705011016e8dc9c7ae37d85ca3a570737084887e477fc15c5229275884"
+    },
+    {
+      "path": "art/source/units-v04/packed/ifv-paint.png",
+      "sha256": "0d28503cde188318c05353531c14ffb81d781f5e6591bc52db455e89e8a1ae09"
+    },
+    {
+      "path": "art/source/units-v04/packed/ifv-repair-base.png",
+      "sha256": "b87843b35a09c5262c229fef1f9e77afba975b5f98fa92444a33d0b8505edc50"
+    },
+    {
+      "path": "art/source/units-v04/packed/ifv-repair-paint.png",
+      "sha256": "f228179e468ef968a7f12e9d3caef73ac000f48e2bbb9e79b051999b3b328c46"
+    },
+    {
+      "path": "art/source/units-v04/packed/ifv-repair-wreck.png",
+      "sha256": "9b4fa82cc8325d09eebf2b6f22643f70080ade5abb2b6d5b736ce13737c01f00"
+    },
+    {
+      "path": "art/source/units-v04/packed/ifv-wreck.png",
+      "sha256": "5d319377d5968d9847385f593992b2438acd9b7dcaae7cd3edf52d56a6518260"
+    },
+    {
+      "path": "art/source/units-v04/packed/mcv-base.png",
+      "sha256": "f76593544ec1bb8aa65831573d53f588ca8b0c0915537ed2407f5b2db1ea968e"
+    },
+    {
+      "path": "art/source/units-v04/packed/mcv-paint.png",
+      "sha256": "38002796dd919025c18ac2ded8a66ad3c3212006564e2b3fcfaef2aa0d195ee5"
+    },
+    {
+      "path": "art/source/units-v04/packed/mcv-wreck.png",
+      "sha256": "9c0400740f6ca5586fa1e881365a8ac9d836e929b9a8314fdbcd8ea45d25551a"
+    },
+    {
+      "path": "art/source/units-v04/packed/miner-base.png",
+      "sha256": "8a70c91d417adc807521a49bcd5b1f0e2e193c6d24602272f481efb0d801217c"
+    },
+    {
+      "path": "art/source/units-v04/packed/miner-full-base.png",
+      "sha256": "f9221370fc924b575000ca91a4e0338e5ab350d01ea6688a67982d5ec10a8242"
+    },
+    {
+      "path": "art/source/units-v04/packed/miner-full-paint.png",
+      "sha256": "e73311ebde89f68ccae7206c51c73048beb197f429f2023817f620ad3e8a6476"
+    },
+    {
+      "path": "art/source/units-v04/packed/miner-full-wreck.png",
+      "sha256": "de2af9edaa6d8730038a15c7a42eee53b1ae8a22b4955c36f2ea0ac87f2153b5"
+    },
+    {
+      "path": "art/source/units-v04/packed/miner-paint.png",
+      "sha256": "21ab39abea204f47b22f191bcde5ca6c066204ad376baa9000a3b499dd949fe6"
+    },
+    {
+      "path": "art/source/units-v04/packed/miner-wreck.png",
+      "sha256": "7e754ab245c9bf57c546e0142431c37d791e1ddd7e3995d656f6acdec71975f8"
+    },
+    {
+      "path": "art/source/units-v04/packed/squad-base.png",
+      "sha256": "fd946a1354130edcf23a7d68ce46d5b51268e584fc6af50ea58034c87603472b"
+    },
+    {
+      "path": "art/source/units-v04/packed/squad-paint.png",
+      "sha256": "752c4216c8a7601ffb2f857e63fa7ab3f35efa9c726979bac8e8116c6271a20a"
+    },
+    {
+      "path": "art/source/v01/base.png",
+      "sha256": "850568c1d8add4ed8cf4ff68198fd28e30655ef4e952084391aa136d8a90703e"
+    },
+    {
+      "path": "art/source/v01/harbor.png",
+      "sha256": "7c9b6002fd2cc262e0c9624182ae9285c9780c5c9788c36fe994ee2fddf3a42f"
+    },
+    {
+      "path": "art/source/v01/units.png",
+      "sha256": "687a636831073fb296d55bb2983568a8330bae4e54af3a646d3af2c39f90fe30"
+    },
+    {
+      "path": "art/source/v01/生成记录.md",
+      "sha256": "c9f851fcd391f68c96dd6b297917834d683a237a57d998f0d29bac7f6e631d1d"
+    },
+    {
+      "path": "art/source/v02/README.md",
+      "sha256": "db6c62326cadb98f891d238c95a774e9d01aec60e47ea03f78856db19e3b2db0"
+    },
+    {
+      "path": "art/source/v02/bake.html",
+      "sha256": "bbc214be25be647f4d7051a447a2eb8358366949d0ec1596b6d7f99d3cc4cdce"
+    },
+    {
+      "path": "art/source/v02/models.js",
+      "sha256": "c7359f9222bf8c28334d325bb2c58107c587d6140da67517964290fb980b1cc8"
+    },
+    {
+      "path": "art/source/v02/port.png",
+      "sha256": "aa75254a9b40ae581b92cc0658ec57b6753335de8b25017c6c730e477b5203d6"
+    },
+    {
+      "path": "art/source/v02/sprites/factory.png",
+      "sha256": "7f6f93627a1109c137722c7b3c752fca8fdfe03094e2c186a511160acfb0a64c"
+    },
+    {
+      "path": "art/source/v02/sprites/hq.png",
+      "sha256": "f147f7e55a56360f481b9dfe37ed3d2aa0e4f93ecd98aaa67553f43b80b4f392"
+    },
+    {
+      "path": "art/source/v02/sprites/ifv.png",
+      "sha256": "6649bbd86162fb5d7f0b815e7ad0fff9ddb6705e89dce3b4c64302573fb4e40f"
+    },
+    {
+      "path": "art/source/v02/sprites/power.png",
+      "sha256": "c6a1ff7ffdc22bd48edda4a84d1ab8b2d308e1d0fb672320f2719fa679f6dec6"
+    },
+    {
+      "path": "art/source/v02/sprites/squad.png",
+      "sha256": "09e4a87c0ece4fbd97ccdf386f10d4ec00f50c80e74eebf6fffbd254aef88e04"
+    },
+    {
+      "path": "art/source/v02/sprites/tank.png",
+      "sha256": "6eac358a1f3cce27a051d089336e89d5d50269c25a7be73da69e4d04e6234362"
+    },
+    {
+      "path": "art/source/v02/vendor/LICENSE.txt",
+      "sha256": "852e0e8699169bf9f6fdc6bda3e682d078dcbc738b5d33e74df594721bff271d"
+    },
+    {
+      "path": "art/source/v02/vendor/three.min.js",
+      "sha256": "170c6789f43217c96b3170f4b42fafe135de7f7cd48497a4218f9757ee1d49fa"
+    },
+    {
+      "path": "scripts/archive-unit-art.ps1",
+      "sha256": "a764e849d0dc1b417af3b17b9002377ec60d7f278606bbd9acc9e0759cd38094"
+    },
+    {
+      "path": "scripts/build.ps1",
+      "sha256": "218f6b25fc86d797e05827fff4054a585acafa22c576064f75c01df66a9359f6"
+    },
+    {
+      "path": "scripts/check-building-v08.cjs",
+      "sha256": "1d21f38d374068b84321069ac4794f328e0ddc2378a1210daed248f7e2054e72"
+    },
+    {
+      "path": "scripts/check-building-v09.cjs",
+      "sha256": "9aba474b647f177c9dd86ea1f811b24bc9274631b1b134c5e4d06b0175c6cc6f"
+    },
+    {
+      "path": "scripts/export-animation-review.cjs",
+      "sha256": "9c15c877867003b176a6f154d9f662357782e2af93cdc1cde708adf951204249"
+    },
+    {
+      "path": "scripts/export-building-animation.cjs",
+      "sha256": "cdbe8a6830bda47aba8126016d4842ec82e642013b8a271e54fd9ab221f0bb5f"
+    },
+    {
+      "path": "scripts/export-building-ground.cjs",
+      "sha256": "00a67015a11ab4bb0b7dcc32f1443bdead3b3e3e100f3c8b0df8e46066bbc118"
+    },
+    {
+      "path": "scripts/export-building-models.cjs",
+      "sha256": "bdd43d6e5a89812bce8ee180cf1beb17dc780fbe05cd5a84e9cb4a1880d2bb96"
+    },
+    {
+      "path": "scripts/export-building-v08.cjs",
+      "sha256": "1902d006616ee88f707e5ec9186772204d97c630290c131b3939f517a27cdbca"
+    },
+    {
+      "path": "scripts/export-building-v09.cjs",
+      "sha256": "78bfafaedbac0823a1ba525f2e6d912ab02cbd51659fde4a2cf5383d4611d232"
+    },
+    {
+      "path": "scripts/export-combat.cjs",
+      "sha256": "f88d1eab4c66ae0109d3aa41bad3db9be21d1e6c6bb14ee92a8bcb2bef901149"
+    },
+    {
+      "path": "scripts/export-damage-v10.cjs",
+      "sha256": "aec57712a1bb04256bc0200e55108e1033b78b7e7021e1f0556da007018bbac5"
+    },
+    {
+      "path": "scripts/export-gait-v09.cjs",
+      "sha256": "e6543367cb178edcc7b8c1f6b691733ea06ee05f8472aecd1056602f7a354b83"
+    },
+    {
+      "path": "scripts/export-infantry.cjs",
+      "sha256": "5a9c80ff64608a60a4b5ea6f9f72270c4ee05991f61914c1b709ada6b900f67b"
+    },
+    {
+      "path": "scripts/export-readable-units.cjs",
+      "sha256": "7b6f30496646db93fc10701c6c8a4fa9befc17c37f23b04d8f1155569e066f6c"
+    },
+    {
+      "path": "scripts/export-relay.cjs",
+      "sha256": "ecdf26e2abb5d9d9c99fc74ae26ad9a9cfe568888c244a3bf4b5662c0bb40217"
+    },
+    {
+      "path": "scripts/export-structure-v10.cjs",
+      "sha256": "5022986069b907b6c77e9a98fa5ee24138e6cd913741ed9b91c37ae9de01c8fc"
+    },
+    {
+      "path": "scripts/export-tank-prototype.cjs",
+      "sha256": "4e7562a56a9a5b8969405b2532d76e8f845d4abd5b1ffce3fd4a5b5e69649deb"
+    },
+    {
+      "path": "scripts/export-unit-models.cjs",
+      "sha256": "337b5b3a1e91d55ac1785019e3bbb95ad49ef6d042bfb8b0023b07bb1a30975e"
+    },
+    {
+      "path": "scripts/measure-performance.ps1",
+      "sha256": "3f23b1978446fed25fb94666a383f251011a1bd69f70c63537429438af93884a"
+    },
+    {
+      "path": "scripts/measure-unit-footprints.cjs",
+      "sha256": "e24cb3a2286aa3953fc7f67e8b9907290dfe26bde7e4adf9cd081edaf37294af"
+    },
+    {
+      "path": "scripts/pack-animation-preview.py",
+      "sha256": "214c17ecb7035cb45cf51ed34af4dcea36d7c7caa450a73b717eab5b4663d44c"
+    },
+    {
+      "path": "scripts/pack-building-v08.py",
+      "sha256": "8cebda4caca344f8aec874b8881246597088b4476050b9118efe8db6c0463d2b"
+    },
+    {
+      "path": "scripts/pack-building-v09.py",
+      "sha256": "d018569509a7073babcaa727c8937ea414326c1e0491b4dcdf2c63ea5e1da6d0"
+    },
+    {
+      "path": "scripts/pack-field-art.py",
+      "sha256": "f1f7549d5e54e5b8e05b568dec5b81a7e8614ab37f30a0bb23d634ced77f9b83"
+    },
+    {
+      "path": "scripts/pack-gait-v09.py",
+      "sha256": "5569c02b1b545cae35f5b7b0b2cb894e3f8b7e09970e007cce16c8de7f81b42d"
+    },
+    {
+      "path": "scripts/pack-infantry.py",
+      "sha256": "e85d75aa3155a2fce9e7279fc5f4a67a1b5279ee075407c3d365fd6ff2e1f3c7"
+    },
+    {
+      "path": "scripts/pack-relay.py",
+      "sha256": "21f1a09a0ec6a52856e5f1410c68b1cde74e4e41e515313191f0ec997aedda5d"
+    },
+    {
+      "path": "scripts/pack-structure-v10.py",
+      "sha256": "6bc210ca05bdafafb1f322c8670da0a109d91dd0a344d8afed3a0fe091957968"
+    },
+    {
+      "path": "scripts/render-relay-plan.py",
+      "sha256": "250e4875bc42841652553fea21a1cfaf3ceda846814f59b5887dcf0c77b07920"
+    },
+    {
+      "path": "scripts/simulate-story-campaign.ps1",
+      "sha256": "b7cd5c0fb49d3d775e8f5e64ec6f61fef3824dabf70397ce739a8fcd0d9bc3d1"
+    },
+    {
+      "path": "scripts/simulate-third-mission.ps1",
+      "sha256": "2b22e02d2e4e8f7de592a2e321143aefd4f50399e2a03a7d462ab7f08ef329bc"
+    },
+    {
+      "path": "scripts/verify-infantry-rig.cjs",
+      "sha256": "b6f9d366b267ddf1ca281f8aa70e43bedbd5a7fb673e9a2f3e1549dff494d89a"
+    },
+    {
+      "path": "src/AiOrderScheduler.cs",
+      "sha256": "1c550fbda33da362c97042e0d275ab65a0e2e65dfaf05bff32f2a8d9f9ea15f8"
+    },
+    {
+      "path": "src/AssemblyInfo.cs",
+      "sha256": "274773beaed72b08776eece712a8f7301879edeb7920a1e4ac284c582561517e"
+    },
+    {
+      "path": "src/BaseDefense.cs",
+      "sha256": "767e6c1c25969c16c2942fa125315770cb67164a118e483d875ed7c72f2787fc"
+    },
+    {
+      "path": "src/BattleAnimation.cs",
+      "sha256": "cd76e9f9ccf79b33ce5782b0585d9926fb50ebdd0d45111666e50d132e2076a5"
+    },
+    {
+      "path": "src/BattleCursor.cs",
+      "sha256": "154cf8042edc1a93deb625b1af2ef3906e89b1be955d10d982279655f177f0e3"
+    },
+    {
+      "path": "src/BattleEffects.cs",
+      "sha256": "5af7fe13530fbb3f0b16b726671fa5448583c2e7f9932c45e6778a076e3ecbb6"
+    },
+    {
+      "path": "src/BattleIndicators.cs",
+      "sha256": "f54911c71195995c669c6d4f00f8989ca3f84f6a31b0df4fef848a7657d7a7d3"
+    },
+    {
+      "path": "src/BattlefieldBounds.cs",
+      "sha256": "5ca067a493abcefa9902d8c5704998a1be81e94899c7113dd01557ded054c7e9"
+    },
+    {
+      "path": "src/BlastArtV11.cs",
+      "sha256": "11ad714e9c787754bcdb1efd78160d4eb94dfbbd911f39c9a53b997d68f40f29"
+    },
+    {
+      "path": "src/BlastFragments.cs",
+      "sha256": "2b788ab353ac8d36a59110b9934045ece67c71b3577ebcfd2af7c95c6a99948e"
+    },
+    {
+      "path": "src/BuildingCraters.cs",
+      "sha256": "084df10ca9ce1438eeeb554f9b0cb84a64abb220bed6c8570fd1d1bd2171848c"
+    },
+    {
+      "path": "src/BuildingGroundMetric.cs",
+      "sha256": "75834917a0a95dcf421c58d451afa068db6cfde1f7767cdb356e3da70306669d"
+    },
+    {
+      "path": "src/BuildingHazards.cs",
+      "sha256": "02851eaf1d9b55a5298bb461bd18a8a42763ea8b6226e08f7596cea6dd477109"
+    },
+    {
+      "path": "src/BuildingV08.cs",
+      "sha256": "b7ade0b5625224d8410a11a2b8b17c550a6fbaef3c1c6d875f14f7d40b9b39c5"
+    },
+    {
+      "path": "src/BuildingV08Metadata.cs",
+      "sha256": "17232b0a86c11017aa378cd1708da6c2127444ea23275a99167185def913e605"
+    },
+    {
+      "path": "src/Campaign.cs",
+      "sha256": "f646934f0aaabf9cca7ef18a9296e79f7ca493f8bdc8d39ffa5ad0ab1925b0eb"
+    },
+    {
+      "path": "src/CampaignAiIdentity.cs",
+      "sha256": "4ce43cb675b2a9947293138d45a3a2482217bf746410f0dcaa5efa26ad003074"
+    },
+    {
+      "path": "src/CampaignAiPosts.cs",
+      "sha256": "88104debbbf1d4134744ee7191dbbac47076cd38e93ce73e2eacc2d735725d56"
+    },
+    {
+      "path": "src/ClassicCommandUI.cs",
+      "sha256": "41f17169061dd32da94f3c2806ee3f40b01759f4648957dad0995dc0227da235"
+    },
+    {
+      "path": "src/ClassicInput.cs",
+      "sha256": "39218ddf28b06e80cc1120c39e0c53ca8416d4c3cc2947fe60f4b76102111a50"
+    },
+    {
+      "path": "src/ClassicInputV2.cs",
+      "sha256": "1c8fd92f320ac15bf15ea1a9bb0c4a51475954f2ed9a67b1f6783bf9b4c141f1"
+    },
+    {
+      "path": "src/CoastalDrawing.cs",
+      "sha256": "a1e188993c6397b7f663b12507c5e546cd1ffad7cf4cc0a278c5a91aaf5d2e33"
+    },
+    {
+      "path": "src/CoastalTerrain.cs",
+      "sha256": "d37630de0749dea4ad8b9d0384b3b033459c44ae3ca385177a2d027257e225b5"
+    },
+    {
+      "path": "src/CombatOrders.cs",
+      "sha256": "dc3b0df3b8ff1f145d08d734a570e125b8d15969ebc921a09f7e6881f7d4eb45"
+    },
+    {
+      "path": "src/CombatPresentation.cs",
+      "sha256": "f8e0b46e84784234d5988800992e23029d97f8b96485d78d84396dd8404d8735"
+    },
+    {
+      "path": "src/CommandDeck.cs",
+      "sha256": "e2ea58ce44c236015678c5c0114f3331b90db8f8f269051485db0646754946f1"
+    },
+    {
+      "path": "src/CommandFeedback.cs",
+      "sha256": "36768b8aa35c714a6cc51e7972606ce40af577c00246dc2030a5071b197b5559"
+    },
+    {
+      "path": "src/CommandWindow.cs",
+      "sha256": "c65a5da6719d3f317d4897feb929cf47b7e5d4926a77164f31434b349fb74ab4"
+    },
+    {
+      "path": "src/CompactHud.cs",
+      "sha256": "a7850aaba654ba2068abbfac1b10fa1538f06e4b0fd30a9eef787b490cfad994"
+    },
+    {
+      "path": "src/Construction.cs",
+      "sha256": "96256f12d9c1cc7aa519e84e717ef66f94ddd1bdec25e5598156ef3983b7ce8e"
+    },
+    {
+      "path": "src/ConstructionInput.cs",
+      "sha256": "a91768dc6822615a51d3cd4f6d7700095f07161ee24f6b8b97042697202a214b"
+    },
+    {
+      "path": "src/DefensePreview.cs",
+      "sha256": "fd1ca230adb701dda5df94cbbd42689700e79aa223bb8a835ca9e792ecf83dd1"
+    },
+    {
+      "path": "src/DeploymentOrders.cs",
+      "sha256": "fffb6c6b0c1c70af2f37bd8944fa8a0387034c07489343187ada2d91103cee39"
+    },
+    {
+      "path": "src/DockQueue.cs",
+      "sha256": "2a0bc7b9716ae23533f5df9f15acedd9f3dd9822e98974138494e0368f7b087d"
+    },
+    {
+      "path": "src/EnemyEconomy.cs",
+      "sha256": "30cfcd7e9678d4ad07ab54850a0a52e0461e205cd531281d7a895234b6c5be60"
+    },
+    {
+      "path": "src/EngagementNavigation.cs",
+      "sha256": "24634beeef16bcc32ec49d149796404d128a3586a391fe66e117e79d264c3141"
+    },
+    {
+      "path": "src/Engineering.cs",
+      "sha256": "86b6484d1a938ee2248a969f4b74413f84d5fb16fabcc70ee869bfd15066038e"
+    },
+    {
+      "path": "src/FacilityAnimation.cs",
+      "sha256": "8a7233898dbf8bc40491b18cfd098efa0d7d8108f2e2a531391abcd8e2262961"
+    },
+    {
+      "path": "src/FactionPaint.cs",
+      "sha256": "a8f8c1a413103151fd3e10bf224740d3fd77b20dcdef025a9b5056ca8e7e0b01"
+    },
+    {
+      "path": "src/FieldArt.cs",
+      "sha256": "4cf964a18bf68be7a1f1887b58f360ca4e460e95e480a36dddeaeda9274758a9"
+    },
+    {
+      "path": "src/FieldConsole.cs",
+      "sha256": "be04b315f924e9791148c30e7158ff14e74902b1f0c1e543df3dc82d91926602"
+    },
+    {
+      "path": "src/FieldFocus.cs",
+      "sha256": "2bbe01f0bbd8936c598abf8f4d1ddcd427d7bb696252be6af31ca8ce45e2069a"
+    },
+    {
+      "path": "src/FieldLabels.cs",
+      "sha256": "43c327b5e17420857004bcc722c685ddea959ccd44304d9fcef8ecb173c120ed"
+    },
+    {
+      "path": "src/FieldManual.cs",
+      "sha256": "000d8cca2ca7d971f92a2264f95d5f4d85e3c3728fc53007fa2b805277a08fff"
+    },
+    {
+      "path": "src/FieldOrders.cs",
+      "sha256": "bdcb1836209ff7bd5c6ee8a1c3eb922434cd704e2525c65ebc7ec6e76ec228fc"
+    },
+    {
+      "path": "src/FieldTraining.cs",
+      "sha256": "dc0ceea660a28ff02de9ffacbb71d52776160953c12d8e823bd9fba5729ed826"
+    },
+    {
+      "path": "src/FormationNavigation.cs",
+      "sha256": "d1e48a608e986a199018d6c27848cb35a3efc00257dcfc6a0e5ed000702b7418"
+    },
+    {
+      "path": "src/FullscreenWindow.cs",
+      "sha256": "d2d182c34b00cdb53c6d1791193dda7d93a5d2a4475d158294ffcd0a8ac912bf"
+    },
+    {
+      "path": "src/GaitAnimation.cs",
+      "sha256": "57f8bb05c907ba53178304858914d72a705b7e168651a834fb0f8eec89aad32f"
+    },
+    {
+      "path": "src/GaitV09Metadata.cs",
+      "sha256": "e6d2aa082e3cc1781c0590be2a9e19a48362a1f2603d3398008af429fdc72593"
+    },
+    {
+      "path": "src/GroundShadows.cs",
+      "sha256": "513a240217c9a5c500203e40ae6bbe75a72896f83d88a5f3a6c818d3074bae87"
+    },
+    {
+      "path": "src/InfantryArt.cs",
+      "sha256": "19bd2a9002d65e3dfc1a8c3dfa3a29d6572d8a36ac036e1290c56b5b8293272a"
+    },
+    {
+      "path": "src/InfantryTactics.cs",
+      "sha256": "0aeaafdf26844d6af3b61bcf2977aae67062c6823b22237f02c6238db16fbd90"
+    },
+    {
+      "path": "src/InfantryV12Metadata.cs",
+      "sha256": "6ea0be7bfe617a79f93a5b8e6533cd7badb1e5f3b19c5b615b5039499732488d"
+    },
+    {
+      "path": "src/IslandMap.cs",
+      "sha256": "8f9024a08c2beb5f8470d7ae8502f9cd1f234ac13f2f8daaed09c16568c740f0"
+    },
+    {
+      "path": "src/IsometricField.cs",
+      "sha256": "d9bdb40d53860a6e61c560e140b7f147a02c44cacbc402a287ddbc02abd47d3a"
+    },
+    {
+      "path": "src/KeyboardProfile.cs",
+      "sha256": "f2eaf1a852a0c39aa586d005ac318f1aed4ee3f3aa510a5b393da5351d1db85b"
+    },
+    {
+      "path": "src/MatchTempo.cs",
+      "sha256": "a3a232e4d564bdaa8ddfc8e5dad26c7c59c86f74562e01ca22a288bf3d2e45e6"
+    },
+    {
+      "path": "src/MissionBriefings.cs",
+      "sha256": "ceee9a00addd6e32b23281347731e53249619b17feb1f8d7954a140d450e270c"
+    },
+    {
+      "path": "src/ModelReview.cs",
+      "sha256": "bf30ddd8fa549ac4b933d3ddddde71930571e8471e19434e400dc703b4b13893"
+    },
+    {
+      "path": "src/Navigation.cs",
+      "sha256": "cd83e804f153af20d55777dbd5f508345b460b106e7b7f9fc064a4f52370ce81"
+    },
+    {
+      "path": "src/NavigationAcceleration.cs",
+      "sha256": "a069c4a2164279ca7f62ac2f5b9e02671d8817d00870873aad812c0e456d2134"
+    },
+    {
+      "path": "src/NavigationBarriers.cs",
+      "sha256": "046ea1cd5d564c3b0a65dbcbb906e62880558e5037784d6f25f99207c3b32837"
+    },
+    {
+      "path": "src/OrderPreview.cs",
+      "sha256": "759544b297ded9e2238f2574c013b323d110057113c9fc3c95bfb0417bb11fdb"
+    },
+    {
+      "path": "src/OreEconomy.cs",
+      "sha256": "45a09b500b57ab357b775b374d1364db0178ceb849479b1707605b6df5e19558"
+    },
+    {
+      "path": "src/OreFieldArt.cs",
+      "sha256": "902616524111d1dde9fec23135b80d77f173276c2050abc27841f50c0bb6cea5"
+    },
+    {
+      "path": "src/OriginalControls.cs",
+      "sha256": "0af814b1747ed7b62e063f96bd602aca57c23965fc78d08b9177e4e96788accd"
+    },
+    {
+      "path": "src/PlacementAssessment.cs",
+      "sha256": "aef5f1c1ddc76a30d7fc8f2dc58e812838bf85dfd83c6c8ffd754888305fa494"
+    },
+    {
+      "path": "src/ProductionNetwork.cs",
+      "sha256": "5921e206e112962a5a92b679636b5387e7bb9378d45b735153ef2aca08697937"
+    },
+    {
+      "path": "src/ProjectedRadar.cs",
+      "sha256": "8ddb7fb045657d9eb4e1eafec2e17531bb3b590c92c3e0d9d4c4855409e39e8d"
+    },
+    {
+      "path": "src/RadarTerrainExport.cs",
+      "sha256": "b189cd52678312e680375f100dc2ae3d474707c2e99347161aa870826a717383"
+    },
+    {
+      "path": "src/ReferenceBalance.cs",
+      "sha256": "8c0b7fb521569e2cea839aee327d86a8d5a550ba444ac67af2a69301e892c6b5"
+    },
+    {
+      "path": "src/RefineryExit.cs",
+      "sha256": "0a097e648da10cc327ba8e7ace38e9954db4741cce4cee5dbda528bab1d1266d"
+    },
+    {
+      "path": "src/RelayAI.cs",
+      "sha256": "e46d2adbada3ae47887c6ec9401dbadb79295bd5043d6ced4de9366e1f17c230"
+    },
+    {
+      "path": "src/RelayArtMetadata.cs",
+      "sha256": "13d913e2a60d2fe46c4069ad5d34222a30078ac384d88b1cabe700d80bb2fff3"
+    },
+    {
+      "path": "src/RelayInterface.cs",
+      "sha256": "ac7b0c74b34e9941c8f3a176fe0ea0fbb378a94c5bd80b0a18b826d59b7a77e2"
+    },
+    {
+      "path": "src/RelayMap.cs",
+      "sha256": "bc197e292962ece0d0b1f2f12752ebefb9b7b63d01d5dd8c22d25852f326e6ff"
+    },
+    {
+      "path": "src/RelayMission.cs",
+      "sha256": "85444592b1a488a7f198c299d981b55d8b87e2e7bb199c8240a399bff309af72"
+    },
+    {
+      "path": "src/RiverGroundCache.cs",
+      "sha256": "03827a2c2a97b679e7f135de2de9b400e3c6b28cc5d72d7975265c854bb6c184"
+    },
+    {
+      "path": "src/RiverbendBrief.cs",
+      "sha256": "8b88d484af012a48aa068f6cf74969444e08d44d18dd17117bdc4a2bf642aa3e"
+    },
+    {
+      "path": "src/RiverbendMap.cs",
+      "sha256": "f6cb83afef1d19ea6c04d02173b8e4aabf4e8cd93b63d93a7c5d714471cff28a"
+    },
+    {
+      "path": "src/RiverbendPreview.cs",
+      "sha256": "54b67917d6c86834b6f917284dd633672bb76c690820925ba8b73f61ea0de4bc"
+    },
+    {
+      "path": "src/RiverbendRules.cs",
+      "sha256": "53c065bd61e13e04b01e3794651688c9b3ec53a11ab497212e757f4c789eb960"
+    },
+    {
+      "path": "src/StrategicAI.cs",
+      "sha256": "27a1d4851a55e628a206c3b60993d34414edb7160e5db23c74223c5eab1b3fc7"
+    },
+    {
+      "path": "src/StrategicPressure.cs",
+      "sha256": "22ed32e182adb42d99df77b4add54d059fb8f2edfb5562562742aa7bbf67a376"
+    },
+    {
+      "path": "src/StructuralEffects.cs",
+      "sha256": "d7825b7855128e2c33f212aabc115efbacc6426fc73296926bdf334b44f9058d"
+    },
+    {
+      "path": "src/StructuralV10Metadata.cs",
+      "sha256": "2fb2a3fb25484332def0ce5ffe9a296253229c8a46c459b9bb2f5c298cc7a32e"
+    },
+    {
+      "path": "src/Surrender.cs",
+      "sha256": "7d18d9049b5a7b1ac94c1d0abd2f87019830813b048cdbd7f07e1c1d72be1617"
+    },
+    {
+      "path": "src/SurveyNavigation.cs",
+      "sha256": "981384b1f2180665c1d61ee4712f021593c34168ba070f5a73bf7cb0a4a67eac"
+    },
+    {
+      "path": "src/TacticalOrders.cs",
+      "sha256": "a8ee20eb9c05b24619a8a2a07d5ef000c269628f3656d411a59f21eb77f70053"
+    },
+    {
+      "path": "src/TerrainRenderer.cs",
+      "sha256": "04266f0d2fd3956f0eff3fb5127fbec0c94642e6117156c3c5abc0594745c137"
+    },
+    {
+      "path": "src/TerritorialAI.cs",
+      "sha256": "fd4dbebb83f764f9e95b0fc416a2993921e744a6d636cda8e51010a80e211d50"
+    },
+    {
+      "path": "src/TrafficCells.cs",
+      "sha256": "5844d510fd4d53b08f66b0eafff787450dd8ae1b1c48c0f0e67dd41d0fde4dd1"
+    },
+    {
+      "path": "src/UnitGroundMetric.cs",
+      "sha256": "2f394aec074945ae648ae1f5d7680410f00c126b7ed6e26fb2279d1077ee937a"
+    },
+    {
+      "path": "src/VehicleGroundScale.cs",
+      "sha256": "dd075c58443b70382a8372f2fd4278c1edf0756a4ca1ace1f8ab9266608791e7"
+    },
+    {
+      "path": "src/Veterancy.cs",
+      "sha256": "0ff13df132156018516efd7b8fd3afb2c539b863cbe33ca1c821ca943e7c62ac"
+    },
+    {
+      "path": "src/WeaponCombat.cs",
+      "sha256": "319c4f40303812414921f08284aea9b98cde93c0427a74d98a123c46019c8dce"
+    },
+    {
+      "path": "src/game.manifest",
+      "sha256": "379d99ae696773c1aca977d677e8b3bc9785f2b5b0d47559d4e36ca87cab12cd"
+    },
+    {
+      "path": "tests/AdjacencyVeterancyChecks.cs",
+      "sha256": "5598890aa079a1edc445c9e79088ab14158446bf34e726f0466b7b4bb5c74f23"
+    },
+    {
+      "path": "tests/AdjacencyVeterancyInterfaceChecks.cs",
+      "sha256": "1f47a9e8022fed472335bd98a36de9a63f2ad3d63adfc3ca8499cce8b2682c20"
+    },
+    {
+      "path": "tests/AiStandoffSimulation.cs",
+      "sha256": "2d232146093fd4d2df37d659e5cd99f9d67ffff5d2c9edf7cce2e311c46d8e8d"
+    },
+    {
+      "path": "tests/AnimationChecks.cs",
+      "sha256": "8648c4b99ee47832d0877d2f1a194737c4a699bd8b3c20d806ad72561d4527d1"
+    },
+    {
+      "path": "tests/BalanceChecks.cs",
+      "sha256": "9308e2ee67c599a4b19fc43664cc7ca1aee0de9cde616a2ea95b2d95d568b301"
+    },
+    {
+      "path": "tests/BalanceInterfaceChecks.cs",
+      "sha256": "af662732cef6f4304c6217da148c03cc0cf4cc9419ccb0e269ca1dd0c23b9783"
+    },
+    {
+      "path": "tests/BalanceRouteChecks.cs",
+      "sha256": "7c51c7113de25775971fe9ec701242f0987d487dee5504fee05f11d5b76dcf28"
+    },
+    {
+      "path": "tests/BattlePresentationChecks.cs",
+      "sha256": "eceed0547c576b73e8aece89d887842a218824ac6d00f1005a4676eb87d38449"
+    },
+    {
+      "path": "tests/BlastEffectChecks.cs",
+      "sha256": "74521d92f7e47e588d564e3f0022a44c210fb7cbfc8228a0234da0fca7b02526"
+    },
+    {
+      "path": "tests/BuildingArtChecks.cs",
+      "sha256": "08522b72c4fabb36567054f0c4777e0b4be885cf2fa5a9fc1a57bf71b3a5f8ee"
+    },
+    {
+      "path": "tests/BuildingV08Checks.cs",
+      "sha256": "6ba292666c0b11a11355f5f4e1ae646e0c172509418f6a01723fcdce63e4e5be"
+    },
+    {
+      "path": "tests/CampaignChecks.cs",
+      "sha256": "720ebe50db18359b48b41f6f9621e2404ceb567b80d5ea3554a94e35766be16c"
+    },
+    {
+      "path": "tests/CampaignStoryChecks.cs",
+      "sha256": "d2503f3fd35dd3f889245fb6e5e613044fd42f62de85fa56166c8950c769bae7"
+    },
+    {
+      "path": "tests/CampaignStoryInterfaceChecks.cs",
+      "sha256": "9c847d6aee7d5fcff3e2e8d5132e627e0cbc33a0e95250e909ca1a39b0fad694"
+    },
+    {
+      "path": "tests/CampaignStorySimulation.cs",
+      "sha256": "b27791adfec4e8807eb05e4cda10f793b0c0fa5c2dd102e9c4056ede81e51c86"
+    },
+    {
+      "path": "tests/CoastPlacementChecks.cs",
+      "sha256": "3d1833db02820e2596c8ed8885201c9f047b38e753f9316039416fddcb3b3e9a"
+    },
+    {
+      "path": "tests/ConstructionChecks.cs",
+      "sha256": "fdde94aca079d515f07da60f19c8199ec5b07806e627e16f0b9852916903e038"
+    },
+    {
+      "path": "tests/DefenseChecks.cs",
+      "sha256": "c157c6a751f391964a38ac10f328207f2555131010074e07805862241575423e"
+    },
+    {
+      "path": "tests/EconomyChecks.cs",
+      "sha256": "f25db6346b7c63e1d0a1a20d63a28c618540fd133ecd8dbdba72cfa586aa0486"
+    },
+    {
+      "path": "tests/FacilityAnimationChecks.cs",
+      "sha256": "1217bd949cea6cc48b43be30697887f91859cac10b35d12ccadbf991863e44c9"
+    },
+    {
+      "path": "tests/HaulAndBoundsChecks.cs",
+      "sha256": "2dfc7105c503568bfffd3aad9559c5ee1a0f99a5f41579feabcb5d29df071f6c"
+    },
+    {
+      "path": "tests/InfantryChecks.cs",
+      "sha256": "7ca1c418b41c80147ca0347cf01d5ee06651c21edd88a0b1723a41bb673199d7"
+    },
+    {
+      "path": "tests/InfantryInterfaceChecks.cs",
+      "sha256": "01fe3cb1010a3b40918007db81a07418e4d3457e602dbc2bb561676e4351c383"
+    },
+    {
+      "path": "tests/MatchTempoChecks.cs",
+      "sha256": "326060b6886b5ed84607ad7e1f590306bbf61f5c4e02cd0041ee0344400daa10"
+    },
+    {
+      "path": "tests/MinerDeliveryChecks.cs",
+      "sha256": "4a15e82d30e58f5c4dd6d66215cafdccf78b487e6230e108236f21f0e46024eb"
+    },
+    {
+      "path": "tests/OriginalControlChecks.cs",
+      "sha256": "28ea3bfd407f0809cb152c67f8ebffbe07b40b7d1fa62e597bb2d9a5cdd3f16d"
+    },
+    {
+      "path": "tests/ParallelProductionChecks.cs",
+      "sha256": "34d012f2b83c5f26d6293317392dc1259b5d7a5493cded2fd37feb25d24c837d"
+    },
+    {
+      "path": "tests/PathingChecks.cs",
+      "sha256": "bd5e64ee2243b30e48adb6e4a1be1ae102b833b58751ce9c20c8d3641249bf7b"
+    },
+    {
+      "path": "tests/PerformanceAndIFVChecks.cs",
+      "sha256": "e34f1c6491a36efaf19c9b6a371731098870e9997b8482f96678ecf4bb2e17f7"
+    },
+    {
+      "path": "tests/PerformanceBenchmark.cs",
+      "sha256": "e21bee19d327f56d4ac2faba247f1484c5128d85309cd34de168665bb08daf9a"
+    },
+    {
+      "path": "tests/PerformanceChecks.cs",
+      "sha256": "77c0917cba3590267139069a6c78b95e16f4cd966d90bf09c6ee94aba4f160f0"
+    },
+    {
+      "path": "tests/PerformanceInterfaceChecks.cs",
+      "sha256": "5854ad284fbf8dbad6261826ef0dff2a483c1da3e6acfa2bd3b25c47110d98c8"
+    },
+    {
+      "path": "tests/PerformanceNativeChecks.cs",
+      "sha256": "337ee967adbdfeaaa0d81e8d2ee9b197c9945c7f65838f66e6f44d09249c5a2b"
+    },
+    {
+      "path": "tests/QueueSurrenderChecks.cs",
+      "sha256": "c3503160c579b8bb6436a098422c0091b78a27197b39c40d5cc22d7ddb61f49c"
+    },
+    {
+      "path": "tests/RelayInterfaceChecks.cs",
+      "sha256": "9868a3706adc6745e22bcbb50f846b4aafad4029253a82961ab98d7b0743d998"
+    },
+    {
+      "path": "tests/RelayMissionChecks.cs",
+      "sha256": "050564023e45466bc9fa82dc81bbacd0bab1ba2bcc43616bba375b88aab76c74"
+    },
+    {
+      "path": "tests/RelaySimulationChecks.cs",
+      "sha256": "4c0c3028c4e038e5d5705a477d7475ed25912a0d06cd567d6bb2fd2d8c4a72c6"
+    },
+    {
+      "path": "tests/RiverbendChecks.cs",
+      "sha256": "1eb83dc64ea524dc443c2f680921c0dda56e9f4aae11341f058a0025e035994e"
+    },
+    {
+      "path": "tests/RiverbendPlayChecks.cs",
+      "sha256": "cfa8a16e463d328e376ce288a4811888a6630954098bd0ec8b940c29043c7407"
+    },
+    {
+      "path": "tests/ScrollChecks.cs",
+      "sha256": "1fa8108ffcccfbe54804e7c84ea0d07f85cbeefc7ddd64ce2b2de7d843749569"
+    },
+    {
+      "path": "tests/StructuralAnimationChecks.cs",
+      "sha256": "9af921c2445c6e3682c6e747075c98c70db33542834618d65569a1c35a634a86"
+    },
+    {
+      "path": "tests/TankPaintChecks.cs",
+      "sha256": "afcfbbe06e8b7ec128bd24c72943f8f9532add7cce432a5b4d53b2de63d4d2ca"
+    },
+    {
+      "path": "tests/TerritorialAiChecks.cs",
+      "sha256": "c76ddf52e117970cdea369e6ed6bd6b96c06602bf4bb681519d4b4fbc5b824b9"
+    },
+    {
+      "path": "tests/ThirdMissionChecks.cs",
+      "sha256": "8d82f9afffbcfff77e6ae6e5d7742e0a0579d17766dc6430d9ac8b1b65a499d5"
+    },
+    {
+      "path": "tests/WindowChecks.cs",
+      "sha256": "8c594851b1cf347171b6560bd8a67612851c8e5df856ce90471852de88550fe7"
+    },
+    {
+      "path": "tests/fixtures/yr-default-hotkeys.csv",
+      "sha256": "ab727c9c82baecf1f80c6617b0d3790fe143146c9e50f53dab951c5c7d607f41"
+    }
+  ],
+  "source_policy": "Editable source, models, intended runtime packs, maps and design/validation records included. Executable and SHA256SUMS are release assets; temporary caches, backups and regenerable frames excluded.",
+  "notes": "CHANGELOG.md contains the complete cumulative change summary since v0.20.0; old documents preserve the status at their creation time."
+}

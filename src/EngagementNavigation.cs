@@ -18,13 +18,22 @@ public partial class Campaign {
  bool FindFiringPosition(Piece unit,PointF aim){
   if(Time<unit.RouteRetryAt)return false;unit.RouteRetryAt=Time+.75f+(unit.Id%5)*.04f;
   var target=unit.Target;var candidates=new List<PointF>();
-  float reach=Math.Max(18,unit.T.Range-4),extent=target!=null&&target.T.Building?Math.Max(target.T.FoundationWidth,target.T.FoundationHeight)*Tile*.55f:0;
+  float reach=Math.Max(18,ReferenceBalance.Range(unit)-4),extent=target!=null&&target.T.Building?Math.Max(target.T.FoundationWidth,target.T.FoundationHeight)*Tile*.55f:0;
   var center=target==null?aim:target.P;double toward=Math.Atan2(unit.P.Y-center.Y,unit.P.X-center.X);
+  // All candidate firing positions lie inside this box. Gather obstacles and
+  // occupied/reserved endpoints once, instead of rescanning every army 144 times.
+  float pad=Clearance(unit),bound=extent+reach;
+  var area=new RectangleF(center.X-bound,center.Y-bound,bound*2,bound*2);
+  var barriers=Obstacles().Select(r=>Inflated(r,pad)).Where(r=>r.IntersectsWith(Inflated(area,.01f))).ToArray();
+  var nearby=Units.Where(u=>u!=unit&&u.Deployed&&!u.T.Building&&
+   (Inflated(area,Tile*2).Contains(u.P)||u.Side==unit.Side&&u.Target!=null&&u.Path.Count>0&&Inflated(area,Tile*2).Contains(u.Path.Last()))).ToArray();
   for(int ring=0;ring<3;ring++)for(int i=0;i<48;i++){
    double a=toward+i*Math.PI/24;float radius=extent+reach*(1-ring*.22f);
    var p=new PointF(center.X+(float)Math.Cos(a)*radius,center.Y+(float)Math.Sin(a)*radius);
    float distance=target==null?Dist(p,aim):Dist(p,TargetPoint(p,target));
-   if(distance>unit.T.Range-1||!FreeCombatSlot(unit,p))continue;candidates.Add(p);
+   if(distance>ReferenceBalance.Range(unit)-1||distance<MinimumRange(unit)+1||!Battlefield.ContainsFootprint(p,pad)||!TerrainOpen(p,pad)||barriers.Any(r=>r.Contains(p)))continue;
+   if(nearby.Any(u=>TrafficContact(unit.T,p,u.T,u.P)||u.Side==unit.Side&&u.Target!=null&&u.Path.Count>0&&TrafficContact(unit.T,p,u.T,u.Path.Last())))continue;
+   candidates.Add(p);
   }
   // Reserve the route endpoint through the existing Path; no invisible larger
   // collision body. Replan only on obstruction, target movement or path expiry.

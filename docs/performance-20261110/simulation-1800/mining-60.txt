@@ -1,0 +1,2 @@
+2 structure=9 type=hq pos={X=6564, Y=2616} lot={X=6528,Y=2592,Width=72,Height=48} exit={X=6564, Y=2652}
+2 structure=60 type=power pos={X=6648, Y=2544} lot={X=6624,Y=2520,Width=48,Height=48} exit={X=6660, Y=2580}

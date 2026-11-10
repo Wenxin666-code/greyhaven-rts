@@ -34,8 +34,8 @@ public partial class Campaign {
   var stuck=Live(0).FirstOrDefault(o=>o.Queue.Count>0&&o.Work>=o.Queue.Peek().Seconds);
   if(stuck!=null&&stuck.T.Key=="barracks")return "兵营出口被占用，已完成的士兵在营内等待；闲置友军会让出出口。";
   if(stuck!=null)return stuck.T.Name+" #"+stuck.Id+" 已完工但出口堵塞，请移开门口的部队。";
-  if(Landing&&Funds[0]<195&&!Live(0).Any(o=>o.T.Key=="miner"&&o.Mining))return "矿车停工或已损失。选中现有矿车恢复采矿；车辆工厂可以补造矿车。";
-  if(Power(0)<0)return "供电不足，生产以 45% 速度运行。增建电站可恢复速度。";
+  if(Landing&&Funds[0]<Info("miner").Price&&!Live(0).Any(o=>o.T.Key=="miner"&&o.Mining))return "矿车停工或已损失。选中现有矿车恢复采矿；车辆工厂可以补造矿车。";
+  if(Power(0)<0)return "供电不足，生产降至正常速度的 50%—80%。增建电站可恢复速度。";
   return null;
  }
  public bool CancelOrder(Piece o,int slot){

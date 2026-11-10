@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -50,11 +50,12 @@ public sealed partial class RiverbendMap {
    // Broad coastal bays break the continental outline without enclosing bases.
    if(u<.27f)d=Math.Min(d,-EllipseDistance(u*span,v*span,.04f*span,.79f*span,.13f*span,.12f*span));
    if(protectedGround.Contains(CellKey((int)Math.Floor(x),(int)Math.Floor(y)))&&rim>0)d=Math.Max(d,3);
-   float river=Math.Abs(x-(232+11*(float)Math.Sin(y/27f)))-(4.5f+Math.Max(0,y-193)*.18f);
-   if(y>12)d=Math.Min(d,river);
-   d=Math.Min(d,-EllipseDistance(x,y,171,158,24,14));
-   d=Math.Min(d,-EllipseDistance(x,y,286,65,18,12));
-   d=Math.Min(d,-EllipseDistance(x,y,132,202,18,11));
+   float authX=IslandAuthX(x),authY=IslandAuthY(y);
+   float river=Math.Abs(authX-(232+11*(float)Math.Sin(authY/27f)))-(4.5f+Math.Max(0,authY-193)*.18f);
+   if(authY>12)d=Math.Min(d,river*.758f);
+   d=Math.Min(d,-.726f*EllipseDistance(authX,authY,171,158,24,14));
+   d=Math.Min(d,-.726f*EllipseDistance(authX,authY,286,65,18,12));
+   d=Math.Min(d,-.726f*EllipseDistance(authX,authY,132,202,18,11));
   }else{
    float west=.045f+.023f*(float)Math.Sin(v*8+.3)+.012f*(float)Math.Sin(v*23);
    float south=1.035f-.06f*(float)Math.Sin(u*5+.6)-.02f*(float)Math.Sin(u*17);
@@ -81,7 +82,7 @@ public sealed partial class RiverbendMap {
  Cell ExtensionAt(int x,int y){
   if(!coastReady||!WithinRadar(x,y))return null;
   Cell c;long key=CellKey(x,y);if(extension.TryGetValue(key,out c))return c;
-  c=BaseExtension(x,y);ApplyCoast(x,y,c);extension.Add(key,c);return c;
+  c=IsRelay?RelayGround(x,y):BaseExtension(x,y);if(!IsRelay)ApplyCoast(x,y,c);extension.Add(key,c);return c;
  }
 }
 public partial class Campaign {

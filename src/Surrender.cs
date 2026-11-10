@@ -29,7 +29,7 @@ public partial class Campaign {
   // No transfers/refunds or completed orders may survive the eliminated side.
   for(int category=0;category<2;category++)construction[side,category]=null;
   foreach(var u in remaining){u.Queue.Clear();u.Work=0;u.WorkPaid=0;u.Repairing=false;u.Selling=false;}
-  foreach(var u in remaining.OrderBy(u=>u.T.Building))if(u.Alive)Kill(u);
+  foreach(var u in remaining.OrderBy(u=>u.T.Building))if(u.Alive){if(IsRelayStation(u)){u.Side=-1;u.Target=null;Changed();}else Kill(u);}
   UpdateSatellites();
   string message=FactionName(side)+"已投降，残余设施正在自毁。";
   if(focus!=null)SetEvent(focus.P,message);Radio=message;

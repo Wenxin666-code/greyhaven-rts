@@ -1,0 +1,67 @@
+{
+  "commit": "e4b5712df96ec3acb05ddbda9fe2ba63e30576ab",
+  "sha256": "f33edabdced41e7448ae2c82b68f46b39f64e172a8bf40dd9e0188f677b5a4fe",
+  "sections": {
+    "FV": {
+      "Passengers": "1",
+      "Gunner": "yes",
+      "Weapon1": "HoverMissile",
+      "EliteWeapon1": "HoverMissileE",
+      "Weapon2": "RepairBullet",
+      "EliteWeapon2": "RepairBullet",
+      "Weapon3": "CRM60",
+      "EliteWeapon3": "CRM60",
+      "Weapon17": "CRMissileLauncher",
+      "EliteWeapon17": "CRMissileLauncher"
+    },
+    "MTNK": {},
+    "E1": {
+      "IFVMode": "2"
+    },
+    "GGI": {
+      "IFVMode": "16"
+    },
+    "ENGINEER": {
+      "IFVMode": "1"
+    },
+    "HoverMissile": {
+      "Damage": "25",
+      "ROF": "50",
+      "Range": "6",
+      "Burst": "2",
+      "Warhead": "HE",
+      "MinimumRange": "1"
+    },
+    "RepairBullet": {
+      "Damage": "-50",
+      "ROF": "80",
+      "Range": "1.8",
+      "Warhead": "Mechanical"
+    },
+    "CRM60": {
+      "Damage": "25",
+      "ROF": "15",
+      "Range": "6",
+      "Warhead": "SSA"
+    },
+    "CRMissileLauncher": {
+      "Damage": "30",
+      "ROF": "40",
+      "Range": "8",
+      "Burst": "2",
+      "Warhead": "GUARDWH",
+      "MinimumRange": "1"
+    },
+    "SSA": {
+      "Verses": "100%,100%,100%,60%,40%,40%,75%,50%,25%,100%,100%"
+    },
+    "GUARDWH": {
+      "Verses": "20%,20%,20%,100%,50%,100%,10%,10%,10%,100%,100%",
+      "CellSpread": ".5",
+      "PercentAtMax": ".5"
+    },
+    "Mechanical": {
+      "Verses": "0%,0%,0%,100%,100%,100%,0%,0%,0%,100%,100%"
+    }
+  }
+}

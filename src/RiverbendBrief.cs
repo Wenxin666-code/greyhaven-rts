@@ -1,13 +1,13 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Linq;
 namespace Greyhaven {
 partial class CommandWindow {
- Bitmap riverBriefMap,trainingBriefMap,islandBriefMap;
+ Bitmap riverBriefMap,trainingBriefMap,islandBriefMap,relayBriefMap;
  void DrawRiverBrief(Graphics g,RectangleF box){
-  bool island=islandMissionSelected;var cache=island?islandBriefMap:riverBriefMap;
+  bool island=islandMissionSelected,relay=relayMissionSelected;var cache=relay?relayBriefMap:island?islandBriefMap:riverBriefMap;
   if(cache==null){
-   if(riverMap==null||riverMap.IsTraining||riverMap.IsIsland!=island){riverMap=new RiverbendMap(island);riverViewZoom=-1;}
+   if(riverMap==null||riverMap.IsTraining||riverMap.IsIsland!=island||riverMap.IsRelay!=relay){riverMap=relay?RiverbendMap.Relay():new RiverbendMap(island);riverViewZoom=-1;}
    EnsureRiverArt();var oldCenter=mapCenter;float oldZoom=mapZoom;bool oldBattle=riverBattleRender,oldLabels=mapLabels,oldClient=drawingClient;
    try{
     riverBattleRender=false;mapLabels=false;drawingClient=false;RiverFit();
@@ -26,7 +26,7 @@ partial class CommandWindow {
     }
    }finally{mapCenter=oldCenter;mapZoom=oldZoom;riverBattleRender=oldBattle;mapLabels=oldLabels;drawingClient=oldClient;}
   }
-  if(island)islandBriefMap=cache;else riverBriefMap=cache;g.DrawImage(cache,box);
+  if(relay)relayBriefMap=cache;else if(island)islandBriefMap=cache;else riverBriefMap=cache;g.DrawImage(cache,box);
  }
  void DrawTrainingBrief(Graphics g,RectangleF box){
   if(trainingBriefMap==null){

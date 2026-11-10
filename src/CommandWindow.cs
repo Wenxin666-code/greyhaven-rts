@@ -30,10 +30,10 @@ partial class CommandWindow:Form {
   KeyPreview=true;SetStyle(ControlStyles.ResizeRedraw|ControlStyles.Opaque|ControlStyles.AllPaintingInWmPaint,true);
   Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);
   world=new Campaign();ground=MakeGround();ProjectTerrain();radarGround=new Bitmap(488,214,System.Drawing.Imaging.PixelFormat.Format32bppPArgb);using(var rg=Graphics.FromImage(radarGround))rg.DrawImage(ground,0,0,488,214);
-  foreach(var key in new[]{"hq","power","factory","barracks","radar","satellite","post","harbormaster","refinery","residence","shop","municipal"}){painted[key]=Raw("iso-"+key);painted[key+"-paint"]=Raw("iso-"+key+"-paint");}
-  foreach(var key in new[]{"squad","at","engineer","tank","ifv","ifv-repair","mcv","arty","miner","miner-full"}){
+  foreach(var key in new[]{"hq","power","factory","barracks","radar","satellite","post","harbormaster","refinery","residence","shop","municipal","relay","bunker"}){painted[key]=Raw("iso-"+key);painted[key+"-paint"]=Raw("iso-"+key+"-paint");}
+  foreach(var key in new[]{"squad","at","engineer","sniper","tank","ifv","ifv-repair","mcv","arty","miner","miner-full"}){
    painted[key]=Raw(key+"-base");painted[key+"-paint"]=Raw(key+"-paint");
-   if(key!="squad"&&key!="at"&&key!="engineer")painted[key+"-wreck"]=Raw(key+"-wreck");
+   if(key!="squad"&&key!="at"&&key!="engineer"&&key!="sniper")painted[key+"-wreck"]=Raw(key+"-wreck");
   }
   foreach(var key in new[]{"plate","harbor"})painted[key]=Raw(key);
   painted["ore"]=OreSprites();
@@ -48,14 +48,14 @@ partial class CommandWindow:Form {
   Restart();pulse.Interval=15;pulse.Tick+=(s,e)=>{double now=watch.Elapsed.TotalSeconds;double elapsed=now-last;float dt=(float)Math.Min(.12,elapsed);last=now;
    if(!briefing&&!paused&&!world.Won&&!world.Lost){if(ContainsFocus){TickCameraControls(dt);if(Control.MouseButtons==MouseButtons.None&&!rightPending&&cameraKeys.Count==0)PollEdgeScroll(dt);else edgeDwell=0;}else edgeDwell=0;AdvanceMatch(elapsed);selection.RemoveAll(o=>!o.Alive||o.Carrier!=null);if(followUnit!=null){if(followUnit.Alive)CenterAt(followUnit.P);else followUnit=null;}}
    if(briefing||paused||world.Won||world.Lost)simulation.Reset();if(ContainsFocus)UpdateBattleCursor();
-   if(modelReview&&modelSpin){modelClock+=dt;if(!modelBuildings)modelAngle=(modelAngle+dt*5)%64;hudDirty=true;}
+   if(modelReview&&modelSpin){modelClock+=dt;if(!modelBuildings&&!modelWalking&&!modelEntrenched&&!modelAiming)modelAngle=(modelAngle+dt*5)%64;hudDirty=true;}
    if(!briefing&&!paused&&(world.Won||world.Lost)&&world.VisualTime-world.OutcomeAt<6)world.TickVisuals(dt*speed);
    if(!briefing||hudDirty)Invalidate();};SetFullscreen(true);UpdateBattleCursor(true);pulse.Start();
   Deactivate+=(s,e)=>{mapDragging=false;rightPending=rightDragging=false;cameraKeys.Clear();if(zHeld){zHeld=false;planningPinned=planned.Count>0;}ResetEdgeScroll();frontEnterHeld=false;tHeld=false;selectType=null;if(!briefing&&!world.Won&&!world.Lost)paused=true;drag=false;panning=false;Capture=false;};
  }
  bool resourcesReleased;
  protected override void Dispose(bool disposing){
-  if(disposing){ClearRiverGroundCache();if(islandBriefMap!=null){islandBriefMap.Dispose();islandBriefMap=null;}if(trainingBriefMap!=null){trainingBriefMap.Dispose();trainingBriefMap=null;}if(riverBriefMap!=null){riverBriefMap.Dispose();riverBriefMap=null;}if(projectedRadar!=null){projectedRadar.Dispose();projectedRadar=null;}if(riverTextures!=null){foreach(var texture in riverTextures)texture.Dispose();riverTextures=null;}if(riverView!=null){riverView.Dispose();riverView=null;}}
+  if(disposing){ClearRiverGroundCache();if(relayBriefMap!=null){relayBriefMap.Dispose();relayBriefMap=null;}if(islandBriefMap!=null){islandBriefMap.Dispose();islandBriefMap=null;}if(trainingBriefMap!=null){trainingBriefMap.Dispose();trainingBriefMap=null;}if(riverBriefMap!=null){riverBriefMap.Dispose();riverBriefMap=null;}if(projectedRadar!=null){projectedRadar.Dispose();projectedRadar=null;}if(riverTextures!=null){foreach(var texture in riverTextures)texture.Dispose();riverTextures=null;}if(riverView!=null){riverView.Dispose();riverView=null;}}
   if(disposing&&!resourcesReleased){resourcesReleased=true;ReleaseBlastFragments();ReleaseBattleCursors();pulse.Stop();pulse.Dispose();if(timerPrecision)timeEndPeriod(1);ground.Dispose();ClearTerrainRasters();foreach(var patch in terrainPatches)patch.Image.Dispose();radarGround.Dispose();if(terrainView!=null)terrainView.Dispose();ReleaseFrame();ClearLabelCache();ClearStampCache();foreach(var b in painted.Values)b.Dispose();foreach(var f in fonts.Values)f.Dispose();}
   base.Dispose(disposing);
  }
@@ -147,7 +147,7 @@ partial class CommandWindow:Form {
   if(refresh){
    hits.Clear();DrawHud(g);hudHitCount=hits.Count;hudTime=world.Time;hudWorld=world;hudDirty=false;
   }else if(hits.Count>hudHitCount)hits.RemoveRange(hudHitCount,hits.Count-hudHitCount);
-  DrawAdvancedCommands(g);DrawCoach(g);DrawCardHint(g);DrawPointerHint(g);if(overlay)Overlay(g);
+  DrawRelayInterface(g);DrawAdvancedCommands(g);DrawCoach(g);DrawCardHint(g);DrawPointerHint(g);if(overlay)Overlay(g);
   }
   drawingClient=false;previousOverlay=overlay;
   g.Flush(FlushIntention.Sync);
@@ -168,13 +168,15 @@ partial class CommandWindow:Form {
   if(world.Won||world.Lost){
    string[] lines=world.Won?new[]{"敌方已被歼灭或投降，行动结束。","作战用时 "+TimeSpan.FromSeconds(DisplayBattleSeconds).ToString(@"mm\:ss")+"　｜　存活部队 "+world.Live(0).Count(o=>!o.T.Building)}:
     new[]{"我方单位与建筑已全部损失，本次行动结束。","先保护指挥部，再恢复采矿和生产，再消灭敌方部队和基地。"};
+   if(world.RelayMission)lines=world.Won?new[]{"中继信号恢复，断线前的命令记录已送回指挥部。","周砚：签发时间早于断线，签名是贺峻。","许岑：把原件留好。下一站，石门电站。"}:new[]{world.RelayFailure,"保护中继设备，保留工兵与重建能力后再组织夺控。"};
+   else if(world.Won)lines=StoryVictoryLines(lines);
    for(int i=0;i<lines.Length;i++)Txt(g,lines[i],328,347+i*41,17,i==0?gold:pale);
   }else DrawMissionSummary(g,mission);
   Button(g,328,553,241,49,world.Won||world.Lost?"返回选关":"返回战场",()=>{if(world.Won||world.Lost)OpenMissions();else{paused=false;help=false;}},true);
   if(!world.Won&&!world.Lost){Button(g,328,615,391,36,"键盘与鼠标",OpenKeyboard);Button(g,741,615,391,36,"生产队列",()=>{paused=false;help=false;OpenQueue();});}
   if(!world.Won&&!world.Lost)DrawMatchSpeed(g);
   if(world.Tutorial&&world.Won)Button(g,594,553,205,49,"预览新地图",OpenMapReview);
-  if(!briefing&&!world.Won&&!world.Lost){Button(g,594,553,182,49,"重开本关",()=>{if(world.IslandMission)StartIslandMission();else if(world.River!=null)StartRiverMission();else StartMission(world.Tutorial,world.Assisted);});Button(g,796,553,170,49,"返回选关",OpenMissions);}
+  if(!briefing&&!world.Won&&!world.Lost){Button(g,594,553,182,49,"重开本关",()=>{if(world.RelayMission)StartRelayMission();else if(world.IslandMission)StartIslandMission();else if(world.River!=null)StartRiverMission();else StartMission(world.Tutorial,world.Assisted);});Button(g,796,553,170,49,"返回选关",OpenMissions);}
  }
  RectangleF DragRect(){return RectangleF.FromLTRB(Math.Min(start.X,mouse.X),Math.Min(start.Y,mouse.Y),Math.Max(start.X,mouse.X),Math.Max(start.Y,mouse.Y));}
  PointF ToScreenPoint(MouseEventArgs e){return new PointF((e.X-ox)/Math.Max(.01f,scale),(e.Y-oy)/Math.Max(.01f,scale));}
@@ -191,8 +193,8 @@ partial class CommandWindow:Form {
   if((mods&Keys.Alt)!=0){int accepted=selection.Count(u=>world.ForceMove(u,p));if(accepted==0){RejectDestination();return;}attack=false;Mark(p,null,false);return;}
   bool shortcut=(mods&(Keys.Control|Keys.Shift))==(Keys.Control|Keys.Shift);
   if((mods&Keys.Control)!=0&&!shortcut){
-   int count=0;foreach(var o in selection){if(hit!=null&&hit!=o&&o.Deployed&&o.T.Hit>0){world.Attack(o,hit);count++;}else if(world.Suppress(o,p))count++;}attack=false;
-   if(count>0){Mark(p,null,true);world.Radio="压制指定地面；按 S 停火。";}return;
+   int count=0;foreach(var o in selection){if(hit!=null&&hit!=o&&o.Deployed&&world.Armed(o)){world.Attack(o,hit,true);count++;}else if(world.Suppress(o,p))count++;}attack=false;
+   if(count>0){Mark(p,null,true);world.Radio=Campaign.IsRelayStation(hit)?"正在强制攻击中继站，摧毁会导致任务失败；按 S 停火。":"压制指定地面；按 S 停火。";}return;
   }
   if(!attack&&mods==Keys.None&&selection.Count>0&&selection.All(u=>u.Deployed&&u.T.Key=="miner")){
    var plant=hit!=null&&hit.Deployed&&hit.Side==0&&hit.T.Key=="refinery"?hit:null;
@@ -207,7 +209,7 @@ partial class CommandWindow:Form {
    var repairers=selection.Where(u=>world.CanRepairVehicle(u,hit)).ToArray();
    if(repairers.Length>0){foreach(var u in repairers)world.RepairOrder(u,hit);world.Radio="维修车前往修复目标。";return;}
   }
-  if(!attack&&!shortcut&&mods==Keys.None&&hit!=null&&hit.T.Civilian&&(hit.Side<0||hit.Side==0)&&selection.Any(u=>u.T.Foot)){
+  if(!attack&&!shortcut&&mods==Keys.None&&hit!=null&&hit.T.Garrison&&(hit.Side<0||hit.Side==0)&&selection.Any(u=>u.T.Foot)){
    int entered=0;foreach(var unit in selection.ToArray())if(world.EnterHouse(unit,hit))entered++;
    if(entered==0)world.Radio=hit.Side<0?"需要空闲工兵才能占领中立房屋。":"房屋已满，或所选单位不能驻防。";return;
   }
@@ -224,6 +226,7 @@ partial class CommandWindow:Form {
  Piece markedEnemy;PointF? markedPoint;float markTime;bool markHostile;
  void Mark(PointF p,Piece enemy,bool hostile){markedPoint=p;markedEnemy=enemy;markTime=world.Time;markHostile=hostile;if(hostile&&enemy!=null){flashTarget=enemy;flashAt=watch.Elapsed.TotalSeconds;}}
  void Issue(PointF p,Piece enemy){
+  if(Campaign.IsRelayStation(enemy)){world.Radio=enemy.Side==0?world.RelayStatus:"任务设施需要工兵占领；请勿摧毁。";return;}
   var troops=selection.Where(o=>o.Deployed&&!o.T.Building).ToArray();
   if(enemy!=null&&enemy.Side>0){
    var fighters=selection.Where(o=>o.Deployed&&world.Armed(o)).ToArray();

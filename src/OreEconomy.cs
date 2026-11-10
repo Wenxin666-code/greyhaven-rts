@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Linq;
 using System.Collections.Generic;
@@ -11,10 +11,22 @@ public class OrePatch {
  public float Extract(float request){float take=(float)Math.Min(stock,request);stock-=take;return take;}
 }
 public partial class Campaign {
- public const int LoadValue=180;
+ public const int LoadValue=ReferenceBalance.OreValue*ReferenceBalance.MinerStorage;
  public readonly List<OrePatch> Ore=CreateFields();
  public bool FirstOreCollected {get;private set;}
  public readonly int[] OreReceipts=new int[MaxFactions];
+ // The relay briefing supplies one local deposit to both starting factions.
+ // This is map intelligence, not a larger unit sight radius or a global ore scan.
+ void RevealStartingOre(){
+  if(!RelayMission)return;
+  for(int side=0;side<FactionCount;side++){
+   var closest=Ore.OrderBy(p=>Dist(p.P,Home(side))).FirstOrDefault();if(closest==null)continue;
+   foreach(var patch in Ore.Where(p=>Dist(p.P,closest.P)<=2*Tile)){
+    int x=FogColumn(patch.P.X),y=FogRow(patch.P.Y);
+    for(int dy=-1;dy<=1;dy++)for(int dx=-1;dx<=1;dx++)if(x+dx>=0&&y+dy>=0&&x+dx<MapFogCols&&y+dy<MapFogRows)Discover(side,x+dx,y+dy);
+   }
+  }
+ }
  public PointF? LastEvent;public string EventLabel;public float EventTime;float lastStrike=-10;
  void SetEvent(PointF p,string label){EventTime=Time;LastEvent=p;EventLabel=label;}
  void ReportStrike(Piece unit){
@@ -31,7 +43,7 @@ public partial class Campaign {
    for(int y=0;y<10;y++)for(int x=0;x<7;x++){
     var p=new PointF((cx+x+.5f)*Tile,(cy+y+.5f)*Tile);
     if(center.X==53&&p.Y<684&&p.X>36)continue;
-    if(!Roads.Any(r=>r.Contains(p))&&Dist(p,EnemyHome)>100&&Dist(p,new PointF(152,514))>82)ore.Add(new OrePatch(p.X,p.Y,240));
+    if(!Roads.Any(r=>r.Contains(p))&&Dist(p,EnemyHome)>100&&Dist(p,new PointF(152,514))>82)ore.Add(new OrePatch(p.X,p.Y,1200));
    }
   }return ore;
  }
@@ -40,7 +52,7 @@ public partial class Campaign {
  }
  void RunRefinery(Piece plant,float dt){
   if(!plant.StarterDelivered){
-   PointF exit;if(Exit(plant,Info("miner"),out exit)){Spawn("miner",plant.Side,exit.X,exit.Y);plant.StarterDelivered=true;}
+   PointF exit;if(Exit(plant,Info("miner"),out exit)){Spawn("miner",plant.Side,exit.X,exit.Y).DepartingDock=plant;plant.StarterDelivered=true;}
   }
   if(plant.Door>0)plant.MillPhase=(plant.MillPhase+dt*1.2f)%1;
  }
@@ -52,7 +64,7 @@ public partial class Campaign {
   if(plant!=null&&truck.Returning)truck.Dock=plant;
  }
  public string MiningStatus(Piece truck){
-  string mode=!truck.Mining?"待命":truck.Unload>0?"卸矿":truck.Returning?DockStatus(truck):truck.Surveying?"探查新地形":truck.Path.Count>0?"前往矿区":truck.Patch==null?"寻找矿点":"采集";
+  string mode=!truck.Mining?"待命":truck.Unload>0?"卸矿":truck.Returning?DockStatus(truck):truck.DepartingDock!=null?"驶离卸矿口":truck.Surveying?"探查新地形":truck.Path.Count>0?"前往矿区":truck.Patch==null?"寻找矿点":"采集";
   return mode+"  ·  载矿 "+(int)truck.Cargo+" / "+LoadValue;
  }
  bool WorkingPatch(Piece truck,OrePatch patch){
@@ -71,7 +83,7 @@ public partial class Campaign {
    var dest=new PointF(center.X+offset.X,center.Y+offset.Y);
    if(blocks!=null&&blocks.Any(r=>r.Contains(dest)))continue;
    if(Units.Any(u=>u!=truck&&u.Deployed&&!u.T.Building&&(Dist(u.P,dest)<truck.T.TrafficRadius+u.T.TrafficRadius+1||
-      (u.Mining&&u.Path.Count>0&&Dist(u.Path.Last(),dest)<truck.T.TrafficRadius+u.T.TrafficRadius+1))))continue;
+      (u.Mining&&u.Path.Count>0&&!(unloading&&u.Returning&&u.Dock==truck.Dock&&!u.DockReserved)&&Dist(u.Path.Last(),dest)<truck.T.TrafficRadius+u.T.TrafficRadius+1))))continue;
    if(PlanRoute(truck,dest,blocks)){truck.WorkPoint=dest;return true;}
   }
   if(!unloading)foreach(var idle in Live(truck.Side).Where(u=>u!=truck&&!u.T.Building&&!u.Mining&&u.Path.Count==0&&u.Target==null&&Dist(u.P,center)<Tile).ToArray())NudgeIdleFriend(truck,idle);
@@ -110,9 +122,10 @@ public partial class Campaign {
   }
   if(truck.Cargo>=LoadValue-.01f){truck.Cargo=LoadValue;truck.Returning=true;}
   if(truck.Returning){ReturnOre(truck,dt);return;}
+  if(LeaveRefinery(truck))return;
   var patch=truck.Patch;
   if(patch!=null&&patch.Stock>.01f&&Dist(truck.P,truck.WorkPoint)<5&&Dist(truck.WorkPoint,patch.P)<=Tile*.5f){
-   truck.Path.Clear();float take=patch.Extract(Math.Min(LoadValue-truck.Cargo,dt*36));
+   truck.Path.Clear();float take=patch.Extract(Math.Min(LoadValue-truck.Cargo,dt*ReferenceBalance.HarvestCreditsPerSecond));
    truck.Cargo+=take;if(truck.Side==0&&take>0)FirstOreCollected=true;
    if(patch.Stock<=.01f){truck.Patch=null;truck.OrderedOre=null;truck.Dispatch=0;}
    return;
@@ -120,46 +133,63 @@ public partial class Campaign {
   if(truck.Dispatch>0||(truck.Path.Count>0&&!truck.Surveying))return;
   truck.Dispatch=1;truck.Patch=null;
   if(ChooseOre(truck))return;
+  if(truck.OreSearching){truck.Dispatch=.12f;return;}
   if(truck.Cargo>.01f){truck.Returning=true;truck.Surveying=false;truck.Path.Clear();return;}
   // Busy cells are not an exhausted field. Wait nearby while another truck
   // clears its working cell instead of launching an unrelated exploration trip.
   if(Ore.Any(p=>p.Stock>.01f&&Explored(truck.Side,p.P)&&Units.Any(u=>u!=truck&&u.Deployed&&u.Mining&&u.Patch==p)&&CanMoveTo(truck,p.P))){truck.Path.Clear();truck.Surveying=false;truck.Dispatch=.7f;return;}
   if(truck.Path.Count==0)SurveyForOre(truck);
  }
+ sealed class OreCandidate {internal OrePatch Patch;internal float Penalty,Lower;}
+ sealed class OreSearch {
+  internal PointF Origin;internal int Topology,Token,Next;internal OreCandidate[] Candidates;
+  internal OrePatch Best;internal float BestCost=float.MaxValue;
+ }
+ readonly Dictionary<Piece,OreSearch> oreSearches=new Dictionary<Piece,OreSearch>();
+ float oreBudgetAt=-1;int oreSearchRoutes;
  bool ChooseOre(Piece truck){
   var manual=truck.OrderedOre;truck.OrderedOre=null;
-  if(manual!=null&&manual.Stock>.01f&&RouteToWork(truck,manual.P,false)){truck.Patch=manual;truck.Surveying=false;return true;}
-  OrePatch best=null;PointF[] route=null;PointF work=PointF.Empty;float bestCost=float.MaxValue;
-  var candidates=Ore.Where(p=>p.Stock>.01f&&Explored(truck.Side,p.P))
-   .Select(p=>new{Patch=p,Penalty=WorkingPatch(truck,p)?0:Tile})
-   .Select(p=>new{p.Patch,p.Penalty,Lower=Math.Max(0,Dist(truck.P,p.Patch.P)-6)+p.Penalty}).OrderBy(p=>p.Lower);
-  foreach(var candidate in candidates){
-   var dest=candidate.Patch;
-   // Distance is a lower bound on a legal route. Do not stop at an arbitrary
-   // number of reachable veins: a nearby vein may be across a long detour.
-   if(best!=null&&candidate.Lower>=bestCost)break;
-   if(!RouteToWork(truck,dest.P,false))continue;
-   float cost=0;var prev=truck.P;foreach(var p in truck.Path){cost+=Dist(prev,p);prev=p;}
-   cost+=candidate.Penalty;
-   if(cost<bestCost){best=dest;bestCost=cost;route=truck.Path.ToArray();work=truck.WorkPoint;}
+  if(manual!=null&&manual.Stock>.01f&&RouteToWork(truck,manual.P,false)){
+   oreSearches.Remove(truck);truck.OreSearching=false;truck.Patch=manual;truck.Surveying=false;return true;
   }
-  if(best==null)return false;
-  truck.Path=new Queue<PointF>(route);truck.WorkPoint=work;truck.Patch=best;truck.Surveying=false;return true;
+  if(oreBudgetAt!=Time){oreBudgetAt=Time;oreSearchRoutes=0;}
+  truck.OreSearching=true;
+  if(oreSearchRoutes>=4)return false;
+  OreSearch search;
+  if(!oreSearches.TryGetValue(truck,out search)||search.Topology!=topology||search.Token!=truck.OreSearchToken||Dist(truck.P,search.Origin)>Tile){
+   foreach(var dead in oreSearches.Keys.Where(p=>!p.Alive).ToArray())oreSearches.Remove(dead);
+   search=new OreSearch{Origin=truck.P,Topology=topology,Token=truck.OreSearchToken,
+    Candidates=Ore.Where(p=>p.Stock>.01f&&Explored(truck.Side,p.P)).Select(p=>new OreCandidate{Patch=p,Penalty=WorkingPatch(truck,p)?0:Tile})
+     .Select(p=>{p.Lower=Math.Max(0,Dist(truck.P,p.Patch.P)-6)+p.Penalty;return p;}).OrderBy(p=>p.Lower).ToArray()};
+   oreSearches[truck]=search;
+  }
+  // Keep the same least-route-cost choice, but spread difficult rejected veins
+  // across updates. A pending search is neither exhausted ore nor an order to roam.
+  var savedPath=truck.Path;var savedWork=truck.WorkPoint;
+  try{
+   while(search.Next<search.Candidates.Length&&oreSearchRoutes<4){
+    var candidate=search.Candidates[search.Next];
+    if(search.Best!=null&&candidate.Lower>=search.BestCost)break;
+    search.Next++;if(candidate.Patch.Stock<=.01f)continue;oreSearchRoutes++;
+    if(!RouteToWork(truck,candidate.Patch.P,false))continue;
+    float cost=candidate.Penalty;var prev=truck.P;foreach(var p in truck.Path){cost+=Dist(prev,p);prev=p;}
+    if(cost<search.BestCost){search.Best=candidate.Patch;search.BestCost=cost;}
+   }
+  }finally{truck.Path=savedPath;truck.WorkPoint=savedWork;}
+  bool complete=search.Next>=search.Candidates.Length||search.Best!=null&&search.Candidates[search.Next].Lower>=search.BestCost;
+  if(!complete)return false;
+  oreSearches.Remove(truck);truck.OreSearching=false;
+  if(search.Best==null)return false;
+  if(search.Best.Stock>.01f&&RouteToWork(truck,search.Best.P,false)){
+   truck.Patch=search.Best;truck.Surveying=false;return true;
+  }
+  // Traffic changed while comparing routes; retry known ore, not unexplored land.
+  truck.OreSearching=true;return false;
  }
  void SurveyForOre(Piece truck){
   // Choose unexplored ground using the side's map, independently of ore locations.
   truck.Surveying=ExploreGround(truck);
   if(!truck.Surveying)truck.Dispatch=4;
- }
- bool ExploreGround(Piece unit){
-  const int spacing=4*Tile;var candidates=new List<PointF>();
-  for(int y=(int)FogOriginY+48;y<FogOriginY+MapWidth+MapHeight;y+=spacing)for(int x=(int)FogOriginX+48;x<FogOriginX+MapWidth+MapHeight;x+=spacing){
-   var point=new PointF(x,y);if(!Explored(unit.Side,point)&&TerrainOpen(point,Clearance(unit)))candidates.Add(point);
-  }
-  foreach(var point in candidates.OrderBy(p=>Dist(unit.P,p))){
-   if(Route(unit,point))return true;
-  }
-  return false;
  }
 }
 }

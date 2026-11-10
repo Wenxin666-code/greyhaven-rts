@@ -31,6 +31,8 @@ partial class CommandWindow {
  void ClearStampCache(){foreach(var img in stamps.Values)img.Dispose();stamps.Clear();stampOrder.Clear();stampBytes=0;}
  void DrawStamp(Graphics g,string key,Rectangle source,RectangleF box,Color? faction=null){
   if(!drawingClient){DrawLayeredSource(g,key,source,box,faction);return;}
+  // Reject offscreen stamps before asking GDI+ about the complex clip region.
+  if(box.Right<0||box.Left>W||box.Bottom<0||box.Top>H)return;
   if(!g.IsVisible(box))return;
   if(stampScale!=scale||stampZoom!=zoom){ClearStampCache();stampScale=scale;stampZoom=zoom;}
   var size=new Size(Math.Max(1,(int)Math.Round(box.Width*scale)),Math.Max(1,(int)Math.Round(box.Height*scale)));
@@ -131,6 +133,8 @@ partial class CommandWindow {
  bool MobileHit(Piece o,PointF p,float size,PointF screen){
   int dir=(o.Dir+14)%16;
   if(o.T.Foot){
+   if(CombatPose(o)){string pose=EnsureB08(CombatFrame(o));var crop=CombatCrop(pose);return PixelHit(pose,new Rectangle(Point.Empty,crop.Size),FootCropBox(GaitBox(p,size),crop),screen);}
+   if(o.Stance>0){string key=EnsureB08("stance/"+o.T.Key+"/"+dir/2+"/"+(int)Math.Round(o.Stance*32));return PixelHit(key,new Rectangle(0,0,384,384),GaitBox(p,size),screen);}
    var feet=SoldierFeet(o,p,zoom,world.Time);var box=SoldierBox(feet,size);
    if(Math.Abs(p.X-screen.X)<size*.09f&&Math.Abs(p.Y-screen.Y)<size*.07f)return true;
    return PixelHit(o.T.Key,SourceCell(o.T,o.Side,dir),box,screen);
