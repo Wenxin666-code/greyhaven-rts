@@ -1,12 +1,15 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 namespace Greyhaven {
 public partial class Campaign {
- sealed class AiWing {public Piece[] Units;public int Opponent;public PointF Goal;public float OrderedAt,InitialValue;public int Phase;public PointF Objective;public bool Raid;}
+ const int AssaultTeamLimit=2;
+ const int RaidTeamSize=3;
+ sealed class AiWing {public Piece[] Units;public int Opponent;public PointF Goal;public float OrderedAt,InitialValue,NextRetreatOrder,RegroupUntil;public int Phase;public PointF Objective;public bool Raid;}
  sealed class AiBrain {
  public readonly HashSet<Piece> FieldGuard=new HashSet<Piece>();public PointF FieldPoint;public float FieldOrderedAt,NextFieldAttempt;public int FieldInitial,FieldDeployments;public bool FieldReturning;
+ public float RiverbendRivalDefeatedAt=-1;
  public float NextPush,NextRaid;public int Opponent=-1,Orders,Launches,Raids,Withdrawals;public readonly HashSet<Piece> HomeGuard=new HashSet<Piece>();public PointF Rally;public readonly PointF[] BuildPoints=new PointF[2];
   public readonly float[] LastDispatch=Enumerable.Repeat(-1000f,MaxFactions).ToArray();
   public float NextPlacementTry;public string PlacementFailure;
@@ -70,22 +73,42 @@ public partial class Campaign {
   if(refineries==0){AiPlanBuild(side,brain,"refinery",mine);return;}
   if(AiCount(side,"barracks")==0){AiPlanBuild(side,brain,"barracks",new PointF(home.X+75,home.Y+20));return;}
   if(factories==0&&AiCount(side,"barracks")>0){AiPlanBuild(side,brain,"factory",new PointF(home.X,home.Y+120));return;}
-  if(factories==0)return;
-  if(refineries<2&&Time>StorySecondRefinery(side)&&AiCount(side,"miner")>=2&&Funds[side]>=1300){AiPlanBuild(side,brain,"refinery",mine);return;}
-  int army=Units.Count(p=>p.Alive&&p.Side==side&&!p.T.Building&&p.T.Hit>0);
-  if(factories<2&&Time>StorySecondFactory(side)&&army>=6&&Funds[side]>=2250){
-   if(power<25){AiPlanBuild(side,brain,"power",home);return;}AiPlanBuild(side,brain,"factory",StoryBuildDirection(side,brain.Rally));return;
+  if(factories==0||RelayMission&&RelayStation.Side!=side&&RelaySupportGranted)return;
+  if(WantsSecondRefinery(side)&&AiBudget(side,200)>=Info("refinery").Price){
+   if(AiPlanBuild(side,brain,"refinery",mine))return;
   }
-  if(AiCount(side,"barracks")<2&&Time>StorySecondBarracks(side)&&army>=8&&Funds[side]>=1700){AiPlanBuild(side,brain,"barracks",StoryBuildDirection(side,brain.Rally));return;}
-  if(AiCount(side,"radar")==0&&Time>230&&Funds[side]>=4000){AiPlanBuild(side,brain,"radar",home);return;}
-  if(AiCount(side,"radar")>0&&AiCount(side,"satellite")==0&&Time>480&&Funds[side]>=9000){
+  int army=Units.Count(p=>p.Alive&&p.Side==side&&!p.T.Building&&p.T.Hit>0);
+  if(WantsSecondFactory(side)&&AiBudget(side,250)>=Info("factory").Price+(power<25?Info("power").Price:0)){
+   string type=power<25?"power":"factory";
+   if(AiPlanBuild(side,brain,type,StoryBuildDirection(side,brain.Rally)))return;
+  }
+  if(AiCount(side,"barracks")<2&&Time>StorySecondBarracks(side)&&army>=8&&AiBudget(side,1700)>=Info("barracks").Price){AiPlanBuild(side,brain,"barracks",StoryBuildDirection(side,brain.Rally));return;}
+  if(AiCount(side,"radar")==0&&Time>230&&AiBudget(side,4000-Info("radar").Price)>=Info("radar").Price){AiPlanBuild(side,brain,"radar",home);return;}
+  if(AiCount(side,"radar")>0&&AiCount(side,"satellite")==0&&Time>480&&AiBudget(side,9000-Info("satellite").Price)>=Info("satellite").Price){
    if(power<100){AiPlanBuild(side,brain,"power",home);return;}AiPlanBuild(side,brain,"satellite",home);return;
   }
  }
+ bool AiHasOreFlow(int side){
+  return Live(side).Any(p=>p.T.Key=="refinery"&&p.LastReceipt>0&&Time-p.ReceiptAt<180);
+ }
+ bool WantsSecondRefinery(int side){
+  return Time>StorySecondRefinery(side)&&AiCount(side,"refinery")==1&&AiCount(side,"miner")>=2&&AiHasOreFlow(side);
+ }
+ bool WantsSecondFactory(int side){
+  return Time>StorySecondFactory(side)&&AiCount(side,"factory")==1&&OreReceipts[side]>=2*LoadValue&&AiHasOreFlow(side)&&
+   Live(side).Count(p=>!p.T.Building&&Armed(p))>=6;
+ }
  int AiReserve(int side,bool includeDefense=true){
   int reserve=Time<100?150:350;
-  if(Time>StorySecondRefinery(side)&&AiCount(side,"refinery")<2&&AiCount(side,"miner")>=2)reserve=Info("refinery").Price+200;
-  else if(Time>StorySecondFactory(side)&&AiCount(side,"factory")<2&&Units.Count(p=>p.Alive&&p.Side==side&&p.T.Hit>0&&!p.T.Building)>=6)reserve=Info("factory").Price+(Power(side)<25?Info("power").Price:0)+200;
+  var brain=Brain(side);
+  // An existing construction job is accounted for in AiBudget. Only save for
+  // the next building when the construction queue is empty.
+  if(Construction(side,0)==null&&Live(side).Any(p=>p.T.Key=="hq")&&(!RelayMission||!RelaySupportGranted||RelayStation.Side==side)){
+   if(AiCount(side,"factory")==0&&AiCount(side,"refinery")>0&&AiCount(side,"barracks")>0&&brain.PlacementFailure!="factory")
+    reserve=Info("factory").Price+150;
+   else if(WantsSecondRefinery(side)&&brain.PlacementFailure!="refinery")reserve=Info("refinery").Price+200;
+   else if(WantsSecondFactory(side)&&brain.PlacementFailure!="factory")reserve=Info("factory").Price+(Power(side)<25?Info("power").Price:0)+250;
+  }
   // Recruitment leaves room to finance a planned defence. Its own budget
   // excludes this extra reservation so it never waits for its cost twice.
   if(includeDefense&&Construction(side,1)==null&&AiCount(side,"post")<DesiredDefenses(side))reserve+=Info("post").Price;
@@ -102,6 +125,7 @@ public partial class Campaign {
   bool fortified=known.Count(p=>p.T.Key=="post")>=2;
   float carRatio=.28f,gunRatio=side%5==3?.30f:.18f;StoryVehicleMix(side,ref carRatio,ref gunRatio);
   if(fortified){carRatio=Math.Min(carRatio,.20f);gunRatio=Math.Max(gunRatio,.32f);}
+  else if(enemyArmor>=3&&enemyArmor>enemyFoot){carRatio=Math.Min(carRatio,.22f);gunRatio=Math.Min(gunRatio,.24f);}
   else if(enemyFoot>enemyArmor*2){carRatio=Math.Max(carRatio,StoryRole(side)==CampaignRole.NorthLine?.35f:.5f);gunRatio=Math.Min(gunRatio,.2f);}
   float tankRatio=1-carRatio-gunRatio;
   return cars/carRatio<=Math.Min(tanks/tankRatio,guns/gunRatio)?"ifv":guns/gunRatio<tanks/tankRatio?"arty":"tank";
@@ -116,18 +140,42 @@ public partial class Campaign {
   return anti<(rifles+anti+1)*(armor?.6f:.35f)?"at":"squad";
  }
  void AiRecruit(int side,AiBrain brain,Piece[] known){
-  var facilities=Live(side).Where(p=>p.T.Key=="factory"||p.T.Key=="barracks").ToArray();
-  int desiredMiners=Math.Min(4,Math.Max(2,AiCount(side,"refinery")*2));
+  var facilities=Live(side).Where(p=>!p.Selling&&(p.T.Key=="factory"||p.T.Key=="barracks")).ToArray();
+  if(facilities.Length==0)return;
+  foreach(var facility in facilities)facility.Rally=brain.Rally;
+  int desiredMiners=2*AiCount(side,"refinery");
   int miners=AiCount(side,"miner")+AiPending(side,"miner")+Units.Count(p=>p.Alive&&p.Side==side&&p.T.Key=="refinery"&&!p.StarterDelivered);
-  if(miners<desiredMiners&&facilities.Any(p=>p.T.Key=="factory")&&AiBudget(side,200)>=Info("miner").Price){if(Train(Info("miner"),side,null))brain.Orders++;}
-  int army=Units.Count(p=>p.Alive&&p.Side==side&&!p.T.Building&&p.T.Hit>0)+facilities.Sum(p=>p.Queue.Count(t=>t.Hit>0));
-  int desiredArmy=Math.Min(RelayMission?28:IslandMission?42:48,12+(int)(Time/45)*4);
-  foreach(var facility in facilities.OrderBy(p=>p.Queue.Count).ThenBy(p=>StoryRole(side)!=CampaignRole.Standard&&p.T.Key=="factory"?0:1)){
-   facility.Rally=brain.Rally;if(facility.Queue.Count>=2||facility.ProductionPaused||army>=desiredArmy)continue;
-   var type=Info(facility.T.Key=="factory"?AiVehicle(side,known):AiInfantry(side,known));
-   int coreUnitReserve=facility.T.Key=="barracks"&&type.Key!="engineer"?StoryVehicleReserve(side,army,desiredArmy,known):0;
-   if(AiBudget(side,AiReserve(side))<type.Price+coreUnitReserve||Require(type,side)!=null)continue;
-   if(Train(type,side,facility)){brain.Orders++;if(type.Hit>0)army++;}
+  bool urgentRelay=RelayMission&&RelaySupportGranted&&RelayStation.Side!=side;
+  var vehicleQueue=VehicleQueue(side);
+  bool vehiclesOnline=vehicleQueue!=null&&!vehicleQueue.ProductionPaused;
+  if(miners<desiredMiners&&(!urgentRelay||miners==0)&&vehiclesOnline&&vehicleQueue.Queue.Count<2&&AiPending(side,"miner")==0&&
+     AiBudget(side,miners==0?0:200)>=Info("miner").Price&&Train(Info("miner"),side,vehicleQueue))brain.Orders++;
+
+  // Assigned guards, garrisons and deployed attack teams cannot fill a new
+  // assembly. Count free units and queued replacements against specific jobs.
+  var ready=RelayMission?RelayAvailable(side):AiAvailable(side,brain);
+  int guardSlots=RelayMission?Math.Max(0,RelayGuardCount-relayReserve.Count):Math.Max(0,HomeGuardTarget(side)-brain.HomeGuard.Count);
+  int postSlots=StoryBattle&&RiverbendOperation==null?Math.Max(0,4-brain.FieldGuard.Count):0;
+  int freeWings=Math.Max(1,AssaultSlots(side)-brain.Wings.Count(w=>!w.Raid));
+  int assemblySlots=RelayMission?RelayRecruitSlots():StoryWingMaximum(side)*(OreReceipts[side]>=2*LoadValue?freeWings:1)+RaidTeamSize;
+  int armouredSlots=vehiclesOnline?(int)Math.Ceiling(assemblySlots*StoryArmouredShare(side)):0;
+  int queuedArmour=vehiclesOnline?vehicleQueue.Queue.Count(t=>t.Hit>0):0;
+  int queuedInfantry=facilities.Where(p=>p.T.Key=="barracks"&&!p.ProductionPaused).Sum(p=>p.Queue.Count(t=>t.Hit>0));
+  int armourNeeded=Math.Max(0,armouredSlots-ready.Count(p=>!p.T.Foot)-queuedArmour);
+  int infantryNeeded=Math.Max(0,guardSlots+postSlots+assemblySlots-armouredSlots-ready.Count(p=>p.T.Foot)-queuedInfantry);
+  bool queuedVehicle=false;
+  var queues=facilities.Where(p=>p.T.Key=="barracks"||p==vehicleQueue);
+  foreach(var facility in queues.OrderBy(p=>p.T.Key=="factory"?0:1).ThenBy(p=>p.Queue.Count)){
+   if(facility.Queue.Count>=2||facility.ProductionPaused)continue;
+   bool vehicles=facility.T.Key=="factory";
+   var type=Info(vehicles?AiVehicle(side,known):AiInfantry(side,known));
+   if(vehicles&&armourNeeded==0||!vehicles&&infantryNeeded==0&&type.Key!="engineer")continue;
+   int armourReserve=!vehicles&&type.Key!="engineer"&&!queuedVehicle&&armourNeeded>0&&vehiclesOnline&&vehicleQueue.Queue.Count<2?Info(AiVehicle(side,known)).Price:0;
+   int reserve=urgentRelay?100:AiReserve(side);
+   if(AiBudget(side,reserve)<type.Price+armourReserve||!Train(type,side,facility))continue;
+   brain.Orders++;
+   if(vehicles){armourNeeded--;queuedVehicle=true;}
+   else if(type.Hit>0)infantryNeeded--;
   }
  }
  void SmartEconomy(int side){
@@ -136,18 +184,23 @@ public partial class Campaign {
    var mcv=Live(side).FirstOrDefault(p=>p.T.Key=="mcv");if(mcv!=null)DeployEnemyBase(mcv);
    else if(!Units.Any(p=>p.Alive&&p.Side==side&&(p.T.Key=="hq"||p.T.Key=="mcv")))EnemyRecoveryProduction(side);
   }
-  AiConstruction(side,brain,known);AiFortify(side,brain,known);AiBunker(side,brain);AiRecruit(side,brain,known);
+  AiConstruction(side,brain,known);AiFortify(side,brain,known);
   foreach(var building in Live(side).Where(p=>p.T.Building&&!p.T.Civilian)){if(building.Hp<building.T.Hp*StoryRepairThreshold(side)&&Funds[side]>(known.Any(e=>e.T.Hit>0&&TargetDistance(e,building)<420)?400:AiReserve(side)+400))building.Repairing=true;else if(Funds[side]<200)building.Repairing=false;}
   SmartTactics(side,false);
+  AiBunker(side,brain);AiRecruit(side,brain,known);
  }
  int AiOpponent(int side,AiBrain brain,Piece[] known){
-  int best=-1;float bestScore=float.MinValue;
+  int best=-1;float bestScore=float.MinValue;bool rivalry=RiverbendRivalry;
   for(int enemy=0;enemy<FactionCount;enemy++){
    if(enemy==side||Remaining(enemy)==0||HasSurrendered(enemy))continue;
    var seen=known.Where(p=>p.Side==enemy).ToArray();float score=-Dist(Home(side),Home(enemy))/Tile*2;
+   if(rivalry&&enemy>0)score+=125;
    if(Time-brain.Attacks[enemy]<65)score+=80;
    score+=seen.Count(p=>p.T.Key=="miner")*10+seen.Count(p=>p.T.Building)*3-seen.Count(p=>p.T.Hit>0)*2;
-   if(enemy==brain.Opponent)score+=28;
+   if(enemy==brain.Opponent)score+=14;
+   int committed=brain.Wings.Count(w=>w.Opponent==enemy&&w.Phase!=3);
+   // Repeated Riverbend waves should not make the other rival artificially unattractive.
+   score-=(rivalry?Math.Min(committed,1):committed)*60;
    score+=StoryOpponentPressure(side,enemy,known);
    if(score>bestScore){best=enemy;bestScore=score;}
   }return best;
@@ -157,26 +210,49 @@ public partial class Campaign {
   var target=candidates.OrderBy(p=>Dist(p.P,Home(side))-StoryTargetPriority(side,p,known)).FirstOrDefault();
   return AiOpenPoint(target==null?Home(opponent):target.P);
  }
+ int AssaultSlots(int side){
+  // A second production line backed by actual mining can keep another team
+  // in the field. Each team still recruits from the same paid queues.
+  bool sustainable=Live(side).Count(p=>p.T.Key=="factory"&&!p.ProductionPaused)>=2&&OreReceipts[side]>=6*LoadValue&&AiHasOreFlow(side);
+  return sustainable?AssaultTeamLimit+1:AssaultTeamLimit;
+ }
+ bool RiverbendImpoundGuard(Piece unit){
+  return RiverbendOperation!=null&&RiverbendOperation.IsImpoundGuard(unit);
+ }
+ Piece[] AiAvailable(int side,AiBrain brain,bool anywhere=false){
+  var assigned=new HashSet<Piece>(brain.Wings.SelectMany(w=>w.Units));
+  assigned.UnionWith(brain.HomeGuard);
+  assigned.UnionWith(brain.FieldGuard);
+  return Live(side).Where(p=>!p.T.Building&&Armed(p)&&p.Entering==null&&p.Target==null&&!aiMovesPending.Contains(p)&&
+   !assigned.Contains(p)&&!RiverbendImpoundGuard(p)&&(anywhere||Dist(p.P,Home(side))<900)).ToArray();
+ }
+ Piece[] SelectAssaultUnits(int side,AiBrain brain,Piece[] available,int limit=int.MaxValue){
+  int size=Math.Min(available.Length,Math.Min(StoryWingMaximum(side),limit));
+  int armour=(int)Math.Ceiling(size*StoryArmouredShare(side));
+  var ranked=available.OrderBy(p=>Dist(p.P,brain.Rally)/Math.Max(1,ReferenceBalance.Speed(p))).ToArray();
+  var vehicles=ranked.Where(p=>!p.T.Foot).Take(armour).ToArray();
+  return vehicles.Concat(ranked.Where(p=>!vehicles.Contains(p))).Take(size).ToArray();
+ }
  void SmartTactics(int side,bool periodic){
   if(RelayMission){RelayTactics(side);return;}
   if(HasSurrendered(side))return;var brain=Brain(side);var known=AiKnown(side);
+  if(RiverbendOperation!=null){PressRiverbend(side,brain,known);return;}
   var troops=Live(side).Where(p=>!p.T.Building&&p.T.Hit>0&&p.Entering==null).ToArray();
+  var assets=Live(side).Where(p=>p.T.Building&&!p.T.Civilian).ToArray();
+  bool threatened=known.Any(p=>p.T.Hit>0&&assets.Any(a=>TargetDistance(p,a)<420));
+  // The starting garrison can support a small raid while the mature defence is still filling.
+  AiPressureRaid(side,brain,AiAvailable(side,brain),known,threatened);
   var defenders=MaintainHomeGuard(side,brain,troops,known);
   MaintainStoryPost(side,brain,troops,known,defenders);defenders.UnionWith(brain.FieldGuard);
   RetreatAiMiners(side,brain,known);UpdateAiWings(side,brain,known,defenders);
-  var assets=Live(side).Where(p=>p.T.Building&&!p.T.Civilian).ToArray();
-  bool threatened=known.Any(p=>p.T.Hit>0&&assets.Any(a=>TargetDistance(p,a)<420));
-  var assigned=new HashSet<Piece>(brain.Wings.SelectMany(w=>w.Units));
-  var available=troops.Where(p=>!defenders.Contains(p)&&!assigned.Contains(p)&&p.Target==null&&!aiMovesPending.Contains(p)&&Dist(p.P,Home(side))<900).ToArray();
+  var available=AiAvailable(side,brain).Where(p=>!defenders.Contains(p)).ToArray();
   int opponent=AiOpponent(side,brain,known);brain.Opponent=opponent;if(opponent<0)return;
   int minimum=StoryWingMinimum(side);
   bool waited=Time>=brain.NextPush+MatchTempo.UnderfilledWait&&available.Length>=minimum-1;
-  if(!threatened&&brain.HomeGuard.Count>=Math.Min(HomeGuardTarget(side),troops.Length)&&Time>=brain.NextPush&&(available.Length>=minimum||waited)){
-   var batch=available.OrderBy(p=>Dist(p.P,brain.Rally)).Take(StoryWingMaximum(side)).ToArray();
+  if(!threatened&&brain.Wings.Count(w=>!w.Raid)<AssaultSlots(side)&&brain.HomeGuard.Count>=Math.Min(HomeGuardTarget(side),troops.Length)&&Time>=brain.NextPush&&(available.Length>=minimum||waited)){
+   var batch=SelectAssaultUnits(side,brain,available);
    if(LaunchAiWing(side,brain,batch,opponent,known,false))brain.NextPush=Time+MatchTempo.PushInterval+(side%3)*3;
   }
-  assigned=new HashSet<Piece>(brain.Wings.SelectMany(w=>w.Units));
-  AiPressureRaid(side,brain,troops.Where(p=>!defenders.Contains(p)&&!assigned.Contains(p)&&p.Target==null&&!aiMovesPending.Contains(p)).ToArray(),known,threatened);
  }
  void SmartHousing(int side){
   if(RelayMission)return;
@@ -185,6 +261,7 @@ public partial class Campaign {
    var house=Units.Where(h=>h.Alive&&h.T.Civilian&&h.Side<0&&Explored(side,h.P)&&Dist(h.P,Home(side))<1400&&!known.Any(e=>e.T.Hit>0&&Dist(e.P,h.P)<220))
     .OrderBy(h=>Dist(h.P,engineer.P)).FirstOrDefault();if(house!=null)EnterHouse(engineer,house);
   }
+  if(RiverbendOperation!=null)return;
   int garrison=Units.Count(p=>p.Alive&&p.Side==side&&p.Carrier!=null&&p.Carrier.T.Civilian);
   int housingLimit=StoryHousingLimit(side);if(garrison>=housingLimit)return;var assigned=new HashSet<Piece>(brain.Wings.SelectMany(w=>w.Units));
   assigned.UnionWith(brain.HomeGuard);

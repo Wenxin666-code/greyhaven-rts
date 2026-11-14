@@ -16,8 +16,8 @@ partial class CommandWindow {
    briefing=true;mapReview=false;rulesOpen=true;unitRoster=true;commandRules=false;
    capture("01-载员规则.png");
    islandMissionSelected=true;relayMissionSelected=false;OpenMapReview();
-   if(riverMap.WidthCells!=300||riverMap.HeightCells!=200||riverMap.Houses.Count!=33)throw new Exception("compact island preview dimensions");
-   capture("02-孤岛要塞总览.png");riverMap.Export(Path.Combine(folder,"island-fortress-v02.json"));
+   if(riverMap.WidthCells!=270||riverMap.HeightCells!=180||riverMap.Houses.Count!=33)throw new Exception("compact island preview dimensions");
+   capture("02-孤岛要塞总览.png");riverMap.Export(Path.Combine(folder,"island-fortress-v03.json"));
    StartIslandMission();capture("03-孤岛要塞开局.png");
   }
   Console.WriteLine("PASS native UI: passenger instructions, compact third-mission preview/export and opening; tactical zoom unchanged.");

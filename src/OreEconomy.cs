@@ -91,13 +91,13 @@ public partial class Campaign {
  }
  // Keep neighboring blockers together on every replan; going around only the last
  // vehicle can send a truck straight back into the previous one.
- RectangleF[] MineTraffic(Piece truck,PointF destination){
+ RectangleF[] MineTraffic(Piece truck,PointF destination,Predicate<Piece> include=null){
   var blocks=new List<RectangleF>();
   foreach(var u in Units){
    if(u==truck||!u.Deployed||u.T.Building)continue;
    // Stationary blockers anywhere along the route must participate in the same
    // search. Moving traffic is only sampled nearby, avoiding a stale long wall.
-   if(u.Path.Count>0&&Dist(truck.P,u.P)>140&&Dist(destination,u.P)>90)continue;
+   if(include!=null ? !include(u) : u.Path.Count>0&&Dist(truck.P,u.P)>140&&Dist(destination,u.P)>90)continue;
    float gap=Math.Max(Math.Abs(truck.P.X-u.P.X),Math.Abs(truck.P.Y-u.P.Y));
    float pad=Math.Min(gap-.25f,truck.T.TrafficRadius+u.T.TrafficRadius+1);
    if(pad>0)blocks.Add(new RectangleF(u.P.X-pad,u.P.Y-pad,2*pad,2*pad));

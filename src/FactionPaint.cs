@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Collections.Generic;
@@ -11,7 +11,7 @@ partial class CommandWindow {
  Color UnitColor(int faction){if(faction<0)return Color.FromArgb(222,225,221);Color c;return unitColors.TryGetValue(faction,out c)?c:paintSwatches[(faction%paintSwatches.Length+paintSwatches.Length)%paintSwatches.Length];}
  void SetUnitColor(int faction,Color color){unitColors[faction]=Color.FromArgb(color.R,color.G,color.B);ClearStampCache();hudDirty=true;}
  void DrawLayeredSource(Graphics g,string key,Rectangle source,RectangleF box,Color? faction){
-  if(key.StartsWith("combat/",StringComparison.Ordinal)||key.StartsWith("stance/",StringComparison.Ordinal)||key.StartsWith("b08/",StringComparison.Ordinal)||key.StartsWith("gait/",StringComparison.Ordinal))EnsureB08(key);
+  if(key.StartsWith("combat/",StringComparison.Ordinal)||key.StartsWith("stance/",StringComparison.Ordinal)||key.StartsWith("b08/",StringComparison.Ordinal)||key.StartsWith("gait/",StringComparison.Ordinal)||key.StartsWith("harbor/",StringComparison.Ordinal))EnsureB08(key);
   if(faction.HasValue&&BuildingV08.Contribution(key)){using(var tint=BuildingTint(painted[key],painted[key+"-paint"],source,faction.Value))g.DrawImage(tint,box,new Rectangle(Point.Empty,tint.Size),GraphicsUnit.Pixel);return;}
   g.DrawImage(painted[key],box,source,GraphicsUnit.Pixel);
   if(!faction.HasValue)return;

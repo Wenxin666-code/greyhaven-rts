@@ -129,6 +129,7 @@ window.TankMaster=(()=>{
   beam([0,gunY,1.55],[0,gunY,2.48],.155,'armor',turret);
   for(const z of [1.55,2.46,2.70,3.64])cyl(.17,.085,0,gunY,z,'edge','z',turret);
   cyl(.175,.29,0,gunY,3.87,'steel','z',turret);cyl(.122,.012,0,gunY,4.022,'dark','z',turret);
+  turret.userData.muzzle=[0,gunY,4.028];
   beam([.43,gunY,1.12],[.43,gunY,1.75],.043,'dark',turret);
   bevel(.23,.23,.54,.025,.35,1.03,-.44,'steel',turret);beam([.35,1.08,-.15],[.35,1.08,.55],.035,'dark',turret);
   for(const s of [-1,1]){

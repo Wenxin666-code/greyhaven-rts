@@ -27,7 +27,8 @@ public partial class Campaign {
   if((Tutorial&&Time<180)||!Live(side).Any(p=>p.T.Key=="hq")||!Live(side).Any(p=>p.T.Key=="refinery")||!Live(side).Any(p=>p.T.Key=="barracks"))return 0;
   if(Time<55)return 0;
   int refineries=AiCount(side,"refinery"),factories=AiCount(side,"factory");
-  return factories>=2&&refineries>=2?6:factories>0&&refineries>=2?4:factories>0?2:1;
+  int desired=factories>=2&&refineries>=2?6:factories>0&&refineries>=2?4:factories>0?2:1;
+  return StoryBattle&&desired>2?desired-1:desired;
  }
  void AiFortify(int side,AiBrain brain,Piece[] known){
   AiPlaceReady(side,brain,1);
@@ -39,7 +40,11 @@ public partial class Campaign {
    .OrderBy(p=>assets.Min(a=>Dist(a.P,p.P))).FirstOrDefault();
   bool urgent=danger!=null;
   int desired=DesiredDefenses(side);
-  if(urgent)desired=Math.Max(desired,Time>=600?8:Time>=260?5:2);
+  if(urgent){
+   int response=Time>=600?8:Time>=260?5:2;
+   if(StoryBattle&&response>2)response--;
+   desired=Math.Max(desired,response);
+  }
   int count=AiCount(side,"post");if(count>=desired)return;
   if(OreReceipts[side]==0&&Funds[side]<2750)return;
   int reserve=urgent?Math.Min(100,AiReserve(side,false)):AiReserve(side,false);

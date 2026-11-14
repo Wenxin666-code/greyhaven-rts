@@ -53,7 +53,8 @@ namespace Greyhaven {public partial class Campaign {
    return;
   }
   if(HouseCount(bunker)>=3)return;
-  foreach(var foot in Live(side).Where(u=>u.T.Key=="squad"&&u.Entering==null&&u.Target==null&&Dist(u.P,bunker.P)<12*Tile).OrderBy(u=>Dist(u.P,bunker.P)).ToArray()){
+  foreach(var foot in Live(side).Where(u=>u.T.Key=="squad"&&u.Entering==null&&u.Target==null&&Dist(u.P,bunker.P)<12*Tile&&
+   !brain.HomeGuard.Contains(u)&&!brain.FieldGuard.Contains(u)&&!brain.Wings.Any(wing=>wing.Units.Contains(u))&&(!RelayMission||!RelayAssigned(u))).OrderBy(u=>Dist(u.P,bunker.P)).ToArray()){
    if(Units.Count(u=>u.Alive&&(u.Carrier==bunker||u.Entering==bunker))>=3)break;
    if(EnterHouse(foot,bunker))CancelAiMove(foot);
   }

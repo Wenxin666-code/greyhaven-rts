@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -33,10 +33,10 @@ internal static partial class BuildingV08 {
  static string InfantryAlias(string key){return key=="at-base"?"at-mobile-base":key=="at-paint"?"at-mobile-paint":key.StartsWith("gait/at/",StringComparison.Ordinal)?key.Replace("gait/at/","gait/at-mobile/"):key;}
  static readonly IndexedSpritePack relay=new IndexedSpritePack("relay-v01.pak",true);
  static readonly IndexedSpritePack buildings=new IndexedSpritePack("buildings-v09.pak"),structures=new IndexedSpritePack("structures-v10.pak"),walking=new IndexedSpritePack("gait-v09.pak");
- internal static bool Has(string name){return infantry.Has(InfantryAlias(name))||relay.Has(name)||structures.Has(name)||buildings.Has(name)||name.StartsWith("gait/",StringComparison.Ordinal)&&walking.Has(name);}
- internal static Bitmap Read(string name){return infantry.Has(InfantryAlias(name))?infantry.Read(InfantryAlias(name)):relay.Has(name)?relay.Read(name):name.StartsWith("gait/",StringComparison.Ordinal)?walking.Read(name):structures.Has(name)?structures.Read(name):buildings.Read(name);}
+ internal static bool Has(string name){return name.StartsWith("harbor/",StringComparison.Ordinal)?HarborSprites.Atlas.Value.Has(name):infantry.Has(InfantryAlias(name))||relay.Has(name)||structures.Has(name)||buildings.Has(name)||name.StartsWith("gait/",StringComparison.Ordinal)&&walking.Has(name);}
+ internal static Bitmap Read(string name){return name.StartsWith("harbor/",StringComparison.Ordinal)?HarborSprites.Atlas.Value.Read(name):infantry.Has(InfantryAlias(name))?infantry.Read(InfantryAlias(name)):relay.Has(name)?relay.Read(name):name.StartsWith("gait/",StringComparison.Ordinal)?walking.Read(name):structures.Has(name)?structures.Read(name):buildings.Read(name);}
  internal static bool IsBuilding(string key){return Specs.ContainsKey(key);}
- internal static bool Contribution(string key){return IsBuilding(key)||key.StartsWith("combat/",StringComparison.Ordinal)||key=="squad"||key=="sniper"||key=="at"||key.StartsWith("stance/",StringComparison.Ordinal)||key=="debris-v11"||key.StartsWith("b08/",StringComparison.Ordinal)||key.StartsWith("gait/",StringComparison.Ordinal);}
+ internal static bool Contribution(string key){return IsBuilding(key)||key.StartsWith("harbor/",StringComparison.Ordinal)||key.StartsWith("combat/",StringComparison.Ordinal)||key=="squad"||key=="sniper"||key=="at"||key.StartsWith("stance/",StringComparison.Ordinal)||key=="debris-v11"||key.StartsWith("b08/",StringComparison.Ordinal)||key.StartsWith("gait/",StringComparison.Ordinal);}
 }
 partial class CommandWindow {
  const long BuildingFrameBudget=64L*1024*1024;

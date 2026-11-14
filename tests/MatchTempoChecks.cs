@@ -18,9 +18,9 @@ class MatchTempoChecks {
   w.Train(Campaign.Info("tank"),0,null);w.StartConstruction(Campaign.Info("radar"));var unit=w.Spawn("tank",0,700,1150);Assert(w.Move(unit,new PointF(1000,1150),false),"clock route");return w;
  }
  static void CheckClocks(){
-  foreach(float rate in new[]{1f,2f,3f,4f}){
+  foreach(float rate in new[]{2f,4f,6f,8f}){
    double? total=null;int? funds=null;PointF? position=null;
-   foreach(int hz in new[]{30,60,144}){
+   foreach(int hz in new[]{24,30,60,144}){
     var clock=new SimulationStepper();double time=0;var world=ClockWorld();
     for(int frame=0;frame<hz*8;frame++)clock.Advance(1.0/hz,rate,dt=>{time+=dt;world.Tick(dt);});
     Assert(Math.Abs(time-8*rate)<.001,"render cadence changed simulation time "+rate+" / "+hz);
@@ -29,11 +29,14 @@ class MatchTempoChecks {
     total=time;funds=world.Funds[0];position=at;
    }
   }
+  var fastest=new SimulationStepper();double fastestTime=0;
+  for(int i=0;i<160;i++)fastest.Advance(.05,8f,dt=>fastestTime+=dt);
+  Assert(Math.Abs(fastestTime-64)<.001,"4x falls behind at 20 render Hz");
   var stalled=new SimulationStepper();double progressed=0;int steps=stalled.Advance(.2,2,dt=>progressed+=dt);
   Assert(steps==MatchTempo.MaxStepsPerFrame&&stalled.Pending>0,"long frame must be budgeted");
   stalled.Advance(.01,2,dt=>progressed+=dt);Assert(Math.Abs(progressed+stalled.Pending-.42)<1e-6,"short stall lost time");
   stalled.Reset();Assert(stalled.Pending==0&&stalled.Advance(Double.NaN,2,_=>{})==0,"clock reset/invalid time");
-  Console.WriteLine("Clock: 1/2/3/4x at 30/60/144 render Hz have identical time, paid production and movement; bounded catch-up preserves short stalls.");
+  Console.WriteLine("Clock: 2/4/6/8 game seconds per real second at 24/30/60/144 render Hz have consistent time, paid production and movement; bounded catch-up preserves short stalls.");
  }
 }
 namespace Greyhaven {
@@ -122,7 +125,7 @@ partial class CommandWindow {
   Console.WriteLine(note);Console.WriteLine(realNote);if(folder!=null)File.WriteAllText(Path.Combine(folder,"运行测量.txt"),note+Environment.NewLine+realNote+Environment.NewLine);
  }
  internal void CheckTempoInterface(string folder){
-  StartRiverMission();ClientSize=new Size(1920,1080);if(speed!=2)throw new Exception("default terrain match rate");
+  StartTerrainMission(false);ClientSize=new Size(1920,1080);if(speed!=2||MatchSpeedLabel!="×1")throw new Exception("default terrain match rate");
   var funds=world.Funds.ToArray();AdvanceMatch(.1);if(Math.Abs(world.Time-.2)>.001||Math.Abs(DisplayBattleSeconds-.1)>.001)throw new Exception("native shared clock");
   paused=true;AdvanceMatch(5);if(Math.Abs(world.Time-.2)>.001)throw new Exception("paused match advanced");paused=false;AdvanceMatch(.1);if(Math.Abs(world.Time-.4)>.001)throw new Exception("pause catch-up burst");
   var own=world.Live(0).First();world.Deploy(own);for(int i=0;i<20;i++)world.Tick(.1f);world.Spawn("power",0,world.Home(0).X+100,world.Home(0).Y-60);var source=world.Spawn("factory",0,world.Home(0).X+100,world.Home(0).Y+120);world.Funds[0]=10000;world.Train(Campaign.Info("tank"),0,null);world.StartConstruction(Campaign.Info("radar"));
@@ -131,11 +134,19 @@ partial class CommandWindow {
   paused=true;
   using(var frame=new Bitmap(1920,1080))using(var g=Graphics.FromImage(frame)){
    Action draw=()=>{hudDirty=true;OnPaint(new PaintEventArgs(g,ClientRectangle));};draw();
-   for(int rate=1;rate<=4;rate++){var box=hits.Single(h=>h.Id=="match-speed-"+rate);float work=job.Work;box.Run();if(speed!=rate||job.Work!=work||!paused)throw new Exception("speed button reset work or resumed battle");draw();}
-   ChangeMatchSpeed(2);draw();if(folder!=null){Directory.CreateDirectory(folder);frame.Save(Path.Combine(folder,"对局速度设置.png"),ImageFormat.Png);}
+   if(hits.Count(h=>h.Id!=null&&h.Id.StartsWith("match-speed-",StringComparison.Ordinal))!=4)throw new Exception("expected four match speed buttons");
+   for(int multiplier=1;multiplier<=4;multiplier++){
+    var box=hits.Single(h=>h.Id=="match-speed-"+multiplier);float work=job.Work;box.Run();
+    if(speed!=2*multiplier||MatchSpeedLabel!="×"+multiplier||job.Work!=work||!paused)throw new Exception("speed button applied an incorrect rate or changed the paused match");
+    draw();
+   }
+   if(folder!=null){Directory.CreateDirectory(folder);frame.Save(Path.Combine(folder,"对局速度设置.png"),ImageFormat.Png);}
   }
-  StartMission(true,true);if(speed!=1)throw new Exception("tutorial must keep original pace");StartIslandMission();if(speed!=2||matchRealTime!=0||simulation.Pending!=0)throw new Exception("new match clock reset");
-  Console.WriteLine("Native pace: normal 2x, tutorial 1x, pause, real-time match clock, rate-aware ETAs, four menu buttons and restart reset passed.");
+  paused=false;float beforeFastest=world.Time;AdvanceMatch(.05);
+  if(Math.Abs(world.Time-beforeFastest-.4)>.001)throw new Exception("4x battle did not advance by eight game seconds per real second");
+  StartMission(true,true);if(speed!=2||MatchSpeedLabel!="×1")throw new Exception("tutorial must start at the standard rate");
+  StartIslandMission();if(speed!=2||matchRealTime!=0||simulation.Pending!=0)throw new Exception("new match clock reset");
+  Console.WriteLine("Native pace: four menu rates, default 1x for all missions, pause, real-time match clock, rate-aware ETAs and restart reset passed.");
  }
 }
 }

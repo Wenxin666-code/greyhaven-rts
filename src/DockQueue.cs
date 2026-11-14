@@ -11,9 +11,17 @@ public partial class Campaign {
    // This also avoids committing to the closest building on the wrong bank.
    if(!PlanRoute(truck,gate,null))continue;
    float distance=0;var previous=truck.P;foreach(var p in truck.Path){distance+=Dist(previous,p);previous=p;}
-   // Choose the shortest reachable haul once per load. A normal unloading
-   // queue is not a reason to send a loaded truck to a more distant refinery.
    float cost=distance;
+   if(truck.Side>0){
+    // Score the queue at departure and keep that choice for the trip. Count
+    // only deliveries likely to be ahead by the time this truck reaches it.
+    float speed=Math.Max(1,ReferenceBalance.Speed(truck));
+    int ahead=Units.Count(u=>u!=truck&&u.Deployed&&u.Mining&&u.Returning&&u.Dock==candidate&&
+     (u.DockReserved||Dist(u.P,gate)<=distance+2*Tile));
+    bool departing=Units.Any(u=>u.Deployed&&u.DepartingDock==candidate&&Dist(u.P,gate)<3*Tile);
+    cost+=ahead*(ReferenceBalance.UnloadSeconds*speed+2*Tile);
+    if(departing)cost+=Tile;
+   }
    if(cost<bestCost){best=candidate;bestCost=cost;bestRoute=truck.Path.ToArray();}
   }
   truck.Path=saved;truck.RouteVersion=savedVersion;if(best==null)return false;

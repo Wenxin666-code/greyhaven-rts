@@ -43,11 +43,12 @@ public partial class Campaign {
   return AiOpenPoint(desired);
  }
  int HomeGuardTarget(int side){
-  if(!Live(side).Any(p=>p.T.Building&&!p.T.Civilian))return 0;
-  if(!Live(side).Any(p=>p.T.Key=="factory")||AiCount(side,"refinery")<2)return 6;
+  if(RiverbendOperation!=null||!Live(side).Any(p=>p.T.Building&&!p.T.Civilian))return 0;
+  if(!Live(side).Any(p=>p.T.Key=="factory")||AiCount(side,"refinery")<2)return StoryBattle?5:6;
   var enemies=Enumerable.Range(0,FactionCount).Where(s=>s!=side&&Remaining(s)>0&&!HasSurrendered(s)).OrderBy(s=>Dist(Home(side),Home(s))).ToArray();
   bool twoFronts=enemies.Length>1&&Dist(Home(side),Home(enemies[1]))<=Dist(Home(side),Home(enemies[0]))*1.3f;
   int target=twoFronts?20:12;
+  if(StoryBattle)target-=twoFronts?2:1;
   // Armoured guards carry more combat value than a rifle detachment. Apply the
   // modest discount only after those vehicles actually exist, never on a timer.
   if(StoryRole(side)==CampaignRole.NorthLine)target-=Math.Min(4,AiCount(side,"tank")+AiCount(side,"ifv")+AiCount(side,"arty"));
@@ -102,8 +103,11 @@ public partial class Campaign {
  void CancelAiMove(Piece unit){aiMovesPending.Remove(unit);aiMoveVersions.Remove(unit);}
  void ReturnAiWing(int side,AiBrain brain,AiWing wing){
   wing.Phase=3;wing.Goal=brain.Rally;wing.OrderedAt=Time;
-  foreach(var unit in wing.Units){CancelAiMove(unit);Halt(unit);}
-  QueueAiMarch(wing.Units,wing.Goal,false,true);brain.Withdrawals++;
+  foreach(var unit in wing.Units){
+   CancelAiMove(unit);Halt(unit);
+   if(RiverbendOperation!=null)unit.GuardReturning=true;
+  }
+  QueueAiMarch(wing.Units,wing.Goal,false,true,true);brain.Withdrawals++;
  }
  PointF AiApproach(int side,int opponent,PointF objective){
   var home=Home(side);float dx=home.X-objective.X,dy=home.Y-objective.Y,len=Math.Max(1,Dist(home,objective));
@@ -113,8 +117,9 @@ public partial class Campaign {
   foreach(var wing in brain.Wings.ToArray()){
    wing.Units=wing.Units.Where(p=>p.Deployed&&!defenders.Contains(p)).ToArray();
    if(wing.Units.Length==0){brain.Wings.Remove(wing);continue;}
-   float value=wing.Units.Sum(p=>p.T.Price*Math.Max(.25f,p.Hp/p.T.Hp));
+   float value=AiWingStrength(wing.Units);
    bool fighting=wing.Units.Any(p=>p.Target!=null&&p.Target.Alive&&TargetDistance(p,p.Target)<Math.Max(p.T.Range+3*Tile,200));
+   bool makingProgress=wing.Units.Any(p=>aiMovesPending.Contains(p)||p.Path.Count>0&&p.NoProgressFor<6&&p.StalledFor<6);
    int near=wing.Units.Count(p=>!aiMovesPending.Contains(p)&&Dist(p.P,wing.Goal)<180);
    if(wing.Phase==3){
     if(near>=Math.Max(1,(wing.Units.Length*3+3)/4)||Time-wing.OrderedAt>100){
@@ -125,18 +130,22 @@ public partial class Campaign {
    if(wing.Phase==0){
     if(near<Math.Max(1,(wing.Units.Length*3+3)/4)&&Time-wing.OrderedAt<18)continue;
     wing.Phase=wing.Raid?2:1;wing.Goal=wing.Raid?wing.Objective:AiApproach(side,wing.Opponent,wing.Objective);wing.OrderedAt=Time;
-    QueueAiMarch(wing.Units,wing.Goal,true,true);continue;
+    QueueAiMarch(wing.Units,wing.Goal,true,true,true);continue;
    }
    if(wing.Phase==1){
-    if(near>=Math.Max(3,(wing.Units.Length*2+2)/3)||Time-wing.OrderedAt>80&&near>=3){
-     wing.Phase=2;wing.Goal=wing.Objective;wing.OrderedAt=Time;QueueAiMarch(wing.Units,wing.Goal,true,true);
-    }else if(Time-wing.OrderedAt>125&&!fighting)ReturnAiWing(side,brain,wing);
+    int armourNear=wing.Units.Count(p=>!p.T.Foot&&!aiMovesPending.Contains(p)&&Dist(p.P,wing.Goal)<180);
+    if(near>=Math.Max(3,(wing.Units.Length*2+2)/3)||armourNear>=2||Time-wing.OrderedAt>65&&near>=2){
+     wing.Phase=2;wing.Goal=wing.Objective;wing.OrderedAt=Time;QueueAiMarch(wing.Units,wing.Goal,true,true,true);
+    }else if(Time-wing.OrderedAt>30&&!fighting&&!makingProgress){
+     // A blocked staging site should not abort a reachable attack objective.
+     wing.Phase=2;wing.Goal=wing.Objective;wing.OrderedAt=Time;QueueAiMarch(wing.Units,wing.Goal,true,true,true);
+    }
     continue;
    }
    if(!fighting&&(near>0||Time-wing.OrderedAt>100)){
     var objective=AiObjective(side,wing.Opponent,known);
-    if(Dist(objective,wing.Goal)>3*Tile){wing.Goal=objective;wing.Objective=objective;wing.OrderedAt=Time;QueueAiMarch(wing.Units,wing.Goal,true,true);}
-    else if(Time-wing.OrderedAt>120)ReturnAiWing(side,brain,wing);
+    if(Dist(objective,wing.Goal)>3*Tile){wing.Goal=objective;wing.Objective=objective;wing.OrderedAt=Time;QueueAiMarch(wing.Units,wing.Goal,true,true,true);}
+    else if(Time-wing.OrderedAt>120&&!makingProgress)ReturnAiWing(side,brain,wing);
    }
   }
  }

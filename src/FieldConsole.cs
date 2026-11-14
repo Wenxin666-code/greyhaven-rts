@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
@@ -7,7 +7,7 @@ namespace Greyhaven {
 partial class CommandWindow {
  bool queueOpen;int queueIndex,queuePage,queuePageSource;
  void StartMission(bool tutorial,bool easy){
-  Restart();ResetMatchClock(tutorial);world=new Campaign(tutorial,easy);world.PrepareBattleNavigation();selection.Clear();selection.Add(world.Units[0]);briefing=false;edgeArmed=true;
+  Restart();world=new Campaign(tutorial,easy);world.PrepareBattleNavigation();selection.Clear();selection.Add(world.Units[0]);briefing=false;edgeArmed=true;
  }
  void DrawTiles(Graphics g,RectangleF r,Color color,bool lines){
   Rect(g,r.X,r.Y,r.Width,r.Height,Color.FromArgb(lines?38:48,color));
@@ -31,15 +31,29 @@ partial class CommandWindow {
   foreach(var o in world.Units.Where(o=>o.Alive&&o.T.Building&&world.Visible(o)))DrawTiles(g,Campaign.Footprint(o.T,o.P),Team(o.Side),place!=null||showGrid);
  }
  int Pending(){return world.Live(0).Sum(o=>o.Queue.Count)+Enumerable.Range(0,2).Count(c=>world.Construction(0,c)!=null);}
- List<Piece> Producers(){return world.Live(0).Where(o=>new[]{"hq","factory","barracks"}.Contains(o.T.Key)).OrderByDescending(o=>o.Queue.Count>0).ThenBy(o=>o.Id).ToList();}
+ List<Piece> Producers(){
+  var vehicles=world.VehicleQueue(0);
+  return world.Live(0).Where(o=>o==vehicles||o.T.Key=="hq"||o.T.Key=="barracks")
+   .OrderByDescending(o=>o.Queue.Count>0).ThenBy(o=>o.Id).ToList();
+ }
  int queueId;
  void OpenQueue(){
-  queueOpen=true;place=null;queuePage=0;queuePageSource=0;var list=Producers();var producer=selection.FirstOrDefault(o=>o.Queue.Count>0)??world.LastOrder;
+  queueOpen=true;place=null;queuePage=0;queuePageSource=0;var list=Producers();
+  var producer=selection.FirstOrDefault(o=>o.Queue.Count>0||o.T.Key=="factory")??world.LastOrder;
+  if(producer!=null&&producer.T.Key=="factory")producer=world.VehicleQueue(0);
   int i=list.IndexOf(producer);queueIndex=Math.Max(0,i);queueId=list.Count==0?0:list[queueIndex].Id;
  }
  PointF SuggestSpot(TypeInfo t){
   var h=world.Live(0).FirstOrDefault(o=>o.T.Key=="hq");if(h==null)return PointF.Empty;
   PointF ideal=t.Key=="refinery"?new PointF(h.P.X-84,h.P.Y-66):new PointF(h.P.X+(t.Key=="power"?100:t.Key=="factory"?177:-25),h.P.Y+(t.Key=="barracks"?100:30));
+  if(world.FirstChapter&&Campaign.Dist(h.P,world.Home(0))<Campaign.Tile*2){
+   switch(t.Key){
+    case "power":ideal=RiverbendMap.PortPoint(20,38);break;
+    case "refinery":ideal=RiverbendMap.PortPoint(29,37);break;
+    case "barracks":ideal=RiverbendMap.PortPoint(23,43);break;
+    case "factory":ideal=RiverbendMap.PortPoint(28,43);break;
+   }
+  }
   for(int n=0;n<10;n++)for(int y=-n;y<=n;y++)for(int x=-n;x<=n;x++){
    if(Math.Max(Math.Abs(x),Math.Abs(y))!=n)continue;var p=new PointF(ideal.X+x*24,ideal.Y+y*24);if(world.CanPlace(t,p,null))return Campaign.Middle(Campaign.Footprint(t,p));}
   return PointF.Empty;
@@ -60,9 +74,10 @@ partial class CommandWindow {
   var src=world.Live(0).FirstOrDefault(o=>o.T.Key==Campaign.Info(world.LessonKey).Producer);return src==null?PointF.Empty:src.P;
  }
  void DrawObjectiveMarker(Graphics g){
-  if(!world.Tutorial)return;var p=Marker();if(p.IsEmpty)return;
+  if(!world.Tutorial||world.FirstChapter)return;var p=Marker();if(p.IsEmpty)return;
   var q=ScreenOf(p);if(BuildingLesson()){var state=g.Save();GroundSpace(g);DrawTiles(g,Campaign.Footprint(Campaign.Info(world.LessonKey),p),gold,true);g.Restore(state);}
-  using(var pen=new Pen(gold,2)){pen.DashStyle=DashStyle.Dash;g.DrawEllipse(pen,q.X-45,q.Y-25,90,50);}Txt(g,"▼ 训练目标",q.X-38,q.Y-61,15,gold,true);
+  using(var pen=new Pen(gold,2)){pen.DashStyle=DashStyle.Dash;g.DrawEllipse(pen,q.X-45,q.Y-25,90,50);}
+  Txt(g,"▼ 训练目标",q.X-38,q.Y-61,15,gold,true);
  }
  void FocusLesson(){
   var marker=Marker();if(!marker.IsEmpty)CenterAt(marker);string key=world.LessonKey;queueOpen=false;place=null;attack=false;
@@ -75,11 +90,11 @@ partial class CommandWindow {
  }
  string LessonHint(){
   string key=world.LessonKey;var own=world.Live(0);
-  if(key=="hq")return world.Landing?"指挥部正在展开，完工后进入下一步。":selection.Any(o=>o.T.Key=="mcv")?"再次点工程车或按 D 展开。":"先点金圈里的工程车，或点「定位本步」选中它。";
+  if(key=="hq")return world.Landing?"指挥部正在展开，完工后进入下一步。":selection.Any(o=>o.T.Key=="mcv")?"再次点工程车或按 D 展开。":"先选中工程车，也可以点「定位本步」。";
   if(BuildingLesson()){
    var t=Campaign.Info(key);var job=world.Construction(t);if(job!=null&&!job.Ready)return t.Name+"："+world.ConstructionState(job,0,speed)+"。右键图标暂停／再右键取消，左键继续。";var site=world.Units.FirstOrDefault(o=>o.Alive&&o.Side==0&&o.T==t);
    if(site!=null)return t.Name+" 正在施工，约 "+(int)Math.Ceiling((1-site.Ready)*Campaign.AssemblySeconds/speed)+" 秒完成。";
-   return place==t?"左键点击金色推荐地基；红色预览表示此处不能建造。":"点「建筑」中的「"+t.Name+"」生产；就绪后再点击图标，放到推荐地基。";
+   return place==t?"左键点击可建造的位置。红色格子表示该格不能建造。":"点「建筑」中的「"+t.Name+"」生产；就绪后点图标放置。点「定位本步」可查看推荐位置。";
   }
   if(key=="squad"||key=="ifv"){
    var t=Campaign.Info(key);var src=own.FirstOrDefault(o=>o.Queue.Contains(t));
@@ -93,10 +108,15 @@ partial class CommandWindow {
    if(key=="ore")return truck.Patch==null?"矿车会向未探索地带找矿。也可派步兵先探路，再选矿车左键点金色矿石。":"矿车已找到金色矿点，正在驶近。点「定位本步」查看矿点和车上的载量。";
    return truck.Returning?"矿车正在返厂卸货。留出厂门，留意精炼厂上方显示的入账金额。":"采集进度 "+(int)truck.Cargo+" / "+Campaign.LoadValue+"。满载后自动返厂，也可选车点己方精炼厂提前卸矿。";
   }
+  if(world.FirstChapter)return "点「定位本步」选中战斗部队，按住 Ctrl+Shift 沿港务中心到货运闸的公路搜索。";
   return "点「定位本步」选中战斗部队，按住 Ctrl+Shift 点击港务中心附近搜索，消灭最后的敌方守军。";
  }
  void DrawCoach(Graphics g){
   string advice=world.Coach();
+  if(world.FirstChapter){DrawChapterCoach(g,advice);return;}
+  if(world.RiverbendOperation!=null&&world.RiverbendOperation.Guidance!=null){
+   DrawChapterDepartureRadio(g,world.RiverbendOperation.Guidance,12,880);return;
+  }
   if(!world.Tutorial){if(advice!=null)Txt(g,advice,14,12,14,gold,true);else DrawStatusMessage(g);return;}
   hits.Add(new HitBox{Box=new RectangleF(16,MapTop+9,810,65),Run=()=>{}});
   Plate(g,new RectangleF(16,MapTop+9,810,65),panel,C("#b49457"));

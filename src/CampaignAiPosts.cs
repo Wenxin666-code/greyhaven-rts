@@ -8,8 +8,9 @@ namespace Greyhaven {public partial class Campaign {
  bool StoryPostPoint(int side,out PointF result){
   result=PointF.Empty;if(!StoryBattle||side<=0)return false;var role=StoryRole(side);var home=Home(side);PointF preferred;
   if(!IslandMission){
-   var bridge=side==1?River.Bridges.OrderBy(b=>b.Top).First():River.Bridges.OrderByDescending(b=>b.Top).First();
-   preferred=new PointF((bridge.Right+5)*Tile,(bridge.Top+bridge.Height*.5f)*Tile);
+   var bridge=River.Bridges[0];
+   float shoulder=side==1?bridge.Top-2.5f:bridge.Bottom+2.5f;
+   preferred=new PointF((bridge.Right+4.5f)*Tile,shoulder*Tile);
   }else if(role==CampaignRole.Mining){
    var refinery=Live(side).Where(u=>u.T.Key=="refinery").OrderByDescending(u=>Dist(u.P,home)).FirstOrDefault();
    if(refinery==null)return false;preferred=new PointF(refinery.P.X-6*Tile,refinery.P.Y);

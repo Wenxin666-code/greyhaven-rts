@@ -21,6 +21,7 @@ partial class CommandWindow {
   return false;
  }
  Piece CardProducer(TypeInfo t){
+  if(t.Producer=="factory")return world.VehicleQueue(0);
   return world.Live(0).Where(p=>p.T.Key==t.Producer&&p.Queue.Contains(t))
    .OrderByDescending(p=>selection.Contains(p)).ThenByDescending(p=>p.Queue.Peek()==t)
    .ThenByDescending(p=>p.ProductionPaused&&p.Queue.Peek()==t).ThenByDescending(p=>p.Queue.Peek()==t?p.Work/t.Seconds:0)
@@ -35,7 +36,7 @@ partial class CommandWindow {
   for(int i=0;i<count;i++){
    var source=CardProducer(t);if(source==null)return;var jobs=source.Queue.ToArray();int index=Array.LastIndexOf(jobs,t);if(index<0)return;
    if(index>0){world.CancelOrder(source,index);continue;}
-   if(!source.ProductionPaused){source.ProductionPaused=true;world.Radio=source.T.Name+" #"+source.Id+" 暂停；左键继续，右键取消。";return;}
+   if(!source.ProductionPaused){source.ProductionPaused=true;world.Radio=(source.T.Key=="factory"?"车辆队列":source.T.Name+" #"+source.Id)+" 暂停；左键继续，右键取消。";return;}
    world.CancelOrder(source,0);
   }
  }

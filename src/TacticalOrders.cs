@@ -7,6 +7,7 @@ public partial class Campaign {
  // Commands own their destination. Opportunistic fire must not overwrite it.
  static void ClearMission(Piece o){o.OreSearchToken++;o.OreSearching=false;o.RallySource=null;o.RallySlot=0;o.PendingDeploy=false;o.SupportTarget=null;o.SupportAutomatic=false;o.SupportScanAt=0;o.Entering=null;o.RouteRetryAt=0;o.NoProgressFor=0;o.StalledFor=0;o.DepartingDock=null;o.DockAccessAt=0;
   o.GuardHome=null;o.Escort=null;o.GuardTravelling=false;o.GuardReturning=false;
+  o.MovingFireTarget=null;
   o.Waypoints.Clear();o.WaypointIndex=0;o.PatrolStart=0;o.Patrol=false;o.ForceMoving=false;
  }
  public static float ScanRange(Piece o){
@@ -56,7 +57,7 @@ public partial class Campaign {
   }
   if(o.Path.Count==0&&o.Waypoints.Count>0&&Dist(o.P,o.Goal)<12){
    int next=o.WaypointIndex+1;
-   if(next>=o.Waypoints.Count){if(!o.Patrol){o.Waypoints.Clear();return;}next=o.PatrolStart;}
+   if(next>=o.Waypoints.Count){if(!o.Patrol){o.Waypoints.Clear();o.Advancing=false;return;}next=o.PatrolStart;}
    if(o.Replan<=0){o.Replan=.7f;if(Route(o,o.Waypoints[next])){o.WaypointIndex=next;o.Goal=o.Waypoints[next];}}
   }
   if(o.Path.Count==0)o.ForceMoving=false;

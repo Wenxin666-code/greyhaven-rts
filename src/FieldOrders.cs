@@ -85,6 +85,27 @@ public partial class Campaign {
   if(unit.RallySource==null){unit.RallySource=source;unit.RallySlot=0;unit.RallyRetryAt=0;}
   ContinueRally(unit);
  }
+ RectangleF[] FriendlyExitAreas(Piece unit){
+  return Live(unit.Side).Where(o=>HasGate(o.T))
+   .Select(o=>Inflated(ExitApron(o.T,Footprint(o.T,o.P)),unit.T.TrafficRadius)).ToArray();
+ }
+ static readonly Point[] ExitYieldDirections={
+  new Point(0,1),new Point(-1,1),new Point(1,1),new Point(-1,0),new Point(1,0),
+  new Point(-1,-1),new Point(1,-1),new Point(0,-1)
+ };
+ void YieldRiverbendExit(Piece unit,PointF door){
+  if(Time<unit.RallyRetryAt)return;
+  unit.RallyRetryAt=Time+.8f;
+  var exits=FriendlyExitAreas(unit);
+  float pad=Clearance(unit);
+  var barriers=Grid(pad).Barriers;
+  foreach(int distance in new[]{Tile,2*Tile})foreach(var direction in ExitYieldDirections){
+   var slot=new PointF(door.X+direction.X*distance,door.Y+direction.Y*distance);
+   if(exits.Any(exit=>exit.Contains(slot))||!ExitClear(unit,unit.T,slot)||
+    !CanLink(!unit.T.Foot,unit.P,slot,barriers,pad))continue;
+   if(Move(unit,slot,false,MineTraffic(unit,slot)))return;
+  }
+ }
  void ContinueRally(Piece unit){
   var source=unit.RallySource;
   if(source==null||!source.Deployed||source.Side!=unit.Side||!unit.Deployed){unit.RallySource=null;return;}
@@ -92,12 +113,15 @@ public partial class Campaign {
   unit.RallyRetryAt=Time+.6f+(unit.Id%5)*.04f;
   var gate=Gate(Footprint(source.T,source.P));var yard=new PointF(Middle(ExitApron(source.T,Footprint(source.T,source.P))).X,gate.Bottom+Tile);
   var centers=source.Rally.HasValue?new[]{source.Rally.Value,yard}:new[]{yard};int attempts=0;
+  var exits=FriendlyExitAreas(unit);
   // Resume blocked exit searches over several updates, and never replace a
   // player's order. Completing a production queue cannot plan 130 routes/frame.
   while(unit.RallySlot<65*centers.Length&&attempts<3){
    int index=unit.RallySlot++,i=index%65,col=i%7,lateral=(col+1)/2*(col%2==1?-1:1);var center=centers[index/65];
    var slot=new PointF(center.X+lateral*(unit.T.Foot?Tile/2:Tile),center.Y+(i/7)*(unit.T.Foot?Tile/2:Tile));
-   if(Units.Any(o=>o!=unit&&o.Deployed&&!o.T.Building&&(TrafficContact(unit.T,slot,o.T,o.P)||o.Path.Count>0&&TrafficContact(unit.T,slot,o.T,o.Path.Last()))))continue;
+   // A free parking point can still block the next unit at a production door.
+   if(exits.Any(exit=>exit.Contains(slot))||Units.Any(o=>o!=unit&&o.Deployed&&!o.T.Building&&
+    (TrafficContact(unit.T,slot,o.T,o.P)||o.Path.Count>0&&TrafficContact(unit.T,slot,o.T,o.Path.Last()))))continue;
    attempts++;if(Move(unit,slot,false))return;
   }
   if(unit.RallySlot>=65*centers.Length){unit.RallySlot=0;unit.RallyRetryAt=Time+2;}

@@ -18,8 +18,9 @@ namespace Greyhaven {
 public partial class Campaign {
  static void ThirdAssert(bool ok,string message){if(!ok)throw new Exception(message);}
  internal static void CheckThirdTerrain(){
-  var m=new RiverbendMap(true);ThirdAssert(m.WidthCells==300&&m.HeightCells==200&&m.Starts.Length==6,"third map dimensions/factions");
+  var m=new RiverbendMap(true);ThirdAssert(m.WidthCells==270&&m.HeightCells==180&&m.Starts.Length==6,"third map dimensions/factions");
   ThirdAssert(m.Cells.Length>new RiverbendMap().Cells.Length*1.8,"larger map");
+  ThirdAssert(m.At(298,1)==null&&m.At(285,191)==null,"removed map borders still contain terrain");
   for(int side=1;side<6;side++){
    ThirdAssert(m.Connected(m.Starts[0],m.Starts[side]),"disconnected faction "+side);
    ThirdAssert(m.Starts.Skip(1).All(p=>p.X>=112||p.Y>=94),"enemies must be outside resource island");
@@ -30,7 +31,7 @@ public partial class Campaign {
   foreach(var surface in new[]{RiverbendMap.Surface.Water,RiverbendMap.Surface.Marsh,RiverbendMap.Surface.Ramp,RiverbendMap.Surface.Rock,RiverbendMap.Surface.Bridge})ThirdAssert(m.Cells.Any(c=>c.Ground==surface),"missing diverse terrain "+surface);
   var gate=m.IslandGate;for(int y=gate.Top;y<gate.Bottom;y++)for(int x=gate.Left;x<gate.Right;x++)m.At(x,y).Ground=RiverbendMap.Surface.Water;
   for(int side=1;side<6;side++)ThirdAssert(!m.Connected(m.Starts[0],m.Starts[side]),"hidden second island exit "+side);
-  Console.WriteLine("Third terrain: 300x200, six separated starts, all 33 house doors, multiple biomes and a single 6-cell-wide island gate passed; island ore cells="+resources);
+  Console.WriteLine("Third terrain: {0}x{1}, six separated starts, all {2} house doors, multiple biomes and one 6-cell-wide island gate; island ore cells={3}.",m.WidthCells,m.HeightCells,m.Houses.Count,resources);
  }
  internal static void CheckNavigationAcceleration(){
   var w=new Campaign(false,false,true,true);var rng=new Random(5729);int checkedEdges=0;
@@ -52,7 +53,7 @@ public partial class Campaign {
   Console.WriteLine("Navigation acceleration: "+checkedEdges+" exact swept connections, three footprints, rasterized obstacles and building invalidation passed.");
  }
  internal static void CheckThirdOpening(){
-  var w=new Campaign(true,false,true,true);w.Units.Clear();w.Ore.Clear();w.Spawn("mcv",1,7600,4600);
+  var w=new Campaign(true,false,true,true);w.Units.Clear();w.Ore.Clear();var enemyHome=w.Home(1);w.Spawn("mcv",1,enemyHome.X,enemyHome.Y);
   var home=w.Home(0);var units=new[]{w.Spawn("squad",0,home.X,home.Y),w.Spawn("tank",0,home.X+24,home.Y),w.Spawn("miner",0,home.X+48,home.Y)};
   for(int i=0;i<units.Length;i++){
    var point=new PointF(126*Tile,50*Tile+i*24);var path=units[i].Path.ToArray();int population=w.Units.Count;
@@ -79,7 +80,7 @@ public partial class Campaign {
   for(int s=0;s<6;s++)ThirdAssert(w.Funds[s]==ReferenceBalance.StartingCredits&&w.Live(s).Count()==4&&w.Explored(s,w.Home(s)),"fair start, fog and funds "+s);
   foreach(var u in w.Units.Where(p=>p.Side==1||p.Side==2).ToArray())u.Hp=0;
   w.CheckEnemySurrender(4);ThirdAssert(!w.Won&&w.Remaining(5)>0,"fifth enemy must prevent premature victory");
-  w=new Campaign(false,false,true,true);w.Units.Clear();w.Ore.Clear();w.Spawn("mcv",0,900,700);w.Spawn("mcv",5,7600,4500);
+  w=new Campaign(false,false,true,true);w.Units.Clear();w.Ore.Clear();var frontierHome=w.Home(5);w.Spawn("mcv",0,900,700);w.Spawn("mcv",5,frontierHome.X,frontierHome.Y);
   var house=w.Spawn("residence",-1,2000,2000);var dead=w.Spawn("power",3,6000,2500);w.CheckEnemySurrender(3.1f);
   ThirdAssert(w.HasSurrendered(3)&&!dead.Alive&&!w.HasSurrendered(5)&&house.Side==-1,"independent fifth-faction surrender");
   w=new Campaign(false,false,true,true);w.Units.Clear();w.Ore.Clear();w.Funds[4]=5000;var home=w.Home(4);
@@ -121,9 +122,17 @@ partial class CommandWindow {
     var ev=new MouseEventArgs(MouseButtons.Left,1,(int)(ox+p.X*scale),(int)(oy+p.Y*scale),0);OnMouseDown(ev);OnMouseUp(ev);
    };
    tap("03    孤岛要塞");if(!islandMissionSelected)throw new Exception("third native selection button");
-   capture("孤岛要塞-选关.png");tap("查看地图");if(!mapReview||!riverMap.IsIsland)throw new Exception("third native map-preview button");RiverFit();capture("孤岛要塞-全图.png");
+   capture("孤岛要塞-选关.png");var previewMap=riverMap;
+   if(islandBriefMap==null||!previewMap.IsIsland||previewMap.WidthCells!=270||previewMap.HeightCells!=180)throw new Exception("third thumbnail uses stale dimensions");
+   tap("查看地图");if(!mapReview||riverMap!=previewMap)throw new Exception("third native map preview changed terrain");RiverFit();capture("孤岛要塞-全图.png");
    RiverFocus(64,42,.55f);capture("孤岛要塞-资源岛与堤桥.png");CloseMapReview();tap("进入孤岛要塞");
    if(!world.IslandMission||world.FactionCount!=6||briefing||zoom<MinBattleZoom||zoom>MaxBattleZoom)throw new Exception("native third launch and tactical zoom");
+   var battleMap=world.River;
+   if(battleMap.WidthCells!=previewMap.WidthCells||battleMap.HeightCells!=previewMap.HeightCells||battleMap.TerrainBounds!=previewMap.TerrainBounds||
+      !battleMap.Starts.SequenceEqual(previewMap.Starts)||!battleMap.Bridges.SequenceEqual(previewMap.Bridges)||
+      !battleMap.Ore.SequenceEqual(previewMap.Ore)||!battleMap.Houses.Select(h=>h.Lot).SequenceEqual(previewMap.Houses.Select(h=>h.Lot))||
+      !battleMap.Cells.Zip(previewMap.Cells,(a,b)=>a.Ground==b.Ground&&a.Height==b.Height&&a.Tree==b.Tree).All(match=>match))
+    throw new Exception("third preview and playable terrain disagree");
    if(world.Live(0).Count()!=4||!selection.Contains(world.Units[0]))throw new Exception("native third spawn/selection");
    capture("孤岛要塞-正式开局.png");
    var home=world.Home(0);world.Spawn("power",0,home.X+90,home.Y);world.Spawn("radar",0,home.X+90,home.Y+70);world.Spawn("satellite",0,home.X-90,home.Y);
@@ -136,7 +145,7 @@ partial class CommandWindow {
    }
    timings.Sort();if(riverGroundBytes>RiverTileBudget)throw new Exception("third terrain cache exceeds memory bound");
    Console.WriteLine("Third native 1920x1080 pan: median {0:F1}ms, p95 {1:F1}ms; bounded visible terrain cache {2:F1}MiB.",timings[24],timings[45],riverGroundBytes/1048576.0);
-   if(folder!=null)world.River.Export(Path.Combine(Path.GetDirectoryName(folder),"maps","island-fortress-v02.json"));
+   if(folder!=null)world.River.Export(Path.Combine(Path.GetDirectoryName(folder),"maps","island-fortress-v03.json"));
    StartRiverMission();if(world.IslandMission||world.FactionCount!=3)throw new Exception("second mission changed shape");
    LaunchMission();if(!world.Tutorial||world.FactionCount!=2)throw new Exception("training changed");
   }

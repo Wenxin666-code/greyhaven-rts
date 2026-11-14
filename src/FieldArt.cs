@@ -19,7 +19,8 @@ partial class CommandWindow {
   if(t.Key=="tank")return TankCell(row,dir*4);
   return new Rectangle(dir%8*MobileCell,dir/8*MobileCell,MobileCell,MobileCell);
  }
- static int TankFrame(Piece o){return ((int)Math.Round(o.Turn*4)+56)%64;}
+ static int TankFrame(float angle){return ((int)Math.Round(angle*4)+56)%64;}
+ static int TankFrame(Piece o){return TankFrame(o.Turn);}
  const int TankCellSize=512;
  // Geometry/alpha is shared by every faction. Color is an independent layer.
  static Rectangle TankCell(int side,int angle){return new Rectangle(angle%8*TankCellSize,angle/8*TankCellSize,TankCellSize,TankCellSize);}
@@ -104,13 +105,16 @@ partial class CommandWindow {
  }
  void DrawFieldSprite(Graphics g,Piece o,PointF p,float size){
   if(o.T.Building&&BuildingV08.IsBuilding(o.T.Key)){DrawB08Field(g,o,p,size);return;}
+  if(o.T.Key=="tank"){
+   if(!o.Alive){DrawStamp(g,"tank-wreck",TankCell(0,TankFrame(o)),VehicleRect(o.T,p,size));return;}
+   var pose=TankPoseFor(o,p,size);var color=UnitColor(o.Side);
+   DrawStamp(g,TankHullKey,pose.HullCell,pose.HullBox,color);
+   DrawStamp(g,TankTurretKey,pose.TurretCell,pose.TurretBox,color);
+   return;
+  }
   p=RecoilPoint(o,p);
   int dir=(o.Dir+14)%16;
   if(o.T.Building&&(!o.Alive||o.Ready<1)){DrawBuildingState(g,o,p,size);return;}
-  if(o.T.Key=="tank"){
-   int frame=TankFrame(o);
-   DrawStamp(g,o.Alive?"tank":"tank-wreck",TankCell(0,frame),VehicleRect(o.T,p,size),o.Alive?(Color?)UnitColor(o.Side):null);return;
-  }
   if(!o.Alive){
    if(o.T.Building)BuildingArt(g,o.T.Key,o.Side,BuildingRect(Campaign.Footprint(o.T,o.P),p,zoom),1,true);
    else if(!o.T.Foot)DrawStamp(g,o.T.Key+"-wreck",SourceCell(o.T,0,dir),VehicleRect(o.T,p,size));
@@ -123,7 +127,9 @@ partial class CommandWindow {
   }
   if(world.RepairVehicle(o)){DrawStamp(g,"ifv-repair",SourceCell(o.T,o.Side,dir),VehicleRect(o.T,p,size),UnitColor(o.Side));return;}
   if(o.T.Key=="miner"&&o.Cargo>10){
-   DrawStamp(g,"miner-full",SourceCell(o.T,o.Side,dir),VehicleRect(o.T,p,size),UnitColor(o.Side));return;
+   var coat=world.HarborOperation!=null&&o==world.HarborOperation.RoadVehicle?C("#cf9c58"):
+    UnitColor(world.RiverbendOperation!=null&&world.RiverbendOperation.IsSeizedTruck(o)?2:o.Side);
+   DrawStamp(g,"miner-full",SourceCell(o.T,o.Side,dir),VehicleRect(o.T,p,size),coat);return;
   }
   if(o.T.Foot){DrawFootGait(g,o,p,size);return;}
   DrawLive(g,o.T,o.Side,dir,p,size,o.Ready);
@@ -133,14 +139,22 @@ partial class CommandWindow {
  bool MobileHit(Piece o,PointF p,float size,PointF screen){
   int dir=(o.Dir+14)%16;
   if(o.T.Foot){
+   p=RecoilPoint(o,p);
    if(CombatPose(o)){string pose=EnsureB08(CombatFrame(o));var crop=CombatCrop(pose);return PixelHit(pose,new Rectangle(Point.Empty,crop.Size),FootCropBox(GaitBox(p,size),crop),screen);}
    if(o.Stance>0){string key=EnsureB08("stance/"+o.T.Key+"/"+dir/2+"/"+(int)Math.Round(o.Stance*32));return PixelHit(key,new Rectangle(0,0,384,384),GaitBox(p,size),screen);}
-   var feet=SoldierFeet(o,p,zoom,world.Time);var box=SoldierBox(feet,size);
-   if(Math.Abs(p.X-screen.X)<size*.09f&&Math.Abs(p.Y-screen.Y)<size*.07f)return true;
-   return PixelHit(o.T.Key,SourceCell(o.T,o.Side,dir),box,screen);
+   FootMotion motion;
+   if(gaitWorld==world&&footMotion.TryGetValue(o.Id,out motion)&&motion.Amount>.18f){
+    int view=dir/2;var crop=InfantryGaitCrop(o.T.Key,view);var box=GaitCropBox(p,size,crop);
+    if(box.Contains(screen)&&PixelHit(EnsureB08("gait/"+o.T.Key+"/"+view+"/"+motion.Frame),new Rectangle(Point.Empty,crop.Size),box,screen))return true;
+    if(motion.Amount>=.82f)return false;
+   }
+   return PixelHit(o.T.Key,SourceCell(o.T,o.Side,dir),SoldierBox(p,size),screen);
   }
-  var source=o.T.Key=="tank"?TankCell(o.Side,TankFrame(o)):SourceCell(o.T,o.Side,dir);
-  return PixelHit(LiveArtKey(o),source,VehicleRect(o.T,p,size),screen);
+  if(o.T.Key=="tank"){
+   var pose=TankPoseFor(o,p,size);
+   return PixelHit(TankHullKey,pose.HullCell,pose.HullBox,screen)||PixelHit(TankTurretKey,pose.TurretCell,pose.TurretBox,screen);
+  }
+  return PixelHit(LiveArtKey(o),SourceCell(o.T,o.Side,dir),VehicleRect(o.T,RecoilPoint(o,p),size),screen);
  }
  bool PixelHit(string key,Rectangle src,RectangleF box,PointF screen){
   if(!box.Contains(screen))return false;int x=(int)((screen.X-box.X)*src.Width/box.Width),y=(int)((screen.Y-box.Y)*src.Height/box.Height);

@@ -20,7 +20,8 @@ public partial class Campaign {
   for(int i=0;i<30;i++)AssertQueue(Train(Info(i%2==0?"squad":"at"),0,null),"all 30 infantry orders accepted");
   AssertQueue(!Train(Info("engineer"),0,null)&&b.Queue.Count==30&&Require(Info("engineer"),0).Contains("30"),"31st rejected with reason");
   for(int i=0;i<30;i++)AssertQueue(Train(Info("ifv"),0,null),"independent 30 vehicle orders, no old 55 cap");
-  AssertQueue(!Train(Info("miner"),0,null),"vehicle queue boundary");
+  var secondFactory=Spawn("factory",0,1080,600);
+  AssertQueue(!Train(Info("miner"),0,secondFactory)&&secondFactory.Queue.Count==0,"shared 30-order vehicle queue");
   AssertQueue(Require(Info("refinery"),0)==null,"no global cap on refinery free miner");
   var replacement=Spawn("barracks",0,400,700);var jobs=b.Queue.ToArray();SetPrimary(replacement);
   AssertQueue(b.Queue.SequenceEqual(jobs)&&replacement.Queue.Count==0,"priority does not transfer any old queue");
@@ -32,7 +33,7 @@ public partial class Campaign {
   CancelOrder(f,29);AssertQueue(Train(Info("miner"),0,null),"more than 55 alive units still accept orders");
   Funds[0]=1000;UnitTick(f,1,true);int paid=f.WorkPaid,cash=Funds[0];
   AssertQueue(paid>0&&CancelOrder(f,0)&&Funds[0]==cash+paid&&f.Queue.Count==29,"head refund with long tail");
-  Console.WriteLine("Production: 30 inclusive per factory, full-pool rejection, independent queues, no global 55 cap, tail cancel and priority isolation passed.");
+  Console.WriteLine("Production: shared vehicle capacity, independent barracks capacity, no global 55 cap and exact cancellation refunds passed.");
  }
  static Campaign SurrenderWorld(bool river=false){var w=new Campaign(false,false,river);w.Units.Clear();w.Ore.Clear();w.Spawn("mcv",0,300,800);return w;}
  internal void CheckSurrenderCases(){

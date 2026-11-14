@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Linq;
 namespace Greyhaven {public partial class Campaign {
  enum CampaignRole { Standard,NorthLine,Mining,Transport,LocalDefense,Frontier }
- bool StoryBattle {get{return River!=null&&!RelayMission;}}
+ bool StoryBattle {get{return River!=null&&!FirstChapter&&!RelayMission;}}
  CampaignRole StoryRole(int side){return StoryBattle&&side>0&&side<FactionCount?(CampaignRole)side:CampaignRole.Standard;}
  public string StoryFactionName(int side){
   if(side<0)return "中立";
@@ -40,6 +40,7 @@ namespace Greyhaven {public partial class Campaign {
  float StoryWithdrawal(int side){switch(StoryRole(side)){case CampaignRole.Mining:case CampaignRole.Transport:return .60f;case CampaignRole.LocalDefense:case CampaignRole.Frontier:return .65f;default:return .5f;}}
  bool StoryRaidAllowed(int side,AiBrain brain,Piece[] known){
   var role=StoryRole(side);if(role!=CampaignRole.Mining&&role!=CampaignRole.LocalDefense)return true;
+  if(Time>=170&&OreReceipts[side]>=3*LoadValue)return true;
   if(brain.Attacks.Any(t=>Time-t<100))return true;
   return known.Any(e=>e.T.Hit>0&&Live(side).Any(a=>(a.T.Key=="refinery"||a.T.Key=="miner"||a.T.Civilian)&&Dist(a.P,e.P)<480));
  }
@@ -74,12 +75,15 @@ namespace Greyhaven {public partial class Campaign {
   var mine=Live(side).Where(u=>u.T.Key=="refinery").OrderByDescending(u=>Dist(u.P,Home(side))).FirstOrDefault();return mine==null?original:mine.P;
  }
  int StoryHousingLimit(int side){return StoryRole(side)==CampaignRole.LocalDefense?(Time<180?3:6):Time<180?2:4;}
- int StoryVehicleReserve(int side,int army,int desiredArmy,Piece[] known){
-  var role=StoryRole(side);if(role==CampaignRole.Standard||army<6||!Live(side).Any(u=>u.T.Key=="factory"))return 0;
-  float share=role==CampaignRole.NorthLine?.60f:role==CampaignRole.Transport?.65f:role==CampaignRole.LocalDefense?.30f:role==CampaignRole.Mining?.40f:.50f;
-  int desired=Math.Max(2,(int)(Math.Min(desiredArmy,Math.Max(10,army+1))*share));
-  int vehicles=new[]{"tank","ifv","arty"}.Sum(key=>AiCount(side,key)+AiPending(side,key));
-  return vehicles<desired?Info(AiVehicle(side,known)).Price:0;
+ float StoryArmouredShare(int side){
+  if(RelayMission)return .60f;
+  switch(StoryRole(side)){
+   case CampaignRole.NorthLine:return .60f;
+   case CampaignRole.Transport:return .65f;
+   case CampaignRole.LocalDefense:return .35f;
+   case CampaignRole.Mining:return .45f;
+   default:return .50f;
+  }
  }
  float storyCheckAt;
  readonly bool[] storyContact=new bool[MaxFactions];
@@ -91,7 +95,8 @@ namespace Greyhaven {public partial class Campaign {
    if(storyContact[side]||!Units.Any(u=>u.Alive&&u.Side==side&&Visible(u)))continue;
    storyContact[side]=true;
    string[] intel={"","这支北线驻防军重视交通线，注意装甲与路口警戒。","白石警卫队主要保护采矿和生产设施，受袭后会回防。","铁轨卫队偏好机动小队，注意交通节点和侧翼。","南岸防卫队依托城镇据守，侦察房屋归属再推进。","独立旅更愿意袭扰薄弱矿路，保护落单矿车。"};
-   StoryNotice="许岑："+intel[side];StoryNoticeUntil=Time+14;Radio=StoryNotice;break;
+   string message=RiverbendOperation!=null&&side==2?"白石警卫队重视矿运，出击时会盯着对手的矿车和精炼厂。":intel[side];
+   StoryNotice="许岑："+message;StoryNoticeUntil=Time+14;Radio=StoryNotice;break;
   }
  }
 }}

@@ -56,7 +56,7 @@ public partial class Campaign {
   RelaySupportGranted=!HasSurrendered(1)&&CanStillResist(1);
   if(RelaySupportGranted){
    Funds[1]+=RelaySupportFunds;
-   RelaySupportNotice="截获通报：通信恢复已达 50%，统辖部向敌方拨付 "+RelaySupportFunds+" 经费。敌军将通过现有设施补充兵力。";
+   RelaySupportNotice="截获通报：通信恢复已达 50%，统辖部向敌方拨付 "+RelaySupportFunds+" 经费。敌军正在组织反夺编队。";
   }else RelaySupportNotice="通信恢复已达 50%。敌方已失去抵抗能力，统辖部取消了本次经济支援。";
   Radio=RelaySupportNotice;SetEvent(RelayStation.P,RelaySupportNotice);
  }

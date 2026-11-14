@@ -6,13 +6,17 @@ using System.IO;
 using System.Globalization;
 namespace Greyhaven {
 public sealed partial class RiverbendMap {
- // Keep the island and its one bridge intact. Compress mainland distances,
- // never unit footprints, road lane widths, building lots or base clearings.
- static int IslandX(int x){return x<=112?x:112+(int)Math.Round((x-112)*188/248.0);}
- static int IslandY(int y){return y<=94?y:94+(int)Math.Round((y-94)*106/146.0);}
- static Point IslandCell(int x,int y){return new Point(IslandX(x),IslandY(y));}
- static float IslandAuthX(float x){return x<=112?x:112+(x-112)*248/188;}
- static float IslandAuthY(float y){return y<=94?y:94+(y-94)*146/106;}
+ public const int IslandColumns=270,IslandRows=180;
+ const int IslandCoastX=112,IslandCoastY=94;
+ const double IslandMainlandScaleX=(IslandColumns-IslandCoastX)/(360.0-IslandCoastX);
+ const double IslandMainlandScaleY=(IslandRows-IslandCoastY)/(240.0-IslandCoastY);
+ // Only the mainland is compacted. The resource island, gate and lot sizes
+ // use their original grid dimensions.
+ static int IslandX(int x){return x<=IslandCoastX?x:IslandCoastX+(int)Math.Round((x-IslandCoastX)*IslandMainlandScaleX);}
+ static int IslandY(int y){return y<=IslandCoastY?y:IslandCoastY+(int)Math.Round((y-IslandCoastY)*IslandMainlandScaleY);}
+ internal static Point IslandCell(int x,int y){return new Point(IslandX(x),IslandY(y));}
+ static float IslandAuthX(float x){return x<=IslandCoastX?x:IslandCoastX+(float)((x-IslandCoastX)/IslandMainlandScaleX);}
+ static float IslandAuthY(float y){return y<=IslandCoastY?y:IslandCoastY+(float)((y-IslandCoastY)/IslandMainlandScaleY);}
  void IslandTown(int x,int y,string name,bool paved){Town(IslandX(x),IslandY(y),name,paved);}
  void IslandLabel(string name,int x,int y,int style){Label(name,IslandX(x),IslandY(y),style);}
  public readonly Rectangle IslandGate=new Rectangle(80,48,36,6);
@@ -20,7 +24,7 @@ public sealed partial class RiverbendMap {
   for(int y=0;y<HeightCells;y++)for(int x=0;x<WidthCells;x++){
    int n=Hash(x+941,y+613);var c=new Cell{Ground=Surface.Meadow,Variation=n};Cells[y*WidthCells+x]=c;
    int u=(int)IslandAuthX(x),v=(int)IslandAuthY(y);
-   bool sea=u<112&&v<94;
+   bool sea=u<IslandCoastX&&v<IslandCoastY;
    bool island=Ellipse(u,v,44,40,41,33)<1+.028*Math.Sin(v*.43);
    float channel=Math.Abs(u-(232+11*(float)Math.Sin(v/27f)));
    bool river=v>12&&channel<4.5f+(v>193?(v-193)*.18f:0);
@@ -54,7 +58,7 @@ public sealed partial class RiverbendMap {
   AddHouse("municipal","大陆行政中心",IslandX(193),IslandY(112),3,3,8);
   AddHouse("shop","堤桥补给站",IslandX(119),IslandY(56),3,2,6);
   AddHouse("residence","岛上旧屋",IslandX(62),IslandY(33),2,2,4);
-  IslandOre(14,42,10,7);IslandOre(46,22,10,7);IslandOre(55,56,9,6);
+  IslandOre(14,42,10,7);IslandOre(43,22,10,7);IslandOre(55,56,9,6);
   for(int i=1;i<Starts.Length;i++){
    var s=Starts[i];IslandOre(s.X-10,s.Y+7,9,6);IslandOre(s.X+9,s.Y-7,8,6);
   }
@@ -79,7 +83,11 @@ public sealed partial class RiverbendMap {
   }
  }
  void ExportIsland(string path){
-  var s=new StringBuilder("{\"id\":\"island-fortress-v02\",\"status\":\"playable\",\"columns\":"+WidthCells+",\"rows\":"+HeightCells+",\"cellWorldSize\":24,\"mutuallyHostileFactions\":6,\"singleIslandGate\":[80,48,36,6],\"starts\":[");
+  var gate=IslandGate;
+  var s=new StringBuilder("{\"id\":\"island-fortress-v03\",\"status\":\"playable\",\"columns\":");
+  s.Append(WidthCells).Append(",\"rows\":").Append(HeightCells).Append(",\"cellWorldSize\":").Append(Campaign.Tile)
+   .Append(",\"mutuallyHostileFactions\":").Append(Starts.Length).Append(",\"singleIslandGate\":[")
+   .Append(gate.X).Append(',').Append(gate.Y).Append(',').Append(gate.Width).Append(',').Append(gate.Height).Append("],\"starts\":[");
   for(int i=0;i<Starts.Length;i++){if(i>0)s.Append(',');s.Append('[').Append(Starts[i].X).Append(',').Append(Starts[i].Y).Append(']');}
   s.Append("],\"cells\":[");for(int i=0;i<Cells.Length;i++){if(i>0)s.Append(',');var c=Cells[i];s.Append('[').Append((int)c.Ground).Append(',').Append(c.Height.ToString("0.000",CultureInfo.InvariantCulture)).Append(',').Append(c.Tree?1:0).Append(']');}
   s.Append("],\"ore\":[");for(int i=0;i<Ore.Count;i++){if(i>0)s.Append(',');s.Append('[').Append(Ore[i].X).Append(',').Append(Ore[i].Y).Append(']');}

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.Linq;
 namespace Greyhaven {
 public partial class Campaign {
@@ -7,17 +8,40 @@ public partial class Campaign {
  public bool SetPrimary(Piece p){
   if(!ProductionBuilding(p))return false;
   foreach(var other in Live(p.Side).Where(u=>u.T==p.T))other.Primary=other==p;
-  // Priority only breaks scheduling ties. Existing work belongs to its factory.
-  if(p.Side==0){LastOrder=p;Radio=p.T.Name+" #"+p.Id+" 已设为优先接单设施；其他设施继续生产。";}return true;
+  if(p.Side==0){
+   LastOrder=p.T.Key=="factory"?VehicleQueue(p.Side):p;
+   Radio=p.T.Name+" #"+p.Id+(p.T.Key=="factory"?" 已设为优先出车点。":" 已设为优先接单设施。");
+  }
+  return true;
  }
  public float ProductionRate(Piece p){
   float power=PowerProductionRate(p.Side);
-  // Construction still uses its existing shared building/defence categories.
-  // Units instead have one real production line per barracks/vehicle factory.
-  return p.T.Key=="hq"?power/(float)Math.Pow(.8,Math.Max(0,Live(p.Side).Count(u=>u.T==p.T)-1)):power;
+  if(p.T.Key!="hq"&&p.T.Key!="factory")return power;
+  int factories=Live(p.Side).Count(u=>u.T==p.T&&(p.T.Key=="hq"||!u.Selling));
+  return power/(float)Math.Pow(.8,Math.Max(0,factories-1));
+ }
+ // The shared queue stays on its current host while the primary exit can change.
+ public Piece VehicleQueue(int side){return VehicleQueue(side,null);}
+ Piece VehicleQueue(int side,Piece skip){
+  return Live(side).Where(p=>p!=skip&&p.T.Key=="factory"&&!p.Selling)
+   .OrderByDescending(p=>p.Queue.Count>0).ThenByDescending(p=>p.Primary).ThenBy(p=>p.Id).FirstOrDefault();
+ }
+ bool UnitProductionExit(Piece source,TypeInfo type,out Piece outlet,out PointF position){
+  outlet=source;
+  if(source.T.Key!="factory")return Exit(source,type,out position);
+  outlet=PrimaryFactory(source.Side,"factory")??source;
+  if(Exit(outlet,type,out position))return true;
+  foreach(var alternate in Live(source.Side).Where(p=>p.T.Key=="factory"&&!p.Selling).ToArray()){
+   if(alternate!=outlet&&Exit(alternate,type,out position)){outlet=alternate;return true;}
+  }
+  return false;
  }
  static float ProductionLoad(Piece p){return Math.Max(0,p.Queue.Sum(t=>t.Seconds)-p.Work);}
  Piece NextUnitFactory(int side,string key,Piece preferred=null,Piece skip=null){
+  if(key=="factory"){
+   var line=VehicleQueue(side,skip);
+   return line!=null&&line.Queue.Count<ProductionQueueLimit?line:null;
+  }
   return Live(side).Where(p=>p!=skip&&p.T.Key==key&&!p.Selling&&p.Queue.Count<ProductionQueueLimit)
    .OrderBy(p=>p.ProductionPaused).ThenBy(p=>p.Queue.Count>0&&p.Work>=p.Queue.Peek().Seconds)
    .ThenBy(ProductionLoad).ThenByDescending(p=>p.Primary).ThenByDescending(p=>p==preferred).ThenBy(p=>p.Id).FirstOrDefault();
@@ -25,7 +49,7 @@ public partial class Campaign {
  void BalanceProduction(){
   // A newly completed or reopened idle factory can take unstarted backlog.
   // Never move the paid head, and never bypass a player's explicit pause.
-  foreach(var group in Units.Where(p=>ProductionBuilding(p)&&p.T.Key!="hq"&&!p.ProductionPaused).GroupBy(p=>new{p.Side,p.T})){
+  foreach(var group in Units.Where(p=>ProductionBuilding(p)&&p.T.Key=="barracks"&&!p.ProductionPaused).GroupBy(p=>p.Side)){
    var factories=group.OrderBy(p=>p.Id).ToArray();
    foreach(var idle in factories.Where(p=>p.Queue.Count==0)){
     var donor=factories.Where(p=>p!=idle&&p.Queue.Count>1).OrderByDescending(ProductionLoad).ThenBy(p=>p.Id).FirstOrDefault();

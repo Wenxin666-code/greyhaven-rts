@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -15,6 +15,7 @@ partial class CommandWindow:Form {
  const int MW=1304,W=1472,H=819,MapTop=0,MH=H;
  Campaign world; readonly Stopwatch watch=Stopwatch.StartNew(); readonly Timer pulse=new Timer(); double last; float scale,ox,oy;
  bool showGrid;bool briefing=true,paused,help,attack,army,drag,dragged; PointF mouse,start;TypeInfo place;
+ bool clickToRelocateBase;
  List<Piece> selection=new List<Piece>();List<HitBox> hits=new List<HitBox>();
  Bitmap ground;Dictionary<string,Font> fonts=new Dictionary<string,Font>();
  Color ink=C("#101b20"),panel=C("#202c32"),pale=C("#f3eee0"),dim=C("#abb8b5"),gold=C("#ecb54e"),teal=C("#82d0b4"),red=C("#ee8b72");
@@ -35,6 +36,7 @@ partial class CommandWindow:Form {
    painted[key]=Raw(key+"-base");painted[key+"-paint"]=Raw(key+"-paint");
    if(key!="squad"&&key!="at"&&key!="engineer"&&key!="sniper")painted[key+"-wreck"]=Raw(key+"-wreck");
   }
+  LoadTankLayers();
   foreach(var key in new[]{"plate","harbor"})painted[key]=Raw(key);
   painted["ore"]=OreSprites();
   foreach(var t in Campaign.Types.Where(t=>t.Foot)){
@@ -46,12 +48,18 @@ partial class CommandWindow:Form {
   painted.Add("removed-building",new Bitmap(FrameSize,FrameSize,System.Drawing.Imaging.PixelFormat.Format32bppPArgb));
   painted.Add("removed-building-paint",new Bitmap(FrameSize,FrameSize,System.Drawing.Imaging.PixelFormat.Format32bppPArgb));
   Restart();pulse.Interval=15;pulse.Tick+=(s,e)=>{double now=watch.Elapsed.TotalSeconds;double elapsed=now-last;float dt=(float)Math.Min(.12,elapsed);last=now;
+   if(RiverbendScenePlaying||RiverbendResultPlaying)AdvanceRiverbendScene(elapsed,ContainsFocus);
+   else if(ChapterScenePlaying||HarborDepartureResult)AdvanceChapterScene(elapsed,ContainsFocus);
+   else{
    if(!briefing&&!paused&&!world.Won&&!world.Lost){if(ContainsFocus){TickCameraControls(dt);if(Control.MouseButtons==MouseButtons.None&&!rightPending&&cameraKeys.Count==0)PollEdgeScroll(dt);else edgeDwell=0;}else edgeDwell=0;AdvanceMatch(elapsed);selection.RemoveAll(o=>!o.Alive||o.Carrier!=null);if(followUnit!=null){if(followUnit.Alive)CenterAt(followUnit.P);else followUnit=null;}}
-   if(briefing||paused||world.Won||world.Lost)simulation.Reset();if(ContainsFocus)UpdateBattleCursor();
+   if(briefing||paused||world.Won||world.Lost)simulation.Reset();
    if(modelReview&&modelSpin){modelClock+=dt;if(!modelBuildings&&!modelWalking&&!modelEntrenched&&!modelAiming)modelAngle=(modelAngle+dt*5)%64;hudDirty=true;}
    if(!briefing&&!paused&&(world.Won||world.Lost)&&world.VisualTime-world.OutcomeAt<6)world.TickVisuals(dt*speed);
+   if(!briefing&&!paused){BeginHarborDeparture();BeginRiverbendDeparture();}
+   }
+   if(ContainsFocus)UpdateBattleCursor();
    if(!briefing||hudDirty)Invalidate();};SetFullscreen(true);UpdateBattleCursor(true);pulse.Start();
-  Deactivate+=(s,e)=>{mapDragging=false;rightPending=rightDragging=false;cameraKeys.Clear();if(zHeld){zHeld=false;planningPinned=planned.Count>0;}ResetEdgeScroll();frontEnterHeld=false;tHeld=false;selectType=null;if(!briefing&&!world.Won&&!world.Lost)paused=true;drag=false;panning=false;Capture=false;};
+  Deactivate+=(s,e)=>{mapDragging=false;rightPending=rightDragging=false;cameraKeys.Clear();if(zHeld){zHeld=false;planningPinned=planned.Count>0;}ResetEdgeScroll();frontEnterHeld=escapeHeld=false;tHeld=false;selectType=null;if(!briefing&&!ChapterScenePlaying&&!world.Won&&!world.Lost)paused=true;drag=false;panning=false;Capture=false;};
  }
  bool resourcesReleased;
  protected override void Dispose(bool disposing){
@@ -64,7 +72,7 @@ partial class CommandWindow:Form {
   int dark=1,caption=ColorTranslator.ToWin32(ink),text=ColorTranslator.ToWin32(pale);
   DwmSetWindowAttribute(Handle,20,ref dark,4);DwmSetWindowAttribute(Handle,35,ref caption,4);DwmSetWindowAttribute(Handle,36,ref text,4);
  }
- void Restart(){mapReview=false;mapDragging=false;modelReview=false;ResetClassicInput();ResetOriginalControls();ResetEdgeScroll();rulesOpen=false;missionPicker=false;hudDirty=true;drag=false;Capture=false;Array.Clear(bookmarks,0,bookmarks.Length);selectType=null;tHeld=false;markedPoint=null;markedEnemy=null;camera=new PointF(255,465);zoom=DefaultZoom;panning=false;syncMarch=true;queueOpen=false;queueIndex=0;world=new Campaign();selection.Clear();selection.Add(world.Units[0]);briefing=true;paused=false;help=false;army=false;place=null;attack=false;ResetMatchClock(false);}
+ void Restart(){mapReview=false;mapDragging=false;modelReview=false;ResetClassicInput();ResetOriginalControls();ResetEdgeScroll();rulesOpen=false;missionPicker=false;hudDirty=true;drag=false;Capture=false;Array.Clear(bookmarks,0,bookmarks.Length);selectType=null;tHeld=false;markedPoint=null;markedEnemy=null;camera=new PointF(255,465);zoom=DefaultZoom;panning=false;syncMarch=true;queueOpen=false;queueIndex=0;world=new Campaign();selection.Clear();selection.Add(world.Units[0]);briefing=true;paused=false;help=false;army=false;place=null;attack=false;ResetMatchClock();}
  Font F(float size,bool bold){string key=size.ToString()+bold;Font f;if(!fonts.TryGetValue(key,out f))fonts[key]=f=new Font("Microsoft YaHei UI",size,bold?FontStyle.Bold:FontStyle.Regular,GraphicsUnit.Pixel);return f;}
  void Txt(Graphics g,string s,float x,float y,float size,Color c,bool bold=false){var font=F(size,bold);
   if(!drawingClient){using(var b=new SolidBrush(c))g.DrawString(s,font,b,x,y,StringFormat.GenericTypographic);return;}
@@ -136,19 +144,25 @@ partial class CommandWindow:Form {
   if(frameBuffer==null||frameBuffer.Size!=ClientSize){AllocateFrame();hudDirty=true;}
   var g=frameGraphics;g.ResetTransform();
   scale=Math.Min(ClientSize.Width/(float)W,ClientSize.Height/(float)H);ox=(ClientSize.Width-W*scale)/2;oy=(ClientSize.Height-H*scale)/2;
-  bool overlay=briefing||paused||diplomacyOpen||world.OutcomeReady;
+  bool overlay=briefing||paused||diplomacyOpen||world.OutcomeReady||ChapterControlsLocked;
   bool refresh=hudDirty||overlay||previousOverlay||hudWorld!=world||world.Time-hudTime>=.1f;
   if(refresh)g.Clear(ink);
   g.TranslateTransform(ox,oy);g.ScaleTransform(scale,scale);g.SmoothingMode=SmoothingMode.AntiAlias;g.InterpolationMode=InterpolationMode.Bilinear;
   drawingClient=true;
   if(briefing){hits.Clear();DrawFront(g);hudDirty=false;}
+  else if(RiverbendScenePlaying||RiverbendResultPlaying){hits.Clear();DrawBattle(g);DrawRiverbendScene(g);hudDirty=false;}
+  else if(ChapterScenePlaying||HarborDepartureResult){hits.Clear();DrawBattle(g);DrawChapterScene(g);hudDirty=false;}
+  else if(HarborDeparturePending||RiverbendDeparturePending){
+   hits.Clear();DrawBattle(g);Metal(g,MW,0,W-MW,H);Txt(g,HarborDeparturePending?"港区守军已清除":"东岸封锁已解除",MW+15,26,16,gold,true);hudDirty=false;
+  }
   else{
   DrawBattle(g);
   if(refresh){
    hits.Clear();DrawHud(g);hudHitCount=hits.Count;hudTime=world.Time;hudWorld=world;hudDirty=false;
   }else if(hits.Count>hudHitCount)hits.RemoveRange(hudHitCount,hits.Count-hudHitCount);
-  DrawRelayInterface(g);DrawAdvancedCommands(g);DrawCoach(g);DrawCardHint(g);DrawPointerHint(g);if(overlay)Overlay(g);
+  DrawRelayInterface(g);DrawAdvancedCommands(g);if(!world.OutcomeReady||!world.FirstChapter)DrawCoach(g);DrawCardHint(g);DrawPointerHint(g);if(overlay)Overlay(g);
   }
+  if(!briefing&&paused&&ChapterControlsLocked)DrawChapterPause(g);
   drawingClient=false;previousOverlay=overlay;
   g.Flush(FlushIntention.Sync);
   if(frameDC==IntPtr.Zero){e.Graphics.DrawImageUnscaled(frameBuffer,0,0);return;}
@@ -158,31 +172,38 @@ partial class CommandWindow:Form {
   if(!copied)e.Graphics.DrawImageUnscaled(frameBuffer,0,0);
  }
  Color Team(int s){return UnitColor(s);}
+ string BattleSummary(){
+  return "作战用时 "+TimeSpan.FromSeconds(DisplayBattleSeconds).ToString(@"mm\:ss")+"　｜　存活部队 "+world.Live(0).Count(o=>!o.T.Building);
+ }
  void Overlay(Graphics g){
   hits.Clear();if(keyboardOpen){Rect(g,0,0,W,H,Color.FromArgb(177,ink));DrawKeyboard(g);return;}if(diplomacyOpen){Rect(g,0,0,W,H,Color.FromArgb(177,ink));DrawDiplomacy(g);return;}Rect(g,0,0,W,H,Color.FromArgb(177,ink));var r=new RectangleF(285,172,900,550);Plate(g,r,C("#1f302f"),C("#a2b398"));Rect(g,286,205,6,112,gold);
   var mission=MissionBriefing.For(world);
   Txt(g,mission.Code,324,203,14,gold,true);
-  string title=world.Won?(world.Tutorial?"训练完成":"行动成功"):world.Lost?"行动终止":help?"任务简报":"指挥已暂停";
+  string title=world.Won?(world.Tutorial&&!world.FirstChapter?"训练完成":"行动成功"):world.Lost?"行动终止":help?"任务简报":"指挥已暂停";
   Txt(g,title,323,245,49,pale,true);Line(g,329,325,1140,325,C("#5d7265"));
   Txt(g,mission.Title,941,275,21,gold,true);
   if(world.Won||world.Lost){
-   string[] lines=world.Won?new[]{"敌方已被歼灭或投降，行动结束。","作战用时 "+TimeSpan.FromSeconds(DisplayBattleSeconds).ToString(@"mm\:ss")+"　｜　存活部队 "+world.Live(0).Count(o=>!o.T.Building)}:
+   string[] lines=world.Won?new[]{"敌方已被歼灭或投降，行动结束。",BattleSummary()}:
     new[]{"我方单位与建筑已全部损失，本次行动结束。","先保护指挥部，再恢复采矿和生产，再消灭敌方部队和基地。"};
    if(world.RelayMission)lines=world.Won?new[]{"中继信号恢复，断线前的命令记录已送回指挥部。","周砚：签发时间早于断线，签名是贺峻。","许岑：把原件留好。下一站，石门电站。"}:new[]{world.RelayFailure,"保护中继设备，保留工兵与重建能力后再组织夺控。"};
    else if(world.Won)lines=StoryVictoryLines(lines);
    for(int i=0;i<lines.Length;i++)Txt(g,lines[i],328,347+i*41,17,i==0?gold:pale);
   }else DrawMissionSummary(g,mission);
-  Button(g,328,553,241,49,world.Won||world.Lost?"返回选关":"返回战场",()=>{if(world.Won||world.Lost)OpenMissions();else{paused=false;help=false;}},true);
+  Button(g,328,553,241,49,world.Won||world.Lost?"返回选关":"返回战场",()=>{if(world.Won||world.Lost)OpenMissions();else{paused=false;help=false;}},!(world.FirstChapter&&world.Won));
   if(!world.Won&&!world.Lost){Button(g,328,615,391,36,"键盘与鼠标",OpenKeyboard);Button(g,741,615,391,36,"生产队列",()=>{paused=false;help=false;OpenQueue();});}
   if(!world.Won&&!world.Lost)DrawMatchSpeed(g);
-  if(world.Tutorial&&world.Won)Button(g,594,553,205,49,"预览新地图",OpenMapReview);
-  if(!briefing&&!world.Won&&!world.Lost){Button(g,594,553,182,49,"重开本关",()=>{if(world.RelayMission)StartRelayMission();else if(world.IslandMission)StartIslandMission();else if(world.River!=null)StartRiverMission();else StartMission(world.Tutorial,world.Assisted);});Button(g,796,553,170,49,"返回选关",OpenMissions);}
+  if(world.FirstChapter&&world.Won)Button(g,594,553,205,49,"下一关 · 河湾镇",StartRiverMission,true);
+  else if(world.Tutorial&&world.Won)Button(g,594,553,205,49,"预览新地图",OpenMapReview);
+  if(!briefing&&!world.Won&&!world.Lost){Button(g,594,553,182,49,"重开本关",()=>{if(world.FirstChapter)StartFirstChapter();else if(world.RelayMission)StartRelayMission();else if(world.IslandMission)StartIslandMission();else if(world.River!=null)StartRiverMission();else StartMission(world.Tutorial,world.Assisted);});Button(g,796,553,170,49,"返回选关",OpenMissions);}
+  if(!briefing&&!help&&!world.Won&&!world.Lost)
+   Button(g,991,553,141,49,clickToRelocateBase?"点地迁移 开":"点地迁移 关",()=>clickToRelocateBase=!clickToRelocateBase,clickToRelocateBase);
  }
  RectangleF DragRect(){return RectangleF.FromLTRB(Math.Min(start.X,mouse.X),Math.Min(start.Y,mouse.Y),Math.Max(start.X,mouse.X),Math.Max(start.Y,mouse.Y));}
+ void CheckDragDistance(){if(!dragged&&Campaign.Dist(start,mouse)>(pressedUnit==null?7:10)*PickPixel)dragged=true;}
  PointF ToScreenPoint(MouseEventArgs e){return new PointF((e.X-ox)/Math.Max(.01f,scale),(e.Y-oy)/Math.Max(.01f,scale));}
  void ContextOrder(Keys mods){ContextOrderAt(mods,null,null);}
  void ContextOrderAt(Keys mods,System.Drawing.PointF? pointOverride,Piece hitOverride){
-  var p=pointOverride??WorldOf(mouse);var hit=pointOverride.HasValue?hitOverride:resolvingPress?pressedUnit:HitScreen(mouse);
+  var p=pointOverride??WorldOf(mouse);var hit=pointOverride.HasValue?hitOverride:resolvingPress?pressedUnit:HitScreen(mouse,false,mods);
   if(hit!=null&&(!hit.Alive||hit.Carrier!=null||!world.Visible(hit)))return;
   if(structureMode!=StructureMode.None){if(structureMode==StructureMode.Repair)world.ToggleRepair(hit);else world.Sell(hit);return;}
   if(AnnotationClick(p,pointOverride.HasValue?ScreenOf(p):mouse,hit,mods))return;
@@ -196,7 +217,7 @@ partial class CommandWindow:Form {
    int count=0;foreach(var o in selection){if(hit!=null&&hit!=o&&o.Deployed&&world.Armed(o)){world.Attack(o,hit,true);count++;}else if(world.Suppress(o,p))count++;}attack=false;
    if(count>0){Mark(p,null,true);world.Radio=Campaign.IsRelayStation(hit)?"正在强制攻击中继站，摧毁会导致任务失败；按 S 停火。":"压制指定地面；按 S 停火。";}return;
   }
-  if(!attack&&mods==Keys.None&&selection.Count>0&&selection.All(u=>u.Deployed&&u.T.Key=="miner")){
+  if(MiningOrdersActive(mods)){
    var plant=hit!=null&&hit.Deployed&&hit.Side==0&&hit.T.Key=="refinery"?hit:null;
    var patch=hit==null&&world.Explored(0,p)?world.OreAt(p):null;
    if(plant!=null||patch!=null){var destination=plant!=null?Campaign.DockPoint(plant):patch.P;var available=selection.Where(u=>world.CanMoveTo(u,destination)).ToArray();if(available.Length==0){RejectDestination();return;}foreach(var u in available)world.MineOrder(u,patch,plant);world.Radio=patch!=null?"已指定矿点，装满后自动返厂。":"有载货的矿车将返回精炼厂卸货。";return;}
@@ -220,7 +241,14 @@ partial class CommandWindow:Form {
    return;
   }
   if(selection.Count==0)return;
-  if(!attack&&mods==Keys.None&&hit==null&&selection.Count==1&&selection[0].T.Key=="hq"){world.Relocate(selection[0],p);return;}
+  if(!attack&&mods==Keys.None&&hit==null&&selection.Count==1&&selection[0].T.Building){
+   var structure=selection[0];
+   if(clickToRelocateBase&&structure.T.Key=="hq"){world.Relocate(structure,p);return;}
+   if(world.CanSetRally(structure)){
+    if(!world.SetRally(structure,pointOverride??ApproachSite(mouse,p)))world.Radio="集结点不可达，已保留原集结点。";
+   }else selection.Clear();
+   return;
+  }
   attack|=shortcut;Issue(pointOverride.HasValue?p:ApproachSite(mouse,p),hit);
  }
  Piece markedEnemy;PointF? markedPoint;float markTime;bool markHostile;
@@ -232,8 +260,6 @@ partial class CommandWindow:Form {
    var fighters=selection.Where(o=>o.Deployed&&world.Armed(o)).ToArray();
    if(fighters.Length==0){world.Radio="所选部队没有可攻击的武器。";return;}
    else{foreach(var o in fighters)world.Attack(o,enemy);Mark(enemy.P,enemy,true);world.Radio="集火："+enemy.T.Name+" #"+enemy.Id;}
-  }else if(troops.Length==0&&selection.Count==1&&selection[0].T.Key!="refinery"&&Campaign.HasGate(selection[0].T)){
-   if(world.SetRally(selection[0],p))Mark(p,null,false);else{world.Radio="集结点不可达，请重新选择。";return;}
   }else if(troops.Length==0){world.Radio="请先点选我方部队，或拖框选择多支部队。";}
   else{
    var eligible=troops.Where(u=>world.CanMoveTo(u,p)).ToArray();if(eligible.Length==0){RejectDestination();return;}
@@ -244,6 +270,7 @@ partial class CommandWindow:Form {
  }
  protected override void OnMouseDown(MouseEventArgs e){base.OnMouseDown(e);edgeDwell=0;hudDirty=true;mouse=ToScreenPoint(e);UpdateBattleCursor(true);
   if(e.Button==MouseButtons.Left||e.Button==MouseButtons.Right){var b=hits.LastOrDefault(h=>h.Box.Contains(mouse));if(b!=null){if(b.Id!="command-type")selectType=null;if(e.Button==MouseButtons.Left)b.Run();else if(b.Right!=null)b.Right();Invalidate();return;}}
+  if(ChapterControlsLocked)return;
   if(mapReview){if(mapViewport.Contains(mouse)&&(e.Button==MouseButtons.Left||e.Button==MouseButtons.Middle||e.Button==MouseButtons.Right)){mapDragging=true;mapDragPoint=mouse;Capture=true;}return;}
   if(briefing||paused||diplomacyOpen||world.Won||world.Lost||mouse.X<0||mouse.X>=MW||mouse.Y<MapTop||mouse.Y>MapTop+MH)return;
   var p=WorldOf(mouse);
@@ -251,14 +278,16 @@ partial class CommandWindow:Form {
 
   if(e.Button==MouseButtons.Right){BeginRightDrag();return;}
   if(e.Button!=MouseButtons.Left)return;selectType=null;rankSeed=null;
-  if(e.Clicks>=2&&ModifierKeys==Keys.None&&place==null){var factory=HitScreen(mouse);if(factory!=null&&factory.Side==0&&world.SetPrimary(factory)){selection.Clear();selection.Add(factory);drag=false;return;}}
   if(place!=null){if(world.Build(place,p))place=null;return;}
-  start=mouse;pressedUnit=HitScreen(mouse);drag=true;dragged=false;Capture=true;
+  var unit=HitScreen(mouse,true,ModifierKeys);
+  if(e.Clicks>=2&&ModifierKeys==Keys.None&&unit!=null&&unit.Side==0&&world.SetPrimary(unit)){selection.Clear();selection.Add(unit);drag=false;return;}
+  start=mouse;pressedUnit=unit;drag=true;dragged=false;Capture=true;
  }
- protected override void OnMouseMove(MouseEventArgs e){base.OnMouseMove(e);edgeArmed=true;var old=mouse;mouse=ToScreenPoint(e);if(mapReview){if(mapDragging){RiverPan(mapDragPoint.X-mouse.X,mapDragPoint.Y-mouse.Y);mapDragPoint=mouse;}hudDirty=true;Invalidate();return;}if(briefing&&old!=mouse)hudDirty=true;if(old!=mouse&&(old.X>=MW||mouse.X>=MW||old.Y<MapTop||mouse.Y<MapTop||old.Y>=MapTop+MH||mouse.Y>=MapTop+MH))hudDirty=true;if(rightPending){MoveRightDrag();UpdateBattleCursor(true);Invalidate();return;}if(panning){Pan(panPoint.X-mouse.X,panPoint.Y-mouse.Y);panPoint=mouse;Invalidate();return;}if(drag&&Campaign.Dist(start,mouse)*Math.Max(.5f,scale)>7)dragged=true;UpdateBattleCursor();}
- protected override void OnMouseUp(MouseEventArgs e){base.OnMouseUp(e);hudDirty=true;if(e.Button==MouseButtons.Right&&rightPending){mouse=ToScreenPoint(e);EndRightDrag();UpdateBattleCursor(true);Invalidate();return;}if(mapReview){mapDragging=false;Capture=false;return;}if(panning){panning=false;Capture=false;return;}if(!drag)return;drag=false;Capture=false;mouse=ToScreenPoint(e);
-  if(mouse.X<0||mouse.X>=MW||mouse.Y<MapTop||mouse.Y>=MapTop+MH){if(!dragged)return;}
-  if(dragged){attack=false;if((ModifierKeys&Keys.Shift)==0)selection.Clear();var r=DragRect();foreach(var u in world.Live(0).Where(u=>!u.T.Building&&r.Contains(ScreenOf(u.P))))if(!selection.Contains(u))selection.Add(u);return;}
+ protected override void OnMouseMove(MouseEventArgs e){base.OnMouseMove(e);var old=mouse;mouse=ToScreenPoint(e);if(ChapterControlsLocked)return;edgeArmed=true;if(mapReview){if(mapDragging){RiverPan(mapDragPoint.X-mouse.X,mapDragPoint.Y-mouse.Y);mapDragPoint=mouse;}hudDirty=true;Invalidate();return;}if(briefing&&old!=mouse)hudDirty=true;if(old!=mouse&&(old.X>=MW||mouse.X>=MW||old.Y<MapTop||mouse.Y<MapTop||old.Y>=MapTop+MH||mouse.Y>=MapTop+MH))hudDirty=true;if(rightPending){MoveRightDrag();UpdateBattleCursor(true);Invalidate();return;}if(panning){Pan(panPoint.X-mouse.X,panPoint.Y-mouse.Y);panPoint=mouse;Invalidate();return;}if(drag)CheckDragDistance();UpdateBattleCursor();}
+ protected override void OnMouseUp(MouseEventArgs e){base.OnMouseUp(e);if(ChapterControlsLocked)return;hudDirty=true;if(e.Button==MouseButtons.Right&&rightPending){mouse=ToScreenPoint(e);EndRightDrag();UpdateBattleCursor(true);Invalidate();return;}if(mapReview){mapDragging=false;Capture=false;return;}if(panning){panning=false;Capture=false;return;}if(e.Button!=MouseButtons.Left||!drag)return;drag=false;Capture=false;mouse=ToScreenPoint(e);
+  CheckDragDistance();
+  if(!dragged&&(mouse.X<0||mouse.X>=MW||mouse.Y<MapTop||mouse.Y>=MapTop+MH)){pressedUnit=null;return;}
+  if(dragged){pressedUnit=null;attack=false;if((ModifierKeys&Keys.Shift)==0)selection.Clear();var r=DragRect();foreach(var u in world.Live(0).Where(u=>!u.T.Building&&r.Contains(ScreenOf(u.P))))if(!selection.Contains(u))selection.Add(u);return;}
   resolvingPress=true;try{ContextOrder(ModifierKeys);}finally{resolvingPress=false;pressedUnit=null;}UpdateBattleCursor(true);Invalidate();
 
  }

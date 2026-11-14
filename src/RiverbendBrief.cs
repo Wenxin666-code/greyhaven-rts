@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Linq;
 namespace Greyhaven {
@@ -32,7 +32,7 @@ partial class CommandWindow {
   if(trainingBriefMap==null){
    var oldMap=riverMap;var oldCenter=mapCenter;float oldZoom=mapZoom;bool oldBattle=riverBattleRender,oldLabels=mapLabels,oldClient=drawingClient;
    try{
-    riverMap=RiverbendMap.Training(Campaign.CreateFields().Select(p=>p.P));EnsureRiverArt();riverBattleRender=false;mapLabels=false;drawingClient=false;RiverFit();
+    riverMap=RiverbendMap.ChapterOne();EnsureRiverArt();riverBattleRender=false;mapLabels=false;drawingClient=false;RiverFit();
     using(var full=new Bitmap(W,H))using(var bg=Graphics.FromImage(full)){
      DrawRiverMap(bg);trainingBriefMap=new Bitmap(496,290);using(var output=Graphics.FromImage(trainingBriefMap)){
       output.Clear(C("#152629"));output.InterpolationMode=System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;

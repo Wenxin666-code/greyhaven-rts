@@ -321,9 +321,14 @@ class CampaignChecks {
   var goal=new PointF(900,1000);w.Move(u,goal,false);Wait(w,1);
   Check(u.Target==null&&u.Goal==goal&&enemy.Hp==10000&&u.P.X>540,"ordinary infantry move must not stop and chase");
   w.Move(u,goal,true);Wait(w,.3f);Check(u.Target==enemy&&enemy.Hp<10000,"attack move stops and shoots encountered target");
-  enemy.Hp=0;Wait(w,12);Check(Campaign.Dist(u.P,goal)<1,"attack move resumes original destination");
+  enemy.Hp=0;Wait(w,12);Check(Campaign.Dist(u.P,goal)<1&&!u.Advancing,"attack move resumes original destination then returns to idle");
   w=EmptyBattle();u=w.Spawn("tank",0,500,1000);enemy=w.Spawn("mcv",1,550,960);enemy.Hp=10000;
   w.Move(u,goal,false);Wait(w,1);Check(u.Target==null&&enemy.Hp<10000&&u.P.X>500,"tank opportunity fire preserves route");
+  var shot=w.Shots.First(s=>s.SourceId==u.Id);
+  Check(Math.Abs(shot.TurretHeading-shot.Heading)>.5f,"moving tank fires with its turret aimed off the hull heading");
+  w=EmptyBattle();u=w.Spawn("tank",0,500,1000);enemy=w.Spawn("mcv",1,500,1090);
+  float hullHeading=u.Turn;w.Attack(u,enemy);Wait(w,1);
+  Check(enemy.Hp<enemy.T.Hp&&u.Turn==hullHeading&&u.TurretTurn!=hullHeading,"stopped tank turns its turret without turning the hull");
   w=EmptyBattle();u=w.Spawn("ifv",0,500,1000);enemy=w.Spawn("mcv",1,650,1000);enemy.Hp=10000;
   var home=u.P;w.Guard(u);Wait(w,2);Check(u.Target==enemy&&Campaign.Dist(u.P,home)>20,"guard approaches within guard radius");
   enemy.P=new PointF(900,1000);Wait(w,8);Check(Campaign.Dist(u.P,home)<12&&u.Target==null,"guard must return when target leaves guarded area");
@@ -331,7 +336,7 @@ class CampaignChecks {
   enemy.Hp=0;var friend=w.Spawn("miner",0,600,1100);w.Halt(friend);Check(w.EscortUnit(u,friend),"escort accepted");w.Move(friend,new PointF(950,1100),false);Wait(w,12);
   Check(u.Escort==friend&&Campaign.Dist(u.P,friend.P)<95,"escort follows moving friendly: "+u.P+" vs "+friend.P);friend.Hp=0;Wait(w,2);Check(u.Escort==null,"escort handles destroyed target");
   w=EmptyBattle();u=w.Spawn("squad",0,500,1000);var points=new[]{new PointF(600,1000),new PointF(600,1100)};
-  Check(w.SetWaypoints(u,points,false),"waypoints accepted");Wait(w,7);Check(Campaign.Dist(u.P,points[1])<1&&u.Waypoints.Count==0,"sequential waypoints finish");
+  Check(w.SetWaypoints(u,points,false),"waypoints accepted");Wait(w,7);Check(Campaign.Dist(u.P,points[1])<1&&u.Waypoints.Count==0&&!u.Advancing,"sequential waypoints finish in idle");
   w.SetWaypoints(u,points,true);Wait(w,7);Check(u.Patrol&&u.Waypoints.Count==2,"patrol persists");w.Halt(u);Wait(w,.5f);Check(u.Waypoints.Count==0&&!u.Patrol&&u.Path.Count==0,"stop cancels patrol");
   w=EmptyBattle();u=w.Spawn("tank",0,500,1000);enemy=w.Spawn("squad",1,600,1000);enemy.Cool=100;w.ForceMove(u,new PointF(700,1000));Wait(w,6);Check(!enemy.Alive,"force-move tank crushes infantry");
   Console.WriteLine("Classic move/attack-move, opportunity fire, guard return, escort, patrol, stop and force-move passed.");

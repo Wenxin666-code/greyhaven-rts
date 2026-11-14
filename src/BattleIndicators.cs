@@ -20,14 +20,20 @@ partial class CommandWindow {
  RectangleF VisibleUnitBox(Piece unit,PointF p,float size){
   if(unit.T.Building)p=DeploymentPoint(unit,p);
   var t=unit.T;int dir=(unit.Dir+14)%16;
-  var source=t.Key=="tank"?TankCell(0,TankFrame(unit)):SourceCell(t,unit.Side,dir);
+  if(t.Key=="tank"){
+   var pose=TankPoseFor(unit,p,size);
+   return RectangleF.Union(VisibleInk(TankHullKey,pose.HullCell,pose.HullBox),VisibleInk(TankTurretKey,pose.TurretCell,pose.TurretBox));
+  }
+  var source=SourceCell(t,unit.Side,dir);
   var box=t.Building?BuildingRect(Campaign.Footprint(t,unit.P),p,zoom):t.Foot?SoldierBox(SoldierFeet(unit,p,zoom,world.Time),size):VehicleRect(t,p,size);
   var key=t.Building?BuildingVisual(unit,out source):LiveArtKey(unit);
   if(CombatPose(unit)){key=EnsureB08(CombatFrame(unit));var crop=CombatCrop(key);source=new Rectangle(Point.Empty,crop.Size);box=FootCropBox(GaitBox(p,size),crop);}
   else if(t.Foot&&unit.Alive&&unit.Stance>0){key=EnsureB08("stance/"+t.Key+"/"+dir/2+"/"+(int)Math.Round(unit.Stance*32));source=new Rectangle(0,0,384,384);box=GaitBox(p,size);}
+  return VisibleInk(key,source,box);
+ }
+ RectangleF VisibleInk(string key,Rectangle source,RectangleF box){
   var ink=SpriteInk(key,source);
-  var result=new RectangleF(box.X+ink.X*box.Width/source.Width,box.Y+ink.Y*box.Height/source.Height,ink.Width*box.Width/source.Width,ink.Height*box.Height/source.Height);
-  return result;
+  return new RectangleF(box.X+ink.X*box.Width/source.Width,box.Y+ink.Y*box.Height/source.Height,ink.Width*box.Width/source.Width,ink.Height*box.Height/source.Height);
  }
  float PixelScale {get{return drawingClient?scale:1;}}
  Point DevicePoint(PointF p){float s=PixelScale;return new Point((int)Math.Round((drawingClient?ox:0)+p.X*s),(int)Math.Round((drawingClient?oy:0)+p.Y*s));}

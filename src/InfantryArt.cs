@@ -6,7 +6,7 @@ namespace Greyhaven {partial class CommandWindow {
   float age=world.VisualTime-p.FiredAt;int frame=age>=0&&age<.23f?9+Math.Min(7,(int)(age/.23f*8)):Math.Max(0,Math.Min(8,(int)Math.Round(p.WeaponAim*8)));
   return "combat/"+p.T.Key+(p.Stance>=.999f?"-deployed":"")+"/"+(p.Dir+14)%16/2+"/"+frame;
  }
- bool CombatPose(Piece p){return Campaign.CombatInfantry(p)&&p.Alive&&(!Campaign.ChangingStance(p)||p.WeaponAim>.001f&&(p.Stance<=.001f||p.Stance>=.999f))&&(p.Stance>0||p.WeaponAim>0||world.Time-p.MovedAt>=.065f);}
+ bool CombatPose(Piece p){return Campaign.CombatInfantry(p)&&p.Alive&&(!Campaign.ChangingStance(p)||p.WeaponAim>.001f&&(p.Stance<=.001f||p.Stance>=.999f))&&(p.Stance>0||p.WeaponAim>0||world.VisualTime-p.MovedAt>=FootMoveHold);}
  static Rectangle CombatCrop(string key){int last=key.LastIndexOf('/'),prior=key.LastIndexOf('/',last-1);return InfantryV12.Crops[key.Substring(0,prior)][key[prior+1]-'0'];}
  static RectangleF FootCropBox(RectangleF box,Rectangle crop){return new RectangleF(box.X+box.Width*crop.X/384,box.Y+box.Height*crop.Y/384,box.Width*crop.Width/384,box.Height*crop.Height/384);}
  void DrawCombatStamp(Graphics g,string key,RectangleF box,Color color){var crop=CombatCrop(key);DrawStamp(g,key,new Rectangle(Point.Empty,crop.Size),FootCropBox(box,crop),color);}

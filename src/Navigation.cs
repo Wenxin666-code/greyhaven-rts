@@ -106,9 +106,9 @@ public partial class Campaign {
   return far;
  }
  public bool Route(Piece o,PointF dest){return PlanRoute(o,dest,null);}
- bool PlanRoute(Piece o,PointF dest,RectangleF[] temporary,Piece ignore=null){
+ bool PlanRoute(Piece o,PointF dest,RectangleF[] temporary,Piece ignore=null,float padding=0){
   bool tracks=!o.T.Foot&&!o.T.Building;
-  float pad=Clearance(o);if(Blocked(dest,pad,ignore))return false;
+  float pad=Math.Max(Clearance(o),padding);if(Blocked(dest,pad,ignore))return false;
   var grid=ignore==null?Grid(pad):new NavigationGrid{Barriers=Obstacles(ignore).Select(r=>Inflated(r,pad)).ToArray()};
   if(temporary!=null){
    // Reuse static terrain and touch only cells covered by current traffic.

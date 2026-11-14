@@ -67,8 +67,10 @@ public partial class Campaign {
  }
  public bool Relocate(Piece o,PointF destination){
   if(!CanRelocate(o,destination)){if(o!=null&&o.Side==0)Radio="基地车无法到达此处，保留当前基地。";return false;}
-  TransferProduction(o);Halt(o);o.BaseTransition=true;o.DeployOrigin=o.P;o.DeployFacing=0;o.Packing=BaseDeploySeconds;o.Relocation=destination;o.Repairing=false;Changed();
-  if(o.Side==0)Radio="基地收起后前往指定位置；建筑生产等待可用指挥部。";return true;
+  TransferProduction(o);Halt(o);o.BaseTransition=true;o.DeployOrigin=o.P;o.DeployFacing=0;o.Packing=BaseDeploySeconds;
+  o.Relocation=destination==o.P?(PointF?)null:destination;o.Repairing=false;Changed();
+  if(o.Side==0)Radio=o.Relocation.HasValue?"基地收起后前往指定位置；建筑生产等待可用指挥部。":"基地正在收起，完成后可指挥基地车移动。";
+  return true;
  }
  void TickPacking(Piece o,float dt){
   o.Packing=Math.Max(0,o.Packing-dt);if(o.Packing>0)return;

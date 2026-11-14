@@ -91,7 +91,11 @@ partial class CommandWindow {
   }
   if(beaconEditing)Txt(g,"注记："+beaconText+"_",20,H-73,15,gold,true);
  }
- void OpenOptions(){paused=!paused;help=false;keyboardOpen=false;diplomacyOpen=false;cameraKeys.Clear();rightPending=rightDragging=false;Capture=false;}
+ void OpenOptions(){
+  paused=!paused;help=false;keyboardOpen=false;diplomacyOpen=false;
+  cameraKeys.Clear();rightPending=rightDragging=drag=panning=false;Capture=false;
+  simulation.Reset();last=watch.Elapsed.TotalSeconds;hits.Clear();hudDirty=true;Invalidate();
+ }
  void OpenDiplomacy(){diplomacyOpen=!diplomacyOpen;keyboardOpen=false;rightPending=rightDragging=false;Capture=false;hudDirty=true;}
  void RadarAction(PointF point,bool right){
   if(!world.Battlefield.Contains(point))return;

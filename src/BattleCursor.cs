@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
@@ -22,11 +22,12 @@ partial class CommandWindow {
    count<troops.Length?new PointerHint(PointerKind.Partial,"部分单位可达 · "+count+" / "+troops.Length):new PointerHint(kind,text);
  }
  PointerHint DescribePointer(Keys mods){
-  if(briefing||paused||diplomacyOpen||world.Won||world.Lost||mouse.X<0||mouse.X>=MW||mouse.Y<MapTop||mouse.Y>=MapTop+MH||hits.Any(h=>h.Box.Contains(mouse)))return new PointerHint(PointerKind.Arrow,"");
+  if(briefing||ChapterScenePlaying||paused||diplomacyOpen||world.Won||world.Lost||mouse.X<0||mouse.X>=MW||mouse.Y<MapTop||mouse.Y>=MapTop+MH||hits.Any(h=>h.Box.Contains(mouse)))return new PointerHint(PointerKind.Arrow,"");
   if(panning||rightDragging)return new PointerHint(PointerKind.Pan,"拖动视角");
   if(drag&&dragged)return new PointerHint(PointerKind.Select,"");
-  var p=WorldOf(mouse);var hit=HitScreen(mouse);
+  var p=WorldOf(mouse);
   if(place!=null)return world.Construction(place)!=null&&world.Construction(place).Ready&&world.Live(0).Any(u=>u.T.Key=="hq")&&world.CanPlace(place,p,null)?new PointerHint(PointerKind.Build,"放置 "+place.Name):new PointerHint(PointerKind.Blocked,world.AssessPlacement(place,p,null,0,true).Summary);
+  var hit=HitScreen(mouse,true,mods);
   if(structureMode!=StructureMode.None){bool valid=structureMode==StructureMode.Sell?world.CanSell(hit):hit!=null&&hit.Deployed&&hit.Side==0&&hit.T.Building&&(hit.Hp<hit.T.Hp||hit.Repairing);
    return new PointerHint(valid?(structureMode==StructureMode.Sell?PointerKind.Sell:PointerKind.Repair):PointerKind.Blocked,valid?(structureMode==StructureMode.Sell?"出售建筑 · 返还 50% 基础价格":"切换建筑维修"):"此处不能执行建筑工具");}
   if(!attack&&mods==Keys.None&&hit!=null&&selection.Count==1&&selection[0]==hit){
@@ -34,7 +35,6 @@ partial class CommandWindow {
    if(hit.T.Key=="mcv")return new PointerHint(world.CanDeploy(hit)?PointerKind.Deploy:PointerKind.Blocked,world.CanDeploy(hit)?"展开基地 · 左键或 D":"空间不足，无法展开");
    if(hit.Deployed&&(hit.T.Garrison||hit.T.Key=="ifv")&&world.HouseCount(hit)>0)return new PointerHint(PointerKind.Deploy,"卸载／撤出 · 左键或 D");
   }
-  if(!attack&&mods==Keys.None&&hit==null&&selection.Count==1&&selection[0].T.Key=="hq")return new PointerHint(world.CanRelocate(selection[0],p)?PointerKind.Move:PointerKind.Blocked,"收起基地并移动");
   if(beaconMode)return new PointerHint(PointerKind.Waypoint,"放置战场标记");
   if(PlanningActive)return MovementHint(p,PointerKind.Waypoint,"添加路径点");
   if((mods&(Keys.Control|Keys.Alt))==(Keys.Control|Keys.Alt)){
@@ -44,8 +44,7 @@ partial class CommandWindow {
   if((mods&Keys.Alt)!=0)return MovementHint(p,PointerKind.ForceMove,"强制移动");
   bool advance=(mods&(Keys.Control|Keys.Shift))==(Keys.Control|Keys.Shift);
   if((mods&Keys.Control)!=0&&!advance)return selection.Any(u=>u.Deployed&&world.Armed(u))&&world.Battlefield.Contains(p)?new PointerHint(PointerKind.Attack,Campaign.IsRelayStation(hit)?"关键设施 · 强制摧毁将导致失败":"强制开火"):new PointerHint(PointerKind.Blocked,"无法强制开火");
-  bool miners=selection.Count>0&&selection.All(u=>u.Deployed&&u.T.Key=="miner");
-  if(!attack&&mods==Keys.None&&miners){
+  if(MiningOrdersActive(mods)){
    if(hit!=null&&hit.Side==0&&hit.Deployed&&hit.T.Key=="refinery")return MovementHint(Campaign.DockPoint(hit),PointerKind.Unload,"返厂卸矿");
    if(hit==null&&world.Explored(0,p)&&world.OreAt(p)!=null)return MovementHint(world.OreAt(p).P,PointerKind.Harvest,"采集矿石");
   }
@@ -59,9 +58,17 @@ partial class CommandWindow {
   if(selection.Count==0)return new PointerHint(PointerKind.Arrow,"");
   if(Campaign.IsRelayStation(hit))return new PointerHint(PointerKind.Blocked,"任务设施 · 需工兵占领");
   if(hit!=null&&hit.Side>0)return selection.Any(u=>u.Deployed&&world.Armed(u))?new PointerHint(PointerKind.Attack,"攻击 "+hit.T.Name):new PointerHint(PointerKind.Blocked,"所选单位没有武器");
-  p=ApproachSite(mouse,p);
-  if(selection.Count==1&&selection[0].T.Building)return world.CanRallyTo(selection[0],p)?new PointerHint(PointerKind.Rally,"设置集结点"):new PointerHint(PointerKind.Blocked,"无法设置集结点");
-  return MovementHint(p,attack||advance?PointerKind.AttackMove:PointerKind.Move,attack||advance?"攻击移动":"移动");
+  if(selection.Count==1&&selection[0].T.Building){
+   var structure=selection[0];
+   if(!attack&&mods==Keys.None&&hit==null){
+    if(clickToRelocateBase&&structure.T.Key=="hq")
+     return world.CanRelocate(structure,p)?new PointerHint(PointerKind.Move,"收起基地并移动"):new PointerHint(PointerKind.Blocked,"基地车无法到达此处");
+    if(world.CanSetRally(structure))
+     return world.CanRallyTo(structure,ApproachSite(mouse,p))?new PointerHint(PointerKind.Rally,"设置集结点"):new PointerHint(PointerKind.Blocked,"无法设置集结点");
+   }
+   return new PointerHint(PointerKind.Arrow,"");
+  }
+  return MovementHint(ApproachSite(mouse,p),attack||advance?PointerKind.AttackMove:PointerKind.Move,attack||advance?"攻击移动":"移动");
  }
  void RejectDestination(){world.Radio="此处不可达，已保留选择与原命令，请换一个落点。";hudDirty=true;UpdateBattleCursor(true);}
  void UpdateBattleCursor(bool force=false){

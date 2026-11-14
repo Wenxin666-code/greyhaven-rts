@@ -22,9 +22,9 @@ partial class CommandWindow {
   ClientSize=new Size(1920,1080);
   using(var target=new Bitmap(1920,1080))using(var g=Graphics.FromImage(target)){
    foreach(int scene in new[]{0,1,2}){bool river=scene>0;
-    if(river)StartRiverMission();else StartMission(true,true);
+    if(river)StartTerrainMission(false);else StartMission(true,true);
     selection.Clear();world.ScrollReveal(scene!=2);zoom=DefaultZoom;
-    var center=scene==2?new PointF(96*24,75*24):river?new PointF(175*24,75*24):new PointF(1100,800);CenterAt(center);
+    var center=scene==2?new PointF(43*24,34*24):river?new PointF(31*24,13*24):new PointF(1100,800);CenterAt(center);
     for(int i=0;i<24;i++)world.Spawn(i%3==0?"squad":"tank",0,center.X+i%6*25-75,center.Y+i/6*25);
     mouse=new PointF(MW+10,700);hudDirty=true;OnPaint(new PaintEventArgs(g,ClientRectangle));
     var cached=new List<double>();var refresh=new List<double>();
@@ -49,9 +49,9 @@ partial class CommandWindow {
 namespace Greyhaven {
 partial class CommandWindow {
  internal void CheckRiverTilePixels(){
-  ClientSize=new Size(1920,1080);StartRiverMission();world.ScrollReveal();
+  ClientSize=new Size(1920,1080);StartTerrainMission(false);world.ScrollReveal();
   using(var frame=new Bitmap(1920,1080))using(var canvas=Graphics.FromImage(frame))OnPaint(new PaintEventArgs(canvas,ClientRectangle));
-  var views=new[]{new PointF(54,65),new PointF(113,80),new PointF(175,75)};
+  var views=new[]{new PointF(8,23),new PointF(47,34),new PointF(31,13)};
   float[] levels={1.05f,1.55f,2.4f};
   for(int scene=0;scene<views.Length;scene++){
    riverBattleRender=true;riverMap=world.River;mapCenter=views[scene];mapZoom=levels[scene];
@@ -76,10 +76,10 @@ partial class CommandWindow {
   // Force reuse, eviction, zoom and mission switches rather than only one camera.
   mapZoom=DefaultZoom;
   for(int i=0;i<18;i++){
-   mapCenter=new PointF(15+i%6*37,20+i/6*45);using(var image=new Bitmap(2100,1450))using(var g=Graphics.FromImage(image))DrawRiverGroundTiles(g);
+   mapCenter=new PointF(12+i%6*14,12+i/6*21);using(var image=new Bitmap(2100,1450))using(var g=Graphics.FromImage(image))DrawRiverGroundTiles(g);
    if(riverGroundBytes>RiverTileBudget)throw new Exception("river tile budget exceeded");
   }
-  var previous=riverGroundMap;StartRiverMission();riverBattleRender=true;riverMap=world.River;mapZoom=DefaultZoom;EnsureRiverGroundCache();
+  var previous=riverGroundMap;StartTerrainMission(false);riverBattleRender=true;riverMap=world.River;mapZoom=DefaultZoom;EnsureRiverGroundCache();
   if(riverGroundTiles.Count!=0||riverGroundMap==previous)throw new Exception("new mission retained stale terrain tiles");riverBattleRender=false;
   Console.WriteLine("River tile overlaps, terrain detail, three tactical zooms, 64 MiB eviction and new-mission invalidation passed.");
  }
@@ -89,10 +89,10 @@ partial class CommandWindow {
 namespace Greyhaven {
 partial class CommandWindow {
  internal void CheckFogCullingPixels(){
-  StartRiverMission();world.ScrollReveal(false);ClientSize=new Size(1920,1080);
+  StartTerrainMission(false);world.ScrollReveal(false);ClientSize=new Size(1920,1080);
   using(var frame=new Bitmap(1920,1080))using(var g=Graphics.FromImage(frame))OnPaint(new PaintEventArgs(g,ClientRectangle));
   for(int scene=0;scene<3;scene++){
-   zoom=new[]{1.05f,1.55f,2.4f}[scene];camera=new PointF((50+scene*55)*24,(60+scene*20)*24);
+   zoom=new[]{1.05f,1.55f,2.4f}[scene];camera=new PointF((20+scene*24)*24,(18+scene*11)*24);
    using(var a=new Bitmap(1920,1080))using(var b=new Bitmap(1920,1080)){
     for(int variant=0;variant<2;variant++)using(var g=Graphics.FromImage(variant==0?a:b)){
      g.TranslateTransform(ox,oy);g.ScaleTransform(scale,scale);g.SetClip(new RectangleF(0,MapTop,MW,MH));GroundSpace(g);g.SmoothingMode=SmoothingMode.None;

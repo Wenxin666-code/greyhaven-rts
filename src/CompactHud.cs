@@ -48,7 +48,7 @@ partial class CommandWindow {
   if(col<0||col>1||index>=cards.Length)return;
   var t=cards[index];string reason=t.Building?world.ConstructionReason(t):world.Require(t,0);float x=MW-332,y=Math.Min(H-154,mouse.Y+12);
   Plate(g,new RectangleF(x,y,320,140),panel,gold);Txt(g,t.Name+"  $"+t.Price,x+12,y+8,16,pale,true);
-  Txt(g,reason??(t.Building?"左键生产／放置 · 右键暂停／取消":"自动分配排产 · 右键暂停／取消"),x+12,y+35,13,reason==null?teal:gold);
+  Txt(g,reason??(t.Building?"左键生产／放置 · 右键暂停／取消":t.Producer=="factory"?"车辆共用队列 · 右键暂停／取消":"自动分配排产 · 右键暂停／取消"),x+12,y+35,13,reason==null?teal:gold);
   Txt(g,"生命 "+t.Hp+"   视野 "+t.SightCells+" 格",x+12,y+60,13,pale);
   Txt(g,t.Key=="bunker"?"容纳 5 名步枪兵 · 驻军射程 6 格":t.Key=="at"?"机枪 4 格 · D 部署导弹 8 格":t.Key=="squad"?"机枪 4 格 · D 部署阵地 5 格":t.Hit>0?"射程 "+(t.Range/(float)Campaign.Tile).ToString("0.#")+" 格   伤害 "+t.Hit+(t.Weapon.Burst>1?" × "+t.Weapon.Burst:"")+"（护甲前）":t.Energy!=0?"电力 "+t.Energy.ToString("+#;-#"):"非攻击单位",x+12,y+82,13,pale);
   Txt(g,(t.Hit>0?"间隔 "+(t.Reload/Math.Max(.1f,speed)).ToString("0.##")+" 秒   ":"")+(!t.Building?"移速 "+(t.Speed/Campaign.Tile*Math.Max(.1f,speed)).ToString("0.##")+" 格/秒":"生产 "+(t.Seconds/Math.Max(.1f,speed)).ToString("0.#")+" 秒"),x+12,y+106,12,dim);
@@ -56,7 +56,7 @@ partial class CommandWindow {
  void DrawQueue(Graphics g,float x){
   var list=Producers();if(list.Count==0){Txt(g,"展开指挥部后查看排产",x,284,12,dim);return;}
   queueIndex=list.FindIndex(o=>o.Id==queueId);if(queueIndex<0)queueIndex=0;var src=list[queueIndex];queueId=src.Id;
-  Txt(g,src.T.Name+" #"+src.Id,x+2,284,11,pale,true);
+  Txt(g,src.T.Key=="factory"?"车辆队列":src.T.Name+" #"+src.Id,x+2,284,11,pale,true);
   Button(g,x+98,277,24,29,"‹",()=>queueId=list[(queueIndex+list.Count-1)%list.Count].Id);
   Button(g,x+128,277,24,29,"›",()=>queueId=list[(queueIndex+1)%list.Count].Id);
   if(queuePageSource!=src.Id){queuePageSource=src.Id;queuePage=0;}
@@ -83,7 +83,7 @@ partial class CommandWindow {
 
  void DrawQueueStrip(Graphics g){
   float x=MW+SideInset;var src=world.Live(0).Where(o=>o.Queue.Count>0).OrderByDescending(o=>selection.Contains(o)).ThenByDescending(o=>o==world.LastOrder).FirstOrDefault();
-  Line(g,x,581,W-SideInset,581,C("#56686e"));int working=world.Live(0).Count(p=>p.Queue.Count>0&&!p.ProductionPaused);Txt(g,"排产 "+Pending()+" / "+working+"厂",x,590,11,pale,true);Button(g,x+104,586,48,27,"总览",OpenQueue);
+  Line(g,x,581,W-SideInset,581,C("#56686e"));int working=world.Live(0).Count(p=>p.Queue.Count>0&&!p.ProductionPaused);Txt(g,"排产 "+Pending()+" / "+working+"线",x,590,11,pale,true);Button(g,x+104,586,48,27,"总览",OpenQueue);
   Plate(g,new RectangleF(x,619,SideWidth,57),panel,C("#637277"));
   var building=army?null:world.Construction(0,productionFilter==1?1:0);
   if(building!=null){Portrait(g,building.Type,new RectangleF(x+3,625,38,31));Txt(g,building.Type.Name,x+44,623,11,pale,true);

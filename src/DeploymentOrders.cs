@@ -3,10 +3,8 @@ using System.Linq;
 using System.Drawing;
 namespace Greyhaven {
 public partial class Campaign {
- static bool Aligned(Piece o,PointF p){
-  double target=Math.Atan2(p.X-o.P.X,p.Y-o.P.Y)*8/Math.PI;
-  return Math.Abs((target-o.Turn+40)%16-8)<.04;
- }
+ // The original Rules.ini allows 60 frames before routing around blockage.
+ const float VehicleBlockageDelay=60f/ReferenceBalance.FramesPerGameSecond;
  PointF TrackStep(Piece o,PointF waypoint,PointF next,float dt){
   if(Dist(o.P,waypoint)<.001f)return waypoint;
   if(o.ForceMoving&&o.T.Key=="tank")foreach(var victim in Units.Where(u=>u.Deployed&&u.Side!=o.Side&&u.T.Foot&&Crushable(u)&&TrafficContact(o.T,next,u.T,u.P)).ToArray())CombatKill(victim,o);
@@ -21,7 +19,8 @@ public partial class Campaign {
    o.TrafficWait=.45f+(o.Id%4)*.07f;
    if(o.TrafficBlocked>.4f)NudgeIdleFriend(o,obstacle);
    if(o.Target!=null&&o.TrafficBlocked>.4f&&FindFiringPosition(o,o.Target.P))return o.P;
-   if(o.TrafficBlocked>.6f&&!TrafficDetour(o,obstacle,waypoint)){
+   float repathDelay=o.Mining||o.Target!=null||o.FirePoint.HasValue ? .6f : VehicleBlockageDelay;
+   if(o.TrafficBlocked>repathDelay&&!TrafficDetour(o,obstacle,waypoint)){
     // A stopped car can occupy an intermediate turn point. Retry the FINAL
     // destination around nearby traffic instead of repeatedly aiming at it.
     var destination=o.Path.Last();if(PlanRoute(o,destination,MineTraffic(o,destination)))o.TrafficBlocked=0;
@@ -44,8 +43,8 @@ public partial class Campaign {
   if(ChangingStance(o))return true;var p=o.FirePoint.Value;if(Dist(o.P,p)>ReferenceBalance.Range(o)||Dist(o.P,p)<MinimumRange(o)){
    if(o.Replan<=0&&!o.T.Building&&!o.Entrenched){ApproachPoint(o,p);o.Replan=1.8f;}return false;
   }
-  if(!o.T.Building)Face(o,p,dt);
-  if(o.Cool<=0&&ReadyToAimFire(o)){
+  bool aimed=AimWeapon(o,p,dt);
+  if(o.Cool<=0&&aimed&&ReadyToAimFire(o)){
    var hit=Units.Where(e=>e!=o&&e.Deployed&&Dist(e.P,p)<(e.T.Building?Radius(e.T):14)).OrderBy(e=>Dist(e.P,p)).FirstOrDefault();
    if(hit!=null&&CanShootAt(o,hit))Fire(o,hit);else FireGround(o,p);
   }return true;

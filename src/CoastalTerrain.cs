@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -60,11 +60,9 @@ public sealed partial class RiverbendMap {
    float west=.045f+.023f*(float)Math.Sin(v*8+.3)+.012f*(float)Math.Sin(v*23);
    float south=1.035f-.06f*(float)Math.Sin(u*5+.6)-.02f*(float)Math.Sin(u*17);
    d=Math.Min((u-west)*span*.7f,(south-v)*span*.7f)+CoastWave(x,y);
+   if(IsRiverbendChapter)d=Math.Max(d,EllipseDistance(x,y,-25,34.5f,31,12)+CoastWave(x,y)*.5f);
    if(protectedGround.Contains(CellKey((int)Math.Floor(x),(int)Math.Floor(y))))d=Math.Max(d,3);
-   if(!IsTraining){
-    d=Math.Min(d,Math.Abs(x-RiverCenter(y))-RiverWidth(y));
-    d=Math.Min(d,-EllipseDistance(x,y,32,24,21,13));
-   }
+   if(!IsTraining)d=Math.Min(d,RiverbendWaterDistance(x,y));
   }
   return d;
  }
@@ -82,7 +80,14 @@ public sealed partial class RiverbendMap {
  Cell ExtensionAt(int x,int y){
   if(!coastReady||!WithinRadar(x,y))return null;
   Cell c;long key=CellKey(x,y);if(extension.TryGetValue(key,out c))return c;
-  c=IsRelay?RelayGround(x,y):BaseExtension(x,y);if(!IsRelay)ApplyCoast(x,y,c);extension.Add(key,c);return c;
+  if(IsChapterOne)c=ChapterOneGround(x,y);
+  else if(IsRelay)c=RelayGround(x,y);
+  else{
+   c=BaseExtension(x,y);
+   if(IsRiverbendChapter&&(x<0||x>=Columns)&&y>=RiverRoadTop&&y<RiverRoadTop+RiverRoadWidth){c.Ground=Surface.Road;c.Tree=false;}
+   ApplyCoast(x,y,c);
+  }
+  extension.Add(key,c);return c;
  }
 }
 public partial class Campaign {

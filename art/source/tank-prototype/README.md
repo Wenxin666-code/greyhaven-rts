@@ -8,6 +8,8 @@
 
 战场中的坦克、生产卡和图鉴使用同一模型导出的素材。碰撞、移动、射程和单位大小保持原设定。
 
+战场中的车身和炮塔各有 64 个朝向和独立的阵营色遮罩。开火时按当时的车身朝向定位炮塔座，再按炮塔朝向取炮口位置。生产卡和图鉴使用同一模型朝前瞄准的整车图。
+
 ## 制作与交付文件
 
 - `model.js`：可编辑的几何源模型，包括斜面装甲、模块化侧裙、轮组与履带、炮管、炮塔附件、光学件、栅格、天线和后部识别板。前进方向为 +Z。
@@ -17,6 +19,7 @@
 - `packed/tank-base.png`：中性车体和完整轮廓。
 - `packed/tank-paint.png`：只有可换色表面，灰度保留光照、接缝与遮挡，其他像素透明。
 - `packed/tank-wreck.png`：独立损毁模型，不依赖阵营编号。
+- `packed/tank-hull-*.png` 和 `packed/tank-turret-*.png` 分别为战场车身、炮塔和对应的阵营色遮罩。`packed/tank-sockets.csv` 记录由同一相机投影得到的炮塔座偏移和炮口位置。
 - `tank-bearing-check.csv`：从实际炮管端点投影得到的方向，用于与游戏真实位移对照。
 - `audit.json`：三套素材的全部方向边界检查。
 
@@ -33,6 +36,8 @@
 ## 重建与检查
 
 素材生成：设置 `PLAYWRIGHT_MODULE` 为本机 Playwright 包路径，执行 `node scripts/export-tank-prototype.cjs`，使用已安装 Edge 离线绘制。Three.js 和许可沿用 `../v02/vendor/`。只有修改模型时才需重新生成素材。
+
+只重建战场车身、炮塔和炮口数据时，运行 `node scripts/export-tank-prototype.cjs --layers-only`。
 
 游戏构建：`./scripts/build.ps1 -Test`。
 

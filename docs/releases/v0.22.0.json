@@ -1,0 +1,32 @@
+{
+  "version": "v0.22.0",
+  "release_date": "2026-11-14",
+  "previous_release": "v0.21.0",
+  "base_commit": "6baa1e1eedc2a8996cdc80f0c0888494b043649a",
+  "build": {
+    "command": "scripts/build.ps1 -ChapterOneVerify -StoryVerify -BalanceVerify -ProductionVerify -TempoVerify -ControlsVerify -AiVerify -RelayVerify -MinerVerify",
+    "clean_source": true,
+    "file_version": "0.22.0.0",
+    "result": "All nine selected suites passed."
+  },
+  "validation": {
+    "coverage": [
+      "First chapter cinematic and mission transition",
+      "Campaign AI and territorial behavior",
+      "Unit balance",
+      "Shared vehicle production and native UI",
+      "Simulation speed and frame pacing",
+      "Input and interface",
+      "Second and third missions, terrain and paired AI development",
+      "Relay objective and counterattack",
+      "Miner logistics and ore conservation"
+    ],
+    "legacy_full_suite": "Not run for this release.",
+    "known_issue": "A movement command targeting an occupied neutral miner footprint can remain pending."
+  },
+  "artifact": {
+    "name": "Greyhaven-v0.22.0.exe",
+    "bytes": 308304384,
+    "sha256": "ad3dd92fe77aa308b635bfb6c0c51c611d9d0a084761025a572536f7a9d66dfb"
+  }
+}

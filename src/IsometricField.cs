@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -54,14 +54,14 @@ partial class CommandWindow {
   float speed=740*dt*ramp/Math.Max(1,(float)Math.Sqrt(x*x+y*y));
   Pan(x*speed,y*speed);
  }
- protected override void OnMouseWheel(MouseEventArgs e){base.OnMouseWheel(e);var p=ToScreenPoint(e);if(QueueWheel(p,e.Delta))return;if(!briefing&&!paused&&!queueOpen&&p.X>=MW&&p.Y>=274){SidebarScroll(-Math.Sign(e.Delta));return;}if(mapReview){RiverWheel(p,e.Delta);return;}if(briefing||paused||p.X<0||p.X>=MW||p.Y<MapTop||p.Y>=MapTop+MH)return;
+ protected override void OnMouseWheel(MouseEventArgs e){base.OnMouseWheel(e);if(ChapterControlsLocked)return;var p=ToScreenPoint(e);if(QueueWheel(p,e.Delta))return;if(!briefing&&!paused&&!queueOpen&&p.X>=MW&&p.Y>=274){SidebarScroll(-Math.Sign(e.Delta));return;}if(mapReview){RiverWheel(p,e.Delta);return;}if(briefing||paused||p.X<0||p.X>=MW||p.Y<MapTop||p.Y>=MapTop+MH)return;
   var before=WorldOf(p);zoom=Math.Max(MinBattleZoom,Math.Min(MaxBattleZoom,zoom*(float)Math.Pow(1.18,e.Delta/120.0)));var after=WorldOf(p);CenterAt(new PointF(camera.X+before.X-after.X,camera.Y+before.Y-after.Y));Invalidate();}
  void GroundSpace(Graphics g){var origin=ScreenOf(PointF.Empty);using(var m=new Matrix(Axis*zoom,Rise*zoom,-Axis*zoom,Rise*zoom,origin.X,origin.Y))g.MultiplyTransform(m);}
  Campaign fogWorld;int fogRevision;RectangleF[] fogRuns;Rectangle fogWindow;
- void Shroud(Graphics g){
+ void Shroud(Graphics g,float strength=1,int viewWidth=MW){
   // The sea extends fog coordinates into negative land coordinates. Visit only
   // the inverse-projected viewport, rather than scanning the larger whole map.
-  float extent=((MW*.5f+2)/(Axis*zoom)+(MH*.5f+2)/(Rise*zoom))*.5f+80;
+  float extent=((viewWidth-MW*.5f+2)/(Axis*zoom)+(MH*.5f+2)/(Rise*zoom))*.5f+80;
   var window=Rectangle.FromLTRB(Math.Max(0,world.FogColumn(camera.X-extent)-2),Math.Max(0,world.FogRow(camera.Y-extent)-2),
    Math.Min(world.MapFogCols,world.FogColumn(camera.X+extent)+3),Math.Min(world.MapFogRows,world.FogRow(camera.Y+extent)+3));
   if(fogWorld!=world||fogRevision!=world.FogRevision||fogWindow!=window){
@@ -79,21 +79,29 @@ partial class CommandWindow {
    }
    fogRuns=runs.ToArray();fogWorld=world;fogRevision=world.FogRevision;fogWindow=window;
   }
-  if(fogRuns.Length>0)using(var brush=new SolidBrush(C("#152323")))g.FillRectangles(brush,fogRuns);
+  if(fogRuns.Length>0)using(var brush=new SolidBrush(Color.FromArgb((int)Math.Round(255*strength),C("#152323"))))g.FillRectangles(brush,fogRuns);
  }
  void DrawBattle(Graphics g){
   facilityAt=-1;
-  var view=g.Save();g.SetClip(new Rectangle(0,MapTop,MW,MH));
-  DrawRiverBattleGround(g);var land=g.Save();GroundSpace(g);if(world.River==null)DrawTerrainPlan(g);
-  var mode=g.SmoothingMode;g.SmoothingMode=SmoothingMode.None;Shroud(g);g.SmoothingMode=mode;g.Restore(land);
-  DrawOre(g);DrawBeacons(g);
+  bool cinematic=ChapterScenePlaying||HarborDepartureResult||RiverbendResultPlaying;
+  int viewWidth=cinematic?W:MW;
+  float fog=cinematic&&world.HarborOperation!=null?world.HarborOperation.FogBlend:RiverbendSceneFog;
+  bool sceneVisibility=cinematic&&world.HarborOperation!=null&&fog<.995f;
+  var view=g.Save();g.SetClip(new Rectangle(0,MapTop,viewWidth,MH));
+  DrawRiverBattleGround(g,viewWidth);var land=g.Save();GroundSpace(g);if(world.River==null)DrawTerrainPlan(g);
+  if(fog>0){var mode=g.SmoothingMode;g.SmoothingMode=SmoothingMode.None;Shroud(g,fog,viewWidth);g.SmoothingMode=mode;}
+  g.Restore(land);
+  DrawOre(g);if(!cinematic)DrawBeacons(g);
+  DrawHarborOperation(g,sceneVisibility);
+  DrawRiverbendRoadside(g);
   DrawBuildingScars(g);
   foreach(var shot in world.Shots)if(shot.TargetId==0)ShotImpact(g,shot);
-  foreach(var o in world.Units.Where(a=>a.Carrier==null&&world.Visible(a)&&(a.T.Foot||a.T.Building)))
+  foreach(var o in world.Units.Where(a=>a.Carrier==null&&(sceneVisibility||world.Visible(a))&&(a.T.Foot||a.T.Building)))
    DrawGroundShadow(g,o,ScreenOf(o.P),o.T.Size*zoom);
-  if(world.Harbor!=null&&world.Explored(0,Campaign.Middle(world.Harbor.Body))){
-   var harborBox=BuildingRect(world.Harbor.Body,ScreenOf(Campaign.Middle(world.Harbor.Body)),zoom);
-   DrawGroundShadow(g,"harbormaster",new Rectangle(0,0,FrameSize,FrameSize),harborBox,false,8);
+  if(world.Harbor!=null&&(sceneVisibility||world.Explored(0,Campaign.Middle(world.Harbor.Body)))){
+   var center=Campaign.Middle(world.Harbor.Body);
+   if(world.FirstChapter)DrawHarborContact(g,center,63,27);
+   else DrawGroundShadow(g,"harbormaster",new Rectangle(0,0,FrameSize,FrameSize),BuildingRect(world.Harbor.Body,ScreenOf(center),zoom),false,8);
   }
   if(selection.Count==1&&selection[0].T.Key=="bunker"){var b=selection[0];DrawDefenseRange(g,b.P,ReferenceBalance.WUCPara.Range,true);}
   if(selection.Count==1&&(showRanges||selection[0].T.Key=="post")){
@@ -107,23 +115,34 @@ partial class CommandWindow {
     if(Campaign.ScanRange(u)>ReferenceBalance.Range(u))Txt(g,u.GuardHome.HasValue?"警戒":"搜索",anchor.X+Axis*r+3,anchor.Y+2,10,teal);
    }
   }
-  bool drawHarbor=world.Harbor!=null&&world.Explored(0,Campaign.Middle(world.Harbor.Body));
-  foreach(var o in world.Units.Where(a=>a.Carrier==null&&world.Visible(a)).OrderBy(a=>a.P.X+a.P.Y)){
+  bool drawHarbor=world.Harbor!=null&&(sceneVisibility||world.Explored(0,Campaign.Middle(world.Harbor.Body)));
+  bool raisedGate = world.HarborOperation != null && world.HarborOperation.GateLift >= 1 &&
+   InHarborShot(RiverbendMap.HarborGateCenter, sceneVisibility);
+  int nextGatePost = raisedGate ? -1 : 3;
+  BeginPickFrame();
+  foreach(var o in world.Units.Where(a=>a.Carrier==null&&(sceneVisibility||world.Visible(a))).OrderBy(a=>a.P.X+a.P.Y)){
    if(drawHarbor&&SiteDepth(world.Harbor)<=o.P.X+o.P.Y){DrawHarbor(g,world.Harbor);drawHarbor=false;}
+   while (nextGatePost <= 1 && RiverbendMap.HarborGateCenter.X + RiverbendMap.HarborGatePost(nextGatePost).Y <= o.P.X + o.P.Y) {
+    DrawRaisedGatePost(g, nextGatePost);
+    nextGatePost += 2;
+   }
    var p=ScreenOf(o.P);float s=o.T.Size*zoom;
-   if(p.X< -s||p.X>MW+s||p.Y<MapTop-s||p.Y>MapTop+MH+s)continue;
+   if(p.X< -s||p.X>viewWidth+s||p.Y<MapTop-s||p.Y>MapTop+MH+s)continue;
+   if(o.Alive&&!o.T.Building)drawnMobiles[o.Id]=new DrawnMobile{Position=p,Depth=o.P.X+o.P.Y};
    if(o.Alive&&selection.Contains(o))SelectionPixels(g,o,p,s);
-   DrawFieldSprite(g,o,p,s);DrawSelectionPips(g,o,p);
+   DrawFieldSprite(g,o,p,s);if(cinematic)DrawHarborTruckLights(g,o);DrawSelectionPips(g,o,p);
    DrawFacilityEffects(g,o,p);
    DrawActorEffects(g,o,p);
    DrawTargetFlash(g,o,p,s);
    float age=world.Time-o.ReceiptAt;
-   if(o.Side==0&&o.Alive&&o.LastReceipt>0&&age<2.3f)Txt(g,"+"+o.LastReceipt,p.X-14,p.Y-s*.33f-age*8,15,gold,true);
+   if(!cinematic&&o.Side==0&&o.Alive&&o.LastReceipt>0&&age<2.3f)Txt(g,"+"+o.LastReceipt,p.X-14,p.Y-s*.33f-age*8,15,gold,true);
   }
   if(drawHarbor)DrawHarbor(g,world.Harbor);
+  for (; nextGatePost <= 1; nextGatePost += 2) DrawRaisedGatePost(g, nextGatePost);
+  if(cinematic){DrawShotTrails(g);g.Restore(view);return;}
   // Overlays are a separate pass so a neighbouring sprite cannot paint over a
   // health bar. No thick faction stripe remains under units' feet.
-  var hovered=HitScreen(mouse);
+  var hovered=HitScreen(mouse,true,ModifierKeys);
   foreach(var o in world.Units.Where(u=>u.Alive&&u.Carrier==null&&world.Visible(u)))
    if(selection.Contains(o)||o==hovered||o.Hp<o.T.Hp||o.Ready<1)DrawUnitHealth(g,o,ScreenOf(o.P),o.T.Size*zoom);
   foreach(var house in world.Units.Where(u=>u.Alive&&u.T.Garrison&&world.Visible(u))){
@@ -139,7 +158,7 @@ partial class CommandWindow {
    Txt(g,site.Name,p.X-29,y+1,14,pale,true);
   }
   DrawShotTrails(g);
-  DrawPreselection(g);DrawPlannedPaths(g);DrawRelayObjective(g);
+  DrawPreselection(g,hovered);DrawPlannedPaths(g);DrawRelayObjective(g);
   if(markedPoint.HasValue&&world.Time-markTime<2.5f){
    var enemy=markedEnemy;if(enemy==null||enemy.Alive&&world.Visible(enemy)){
     var q=ScreenOf(enemy==null?markedPoint.Value:enemy.P);var c=markHostile?red:teal;
@@ -182,17 +201,18 @@ partial class CommandWindow {
  PointF ApproachSite(PointF screen,PointF location){
   foreach(var site in world.Sites){
    var basePos=Campaign.Middle(site.Body);if(!world.Explored(0,basePos))continue;
-   var q=ScreenOf(basePos);if(site.Body.Contains(location)||InkHit("harbormaster",0,BuildingRect(site.Body,q,zoom),screen))return site.P;
+   var q=ScreenOf(basePos);
+   if(site.Body.Contains(location)||(world.FirstChapter?HarborOfficeHit(screen,q):InkHit("harbormaster",0,BuildingRect(site.Body,q,zoom),screen)))return site.P;
   }return location;
  }
  float SiteDepth(Site s){var p=Campaign.Middle(s.Body);return p.X+p.Y;}
 
  void DrawHarbor(Graphics g,Site site){
-  var box=BuildingRect(site.Body,ScreenOf(Campaign.Middle(site.Body)),zoom);
-  BuildingArt(g,"harbormaster",0,box,1);
+  var origin=ScreenOf(Campaign.Middle(site.Body));
+  if(world.FirstChapter)DrawHarborSprite(g,HarborSprites.Office,origin,zoom,HarborOfficeState,HarborCoat);
+  else BuildingArt(g,"harbormaster",0,BuildingRect(site.Body,origin,zoom),1);
  }
  bool RadarOnline(){return world.Power(0)>=0&&world.Live(0).Any(o=>o.T.Key=="radar"||o.T.Key=="satellite");}
- Piece HitScreen(PointF screen){return PickUnit(screen);}
  Bitmap MakeGround(){
   using(var materials=Raw("materials")){
    var bmp=new Bitmap(Campaign.Width,Campaign.Height,PixelFormat.Format32bppPArgb);

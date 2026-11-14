@@ -17,19 +17,34 @@ window.TankBake=(()=>{
  function project(v,model){return new T.Vector3(...v).applyMatrix4(model.matrixWorld).project(camera);}
  async function bake(mode,key='tank'){
   await TankMaster.ready;
-  const spec=key==='tank'?{width:9.25,cell:512}:UnitMaster.specs[key],cell=spec.cell||384,views=key==='tank'?64:spec.foot?8:16,anchor=spec.foot?.91:188/320,width=spec.width;
+  const hullLayer=mode.startsWith('hull-'),turretLayer=mode.startsWith('turret-');
+  const spec=key==='tank'?{width:9.25,cell:hullLayer||turretLayer?256:512}:UnitMaster.specs[key],cell=spec.cell||384,views=key==='tank'?64:spec.foot?8:16,anchor=spec.foot?.91:188/320,width=spec.width;
   renderer.setSize(cell*2,cell*2);
   const aim=(anchor-.5)*width/Math.cos(Math.PI/6);camera=new T.OrthographicCamera(-width/2,width/2,width/2,-width/2,.1,100);
   camera.position.set(0,aim+20/Math.sqrt(3),20);camera.lookAt(0,aim,0);camera.updateMatrixWorld();
   const model=key==='tank'?TankMaster.build(mode==='wreck'):UnitMaster.build(key,mode==='wreck'),s=scene(model),sheet=canvas(cell*8,cell*views/8),ctx=sheet.getContext('2d');ctx.imageSmoothingQuality='high';
+  const turret=key==='tank'?model.getObjectByName('turret'):null;
+  if(hullLayer)turret.visible=false;
+  if(turretLayer){
+   for(const part of model.children)part.visible=part===turret;
+   turret.position.x=0;turret.position.z=0;
+  }
   // NoBlending prevents Three's OPAQUE shader define from forcing opacity=1.
   // Neutral geometry writes transparent pixels AND depth so hidden paint never leaks.
-  if(mode==='paint')model.traverse(o=>{if(o.isMesh&&!o.material.userData.factionPaint){const old=o.material;o.material=new T.MeshBasicMaterial({color:0x000000,opacity:0,transparent:false,blending:T.NoBlending,depthWrite:true});o.customDepthMaterial=new T.MeshDepthMaterial({depthPacking:T.RGBADepthPacking});o.userData.original=old;}});
-  const bearings=[],margins=[];
+  if(mode==='paint'||mode.endsWith('-paint'))model.traverse(o=>{if(o.isMesh&&!o.material.userData.factionPaint){const old=o.material;o.material=new T.MeshBasicMaterial({color:0x000000,opacity:0,transparent:false,blending:T.NoBlending,depthWrite:true});o.customDepthMaterial=new T.MeshDepthMaterial({depthPacking:T.RGBADepthPacking});o.userData.original=old;}});
+  const bearings=[],margins=[],sockets=[];
   for(let i=0;i<views;i++){
    model.rotation.y=i*Math.PI*2/views;model.updateMatrixWorld(true);renderer.render(s,camera);ctx.drawImage(renderer.domElement,i%8*cell,Math.floor(i/8)*cell,cell,cell);
    if(mode==='base'&&key==='tank'){
     const a=project(model.userData.gunAxis[0],model),b=project(model.userData.gunAxis[1],model);bearings.push([i,(b.x-a.x)*cell/2,-(b.y-a.y)*cell/2]);
+   }
+   if(mode==='hull-base'){
+    const a=project([0,0,0],model),b=project([turret.position.x,0,turret.position.z],model);
+    sockets.push([(b.x-a.x)/2,(a.y-b.y)/2]);
+   }
+   if(mode==='turret-base'){
+    const tip=project(turret.userData.muzzle,turret);
+    sockets.push([.5+tip.x/2,.5-tip.y/2]);
    }
    const px=ctx.getImageData(i%8*cell,Math.floor(i/8)*cell,cell,cell).data;let n=0,l=cell,t=cell,r=0,b=0;
    for(let y=0;y<cell;y++)for(let x=0;x<cell;x++)if(px[(y*cell+x)*4+3]>80){n++;l=Math.min(l,x);r=Math.max(r,x);t=Math.min(t,y);b=Math.max(b,y);}
@@ -37,7 +52,7 @@ window.TankBake=(()=>{
    margins.push({frame:i,ink:n,bounds:[l,t,r,b]});
   }
   const geos=new Set(),mats=new Set();model.traverse(o=>{if(o.geometry)geos.add(o.geometry);if(o.material)mats.add(o.material);if(o.customDepthMaterial)mats.add(o.customDepthMaterial);if(o.userData.original)mats.add(o.userData.original);});geos.forEach(x=>x.dispose());mats.forEach(x=>x.dispose());s.traverse(o=>{if(o.shadow&&o.shadow.map)o.shadow.map.dispose();});
-  return {png:sheet.toDataURL(),bearings,margins};
+  return {png:sheet.toDataURL(),bearings,margins,sockets};
  }
  return {bake,model:(key='tank')=>(key==='tank'?TankMaster.build():UnitMaster.build(key)).toJSON()};
 })();

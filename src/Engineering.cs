@@ -5,9 +5,15 @@ namespace Greyhaven {
 public partial class Campaign {
  public bool RepairVehicle(Piece car){return car!=null&&car.Alive&&car.T.Key=="ifv"&&car.Passenger!=null&&car.Passenger.Alive&&car.Passenger.T.Key=="engineer";}
  public bool Armed(Piece u){return u!=null&&ReferenceBalance.Weapon(u)!=null;}
+ static bool EngineerBuilding(Piece target){
+  return target!=null&&target.Deployed&&target.T.Building;
+ }
+ internal bool CanCaptureBuilding(Piece target){
+  return EngineerBuilding(target)&&!target.T.Defense&&(!target.T.Civilian||HouseCount(target)==0);
+ }
  public bool CanEngineer(Piece unit,Piece target){
-  return unit!=null&&unit.Deployed&&unit.T.Key=="engineer"&&target!=null&&target.Alive&&target.T.Building&&target.Ready>=1&&target.Packing<=0&&
-   (target.Side==unit.Side?target.Hp<target.T.Hp:!target.T.Defense&&(!target.T.Civilian||HouseCount(target)==0));
+  return unit!=null&&unit.Deployed&&unit.T.Key=="engineer"&&EngineerBuilding(target)&&
+   (target.Side==unit.Side?target.Hp<target.T.Hp:CanCaptureBuilding(target));
  }
  public bool EngineerOrder(Piece unit,Piece target){
   if(!CanEngineer(unit,target))return false;
@@ -33,6 +39,14 @@ public partial class Campaign {
  public bool Board(Piece foot,Piece car){
   if(!CanBoard(foot,car))return false;
   PointF p;if(!Exit(car,foot.T,out p)||!Move(foot,p,false))return false;foot.Entering=car;return true;
+ }
+ bool TryUnloadPassenger(Piece car,Piece cargo){
+  Halt(car);
+  PointF drop;
+  if(!Exit(car,cargo.T,out drop))return false;
+  cargo.Carrier=null;
+  cargo.P=drop;
+  return true;
  }
  bool TickBoard(Piece foot){
   var car=foot.Entering;if(!CanBoard(foot,car)){Halt(foot);return false;}

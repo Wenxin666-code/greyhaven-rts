@@ -13,7 +13,7 @@ public partial class Campaign {
  }
  void RecordShot(Piece o,PointF point,Piece target){
   o.FiredAt=VisualTime;o.LastFirePoint=point;
-  Shots.Add(new Shot{A=o.P,B=point,Side=o.Side,Life=1.15f,Born=VisualTime,Heading=o.Turn,
+  Shots.Add(new Shot{A=o.P,B=point,Side=o.Side,Life=1.15f,Born=VisualTime,Heading=o.Turn,TurretHeading=o.TurretTurn,
    Weapon=o.T.Key,Rocket=ReferenceBalance.Weapon(o)!=null&&(ReferenceBalance.Weapon(o).RuleId.Contains("Missile")||ReferenceBalance.Weapon(o).RuleId.Contains("Hover")),Id=++visualShotId,SourceId=o.Id,TargetId=target==null?0:target.Id,Shell=o.T.Key=="arty",HitFoot=target!=null&&target.T.Foot,
    Stance=o.Stance,Aim=o.WeaponAim,ImpactLift=target==null?0:target.T.Building?9:target.T.Foot?8:7});
   // Feedback is cosmetic: no RNG, ballistic delay, damage or fire-rate changes.

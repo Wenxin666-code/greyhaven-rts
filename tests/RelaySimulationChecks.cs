@@ -54,7 +54,36 @@ namespace Greyhaven {public partial class Campaign {
   Console.WriteLine("Relay defended hold fixture: result={0}, counterattacks={1}, enemy combat losses={2}, player survivors={3}, progress={4:F1}s.",w.Won?"won":w.Lost?"lost":"ongoing",w.RelayCounterattacks,enemyCasualties,w.Live(0).Count(u=>!u.T.Building),w.RelayProgress);
   RelayAssert(w.RelayCounterattacks>=2&&enemyCasualties>0,"defended station has no actual repeated combat");
 
+  CheckRelayAidMobilization();
   CheckRelayPhysicalRoutes();
+ }
+ static void CheckRelayAidMobilization(){
+  // Advance a healthy enemy economy before crossing the threshold. The player
+  // owns and guards the objective; the enemy uses its own units and paid queues.
+  var w=new Campaign(false,false,false,false,true);
+  w.PrepareBattleNavigation();RelayRun(w,600);
+  RelayAssert(!w.Lost&&w.OreReceipts[1]>=2*LoadValue,"mature enemy economy fixture");
+  w.RelayStation.Side=0;w.RelayProgress=179.9f;
+  var station=w.RelayStation.P;
+  var defenders=new[]{"tank","tank","tank","tank","squad","squad","squad","squad","squad","squad","at","at"};
+  for(int i=0;i<defenders.Length;i++){
+   var p=w.AiOpenPoint(new PointF(station.X+(-5+i%4*3)*Tile,station.Y+(4+i/4*2)*Tile));
+   w.Guard(w.Spawn(defenders[i],0,p.X,p.Y));
+  }
+  w.Changed();w.Reveal();
+  int lastId=w.Units.Max(u=>u.Id),previousWaves=w.RelayCounterattacks;
+  float firstArmour=-1,firstShot=-1;
+  var produced=new System.Collections.Generic.HashSet<int>();
+  for(int i=0;i<100*30&&!w.Won&&!w.Lost;i++){
+   w.Tick(1f/30);
+   if(!w.RelaySupportGranted)continue;
+   if(firstArmour<0&&w.Live(1).Any(u=>!u.T.Building&&!u.T.Foot&&w.Armed(u)&&Dist(u.P,station)<12*Tile))firstArmour=w.Time-w.RelaySupportAt;
+   if(firstShot<0&&w.Shots.Any(s=>s.Side==1&&s.Born>=w.RelaySupportAt&&Dist(s.B,station)<12*Tile))firstShot=w.Time-w.RelaySupportAt;
+   foreach(var u in w.Units.Where(u=>u.Id>lastId&&u.Side==1&&!u.T.Building&&u.T.Hit>0))produced.Add(u.Id);
+  }
+  RelayAssert(w.RelaySupportGranted&&w.RelayCounterattacks-previousWaves>=2&&produced.Count>=4,"aid failed to mobilize and produce a second attack team");
+  RelayAssert(firstArmour>=0&&firstArmour<=60&&firstShot>=0&&firstShot<=60,"counterattack failed to reach or fight in the station area");
+  Console.WriteLine("Relay supported counterattack: first armour {0:F1}s, first shot {1:F1}s, paid combat units {2}, waves {3}, station owner {4}.",firstArmour,firstShot,produced.Count,w.RelayCounterattacks-previousWaves,w.RelayStation.Side);
  }
  internal static void CheckRelayPhysicalRoutes(){
   // Run physical movement, not only route queries, through the entire western approach.

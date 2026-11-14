@@ -1,5 +1,5 @@
-﻿[CmdletBinding()]
-param([switch]$InfantryVerify,[switch]$InfantryPreview,[switch]$VeterancyVerify,[switch]$VeterancyPreview,[switch]$PerformanceIFVVerify,[switch]$PerformanceIFVPreview,[switch]$NativePerformance,[int]$PerformanceWarmup=580,[switch]$BalanceVerify,[switch]$BalancePreview,[switch]$StoryVerify,[switch]$StoryPreview,[switch]$RelayVerify,[switch]$RelayPreview,[switch]$MinerVerify,[switch]$PerformanceVerify,[switch]$TerritoryVerify,[switch]$DefenseVerify,[switch]$DefensePreview,[switch]$HaulVerify,[switch]$HaulPreview,[switch]$TempoVerify,[switch]$TempoPreview,[switch]$ControlsVerify,[switch]$ControlsPreview,[switch]$IslandPreview,[switch]$AiVerify,[switch]$ProductionVerify,[switch]$BlastVerify,[switch]$BlastPreview,[switch]$StructurePreview,[switch]$MotionPreview,[switch]$BuildingPreview,[switch]$ScrollVerify,[switch]$ScrollPreview,[switch]$QueuePreview,[switch]$Test,[switch]$MeasureFrames,[switch]$MeasureScroll,[switch]$ModelPreview,[switch]$SpacingPreview,[switch]$PresentationPreview,[switch]$TrafficPreview,[switch]$AnimationPreview,[switch]$MapPreview,[switch]$RiverPreview,[switch]$PathingPreview,[switch]$EconomyPreview,[switch]$ConstructionPreview,[switch]$InterfacePreview,[string]$DriveFrames,[string]$OreFrames)
+[CmdletBinding()]
+param([switch]$InfantryVerify,[switch]$InfantryPreview,[switch]$VeterancyVerify,[switch]$VeterancyPreview,[switch]$PerformanceIFVVerify,[switch]$PerformanceIFVPreview,[switch]$NativePerformance,[int]$PerformanceWarmup=580,[switch]$BalanceVerify,[switch]$BalancePreview,[switch]$StoryVerify,[switch]$StoryPreview,[switch]$ChapterOneVerify,[switch]$RelayVerify,[switch]$RelayPreview,[switch]$MinerVerify,[switch]$PerformanceVerify,[switch]$TerritoryVerify,[switch]$DefenseVerify,[switch]$DefensePreview,[switch]$HaulVerify,[switch]$HaulPreview,[switch]$TempoVerify,[switch]$TempoPreview,[switch]$ControlsVerify,[switch]$ControlsPreview,[switch]$IslandPreview,[switch]$AiVerify,[switch]$ProductionVerify,[switch]$BlastVerify,[switch]$BlastPreview,[switch]$StructurePreview,[switch]$MotionPreview,[switch]$BuildingPreview,[switch]$ScrollVerify,[switch]$ScrollPreview,[switch]$QueuePreview,[switch]$Test,[switch]$MeasureFrames,[switch]$MeasureScroll,[switch]$ModelPreview,[switch]$SpacingPreview,[switch]$PresentationPreview,[switch]$TrafficPreview,[switch]$AnimationPreview,[switch]$MapPreview,[switch]$RiverPreview,[switch]$PathingPreview,[switch]$EconomyPreview,[switch]$ConstructionPreview,[switch]$InterfacePreview,[string]$DriveFrames,[string]$OreFrames)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
@@ -20,15 +20,18 @@ foreach ($key in $mobile) {
         $images += Get-Item -LiteralPath (Join-Path $art "units-v04/packed/$key-$layer.png")
     }
 }
-foreach ($layer in @('base','paint','wreck')) {
+foreach ($layer in @('base','paint','wreck','hull-base','hull-paint','turret-base','turret-paint')) {
     $images += Get-Item -LiteralPath (Join-Path $art "tank-prototype/packed/tank-$layer.png")
 }
 $images += @(Get-ChildItem -LiteralPath (Join-Path $art 'console') -Filter '*.png' | Where-Object { $_.Name -ne 'portraits.png' })
 $resources = @($images | ForEach-Object { '/resource:' + $_.FullName + ',Greyhaven.Art.' + $_.Name })
+$resources += '/resource:' + (Join-Path $art 'tank-prototype/packed/tank-sockets.csv') + ',Greyhaven.Art.tank-sockets.csv'
 $infantryPack=Get-Item -LiteralPath (Join-Path $art "infantry-v12/packed/infantry-v12.pak")
 $resources += "/resource:" + $infantryPack.FullName + ",Greyhaven.Art.infantry-v12.pak"
 $relayPack=Get-Item -LiteralPath (Join-Path $art 'relay-v01/packed/relay-v01.pak')
 $resources += '/resource:' + $relayPack.FullName + ',Greyhaven.Art.relay-v01.pak'
+$harborPack=Get-Item -LiteralPath (Join-Path $art 'harbor-v01/packed/harbor-v01.pak')
+$resources += '/resource:' + $harborPack.FullName + ',Greyhaven.Art.harbor-v01.pak'
 $pack=Get-Item -LiteralPath (Join-Path $art 'buildings-v09/packed/buildings-v09.pak')
 $resources += '/resource:' + $pack.FullName + ',Greyhaven.Art.buildings-v09.pak'
 $structurePack=Get-Item -LiteralPath (Join-Path $art 'buildings-v10/packed/structures-v10.pak')
@@ -110,6 +113,15 @@ if ($BalancePreview) {
   & $check (Join-Path $root 'docs/balance-20261109')
   if($LASTEXITCODE){throw '数值界面检查未通过'}
  }finally{if(Test-Path -LiteralPath $check){Remove-Item -LiteralPath $check}}
+}
+if ($ChapterOneVerify) {
+ $chapterCheck=Join-Path ([IO.Path]::GetTempPath()) ("greyhaven-chapter-one-{0}.exe" -f [guid]::NewGuid())
+ try {
+  & $compiler @options "/out:$chapterCheck" /main:ChapterOneChecks @resources @source (Join-Path $root 'tests/ChapterOneChecks.cs')
+  if ($LASTEXITCODE) { throw '第一关检查编译失败' }
+  & $chapterCheck (Join-Path $root '.cache/chapter-one-review')
+  if ($LASTEXITCODE) { throw '第一关检查未通过' }
+ } finally { if (Test-Path -LiteralPath $chapterCheck) { Remove-Item -LiteralPath $chapterCheck } }
 }
 if ($StoryVerify -or $Test) {
  $storyCheck=Join-Path ([IO.Path]::GetTempPath()) ("greyhaven-story-{0}.exe" -f [guid]::NewGuid())

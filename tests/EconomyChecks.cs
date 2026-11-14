@@ -27,14 +27,14 @@ public partial class Campaign {
  }
  internal void CheckFactories(){
   EmptyEconomy();Spawn("power",0,500,500);var a=Spawn("factory",0,400,600);var b=Spawn("factory",0,600,600);
-  Train(Info("ifv"),0,b);Train(Info("ifv"),0,b);AssertEconomy(a.Queue.Count==1&&b.Queue.Count==1,"orders spread across both factories");
+  Train(Info("ifv"),0,b);Train(Info("ifv"),0,b);AssertEconomy(a.Queue.Count==2&&b.Queue.Count==0,"one vehicle queue");
   UnitTick(a,1,true);UnitTick(b,1,true);float work=a.Work;int paid=a.WorkPaid;SetPrimary(b);
-  AssertEconomy(a.Work==work&&a.WorkPaid==paid&&a.Queue.Count==1&&b.Queue.Count==1,"priority switch never steals work");
-  AssertEconomy(Math.Abs(ProductionRate(b)-.45f)<.001,"low power slows each independent line");Spawn("power",0,600,500);
-  AssertEconomy(Math.Abs(ProductionRate(b)-1)<.001,"no double speed bonus");UnitTick(b,1,true);float kept=b.Work;int keptPaid=b.WorkPaid;
-  int cash=Funds[0];a.Hp=0;Kill(a);AssertEconomy(b.Queue.Count==2&&b.Work==kept&&b.WorkPaid==keptPaid&&Funds[0]==cash+paid,"combat loss preserves busy survivor and refunds restarted work");
+  AssertEconomy(a.Work==work&&a.WorkPaid==paid&&a.Queue.Count==2&&b.Queue.Count==0,"priority switch preserves progress");
+  AssertEconomy(Math.Abs(ProductionRate(a)-PowerProductionRate(0)/.8f)<.001,"low power applies to the shared line");Spawn("power",0,600,500);
+  AssertEconomy(Math.Abs(ProductionRate(a)-1.25f)<.001,"two factories speed up the shared queue");
+  int cash=Funds[0];a.Hp=0;Kill(a);AssertEconomy(b.Queue.Count==2&&b.Work==work&&b.WorkPaid==paid&&Funds[0]==cash,"combat loss transfers paid progress without recharging");
   var enemy=Spawn("factory",1,1000,600);Train(Info("ifv"),1,null);UnitTick(enemy,1,true);paid=enemy.WorkPaid;int money=Funds[1];var door=Middle(ExitApron(enemy.T,Footprint(enemy.T,enemy.P)));var eng=Spawn("engineer",0,door.X,door.Y);EngineerOrder(eng,enemy);UnitTick(eng,.1f,true);AssertEconomy(enemy.Side==0&&enemy.Queue.Count==0&&Funds[1]==money+paid,"captured factory never gifts old orders");
-  Console.WriteLine("Independent factory queues, priority isolation, power, combat destruction and capture handover passed.");
+  Console.WriteLine("Shared vehicle queue, primary exit, low power, combat loss and capture handover passed.");
  }
  internal void CheckOreChoice(){
   EmptyEconomy();var near=new OrePatch(420,600,480);var far=new OrePatch(1100,600,480);Ore.Add(near);Ore.Add(far);var car=Spawn("miner",0,400,600);var other=Spawn("miner",0,900,900);other.Patch=near;car.Patch=far;
@@ -60,7 +60,7 @@ partial class CommandWindow {
   using(var frame=new Bitmap(1920,1080))using(var g=Graphics.FromImage(frame)){
    riverMissionSelected=false;hudDirty=true;OnPaint(new PaintEventArgs(g,ClientRectangle));frame.Save(Path.Combine(folder,"选关预览-教学港区.png"),ImageFormat.Png);
    riverMissionSelected=true;hudDirty=true;OnPaint(new PaintEventArgs(g,ClientRectangle));frame.Save(Path.Combine(folder,"选关预览-河湾镇.png"),ImageFormat.Png);
-   StartRiverMission();var home=world.Home(0);world.Spawn("power",0,home.X+130,home.Y);world.Spawn("power",0,home.X+130,home.Y+72);var satellite=world.Spawn("satellite",0,home.X+40,home.Y-110);
+   StartTerrainMission(false);var home=world.Home(0);world.Spawn("power",0,home.X+130,home.Y);world.Spawn("power",0,home.X+130,home.Y+72);var satellite=world.Spawn("satellite",0,home.X+40,home.Y-110);
    var car=world.Spawn("ifv",0,home.X+46,home.Y+44);var eng=world.Spawn("engineer",0,car.P.X+27,car.P.Y);world.Load(car);var target=world.Spawn("tank",0,car.P.X+34,car.P.Y);target.Hp=50;world.RepairOrder(car,target);world.Tick(.1f);
    selection.Clear();selection.Add(car);CenterAt(home);hudDirty=true;OnPaint(new PaintEventArgs(g,ClientRectangle));frame.Save(Path.Combine(folder,"工兵维修车与间谍卫星.png"),ImageFormat.Png);
    var patch=world.Ore.OrderBy(p=>Campaign.Dist(p.P,home)).First();foreach(var p in world.Ore.Where(p=>Campaign.Dist(p.P,patch.P)<100))p.Stock*=Math.Max(0,Math.Min(1,(p.P.X-patch.P.X+36)/144));CenterAt(patch.P);selection.Clear();hudDirty=true;OnPaint(new PaintEventArgs(g,ClientRectangle));frame.Save(Path.Combine(folder,"连续矿田与逐格采空.png"),ImageFormat.Png);

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
@@ -35,7 +35,7 @@ partial class CommandWindow {
   briefing=true;paused=false;help=false;missionPicker=true;drag=false;panning=false;Capture=false;
   hits.Clear();hudDirty=true;Invalidate();
  }
- void LaunchMission(){StartMission(true,true);hits.Clear();hudDirty=true;Invalidate();}
+ void LaunchMission(){StartFirstChapter();}
  void FrontKey(Keys key){
   if(mapReview){RiverKey(key);return;}
   if(modelReview){ModelKey(key);return;}
@@ -44,7 +44,10 @@ partial class CommandWindow {
    if(key==Keys.Left||key==Keys.Right){int page=veterancyRules?3:commandRules?2:unitRoster?1:0;page=(page+(key==Keys.Right?1:3))%4;unitRoster=page==1;commandRules=page==2;veterancyRules=page==3;}
    hudDirty=true;Invalidate();return;
   }
-  if(key==Keys.Escape&&missionPicker){missionPicker=false;hits.Clear();}
+  if(key==Keys.Escape){
+   if(!missionPicker){Close();return;}
+   missionPicker=false;hits.Clear();
+  }
   else if(key==Keys.Enter){if(missionPicker){LaunchSelectedMission();}else OpenMissions();}
   hudDirty=true;Invalidate();
  }
@@ -71,9 +74,9 @@ partial class CommandWindow {
  }
  void LaunchSelectedMission(){if(relayMissionSelected)StartRelayMission();else if(islandMissionSelected)StartIslandMission();else if(riverMissionSelected)StartRiverMission();else LaunchMission();}
  void DrawPicker(Graphics g){
-  var mission=relayMissionSelected?MissionBriefing.Relay:islandMissionSelected?MissionBriefing.Island:riverMissionSelected?MissionBriefing.Riverbend:MissionBriefing.Training;
+  var mission=relayMissionSelected?MissionBriefing.Relay:islandMissionSelected?MissionBriefing.Island:riverMissionSelected?MissionBriefing.Riverbend:MissionBriefing.Prologue;
   Txt(g,"行动选择",58,90,46,pale,true);Txt(g,"MISSION DIRECTORY   /   01 — 04",61,155,14,gold,true);
-  Button(g,64,214,373,64,"01    野外训练",()=>{riverMissionSelected=false;islandMissionSelected=false;relayMissionSelected=false;hudDirty=true;},!riverMissionSelected);
+  Button(g,64,214,373,64,"01    断线之夜",()=>{riverMissionSelected=false;islandMissionSelected=false;relayMissionSelected=false;hudDirty=true;},!riverMissionSelected);
   Button(g,64,295,373,64,"02    河湾镇",()=>{riverMissionSelected=true;islandMissionSelected=false;relayMissionSelected=false;hudDirty=true;},riverMissionSelected&&!islandMissionSelected&&!relayMissionSelected);
   Button(g,64,376,373,64,"03    孤岛要塞",()=>{riverMissionSelected=true;islandMissionSelected=true;relayMissionSelected=false;hudDirty=true;},islandMissionSelected);
   Button(g,64,457,373,64,"04    雾脊中继站",()=>{riverMissionSelected=true;islandMissionSelected=false;relayMissionSelected=true;hudDirty=true;},relayMissionSelected);
@@ -94,7 +97,7 @@ partial class CommandWindow {
   BriefingParagraph(g,mission.Orders,new RectangleF(528,540,828,31),18,pale);
   Txt(g,"胜利条件",528,581,13,dim,true);
   BriefingParagraph(g,mission.Victory,new RectangleF(611,578,745,29),16,pale);
-  Button(g,1078,620,278,62,relayMissionSelected?"进入雾脊中继站":islandMissionSelected?"进入孤岛要塞":riverMissionSelected?"进入河湾镇":"进入训练",LaunchSelectedMission,true);Txt(g,"›",1320,625,30,ink,true);
+  Button(g,1078,620,278,62,relayMissionSelected?"进入雾脊中继站":islandMissionSelected?"进入孤岛要塞":riverMissionSelected?"进入河湾镇":"开始序章",LaunchSelectedMission,true);Txt(g,"›",1320,625,30,ink,true);
  }
 }
 }

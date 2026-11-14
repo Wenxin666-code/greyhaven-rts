@@ -51,18 +51,39 @@ public partial class Campaign {
   foreach(var point in unit.Path){distance+=Dist(from,point);from=point;if(distance>limit)break;}
   return drift<MinimumRange(unit)||drift>ReferenceBalance.Range(unit)+(distance>limit?4*Tile:0);
  }
+ static bool AimWeapon(Piece o,PointF point,float dt){
+  if(o.T.Key=="tank"){
+   float heading=Bearing(o.P,point);
+   RotateToward(ref o.TurretTurn,heading,dt);
+   return o.TurretTurn==heading;
+  }
+  if(!o.T.Building)Face(o,point,dt);
+  return true;
+ }
+ void MovingTankFire(Piece tank,float dt){
+  if(tank.ScanIn<=0){
+   tank.ScanIn=.18f;
+   tank.MovingFireTarget=FindContact(tank,ReferenceBalance.Range(tank));
+  }
+  var target=tank.MovingFireTarget;
+  if(target==null||target.Side==tank.Side||!Targetable(target)||!CanShootAt(tank,target)||!VisibleTo(tank.Side,target)){
+   tank.MovingFireTarget=null;
+   RotateToward(ref tank.TurretTurn,tank.Turn,dt);
+   return;
+  }
+  if(AimWeapon(tank,TargetPoint(tank.P,target),dt)&&tank.Cool<=0)Fire(tank,target);
+ }
  bool FightContact(Piece o,float dt){
   o.ScanIn-=dt;if(ChangingStance(o))return true;
   bool travelling=o.Target==null&&o.Path.Count>0&&!o.Advancing;
   if(travelling||o.GuardReturning){
-   // Grizzly's OpportunityFire permits a shot without cancelling movement.
-   // Infantry and artillery keep walking; an explicit attack-move stops to fight.
-   if(o.T.Key=="tank"&&!o.GuardReturning&&o.ScanIn<=0){
-    o.ScanIn=.18f;var opportunity=FindContact(o,ReferenceBalance.Range(o));
-    if(opportunity!=null&&o.Cool<=0)Fire(o,opportunity);
+   if(o.T.Key=="tank"){
+    if(travelling&&!o.GuardReturning)MovingTankFire(o,dt);
+    else RotateToward(ref o.TurretTurn,o.Turn,dt);
    }
    return false;
   }
+  o.MovingFireTarget=null;
   var e=o.Target;
   if(e!=null){
    bool visible=VisibleTo(o.Side,e);
@@ -73,15 +94,20 @@ public partial class Campaign {
    o.ScanIn=.18f;var found=FindContact(o,ScanRange(o));
    if(found!=null&&(e==null||TargetDistance(o,found)<=ReferenceBalance.Range(o))){e=found;TakeContact(o,e,ContactOrder.Automatic);}
   }
-  if(e==null){if(o.Side>0&&o.Entrenched&&!o.GuardHome.HasValue)ReleaseInfantry(o);return false;}
+  if(e==null){
+   if(o.T.Key=="tank")RotateToward(ref o.TurretTurn,o.Turn,dt);
+   if(o.Side>0&&o.Entrenched&&!o.GuardHome.HasValue)ReleaseInfantry(o);
+   return false;
+  }
   bool seen=VisibleTo(o.Side,e);
   if(seen){o.LastContact=e.P;PrepareAiInfantry(o,e);if(ChangingStance(o))return true;}
   if(seen&&CanShootAt(o,e)){
    o.Path.Clear();o.Replan=0;
-   if(!o.T.Building)Face(o,e.P,dt);
-   if(o.Cool<=0&&ReadyToAimFire(o)&&(o.T.Key!="tank"||Aligned(o,e.P)))Fire(o,e);
+   bool aimed=AimWeapon(o,o.T.Key=="tank"?TargetPoint(o.P,e):e.P,dt);
+   if(o.Cool<=0&&aimed&&ReadyToAimFire(o))Fire(o,e);
    return true;
   }
+  if(seen&&o.T.Key=="tank")AimWeapon(o,TargetPoint(o.P,e),dt);
   if(o.T.Building||o.Entrenched)return false;
   if(!seen&&Explored(o.Side,o.LastContact)){EndContact(o);return false;}
   if(o.Replan<=0){

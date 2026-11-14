@@ -14,7 +14,7 @@ public partial class Campaign {
   var hq=w.Spawn("hq",2,home.X,home.Y);w.Spawn("refinery",2,home.X-120,home.Y+120);w.Spawn("refinery",2,home.X+120,home.Y+144);w.Spawn("factory",2,home.X+120,home.Y);
   for(int i=0;i<30;i++)w.Spawn(i%3==0?"at":"tank",2,home.X-120+i%6*24,home.Y-96+i/6*24);
   var brain=w.Brain(2);w.SmartTactics(2,true);
-  TerritoryAssert(brain.HomeGuard.Count==20,"Two exposed fronts retain standing defence and local reserves");
+  TerritoryAssert(brain.HomeGuard.Count==18,"Two exposed fronts retain standing defence and local reserves");
   TerritoryAssert(brain.HomeGuard.All(p=>p.GuardHome.HasValue),"Standing guards keep a return anchor");
   TerritoryAssert((brain.Wings.Count>0||brain.FieldGuard.Count>0)&&brain.Wings.All(g=>g.Units.All(p=>!brain.HomeGuard.Contains(p)))&&brain.FieldGuard.All(p=>!brain.HomeGuard.Contains(p)),"Only surplus units may join attack wings or field posts");
   TerritoryAssert(brain.Wings.All(g=>g.Phase==0&&g.InitialValue>0&&g.Objective!=g.Goal),"Attack teams muster before advancing");

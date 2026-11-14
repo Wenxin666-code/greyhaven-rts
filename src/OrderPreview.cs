@@ -37,10 +37,12 @@ public partial class Campaign {
   ConnectGrid(grid,pad);int a=Anchor(unit.P,grid.Open,grid.Barriers,tracks,pad),b=Anchor(p,grid.Open,grid.Barriers,tracks,pad);
   return a>=0&&b>=0&&grid.Regions[a]==grid.Regions[b];
  }
+ public bool CanSetRally(Piece src){return ProductionBuilding(src)&&src.Side==0&&src.T.Key!="hq";}
  public bool CanRallyTo(Piece src,PointF p){
-  if(src==null||!src.Deployed||src.Side!=0||src.T.Key=="refinery"||!HasGate(src.T))return false;
-  var gate=Gate(Footprint(src.T,src.P));
-  return Types.Where(t=>!t.Building&&t.Producer==src.T.Key).All(t=>CanMoveTo(new Piece{T=t,Side=src.Side,Hp=t.Hp,P=new PointF(src.P.X,gate.Bottom+12)},p));
+  if(!CanSetRally(src))return false;
+  var exit=Middle(ExitApron(src.T,Footprint(src.T,src.P)));
+  return Types.Where(t=>!t.Building&&t.Producer==src.T.Key)
+   .All(t=>CanMoveTo(new Piece{T=t,Side=src.Side,Hp=t.Hp,P=exit},p));
  }
 }
 }

@@ -23,6 +23,7 @@ public partial class Campaign {
    var target=source.BurstTarget;
    if(target!=null&&!target.Alive){source.BurstRemaining=0;break;}
    var point=target==null?source.BurstPoint:TargetPoint(source.P,target);
+   if(source.T.Key=="tank"&&!AimWeapon(source,point,dt))return;
    Impact(source,target,point,source.BurstWeapon);source.BurstRemaining--;source.BurstAt+=ReferenceBalance.BurstSpacing;
   }
  }

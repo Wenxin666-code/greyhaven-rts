@@ -34,7 +34,7 @@ class PathingChecks {
 namespace Greyhaven {
 partial class CommandWindow {
  internal void CapturePathingReview(string folder){
-  StartRiverMission();if(world.Units.Where(u=>u.T.Civilian).Any(u=>u.Side!=-1))throw new Exception("house starts hostile");
+  StartTerrainMission(false);if(world.Units.Where(u=>u.T.Civilian).Any(u=>u.Side!=-1))throw new Exception("house starts hostile");
   if(UnitColor(-1).R<210||UnitColor(-1).G<210||UnitColor(-1).B<210)throw new Exception("neutral color not white");
   ClientSize=new Size(1920,1080);var house=world.Units.First(u=>u.T.Key=="municipal");var engineer=world.Live(0).First(u=>u.T.Key=="engineer");engineer.P=new PointF(house.P.X,house.P.Y+100);
   world.Tick(.1f);selection.Clear();selection.Add(engineer);CenterAt(house.P);mouse=ScreenOf(house.P);

@@ -16,6 +16,10 @@ class WindowChecks {
  }
  static void Tap(CommandWindow f,string id){var r=f.TestControlBox(id);Press(f,(int)(r.X+r.Width/2),(int)(r.Y+r.Height/2));}
  static void CardClick(CommandWindow f,int index){var p=f.CardLocation(index);Press(f,p.X,p.Y);}
+ static void PressKey(CommandWindow f,Keys key){
+  var e=new KeyEventArgs(key);
+  foreach(var name in new[]{"OnKeyDown","OnKeyUp"})typeof(CommandWindow).GetMethod(name,flags).Invoke(f,new object[]{e});
+ }
  [STAThread]static int Main(string[] args){try{Run(args);return 0;}catch(Exception e){Console.Error.WriteLine(e.Message);Console.Error.WriteLine(e.StackTrace);return 1;}}
  static void Run(string[] args){
   bool controlsOnly=args.Length==2&&args[0]=="--controls";if(controlsOnly)args=new[]{args[1]};
@@ -39,7 +43,7 @@ class WindowChecks {
    if(!(bool)Field(f,"missionPicker")||!(bool)Field(f,"briefing"))throw new Exception("start must open mission selection");
    Frame(f,args.Length==0?null:Path.Combine(Path.GetDirectoryName(args[0]),"关卡选择.png"));
    Press(f,220,556);if(!(bool)Field(f,"mapReview"))throw new Exception("new map preview entry");
-   typeof(CommandWindow).GetMethod("OnKeyDown",flags).Invoke(f,new object[]{new KeyEventArgs(Keys.Escape)});Frame(f,null);
+   PressKey(f,Keys.Escape);Frame(f,null);
    if((bool)Field(f,"mapReview")||!(bool)Field(f,"missionPicker"))throw new Exception("map preview return to missions");
    Press(f,140,694);if((bool)Field(f,"missionPicker"))throw new Exception("back to title");
    Press(f,220,571);Press(f,180,255);Press(f,1194,651);if((bool)Field(f,"briefing")||!((Campaign)Field(f,"world")).Tutorial)throw new Exception("only tutorial may launch");
@@ -67,7 +71,7 @@ class WindowChecks {
    for(int i=0;i<60;i++)w.Tick(.1f);Frame(f,null);CardClick(f,1);for(int i=0;i<100;i++)w.Tick(.1f);Frame(f,null);CardClick(f,1);MapClick(f,123,610);for(int i=0;i<65;i++)w.Tick(.1f);
    Frame(f,null);CardClick(f,2);for(int i=0;i<170;i++)w.Tick(.1f);Frame(f,null);CardClick(f,2);MapClick(f,339,548);for(int i=0;i<110;i++)w.Tick(.1f);
    Tap(f,"步兵");CardClick(f,0);if(!w.Live(0).Any(o=>o.Queue.Count>0))throw new Exception("training click");
-   CardClick(f,0);typeof(CommandWindow).GetMethod("OnKeyDown",flags).Invoke(f,new object[]{new KeyEventArgs(Keys.Escape)});Frame(f,null);Tap(f,"生产队列");
+   CardClick(f,0);PressKey(f,Keys.Escape);Frame(f,null);Tap(f,"生产队列");
    if(!(bool)Field(f,"queueOpen"))throw new Exception("queue tab");
    var source=w.Live(0).Single(o=>o.Queue.Count>0);if(source.Queue.Count!=2)throw new Exception("second order");
    Frame(f,args.Length==0?null:args[0]);int funds=w.Funds[0];Tap(f,"cancel-1");if(source.Queue.Count!=1||w.Funds[0]!=funds)throw new Exception("cancel waiting slot");
@@ -91,7 +95,7 @@ class WindowChecks {
    // The live window advances only the visual clock after the final kill.
    w.TickVisuals(Campaign.BuildingDestructionSeconds+.30f);Frame(f,null);
    Tap(f,"预览新地图");if(!(bool)Field(f,"mapReview"))throw new Exception("tutorial completion to map preview");
-   typeof(CommandWindow).GetMethod("OnKeyDown",flags).Invoke(f,new object[]{new KeyEventArgs(Keys.Escape)});Frame(f,null);Press(f,1194,651);
+   PressKey(f,Keys.Escape);Frame(f,null);Press(f,1194,651);
    w=(Campaign)Field(f,"world");if(!w.Tutorial)throw new Exception("obsolete campaign became available");var trooper=w.Live(0).First(o=>o.T.Foot);var nearby=w.Spawn("squad",1,351,421);for(int i=0;i<3;i++)w.Tick(.1f);Frame(f,null);
    MapClick(f,(int)trooper.P.X,(int)trooper.P.Y);var units=(System.Collections.Generic.List<Piece>)Field(f,"selection");
    if(!units.Contains(trooper))throw new Exception("classic select");
@@ -127,7 +131,8 @@ partial class CommandWindow {
   if(DescribePointer(Keys.Control|Keys.Shift).Kind!=PointerKind.AttackMove)throw new Exception("attack move pointer");
   if(DescribePointer(Keys.Control|Keys.Alt).Kind!=PointerKind.Guard)throw new Exception("guard pointer");
   world.Move(unit,new PointF(700,1000),false);var path=unit.Path.ToArray();var goal=unit.Goal;attack=true;
-  CenterAt(new PointF(600,75));mouse=ScreenOf(new PointF(600,75));if(DescribePointer(Keys.None).Kind!=PointerKind.Blocked)throw new Exception("water blocked pointer");
+  var blocked=Campaign.Middle(Campaign.YardWalls[0]);CenterAt(blocked);mouse=ScreenOf(blocked);
+  if(DescribePointer(Keys.None).Kind!=PointerKind.Blocked)throw new Exception("blocked terrain pointer");
   ContextOrder(Keys.None);if(!attack||selection.Count!=1||unit.Goal!=goal||!unit.Path.SequenceEqual(path))throw new Exception("invalid destination cancelled pending attack or path");
   attack=false;ContextOrder(Keys.Alt);if(unit.Goal!=goal||!unit.Path.SequenceEqual(path))throw new Exception("invalid force move overwrote order");
   OnKeyDown(new KeyEventArgs(Keys.Z));ContextOrder(Keys.None);if(planned.Count!=0||!unit.Path.SequenceEqual(path))throw new Exception("invalid waypoint halted unit");OnKeyUp(new KeyEventArgs(Keys.Z));
@@ -135,6 +140,7 @@ partial class CommandWindow {
   var miner=world.Spawn("miner",0,600,1030);world.Halt(miner);selection.Clear();selection.Add(miner);if(DescribePointer(Keys.None).Kind!=PointerKind.Blocked)throw new Exception("unarmed attack blocked");
   var patch=world.Ore[0];miner.P=patch.P;world.Tick(.01f);CenterAt(patch.P);mouse=ScreenOf(new PointF(patch.P.X+19,patch.P.Y));
   if(DescribePointer(Keys.None).Kind!=PointerKind.Harvest)throw new Exception("ore pointer");
+  ContextOrder(Keys.None);if(!miner.Mining||miner.OrderedOre==null)throw new Exception("ore near the selected miner must receive a mining order");
   var plant=world.Spawn("refinery",0,600,1100);plant.StarterDelivered=true;CenterAt(plant.P);mouse=ScreenOf(plant.P);if(DescribePointer(Keys.None).Kind!=PointerKind.Unload)throw new Exception("unload pointer");
   selection.Clear();selection.Add(unit);mouse=ScreenOf(unit.P);if(DescribePointer(Keys.None).Kind!=PointerKind.Select)throw new Exception("friendly select pointer");
   place=Campaign.Info("power");CenterAt(new PointF(0,0));mouse=ScreenOf(new PointF(0,0));if(DescribePointer(Keys.None).Kind!=PointerKind.Blocked)throw new Exception("placement blocked pointer");place=null;
@@ -155,12 +161,15 @@ partial class CommandWindow {
   selection.Clear();selection.Add(old);
   Action<Keys> tap=k=>{OnKeyDown(new KeyEventArgs(k));OnKeyUp(new KeyEventArgs(k));};
   foreach(float level in new[]{.62f,1.05f,2.4f}){
-   zoom=level;var p=ScreenOf(moving.P);if(HitScreen(new PointF(p.X+4,p.Y-9))!=moving)throw new Exception("small infantry pick margin at "+level);
+   zoom=level;var p=ScreenOf(moving.P);if(HitScreen(new PointF(p.X+9,p.Y-9))!=moving)throw new Exception("small infantry pick margin at "+level);
   }
   zoom=1.05f;mouse=ScreenOf(moving.P);var click=mouse;
+  using(var frame=new Bitmap(1472,819))using(var g=Graphics.FromImage(frame))OnPaint(new PaintEventArgs(g,ClientRectangle));
+  moving.P=new PointF(moving.P.X+24,moving.P.Y); // The image on the screen has not advanced yet.
   OnMouseDown(new MouseEventArgs(MouseButtons.Left,1,(int)click.X,(int)click.Y,0));
   moving.P=new PointF(moving.P.X+32,moving.P.Y); // Moves between mouse down and up.
-  OnMouseUp(new MouseEventArgs(MouseButtons.Left,1,(int)click.X,(int)click.Y,0));
+  OnMouseMove(new MouseEventArgs(MouseButtons.Left,1,(int)click.X+8,(int)click.Y,0));
+  OnMouseUp(new MouseEventArgs(MouseButtons.Left,1,(int)click.X+8,(int)click.Y,0));
   if(selection.Count!=1||selection[0]!=moving||old.Path.Count!=0)throw new Exception("moving click must switch selection, not order old group");
   mouse=ScreenOf(moving.P);ContextOrder(Keys.None);if(selection.Count!=1)throw new Exception("repeat select toggled off");
   mouse=ScreenOf(old.P);ContextOrder(Keys.Shift);if(selection.Count!=2)throw new Exception("shift add");ContextOrder(Keys.Shift);if(selection.Count!=1)throw new Exception("shift remove");
@@ -177,7 +186,33 @@ partial class CommandWindow {
   tap(Keys.E);if(ProductionCards().Any(t=>!t.Foot))throw new Exception("E infantry tab");tap(Keys.R);if(ProductionCards().Any(t=>t.Foot||t.Building))throw new Exception("R vehicle tab");
   var enemy=world.Spawn("tank",1,650,1000);world.Tick(.01f);Mark(enemy.P,enemy,true);flashAt=watch.Elapsed.TotalSeconds-.051;
   if(TargetFlash(enemy)<.7f)throw new Exception("fast highlight peak");flashAt=watch.Elapsed.TotalSeconds-.21;if(TargetFlash(enemy)!=0)throw new Exception("fast highlight expiry");
+  CheckBattlePicking();
   Restart();Console.WriteLine("Classic keys, small-target preselection at three zoom levels, moving click capture, team 9 and fast highlight passed.");
+ }
+ void CheckBattlePicking(){
+  world=new Campaign(true);world.Units.Clear();
+  var shooter=world.Spawn("tank",0,500,1000);
+  var target=world.Spawn("engineer",1,600,1000);
+  world.Tick(.03f);zoom=MinBattleZoom;CenterAt(target.P);
+  selection.Clear();selection.Add(shooter);
+  using(var frame=new Bitmap(1472,819))using(var g=Graphics.FromImage(frame))OnPaint(new PaintEventArgs(g,ClientRectangle));
+  var ground=ScreenOf(target.P);
+  var at=new PointF(ground.X+9,ground.Y-9);
+  if(HitScreen(at)!=target)throw new Exception("small enemy selection margin");
+  target.P=new PointF(634,1000);
+  mouse=at;
+  if(DescribePointer(Keys.None).Kind!=PointerKind.Attack)throw new Exception("enemy cursor must use the displayed position");
+  var click=new MouseEventArgs(MouseButtons.Left,1,(int)Math.Round(at.X),(int)Math.Round(at.Y),0);
+  OnMouseDown(click);OnMouseUp(click);
+  if(shooter.Target!=target||flashTarget!=target)throw new Exception("moving enemy point attack must keep the chosen target");
+
+  var rear=world.Spawn("tank",0,700,1000);var front=world.Spawn("tank",1,700,1000);
+  front.Turn=rear.Turn;front.TurretTurn=rear.TurretTurn;
+  world.Spawn("engineer",0,660,1000);world.Tick(.24f);
+  var center=ScreenOf(front.P);var box=MobilePickBody(front,center,front.T.Size*zoom);
+  var middle=new PointF(box.Left+box.Width*.5f,box.Top+box.Height*.5f);
+  if(!MobileHit(front,center,front.T.Size*zoom,middle)||HitScreen(middle)!=front)throw new Exception("overlapping pixels should pick the front unit");
+  if(HitScreen(ScreenOf(new PointF(600,1120)))!=null)throw new Exception("empty ground cannot select a nearby unit");
  }
  internal void CheckCommandFeedback(string folder){
   ClientSize=new Size(1920,1080);StartMission(false,true);CenterAt(new PointF(690,715));showGrid=true;
@@ -295,7 +330,7 @@ partial class CommandWindow {
     PaintFrame(reference,unit.T,side,0,box);
     for(int y=0;y<160;y+=2)for(int x=0;x<192;x+=2)
      if(frame.GetPixel(x,y)!=expected.GetPixel(x,y))throw new Exception("infantry differs from a single sprite");
-    if(!MobileHit(unit,feet,size,feet)||MobileHit(unit,feet,size,new PointF(feet.X+size*.32f,feet.Y-size*.18f)))
+    if(!MobilePickArea(MobilePickBody(unit,feet,size),feet,true).Contains(feet)||MobileHit(unit,feet,size,new PointF(feet.X+size*.32f,feet.Y-size*.18f)))
      throw new Exception("single soldier hit bounds");
    }
   }Restart();

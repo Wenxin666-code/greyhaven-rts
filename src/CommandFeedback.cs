@@ -10,15 +10,24 @@ partial class CommandWindow {
  }
  void DrawTargetFlash(Graphics g,Piece unit,PointF position,float size){
   float strength=TargetFlash(unit);if(strength<=.01f)return;
-  if(unit.T.Building)position=DeploymentPoint(unit,position);
-  var t=unit.T;var source=t.Key=="tank"?TankCell(unit.Side,TankFrame(unit)):SourceCell(t,unit.Side,(unit.Dir+14)%16);
-  var key=t.Building?BuildingVisual(unit,out source):LiveArtKey(unit);
-  var box=t.Building?BuildingRect(Campaign.Footprint(t,unit.P),position,zoom):t.Foot?SoldierBox(SoldierFeet(unit,position,zoom,world.Time),size):VehicleRect(t,position,size);
   var matrix=new ColorMatrix(new[]{new float[]{0,0,0,0,0},new float[]{0,0,0,0,0},new float[]{0,0,0,0,0},new float[]{0,0,0,strength,0},new float[]{1,1,1,0,1}});
   using(var attributes=new ImageAttributes()){
    attributes.SetColorMatrix(matrix);
-   g.DrawImage(painted[key],new[]{new PointF(box.Left,box.Top),new PointF(box.Right,box.Top),new PointF(box.Left,box.Bottom)},source,GraphicsUnit.Pixel,attributes);
+   if(unit.T.Key=="tank"){
+    var pose=TankPoseFor(unit,position,size);
+    FlashLayer(g,TankHullKey,pose.HullCell,pose.HullBox,attributes);
+    FlashLayer(g,TankTurretKey,pose.TurretCell,pose.TurretBox,attributes);
+    return;
+   }
+   if(unit.T.Building)position=DeploymentPoint(unit,position);
+   var t=unit.T;var source=SourceCell(t,unit.Side,(unit.Dir+14)%16);
+   var key=t.Building?BuildingVisual(unit,out source):LiveArtKey(unit);
+   var box=t.Building?BuildingRect(Campaign.Footprint(t,unit.P),position,zoom):t.Foot?SoldierBox(SoldierFeet(unit,position,zoom,world.Time),size):VehicleRect(t,position,size);
+   FlashLayer(g,key,source,box,attributes);
   }
+ }
+ void FlashLayer(Graphics g,string key,Rectangle source,RectangleF box,ImageAttributes attributes){
+  g.DrawImage(painted[key],new[]{new PointF(box.Left,box.Top),new PointF(box.Right,box.Top),new PointF(box.Left,box.Bottom)},source,GraphicsUnit.Pixel,attributes);
  }
 }
 }

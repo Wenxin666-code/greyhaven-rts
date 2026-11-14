@@ -42,13 +42,15 @@ namespace Greyhaven {public partial class Campaign {
   w=BalanceWorld();var plant=w.Spawn("power",0,800,900);var factory=w.Spawn("factory",0,1000,900);var refinery=w.Spawn("refinery",0,1200,900);
   Near(w.Power(0),125,"Electrical units");Near(w.ProductionRate(factory),1,"Full power production");plant.Hp=plant.T.Hp*.25f;Near(w.ProductionRate(factory),2/3f,"Low power follows available capacity");plant.Hp=1;Near(w.ProductionRate(factory),.5f,"Low power minimum");
   plant.Hp=plant.T.Hp;var second=w.Spawn("factory",0,1000,1200);w.Funds[0]=5000;
-  BalanceAssert(w.Train(Info("tank"),0,factory)&&w.Train(Info("tank"),0,second),"Queue tanks in both factories");
-  for(int i=0;i<300;i++){w.UnitTick(factory,.1f,true);w.UnitTick(second,.1f,true);}
-  BalanceAssert(w.Live(0).Count(u=>u.T.Key=="tank")==2,"Both factories complete a tank");BalanceAssert(w.Funds[0]==3600,"Both factories pay 700");
+  var tankOrder=Info("tank");Near(w.ProductionRate(factory),1.25f,"Second factory shortens the shared order");
+  BalanceAssert(w.Train(tankOrder,0,factory)&&w.Train(tankOrder,0,second),"Queue two tanks");
+  w.UnitTick(factory,tankOrder.Seconds*.8f,true);w.UnitTick(second,tankOrder.Seconds*.8f,true);
+  BalanceAssert(w.Live(0).Count(u=>u.T.Key=="tank")==1&&factory.Queue.Count==1&&second.Queue.Count==0,"One tank per order");
+  BalanceAssert(w.Funds[0]==4300,"First of two queued tanks costs 700");
   BalanceAssert(LoadValue==1000,"40 ore bales at 25 credits");var patch=new OrePatch(0,0,1200);float extracted=patch.Extract(1000);Near(extracted,1000,"Load extraction");Near(patch.Stock,200,"Resource conservation");
   w=BalanceWorld();car=w.Spawn("ifv",0,800,1100);var engineer=w.Spawn("engineer",0,800,1100);engineer.Carrier=car;tank=w.Spawn("tank",0,830,1100);tank.Hp=100;
   BalanceAssert(!w.Armed(car),"Repair IFV unarmed");w.RepairOrder(car,tank);w.TickRepairVehicle(car,.1f);Near(tank.Hp,150,"Repair 50");Near(car.Cool,80/15f,"Repair interval");
   if(output!=null){Directory.CreateDirectory(output);var lines=new[]{"单位,规则条目,价格,生命,护甲,Speed,格每游戏秒,视野格,射程格,伤害每发,连射发数,间隔游戏秒,标准速度间隔实秒,生产游戏秒,电力"}.Concat(Types.Select(t=>string.Join(",",new[]{t.Name,t.RuleId,t.Price.ToString(),t.Hp.ToString(),t.Armor.ToString(),t.SpeedRating.ToString(),(t.Speed/Tile).ToString("0.####"),t.SightCells.ToString(),(t.Range/(float)Tile).ToString("0.##"),t.Hit.ToString(),(t.Weapon==null?0:t.Weapon.Burst).ToString(),t.Reload.ToString("0.####"),(t.Reload/MatchTempo.DefaultRate).ToString("0.####"),t.Seconds.ToString("0.##"),t.Energy.ToString()}))).ToArray();File.WriteAllLines(Path.Combine(output,"applied-values.csv"),lines,System.Text.Encoding.UTF8);}
-  Console.WriteLine("PASS: numeric references, time/distance conversion, armor roles, burst timing/cancel, dead zone reposition, 128-angle actual range boundary, sight, movement, power, paid parallel production, ore conservation and repair IFV.");
+  Console.WriteLine("PASS: numeric references, time/distance conversion, armor roles, burst timing/cancel, dead zone reposition, 128-angle actual range boundary, sight, movement, power, paid shared vehicle production, ore conservation and repair IFV.");
  }
 }}

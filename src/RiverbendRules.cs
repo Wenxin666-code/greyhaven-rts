@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Linq;
 namespace Greyhaven {
@@ -8,16 +8,19 @@ public partial class Campaign {
  public int MapHeight {get{return River==null?Height:River.HeightCells*Tile;}}
  static readonly RectangleF[] EmptyTerrain=new RectangleF[0];
  RectangleF[] MapRoads {get{return River==null?Roads:EmptyTerrain;}}
- RectangleF[] MapWalls {get{return River==null?YardWalls:EmptyTerrain;}}
+ RectangleF[] MapWalls {get{return HarborOperation!=null?HarborOperation.Barriers:River==null?YardWalls:EmptyTerrain;}}
  public PointF Home(int side){if(River==null)return side==0?new PointF(152,514):EnemyHome;var p=River.Starts[side];return new PointF((p.X+.5f)*Tile,(p.Y+.5f)*Tile);}
  void SetupRiverbend(){
   if(RelayMission){SetupRelayMission();return;}
   Ore.Clear();foreach(var p in River.Ore)Ore.Add(new OrePatch((p.X+.5f)*Tile,(p.Y+.5f)*Tile,2400));
-  for(int side=0;side<FactionCount;side++){
-   var home=Home(side);Spawn("mcv",side,home.X,home.Y);Spawn("squad",side,home.X+48,home.Y-48);Spawn("squad",side,home.X+72,home.Y-48);Spawn("engineer",side,home.X,home.Y-48);
+  if(River.IsRiverbendChapter)RiverbendOperation=new RiverbendOperation(this);
+  else{
+   for(int side=0;side<FactionCount;side++){
+    var home=Home(side);Spawn("mcv",side,home.X,home.Y);Spawn("squad",side,home.X+48,home.Y-48);Spawn("squad",side,home.X+72,home.Y-48);Spawn("engineer",side,home.X,home.Y-48);
+   }
+   Radio="孤岛要塞：我方位于西北资源岛，堤桥是唯一陆路；五个敌方各自为战。";
   }
   foreach(var h in River.Houses)Spawn(h.Kind,-1,(h.Lot.X+h.Lot.Width*.5f)*Tile,(h.Lot.Y+h.Lot.Height*.5f)*Tile);
-  Radio=IslandMission?"孤岛要塞：我方位于西北资源岛，堤桥是唯一陆路；五个敌方各自为战。":"三方互为敌对。展开基地、采矿扩军；工兵可占领中立房屋，步兵可进驻防守。";
  }
  public float GroundHeight(PointF p){var c=Terrain.At((int)Math.Floor(p.X/Tile),(int)Math.Floor(p.Y/Tile));return c==null?0:c.Height;}
  bool GroundOpen(float x,float y){var c=Terrain.At((int)Math.Floor(x/Tile),(int)Math.Floor(y/Tile));return c!=null&&c.Ground!=RiverbendMap.Surface.Water&&!c.Tree;}

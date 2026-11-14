@@ -54,12 +54,12 @@ partial class CommandWindow {
  }
  PointF Muzzle(Shot s){
   if(s.Garrison){var window=ScreenOf(s.A);window.Y-=18*zoom;return window;}
+  if(s.Weapon=="tank")return TankMuzzle(s);
   var t=Campaign.Info(s.Weapon);var p=ScreenOf(s.A);float x=0,y=0,z=0,width=1,anchor=188f/320;
   switch(s.Weapon){
    case "squad":x=.13f;y=1.277f;z=.89f;width=2.7f;anchor=.91f;break;
    case "sniper":x=.13f;y=1.277f;z=1.089f;width=2.7f;anchor=.91f;break;
    case "at":x=s.Rocket?.26f:.13f;y=s.Rocket?1.54f:1.277f;z=s.Rocket?.73f:.89f;width=2.7f;anchor=.91f;break;
-   case "tank":y=1.92f;z=3.802f;width=9.25f;break;
    case "ifv":x=-.27f;y=2.27f;z=1.755f;width=7.5f;break;
    case "arty":y=3.16f;z=3.36f;width=9.2f;break;
    case "post":{
@@ -68,7 +68,7 @@ partial class CommandWindow {
    }
   }
   // Use precisely the same view quantization as the body sprite.
-  float heading=s.Weapon=="tank"?((float)Math.Round(s.Heading*4)/4+14)%16:((int)Math.Round(s.Heading)+14)%16;
+  float heading=((int)Math.Round(s.Heading)+14)%16;
   if(t.Foot){
    y-=.34f*s.Stance;z+=.05f*s.Stance;
    float angle,py,pz;

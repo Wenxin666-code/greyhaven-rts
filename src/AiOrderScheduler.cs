@@ -8,14 +8,17 @@ public partial class Campaign {
  readonly Queue<AiMoveRequest> aiMoveRequests=new Queue<AiMoveRequest>();
  int aiMoveSerial;readonly Dictionary<Piece,int> aiMoveVersions=new Dictionary<Piece,int>();
  readonly HashSet<Piece> aiMovesPending=new HashSet<Piece>();
- int QueueAiMarch(Piece[] troops,PointF point,bool attackMove=true,bool replace=false){
+ int QueueAiMarch(Piece[] troops,PointF point,bool attackMove=true,bool replace=false,bool splitByMobility=false){
   troops=troops.Where(p=>p.Deployed&&(replace||!aiMovesPending.Contains(p))).OrderBy(p=>p.Id).ToArray();if(troops.Length==0)return 0;
   var center=new PointF(troops.Average(p=>p.P.X),troops.Average(p=>p.P.Y));float distance=Math.Max(1,Dist(center,point));
   var formation=new March{Forward=new PointF((point.X-center.X)/distance,(point.Y-center.Y)/distance)};
+  // The orders share distinct arrival slots, while foot troops and vehicles
+  // maintain their own pace during long approaches.
+  var footFormation=splitByMobility?new March{Forward=formation.Forward}:formation;
   int columns=(int)Math.Ceiling(Math.Sqrt(troops.Length)),rows=(troops.Length+columns-1)/columns;float pitch=troops.Any(p=>!p.T.Foot)?Tile:Tile/2;
   var slots=new PointF[troops.Length];for(int i=0;i<slots.Length;i++)slots[i]=new PointF(point.X+(i%columns-(Math.Min(columns,slots.Length-i/columns*columns)-1)*.5f)*pitch,point.Y+((rows-1)*.5f-i/columns)*pitch);
   var match=MatchSlots(troops,slots);
-  for(int i=0;i<troops.Length;i++){aiMovesPending.Add(troops[i]);int version=++aiMoveSerial;aiMoveVersions[troops[i]]=version;aiMoveRequests.Enqueue(new AiMoveRequest{Unit=troops[i],Goal=slots[match[i]],Formation=formation,Version=version,AttackMove=attackMove});}
+  for(int i=0;i<troops.Length;i++){aiMovesPending.Add(troops[i]);int version=++aiMoveSerial;aiMoveVersions[troops[i]]=version;aiMoveRequests.Enqueue(new AiMoveRequest{Unit=troops[i],Goal=slots[match[i]],Formation=troops[i].T.Foot?footFormation:formation,Version=version,AttackMove=attackMove});}
   return troops.Length;
  }
  void TickAiMarchRequests(){
