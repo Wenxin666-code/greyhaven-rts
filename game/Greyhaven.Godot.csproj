@@ -1,0 +1,15 @@
+<Project Sdk="Godot.NET.Sdk/4.7.2">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <ArtRoot>../art/source</ArtRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="$(ArtRoot)/console/harbor.png;$(ArtRoot)/console/plate.png;$(ArtRoot)/tank-prototype/packed/tank-base.png;$(ArtRoot)/tank-prototype/packed/tank-paint.png" LogicalName="%(Filename)%(Extension)" />
+    <Compile Include="scripts/**/*.cs" />
+    <EmbeddedResource Include="$(ArtRoot)/unit-motion-v09/packed/gait-v09.pak;$(ArtRoot)/blast-v11/blast-cloud-v11.png;$(ArtRoot)/blast-v11/debris-base-v11.png;$(ArtRoot)/buildings-v10/materials/hazard-flame-v10.png" LogicalName="%(Filename)%(Extension)" />
+    <ProjectReference Include="core/Greyhaven.Core.csproj" />
+    <EmbeddedResource Include="$(ArtRoot)/harbor-v01/packed/harbor-v01.pak;$(ArtRoot)/buildings-v09/packed/buildings-v09.pak;$(ArtRoot)/buildings-v10/packed/structures-v10.pak;$(ArtRoot)/infantry-v12/packed/infantry-v12.pak;$(ArtRoot)/units-v04/packed/*-base.png;$(ArtRoot)/units-v04/packed/*-paint.png;$(ArtRoot)/units-v04/packed/*-wreck.png;$(ArtRoot)/tank-prototype/packed/tank-hull-*.png;$(ArtRoot)/tank-prototype/packed/tank-turret-*.png;$(ArtRoot)/tank-prototype/packed/tank-sockets.csv;$(ArtRoot)/tank-prototype/packed/tank-wreck.png;$(ArtRoot)/isometric/ground.png" LogicalName="%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

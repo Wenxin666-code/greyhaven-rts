@@ -24,3 +24,12 @@ __pycache__/
 /docs/infantry-motion-20261110/at-*.png
 /docs/infantry-motion-20261110/squad-*.png
 /docs/infantry-motion-20261110/sniper-*.png
+
+# Godot imports and local export bundles.
+.godot/
+bin/
+obj/
+/game/exports/
+/legacy/windows/*.exe
+/legacy/windows/*.pdb
+/legacy/windows/exports/
