@@ -21,7 +21,7 @@ internal sealed class RiverbendOperation {
         internal bool Leaving;
     }
     readonly List<MarchOrder> departing = new List<MarchOrder>();
-    readonly Piece waitingTruck;
+    readonly Piece waitingTruck, followingTruck;
     readonly Dictionary<Piece, Piece> recalledGuards = new Dictionary<Piece, Piece>();
     Piece attackedFacility;
     PointF raidApproach;
@@ -106,6 +106,7 @@ internal sealed class RiverbendOperation {
             battle.Guard(guard);
         }
         waitingTruck = ParkedTruck(Bridge.Left - 6, Bridge.Bottom + .7f, false);
+        followingTruck = ParkedTruck(Bridge.Left - 9, Bridge.Bottom + .7f, false);
         battle.Radio = "许岑：" + HandoffRadio.Replace('\n', ' ');
         battle.RevealRiverbendIntelligence();
     }
@@ -263,6 +264,8 @@ internal sealed class RiverbendOperation {
         foreach (var unit in marchers) battle.Halt(unit);
         if (waitingTruck.Deployed)
             battle.MoveHarborDeparture(waitingTruck, RiverbendMap.PortPoint(RiverbendMap.RiverExitX, 36.65f));
+        if (followingTruck.Deployed)
+            battle.MoveHarborDeparture(followingTruck, RiverbendMap.PortPoint(RiverbendMap.RiverExitX - 3, 35.7f));
         nextMarchOrder = 1.3f;
         return true;
     }
@@ -329,6 +332,7 @@ internal sealed class RiverbendOperation {
             nextMarchOrder = Elapsed + .13f;
         }
         battle.MoveHarborVehicle(waitingTruck, dt, 1.18f, true);
+        battle.MoveHarborVehicle(followingTruck, dt, 1.18f, true);
         foreach (var order in departing) {
             var unit = order.Unit;
             if (unit.Path.Count == 0) continue;

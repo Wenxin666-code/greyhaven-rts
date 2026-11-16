@@ -17,6 +17,8 @@ public partial class HarborGame : Node
     private CampaignChapter activeChapter = CampaignChapter.Harbor, chosenChapter = CampaignChapter.Harbor;
     private TypeInfo placing;
     private bool paused, started, focused = true, rightHeld, panned;
+    private bool edgeArmed, desktopMousePosition;
+    private float edgeDwell;
     private Vector2? dragStart;
     private int multiplier = 1;
     private double nextHud;
@@ -25,6 +27,7 @@ public partial class HarborGame : Node
     public override void _Ready()
     {
         view = GetNode<BattlefieldView>("Battlefield");
+        desktopMousePosition = DisplayServer.GetName() is "Windows" or "macOS" or "X11";
         string[] options = OS.GetCmdlineUserArgs();
         if (DisplayServer.GetName() != "headless" && !options.Contains("--capture") &&
             !options.Contains("--verify-ui") && !options.Contains("--windowed"))
@@ -36,6 +39,8 @@ public partial class HarborGame : Node
             focused = false;
             CancelDrag();
             rightHeld = false;
+            edgeArmed = false;
+            edgeDwell = 0;
             stepper.Reset();
         };
         MakeInterface();
@@ -57,9 +62,13 @@ public partial class HarborGame : Node
     private void ResetChapter(bool play, CampaignChapter chapter = null)
     {
         paused = false;
+        edgeArmed = false;
+        edgeDwell = 0;
         viewingMap = false;
         keyboardOpen = false;
         diplomacyOpen = false;
+        basinTestOpen = false;
+        ChangeRoadOrderPhase(RoadOrderPhase.Hidden);
         capturingKey = physicalRouteKey = Key.None;
         showObjectives = false;
         frontPage = FrontPage.Menu;
@@ -90,24 +99,32 @@ public partial class HarborGame : Node
         view.SetWorld(world);
         radar.World = world;
         Layout();
-        view.Center(sequence.Camera());
+        CenterSequence();
         UpdateInterface();
     }
 
     private bool SceneRunning => sequence.Opening || sequence.Departing;
-    private bool Finished => sequence.Complete || world.Lost && world.OutcomeReady;
+    private bool Finished => sequence.ResultReady || world.Lost && world.OutcomeReady;
     private bool WaitingForDeparture => world.Won && !SceneRunning && !sequence.Complete;
-    private bool CanControl => started && !paused && !SceneRunning && !world.Lost && !Finished && !WaitingForDeparture;
+    private bool CanControl => started && !paused && !SceneRunning && !ReadingRoadOrder && !world.Lost && !Finished && !WaitingForDeparture;
 
     public override void _Process(double elapsed)
     {
         if (world == null) return;
-        if (started && focused && !paused)
+        if (ReadingRoadOrder) AdvanceRoadOrder((float)Math.Min(elapsed, .08));
+        else if (started && focused && !paused)
         {
             double previous = world.VisualTime;
             bool sceneFrame = SceneRunning || world.Won || world.Lost;
             stepper.Advance(elapsed, MatchTempo.DefaultRate * (sceneFrame ? 1 : multiplier), Simulate);
-            if (SceneRunning || sequence.Complete) view.Center(sequence.Camera());
+            if (ReadingRoadOrder)
+            {
+                stepper.Reset();
+                CancelDrag();
+                rightHeld = false;
+                UpdateRoadOrderPanel();
+            }
+            if (SceneRunning || sequence.Complete) CenterSequence();
             view.FogStrength = SceneRunning || sequence.Complete ? sequence.Fog : 1;
             if (CanControl)
             {
@@ -122,6 +139,9 @@ public partial class HarborGame : Node
             if (world.VisualTime != previous || CanControl) view.QueueRedraw();
         }
 
+        float cut = started && sequence is BasinSequence basin ? basin.OpeningShade : 0;
+        basinCut.Visible = cut > .001f;
+        if (basinCut.Visible) basinCut.Color = new Color("#111617", cut);
         selected.RemoveAll(p => !p.Alive || p.Carrier != null);
         view.Selection = selected.ToArray();
         UpdatePointer(elapsed);
@@ -140,6 +160,7 @@ public partial class HarborGame : Node
 
     private void Simulate(float step)
     {
+        if (ReadingRoadOrder) return;
         if (SceneRunning || sequence.Complete)
         {
             sequence.Tick(step);
@@ -169,31 +190,74 @@ public partial class HarborGame : Node
         view.Cinematic = false;
         view.FogStrength = 1;
         Layout();
-        view.Center(world.FirstChapter ? world.Home(0) : sequence.CommandVehicle.P);
+        view.Center(world.FirstChapter ? world.Home(0) : sequence.CommandVehicle.P, BattlefieldView.DefaultZoom);
         UpdateInterface();
         view.QueueRedraw();
     }
 
+    private void CenterSequence() => view.Center(sequence.Camera(),
+        sequence is BasinSequence basin ? basin.CameraZoom : null);
+
     private void PollCamera(float dt)
     {
-        if (dragStart.HasValue || rightHeld) return;
-        var mouse = view.GetGlobalMousePosition();
+        if (dragStart.HasValue || rightHeld)
+        {
+            edgeDwell = 0;
+            return;
+        }
         float x = (Input.IsPhysicalKeyPressed(Key.Right) ? 1 : 0) - (Input.IsPhysicalKeyPressed(Key.Left) ? 1 : 0);
         float y = (Input.IsPhysicalKeyPressed(Key.Down) ? 1 : 0) - (Input.IsPhysicalKeyPressed(Key.Up) ? 1 : 0);
-        var area = view.Area;
-        if (OverBattlefield(mouse))
+        if (x != 0 || y != 0)
         {
-            const float edge = 13;
-            if (mouse.X - area.Position.X < edge) x = -1;
-            else if (area.End.X - mouse.X < edge) x = 1;
-            if (mouse.Y - area.Position.Y < edge) y = -1;
-            else if (area.End.Y - mouse.Y < edge) y = 1;
+            edgeDwell = 0;
+            view.Pan(new Vector2(x, y).Normalized() * (660 * dt));
+            return;
         }
-        if (x != 0 || y != 0) view.Pan(new Vector2(x, y).Normalized() * (660 * dt));
+        var viewport = GetViewport();
+        var mouse = desktopMousePosition
+            ? viewport.GetScreenTransform().AffineInverse() * (Vector2)(DisplayServer.MouseGetPosition() -
+                DisplayServer.WindowGetPosition(GetWindow().GetWindowId()))
+            : viewport.GetMousePosition();
+        PanAtEdge(mouse, viewport.GetVisibleRect(), dt);
+    }
+
+    private void PanAtEdge(Vector2 mouse, Rect2 viewport, float dt)
+    {
+        edgeArmed |= viewport.HasPoint(mouse);
+        if (!edgeArmed) return;
+        const float rim = 3;
+        var direction = new Vector2(mouse.X < viewport.Position.X + rim ? -1 : mouse.X >= viewport.End.X - rim ? 1 : 0,
+            mouse.Y < viewport.Position.Y + rim ? -1 : mouse.Y >= viewport.End.Y - rim ? 1 : 0);
+        if (direction == Vector2.Zero && OverBattlefield(mouse))
+        {
+            var area = view.Area;
+            direction = new Vector2(EdgeSpeed(mouse.X - area.Position.X, area.Size.X),
+                EdgeSpeed(mouse.Y - area.Position.Y, area.Size.Y));
+        }
+        if (direction == Vector2.Zero)
+        {
+            edgeDwell = 0;
+            return;
+        }
+        edgeDwell += dt;
+        float ramp = Mathf.Clamp((edgeDwell - .035f) / .11f, 0, 1);
+        if (ramp > 0) view.Pan(direction.LimitLength() * (740 * dt * ramp));
+    }
+
+    private static float EdgeSpeed(float position, float length)
+    {
+        const float band = 28;
+        return position < band ? position / band - 1 : Math.Max(0, (position - length + band) / band);
     }
 
     public override void _Input(InputEvent input)
     {
+        if (ReadingRoadOrder && input is InputEventKey dossierKey)
+        {
+            if (dossierKey.Pressed && !dossierKey.Echo && dossierKey.Keycode == Key.Enter) AcknowledgeRoadOrder();
+            GetViewport().SetInputAsHandled();
+            return;
+        }
         if (diplomacyOpen && input is InputEventKey { Pressed: true, Echo: false } diplomacyKey)
         {
             if (diplomacyKey.Keycode is Key.Escape or Key.Enter || BoundAction(diplomacyKey.PhysicalKeycode) == Key.Tab)
@@ -204,6 +268,20 @@ public partial class HarborGame : Node
         if (keyboardOpen && input is InputEventKey { Pressed: true, Echo: false } binding)
         {
             CaptureBinding(binding);
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+        if (input is InputEventKey { Pressed: true, Echo: false } testKey &&
+            (basinTestOpen && testKey.Keycode == Key.Escape || testKey.Keycode == Key.F9 &&
+             !testKey.CtrlPressed && !testKey.ShiftPressed && !testKey.AltPressed &&
+             BoundAction(Key.F9) == Key.None && CanOpenBasinTest))
+        {
+            SetBasinTest(!basinTestOpen);
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+        if (basinTestOpen && input is InputEventKey { Keycode: Key.Enter })
+        {
             GetViewport().SetInputAsHandled();
             return;
         }
@@ -218,6 +296,19 @@ public partial class HarborGame : Node
         {
             var window = GetWindow();
             window.Mode = window.Mode == Window.ModeEnum.Fullscreen ? Window.ModeEnum.Windowed : Window.ModeEnum.Fullscreen;
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+        if (ReadingArchive && input is InputEventKey { Pressed: true, Echo: false } archiveKey)
+        {
+            switch (archiveKey.Keycode)
+            {
+                case Key.Escape: CloseArchive(); break;
+                case Key.Left when archiveIndex % ArchiveColumns != 0: SelectArchive(archiveIndex - 1); break;
+                case Key.Right when archiveIndex % ArchiveColumns == 0: SelectArchive(archiveIndex + 1); break;
+                case Key.Up when archiveIndex >= ArchiveColumns: SelectArchive(archiveIndex - ArchiveColumns); break;
+                case Key.Down when archiveIndex + ArchiveColumns < archiveCards.Length: SelectArchive(archiveIndex + ArchiveColumns); break;
+            }
             GetViewport().SetInputAsHandled();
             return;
         }
@@ -288,6 +379,16 @@ public partial class HarborGame : Node
             return;
         }
         if (input is not InputEventMouseButton button || !button.Pressed || !OverBattlefield(button.Position)) return;
+        if (button.ButtonIndex == MouseButton.Left && button.DoubleClick && !button.ShiftPressed && !button.CtrlPressed &&
+            !button.AltPressed && placing == null && structureTool == StructureTool.None && !PlanningRoute && !beaconMode &&
+            view.Pick(button.Position) is { Side: 0 } facility && facility.T.Key is "barracks" or "factory" && world.SetPrimary(facility))
+        {
+            selected.Clear();
+            selected.Add(facility);
+            UpdateInterface();
+            GetViewport().SetInputAsHandled();
+            return;
+        }
         switch (button.ButtonIndex)
         {
             case MouseButton.Left: dragStart = button.Position; break;
@@ -418,9 +519,13 @@ public partial class HarborGame : Node
             return;
         }
 
-        var hit = view.Pick(click, !shift && !ctrl && !alt && selected.Count > 0 && selected.All(p => p.T.Key == "miner"));
+        var hit = PickOrderTarget(click, shift, ctrl, alt);
         IssueMapCommand(click, ground, hit, shift, ctrl, alt);
     }
+
+    private Piece PickOrderTarget(Vector2 position, bool shift, bool ctrl, bool alt) => view.Pick(position,
+        !shift && !ctrl && !alt && selected.Count > 0 && selected.All(p => p.T.Key == "miner"),
+        !shift && !ctrl && !alt && selected.Any(p => p.Deployed && p.T.Foot && p.T.Key != "sniper"));
 
     private void IssueMapCommand(Vector2 click, Point ground, Piece hit, bool shift, bool ctrl, bool alt)
     {
@@ -434,12 +539,14 @@ public partial class HarborGame : Node
         }
         if (alt)
         {
+            var destination = ForceMoveDestination(ground, hit);
             foreach (var unit in selected)
-                if (world.ForceMove(unit, ground)) view.ShowMoveOrder(unit, ground);
+                if (world.Move(unit, destination, false)) view.ShowMoveOrder(unit, destination);
             return;
         }
         if (ctrl && !shift)
         {
+            if (hit?.T.IsWall == true && !selected.Any(p => p.Deployed && world.CanAttackTarget(p, hit))) return;
             foreach (var unit in selected)
                 if (hit != null && hit != unit) world.Attack(unit, hit, true);
                 else world.Suppress(unit, ground);
@@ -453,8 +560,20 @@ public partial class HarborGame : Node
         else if (selected.Count > 0) RejectDestination();
     }
 
+    private static Point ForceMoveDestination(Point ground, Piece hit) => hit is { Side: > 0, Deployed: true } && hit.T.Foot
+        ? hit.P : ground;
+
     private bool IssueContext(Piece hit, Point ground, bool shift, bool advance)
     {
+        if (hit?.T.IsWall == true)
+        {
+            if (hit.Side == 0) return true;
+            if (hit.Side < 0) return true;
+            var breakers = selected.Where(p => p.Deployed && world.CanAttackTarget(p, hit)).ToArray();
+            foreach (var unit in breakers) world.Attack(unit, hit);
+            if (breakers.Length > 0) Mark(hit.P, hit);
+            return true;
+        }
         if (!shift && !advance && selected.Count > 0 && selected.All(p => p.T.Key == "miner"))
         {
             var ore = hit == null && world.Explored(0, ground) ? world.OreAt(ground) : null;
@@ -469,9 +588,20 @@ public partial class HarborGame : Node
             }
         }
 
+        if (shift && !advance && hit?.Side == 0)
+        {
+            if (!selected.Remove(hit)) selected.Add(hit);
+            return true;
+        }
+
         if (hit?.Side > 0)
         {
             var fighters = selected.Where(p => p.Deployed && world.Armed(p)).ToArray();
+            if (!shift && !advance && fighters.Length == 0 && selected.FirstOrDefault(p => world.CanEngineer(p, hit)) is { } engineer)
+            {
+                if (!world.EngineerOrder(engineer, hit)) RejectDestination();
+                return true;
+            }
             if (fighters.Length > 0 && !Campaign.IsRelayStation(hit))
             {
                 foreach (var unit in fighters) world.Attack(unit, hit);
@@ -488,20 +618,21 @@ public partial class HarborGame : Node
                 if (world.CanBoard(unit, hit)) { if (!world.Board(unit, hit)) RejectDestination(); return true; }
                 if (world.CanRepairVehicle(unit, hit)) { world.RepairOrder(unit, hit); return true; }
             }
-            if (hit.T.Garrison && hit.Side <= 0 && selected.Any(p => p.T.Foot))
+            if (hit.T.Garrison && hit.Side == 0 && selected.Any(p => world.CanEnterHouse(p, hit)))
             {
-                int entered = selected.Count(p => p != hit && world.EnterHouse(p, hit));
-                if (entered == 0) world.Radio = hit.Side < 0 ? "需要空闲工兵才能占领中立房屋。" : "房屋已满，或所选单位不能驻防。";
+                int entered = selected.Count(p => world.EnterHouse(p, hit));
+                if (entered == 0) world.Radio = "没有空闲的驻防入口。";
+                return true;
+            }
+            if (hit.T.Garrison && hit.Side < 0 && selected.Any(p => p.T.Foot))
+            {
+                world.Radio = "需要空闲工兵才能占领中立房屋。";
                 return true;
             }
 
             if (hit.Side == 0)
             {
-                if (shift)
-                {
-                    if (!selected.Remove(hit)) selected.Add(hit);
-                }
-                else if (selected.Count == 1 && selected[0] == hit)
+                if (selected.Count == 1 && selected[0] == hit)
                 {
                     if (hit.T.Key == "mcv" || hit.T.DeployableFoot ||
                         hit.T.Key == "ifv" && hit.Passenger != null || hit.T.Garrison && world.HouseCount(hit) > 0)

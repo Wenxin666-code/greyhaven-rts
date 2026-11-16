@@ -11,9 +11,9 @@ namespace Greyhaven {
 public sealed partial class RiverbendMap {
  public const int Columns=92,Rows=68;
  public readonly int WidthCells,HeightCells;public readonly bool IsIsland;public readonly Point[] Starts;
- public string Title {get{return IsRelay?"雾脊中继站":IsChapterOne?"断线之夜":IsTraining?"野外训练":IsIsland?"孤岛要塞":"河湾镇";}}
+ public string Title {get{return IsBasin?"盆地岔口":IsRelay?"雾脊中继站":IsChapterOne?"断线之夜":IsTraining?"野外训练":IsIsland?"孤岛要塞":"河湾镇";}}
  public enum Surface { Meadow,Soil,Rock,Marsh,Water,Road,Bridge,Square,Ramp,Sand }
- public sealed class Cell {public Surface Ground;public float Height;public bool Tree;public int Variation;}
+ public sealed class Cell {public Surface Ground;public float Height;public bool Tree,Railroad,Cliff;public int Variation;}
  public sealed class House {
   public string Kind,Name;public Rectangle Lot;public int Capacity;
   public Point Door {get{return new Point(Lot.X+Lot.Width/2,Lot.Bottom);}}
@@ -25,7 +25,7 @@ public sealed partial class RiverbendMap {
  public readonly List<Landmark> Labels=new List<Landmark>();
  public readonly List<Point> Ore=new List<Point>();
  public readonly Point WestStart=new Point(24,34),EastStart=new Point(73,18),SouthStart=new Point(74,52);
- internal bool IsRiverbendChapter {get{return !IsTraining&&!IsIsland&&!IsRelay;}}
+ internal bool IsRiverbendChapter {get{return !IsTraining&&!IsIsland&&!IsRelay&&!IsBasin;}}
  internal const int RiverRoadTop=31,RiverRoadWidth=7,RiverExitX=119;
  internal static readonly Point RiverJunction=new Point(63,34),RiverBridgeHouse=new Point(36,28);
  internal static readonly Rectangle RiverImpound=new Rectangle(57,25,5,5);
@@ -39,12 +39,14 @@ public sealed partial class RiverbendMap {
  static double Ellipse(int x,int y,float cx,float cy,float rx,float ry){return Math.Pow((x-cx)/rx,2)+Math.Pow((y-cy)/ry,2);}
  static int Hash(int x,int y){unchecked{uint q=(uint)(x*73856093^y*19349663^71423);q^=q>>13;q*=1274126177;return (int)(q&0x7fffffff);}}
  public RiverbendMap(bool island=false):this(island,false,null){}
- RiverbendMap(bool island,bool training,IEnumerable<PointF> minerals,bool relay=false,bool chapterOne=false){
+ RiverbendMap(bool island,bool training,IEnumerable<PointF> minerals,bool relay=false,bool chapterOne=false,bool basin=false){
   IsRelay=relay;IsIsland=island;IsTraining=training||chapterOne;IsChapterOne=chapterOne;
-  WidthCells=chapterOne?ChapterOneWidth:relay?240:training?Campaign.Width/Campaign.Tile:island?IslandColumns:Columns;
-  HeightCells=chapterOne?ChapterOneHeight:relay?180:training?Campaign.Height/Campaign.Tile:island?IslandRows:Rows;
+  IsBasin=basin;
+  WidthCells=basin?BasinWidth:chapterOne?ChapterOneWidth:relay?240:training?Campaign.Width/Campaign.Tile:island?IslandColumns:Columns;
+  HeightCells=basin?BasinHeight:chapterOne?ChapterOneHeight:relay?180:training?Campaign.Height/Campaign.Tile:island?IslandRows:Rows;
   Cells=new Cell[WidthCells*HeightCells];
-  Starts=chapterOne?new[]{LandingBase,new Point(54,29)}:relay?new[]{RelayCell(15,82),RelayCell(84,42)}:training?new[]{new Point(6,21),new Point((int)(Campaign.EnemyHome.X/Campaign.Tile),(int)(Campaign.EnemyHome.Y/Campaign.Tile))}:island?new[]{new Point(36,30),IslandCell(320,31),IslandCell(325,104),IslandCell(316,209),IslandCell(191,213),IslandCell(163,105)}:new[]{WestStart,EastStart,SouthStart};
+  Starts=basin?BasinStarts():chapterOne?new[]{LandingBase,new Point(54,29)}:relay?new[]{RelayCell(15,82),RelayCell(84,42)}:training?new[]{new Point(6,21),new Point((int)(Campaign.EnemyHome.X/Campaign.Tile),(int)(Campaign.EnemyHome.Y/Campaign.Tile))}:island?new[]{new Point(36,30),IslandCell(320,31),IslandCell(325,104),IslandCell(316,209),IslandCell(191,213),IslandCell(163,105)}:new[]{WestStart,EastStart,SouthStart};
+  if(basin){GenerateBasin();return;}
   if(chapterOne){GenerateChapterOne();return;}
   if(relay){GenerateRelay();return;}
   if(training){GenerateTraining(minerals);PrepareCoastline();return;}
@@ -126,12 +128,13 @@ public sealed partial class RiverbendMap {
   for(int yy=y-1;yy<=y+h;yy++)for(int xx=x-1;xx<=x+w;xx++){var c=At(xx,yy);c.Tree=false;if(c.Ground!=Surface.Road){c.Ground=Surface.Square;c.Height=level;}}
   Houses.Add(new House{Kind=key,Name=name,Lot=lot,Capacity=slots});
  }
- public bool Walkable(int x,int y){var c=At(x,y);return c!=null&&c.Ground!=Surface.Water&&!c.Tree&&!Houses.Any(h=>h.Lot.Contains(x,y));}
+ public bool Walkable(int x,int y){var c=At(x,y);return c!=null&&c.Ground!=Surface.Water&&!c.Tree&&!c.Cliff&&!Houses.Any(h=>h.Lot.Contains(x,y));}
  public bool CanStep(Point a,Point b){return Walkable(b.X,b.Y)&&Walkable(a.X,a.Y)&&Math.Abs(At(a.X,a.Y).Height-At(b.X,b.Y).Height)<=.26f;}
- public bool Connected(Point a,Point b){
-  if(!Walkable(a.X,a.Y)||!Walkable(b.X,b.Y))return false;
+ public bool Connected(Point a,Point b)=>Connected(a,b,null);
+ internal bool Connected(Point a,Point b,Predicate<Point> blocked){
+  if(!Walkable(a.X,a.Y)||!Walkable(b.X,b.Y)||blocked?.Invoke(a)==true||blocked?.Invoke(b)==true)return false;
   var seen=new HashSet<long>();var q=new Queue<Point>();q.Enqueue(a);seen.Add(CellKey(a.X,a.Y));
-  while(q.Count>0){var p=q.Dequeue();if(p==b)return true;foreach(var d in new[]{new Point(1,0),new Point(-1,0),new Point(0,1),new Point(0,-1)}){var n=new Point(p.X+d.X,p.Y+d.Y);long key=CellKey(n.X,n.Y);if(seen.Contains(key)||!CanStep(p,n))continue;seen.Add(key);q.Enqueue(n);}}
+  while(q.Count>0){var p=q.Dequeue();if(p==b)return true;foreach(var d in new[]{new Point(1,0),new Point(-1,0),new Point(0,1),new Point(0,-1)}){var n=new Point(p.X+d.X,p.Y+d.Y);long key=CellKey(n.X,n.Y);if(seen.Contains(key)||blocked?.Invoke(n)==true||!CanStep(p,n))continue;seen.Add(key);q.Enqueue(n);}}
   return false;
  }
  public void Export(string path){

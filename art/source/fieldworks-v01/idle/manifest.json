@@ -1,0 +1,47 @@
+{
+  "framesPerSecond": 24,
+  "frames": 144,
+  "seconds": 6,
+  "columns": 12,
+  "cell": 320,
+  "anchor": [
+    160,
+    220
+  ],
+  "views": {
+    "front": {
+      "angle": 0,
+      "bounds": [
+        52,
+        90,
+        268,
+        274
+      ],
+      "minPaintFraction": 0.34916960241570205,
+      "maxPaintFraction": 0.36394422310756974,
+      "maxJointGap": 4.577566798522237e-16,
+      "loopError": 0,
+      "carrierTravel": 0.24747025907607245,
+      "lowestCarrier": 0.48237468698351704,
+      "highestCarrier": 0.7298449460595895,
+      "maxAngleDegrees": 16.442150019789207
+    },
+    "rear": {
+      "angle": 180,
+      "bounds": [
+        52,
+        94,
+        268,
+        274
+      ],
+      "minPaintFraction": 0.25064790818215477,
+      "maxPaintFraction": 0.2668395153182708,
+      "maxJointGap": 4.577566798522237e-16,
+      "loopError": 0,
+      "carrierTravel": 0.24747025907607245,
+      "lowestCarrier": 0.48237468698351704,
+      "highestCarrier": 0.7298449460595895,
+      "maxAngleDegrees": 16.442150019789207
+    }
+  }
+}

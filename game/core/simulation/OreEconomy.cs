@@ -94,7 +94,7 @@ public partial class Campaign {
  RectangleF[] MineTraffic(Piece truck,PointF destination,Predicate<Piece> include=null){
   var blocks=new List<RectangleF>();
   foreach(var u in Units){
-   if(u==truck||!u.Deployed||u.T.Building)continue;
+   if(u==truck||!u.Deployed||u.T.Building||CanCrush(truck,u))continue;
    // Stationary blockers anywhere along the route must participate in the same
    // search. Moving traffic is only sampled nearby, avoiding a stale long wall.
    if(include!=null ? !include(u) : u.Path.Count>0&&Dist(truck.P,u.P)>140&&Dist(destination,u.P)>90)continue;

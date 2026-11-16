@@ -44,6 +44,7 @@ internal sealed class HarborSequence : ChapterSequence
     internal override Piece CommandVehicle => operation.CommandVehicle;
     internal override float Fog => operation.FogBlend;
     internal override string[] Debrief => CompletionText;
+    internal override string Failure => "先遣队未能夺回旧码头。";
     internal override string Caption => operation.Opening
         ? OpeningText[Pages[(int)operation.Scene]]
         : operation.Departing ? DepartureText[(int)operation.Scene - (int)HarborScene.ReopenGate] : "";

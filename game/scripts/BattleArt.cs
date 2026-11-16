@@ -10,6 +10,11 @@ internal sealed class BattleArt : IDisposable
 {
     private readonly Dictionary<string, Texture2D> staticTextures = new();
     private readonly Dictionary<string, Texture2D> portraits = new();
+    private readonly Dictionary<(int Mask, Color Tint), Texture2D> walls = new();
+    private readonly Dictionary<(int Frame, int Side), Texture2D> oilFrames = new();
+    private Image wallBase, wallPaint;
+    private Image oilBase, oilPaint;
+    private const int OilColumns = 12, OilCell = 192, OilFrames = 144, OilFps = 24;
     private readonly Dictionary<Texture2D, (int Width, byte[] Bits)> hitMasks = new();
     private readonly Dictionary<(Texture2D Texture, Rect2 Cell), Rect2> inkBounds = new();
     private readonly Dictionary<string, (ImageTexture Texture, LinkedListNode<string> Age)> frames = new();
@@ -31,7 +36,13 @@ internal sealed class BattleArt : IDisposable
         string key = type.Key == "at" ? "at-mobile" : type.Key;
         Texture2D body, paint;
         Rect2I cell;
-        if (type.Building)
+        if (type.IsWall)
+        {
+            body = Wall(0, Faction(0));
+            paint = null;
+            cell = new Rect2I(0, 0, 320, 320);
+        }
+        else if (type.Building)
         {
             body = Frame("iso-" + key);
             paint = Frame("iso-" + key + "-paint", false);
@@ -67,10 +78,7 @@ internal sealed class BattleArt : IDisposable
                 float alpha = color[i + 3] / 255f;
                 if (type.Building)
                 {
-                    float weight = pixels[i + 3] == 0 ? 0 : color[i + 3] / (float)pixels[i + 3];
-                    pixels[i] = (byte)Math.Clamp(pixels[i] - color[i] * weight * (1 - faction.R), 0, 255);
-                    pixels[i + 1] = (byte)Math.Clamp(pixels[i + 1] - color[i + 1] * weight * (1 - faction.G), 0, 255);
-                    pixels[i + 2] = (byte)Math.Clamp(pixels[i + 2] - color[i + 2] * weight * (1 - faction.B), 0, 255);
+                    TintContribution(pixels, color, i, faction);
                 }
                 else
                 {
@@ -94,16 +102,78 @@ internal sealed class BattleArt : IDisposable
         return texture;
     }
 
+    private static void TintContribution(byte[] pixels, byte[] paint, int i, Color tint)
+    {
+        float weight = pixels[i + 3] == 0 ? 0 : paint[i + 3] / (float)pixels[i + 3];
+        pixels[i] = (byte)Math.Clamp(pixels[i] - paint[i] * weight * (1 - tint.R), 0, 255);
+        pixels[i + 1] = (byte)Math.Clamp(pixels[i + 1] - paint[i + 1] * weight * (1 - tint.G), 0, 255);
+        pixels[i + 2] = (byte)Math.Clamp(pixels[i + 2] - paint[i + 2] * weight * (1 - tint.B), 0, 255);
+    }
+
+    internal Texture2D Wall(int mask, Color tint)
+    {
+        if (walls.TryGetValue((mask, tint), out var old)) return old;
+        wallBase ??= Static("wall-base.png").GetImage();
+        wallPaint ??= Static("wall-paint.png").GetImage();
+        var bounds = new Rect2I(mask % 4 * 320, mask / 4 * 320, 320, 320);
+        var texture = TintRegion(wallBase, wallPaint, bounds, tint);
+        walls.Add((mask, tint), texture);
+        return texture;
+    }
+
+    internal Texture2D OilDerrick(int side, float time = 0)
+    {
+        int frame = (int)(time * OilFps) % OilFrames;
+        if (oilFrames.TryGetValue((frame, side), out var old)) return old;
+        oilBase ??= LoadOilSheet("oilwell-front-base.png");
+        oilPaint ??= LoadOilSheet("oilwell-front-paint.png");
+        var bounds = new Rect2I(frame % OilColumns * OilCell, frame / OilColumns * OilCell, OilCell, OilCell);
+        var texture = TintRegion(oilBase, oilPaint, bounds, Faction(side));
+        oilFrames.Add((frame, side), texture);
+        return texture;
+    }
+
+    private static Image LoadOilSheet(string name)
+    {
+        var image = new Image();
+        if (image.LoadPngFromBuffer(EmbeddedArt(name)) != Error.Ok)
+        {
+            image.Dispose();
+            throw new InvalidDataException("Invalid PNG: " + name);
+        }
+        image.Resize(OilColumns * OilCell, OilFrames / OilColumns * OilCell, Image.Interpolation.Bilinear);
+        return image;
+    }
+
+    private static Texture2D TintRegion(Image baseLayer, Image paintLayer, Rect2I bounds, Color tint)
+    {
+        using var body = baseLayer.GetRegion(bounds);
+        using var layer = paintLayer.GetRegion(bounds);
+        body.Convert(Image.Format.Rgba8);
+        layer.Convert(Image.Format.Rgba8);
+        var pixels = body.GetData();
+        var paint = layer.GetData();
+        for (int i = 0; i < pixels.Length; i += 4)
+            TintContribution(pixels, paint, i, tint);
+        body.SetData(bounds.Size.X, bounds.Size.Y, false, Image.Format.Rgba8, pixels);
+        return ImageTexture.CreateFromImage(body);
+    }
+
     internal Texture2D Static(string name)
     {
         if (staticTextures.TryGetValue(name, out var texture)) return texture;
+        var loaded = Decode(name, EmbeddedArt(name));
+        staticTextures.Add(name, loaded);
+        return loaded;
+    }
+
+    private static byte[] EmbeddedArt(string name)
+    {
         using var stream = typeof(BattleArt).Assembly.GetManifestResourceStream(name)
             ?? throw new InvalidDataException("Missing art: " + name);
         var bytes = new byte[checked((int)stream.Length)];
         stream.ReadExactly(bytes);
-        var loaded = Decode(name, bytes);
-        staticTextures.Add(name, loaded);
-        return loaded;
+        return bytes;
     }
 
     internal Texture2D Frame(string name, bool required = true)
@@ -205,6 +275,12 @@ internal sealed class BattleArt : IDisposable
     {
         foreach (var texture in staticTextures.Values) texture.Dispose();
         foreach (var texture in portraits.Values) texture.Dispose();
+        foreach (var texture in walls.Values) texture.Dispose();
+        foreach (var texture in oilFrames.Values) texture.Dispose();
+        wallBase?.Dispose();
+        wallPaint?.Dispose();
+        oilBase?.Dispose();
+        oilPaint?.Dispose();
         foreach (var entry in frames.Values) entry.Texture.Dispose();
         harbor.Dispose();
         infantry.Dispose();

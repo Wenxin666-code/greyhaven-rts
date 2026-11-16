@@ -81,6 +81,7 @@ public sealed partial class RiverbendMap {
   if(!coastReady||!WithinRadar(x,y))return null;
   Cell c;long key=CellKey(x,y);if(extension.TryGetValue(key,out c))return c;
   if(IsChapterOne)c=ChapterOneGround(x,y);
+  else if(IsBasin)c=BasinGround(x,y);
   else if(IsRelay)c=RelayGround(x,y);
   else{
    c=BaseExtension(x,y);

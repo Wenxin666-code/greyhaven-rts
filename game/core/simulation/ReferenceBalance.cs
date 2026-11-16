@@ -6,6 +6,8 @@ public enum ArmorKind { None, Flak, Plate, Light, Medium, Heavy, Wood, Steel, Co
 [Flags]public enum VeteranAbility { None=0,Firepower=1,Faster=2,Stronger=4,RateOfFire=8,SelfHeal=16 }
 public sealed class WeaponProfile {
  public readonly string RuleId;public readonly int Damage,Burst,Frames;public readonly float Range,MinimumRange,Reload,Spread;public readonly float[] Verses;
+ public bool BlockedByWalls => RuleId is "M60" or "M60E" or "Vulcan" or "Para" or "ParaE" or "UCPara" or "UCElitePara" or "AWP" or "AWPE" or "CRAWP" or "CRM60" or "105mm" or "105mmE";
+ public bool DamagesWalls => RuleId is "105mm" or "105mmE" or "HowitzerGun" or "HoverMissile" or "HoverMissileE" or "MissileLauncher" or "MissileLauncherE" or "CRMissileLauncher";
  public WeaponProfile(string id,int damage,int frames,float cells,float minimum,int burst,float spread,float[] verses){RuleId=id;Damage=damage;Frames=frames;Range=cells*Campaign.Tile;MinimumRange=minimum*Campaign.Tile;Reload=frames/ReferenceBalance.FramesPerGameSecond;Burst=burst;Spread=spread*Campaign.Tile;Verses=verses;}
 }
 // Fixed CnCNet YR rules, e4b5712df96ec3acb05ddbda9fe2ba63e30576ab.
@@ -48,6 +50,8 @@ public static class ReferenceBalance {
    case "satellite": Set(t,"GASPYSAT",1500,1000,ArmorKind.Wood,0,5,-100,null,null,false);break;
    case "sniper": Set(t,"SNIPE",600,125,ArmorKind.None,4,8,0,WAWP,WAWPE,false);break;
    case "bunker": Set(t,"NABNKR",500,600,ArmorKind.Steel,0,6,0,null,null,false);break;
+   case "wall": Set(t,"GAWALL",100,300,ArmorKind.Concrete,0,1,0,null,null,false);break;
+   case "oilwell": Set(t,"CAOILD",0,1000,ArmorKind.Steel,0,6,0,null,null,false);break;
    case "post": Set(t,"NALASR",500,400,ArmorKind.Steel,0,7,0,WVulcan,WVulcan,false);break;
    case "squad": Set(t,"E1",200,125,ArmorKind.None,4,5,0,WM60,WM60E,true);break;
    case "at": Set(t,"GGI",400,100,ArmorKind.None,3,6,0,WM60,WM60E,true);break;
@@ -99,6 +103,10 @@ public static class ReferenceBalance {
  }
  public static float Reload(Piece p,WeaponProfile w){return w.Reload*(HasAbility(p,VeteranAbility.RateOfFire)?VeteranROF:1);}
  public static float Speed(Piece p){return p.T.Speed*(HasAbility(p,VeteranAbility.Faster)?VeteranSpeed:1);}
- public static float Damage(Piece source,Piece target,WeaponProfile weapon){return weapon.Damage*weapon.Verses[(int)target.T.Armor]*(HasAbility(source,VeteranAbility.Firepower)?VeteranCombat:1)/(HasAbility(target,VeteranAbility.Stronger)?VeteranArmor:1);}
+ public static float Damage(Piece source,Piece target,WeaponProfile weapon){
+  float firepower=HasAbility(source,VeteranAbility.Firepower)?VeteranCombat:1;
+  if(target.T.IsWall)return weapon.DamagesWalls?weapon.Damage*firepower:0;
+  return weapon.Damage*weapon.Verses[(int)target.T.Armor]*firepower/(HasAbility(target,VeteranAbility.Stronger)?VeteranArmor:1);
+ }
 }
 }

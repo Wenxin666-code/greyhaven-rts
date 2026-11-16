@@ -168,6 +168,7 @@ public partial class HarborGame
     private Piece CardProducer(TypeInfo type)
     {
         if (type.Producer == "factory") return world.VehicleQueue(0);
+        if (type.Producer == "barracks") return world.InfantryQueue(0);
         return world.Live(0).Where(p => p.T.Key == type.Producer && p.Queue.Contains(type))
             .OrderByDescending(p => selected.Contains(p)).ThenByDescending(p => p.Queue.Peek() == type)
             .ThenByDescending(p => p.ProductionPaused && p.Queue.Peek() == type)
@@ -234,7 +235,8 @@ public partial class HarborGame
         ShowTile(tile, type, text, progress, count, enabled, job?.Ready == true, placing == type || world.LessonKey == type.Key);
         tile.Plate.TooltipText = type.Name + "   $" + type.Price + "\n" +
             (reason ?? (type.Building ? "左键生产或放置，右键暂停／取消" : "左键排产，右键减单／暂停")) +
-            $"\n生命 {type.Hp}    视野 {type.SightCells} 格";
+            (type.IsWall ? "\n占地 1 格；同一直线可补齐最多 4 格。"
+                : $"\n生命 {type.Hp}    视野 {type.SightCells} 格");
     }
 
     private void ShowTile(ProductionTile tile, TypeInfo type, string text, float progress, int count, bool enabled, bool ready, bool lit)
@@ -265,6 +267,7 @@ public partial class HarborGame
         queuePage = 0;
         var source = selected.FirstOrDefault(p => p.Queue.Count > 0 || p.T.Key == "factory") ?? world.LastOrder;
         if (source?.T.Key == "factory") source = world.VehicleQueue(0);
+        else if (source?.T.Key == "barracks") source = world.InfantryQueue(0);
         queueId = source?.Id ?? 0;
         UpdateInterface();
     }
@@ -272,11 +275,12 @@ public partial class HarborGame
     private void RefreshQueue()
     {
         var vehicleQueue = world.VehicleQueue(0);
-        queueSources = world.Live(0).Where(p => p == vehicleQueue || p.T.Key is "hq" or "barracks")
+        var infantryQueue = world.InfantryQueue(0);
+        queueSources = world.Live(0).Where(p => p == vehicleQueue || p == infantryQueue || p.T.Key == "hq")
             .OrderByDescending(p => p.Queue.Count > 0).ThenBy(p => p.Id).ToArray();
         var source = queueSources.FirstOrDefault(p => p.Id == queueId) ?? queueSources.FirstOrDefault();
         queueId = source?.Id ?? 0;
-        queueTitle.Text = source == null ? "无生产线" : source == vehicleQueue ? "车辆队列" : source.T.Name + " #" + source.Id;
+        queueTitle.Text = source == null ? "无生产线" : source == vehicleQueue ? "车辆队列" : source == infantryQueue ? "步兵队列" : source.T.Name + " #" + source.Id;
         prevProducer.Disabled = nextProducer.Disabled = queueSources.Length <= 1;
         var jobs = source?.Queue.ToArray() ?? Array.Empty<TypeInfo>();
         var construction = source?.T.Key == "hq"

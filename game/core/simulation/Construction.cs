@@ -19,7 +19,7 @@ public partial class Campaign {
   return Require(t,side);
  }
  public bool StartConstruction(TypeInfo t,int side=0){
-  if(!t.Building||t.Key=="hq"||t.Key=="relay"||t.Civilian)return false;
+  if(!t.Building||t.Key=="hq"||t.Key=="relay"||t.Civilian||t.IsOilDerrick)return false;
   var own=Construction(t,side);if(own!=null){own.Paused=false;return true;}
   var reason=ConstructionReason(t,side);if(reason!=null){if(side==0)Radio=reason;return false;}
   construction[side,BuildCategory(t)]=new ConstructionJob{Type=t};
@@ -55,8 +55,16 @@ public partial class Campaign {
  }
  bool PlaceConstruction(TypeInfo t,PointF p,int side){
   var job=Construction(t,side);if(job==null||!job.Ready){if(side==0)Radio="先在侧栏完成建筑生产。";return false;}
-  if(!Live(side).Any(u=>u.T.Key=="hq")||!CanPlace(t,p,null,side)){if(side==0)Radio="此处不能放置；就绪建筑仍保留在侧栏。";return false;}
-  var o=Spawn(t.Key,side,p.X,p.Y);o.Assembly=true;o.Ready=.001f;construction[side,BuildCategory(t)]=null;
+  var placement=AssessPlacement(t,p,side:side,requireBase:true);
+  if(!placement.Valid){if(side==0)Radio="此处不能放置；就绪建筑仍保留在侧栏。";return false;}
+  construction[side,BuildCategory(t)]=null;
+  if(t.IsWall){
+   Spawn(t.Key,side,p.X,p.Y).PaidWall=true;
+   foreach(var cell in placement.WallExtensions){var center=Middle(cell);Spawn(t.Key,side,center.X,center.Y);}
+   if(side==0)Radio=placement.WallExtensions.Count==0?"围墙已放置。":$"围墙已连接，补齐 {placement.WallExtensions.Count} 格。";
+   return true;
+  }
+  var o=Spawn(t.Key,side,p.X,p.Y);o.Assembly=true;o.Ready=.001f;
   if(side==0)Radio=t.Name+"已放置，正在展开。";return true;
  }
  public bool FoundationLevel(TypeInfo t,PointF p){return TerrainBuildable(Footprint(t,p));}
@@ -78,13 +86,15 @@ public partial class Campaign {
   float health=o.Hp/o.T.Hp;o.T=Info("mcv");o.Hp=Math.Max(1,health*o.T.Hp);o.Ready=1;o.Assembly=false;o.BaseTransition=false;Changed();
   var target=o.Relocation;o.Relocation=null;if(target.HasValue&&!Move(o,target.Value,false)&&o.Side==0)Radio="基地已收起，前路临时受阻，请重新指定目的地。";
  }
- public bool CanSell(Piece o){return o!=null&&o.Deployed&&o.Side==0&&o.T.Building&&!o.T.Civilian&&!IsRelayStation(o);}
+ public bool CanSell(Piece o){return o!=null&&o.Deployed&&o.Side==0&&o.T.Building&&!o.T.Civilian&&!o.T.IsOilDerrick&&!IsRelayStation(o);}
  public bool Sell(Piece o){
-  if(!CanSell(o))return false;if(o.T.Garrison){EvacuateHouse(o);if(HouseCount(o)>0){Radio="出口受阻，请先撤出驻军再出售。";return false;}}TransferProduction(o);int value=o.T.Key=="hq"?Info("mcv").Price:o.T.Price;
+  if(!CanSell(o))return false;
+  if(o.T.IsWall){if(o.PaidWall)Funds[o.Side]+=o.T.Price/2;Kill(o);o.Dead=25;Radio=o.PaidWall?"围墙已出售。":"连接墙已拆除。";return true;}
+  if(o.T.Garrison){EvacuateHouse(o);if(HouseCount(o)>0){Radio="出口受阻，请先撤出驻军再出售。";return false;}}TransferProduction(o);int value=o.T.Key=="hq"?Info("mcv").Price:o.T.Price;
   Funds[o.Side]+=(int)(value*.5f);o.Repairing=false;o.Selling=true;o.BaseTransition=false;o.Packing=AssemblySeconds;Halt(o);Changed();Radio="正在出售"+o.T.Name+"。";return true;
  }
  public bool ToggleRepair(Piece o){
-  if(o==null||!o.Deployed||o.Side!=0||!o.T.Building||o.Hp>=o.T.Hp&&!o.Repairing)return false;
+  if(o==null||!o.Deployed||o.Side!=0||!o.T.Building||o.T.IsWall||o.Hp>=o.T.Hp&&!o.Repairing)return false;
   o.Repairing=!o.Repairing;Radio=o.Repairing?"建筑维修开启，逐步消耗军费。":"已停止建筑维修。";return true;
  }
  void TickBuildingRepair(Piece o,float dt){

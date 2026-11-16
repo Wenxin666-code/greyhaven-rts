@@ -36,7 +36,8 @@ public partial class HarborGame
         pointerTime = .07;
         var position = view.GetGlobalMousePosition();
         bool overMap = CanControl && OverBattlefield(position);
-        view.Hovered = overMap && !rightHeld && !dragStart.HasValue ? view.Pick(position) : null;
+        view.Hovered = overMap && !rightHeld && !dragStart.HasValue ? PickOrderTarget(position, Input.IsKeyPressed(Key.Shift),
+            Input.IsKeyPressed(Key.Ctrl), Input.IsKeyPressed(Key.Alt)) : null;
         var hint = CanControl && (rightHeld || overMap)
             ? DescribePointer(position, Input.IsKeyPressed(Key.Ctrl), Input.IsKeyPressed(Key.Shift), Input.IsKeyPressed(Key.Alt))
             : new PointerHint(PointerKind.Arrow);
@@ -67,12 +68,12 @@ public partial class HarborGame
         }
 
         bool minersOnly = !ctrl && !shift && !alt && selected.Count > 0 && selected.All(p => p.T.Key == "miner");
-        var hit = view.Pick(cursor, minersOnly);
+        var hit = PickOrderTarget(cursor, shift, ctrl, alt);
         if (structureTool != StructureTool.None)
         {
             bool canSell = structureTool == StructureTool.Sell && world.CanSell(hit);
             bool canRepair = structureTool == StructureTool.Repair && hit is { Side: 0, Deployed: true } &&
-                hit.T.Building && (hit.Repairing || hit.Hp < hit.T.Hp);
+                hit.T.Building && !hit.T.IsWall && (hit.Repairing || hit.Hp < hit.T.Hp);
             return canSell ? new(PointerKind.Sell) : canRepair ? new(PointerKind.Repair) : new(PointerKind.Blocked, "此处不能执行建筑工具");
         }
 
@@ -86,7 +87,14 @@ public partial class HarborGame
             return hit?.Side == 0
                 ? selected.Any(p => p != hit && p.Deployed && !p.T.Building) ? new(PointerKind.Escort) : new(PointerKind.Blocked, "请选其他部队进行护卫")
                 : MoveHint(ground, PointerKind.Guard);
-        if (alt) return MoveHint(ground, PointerKind.ForceMove);
+        if (alt) return MoveHint(ForceMoveDestination(ground, hit), PointerKind.ForceMove);
+        if (hit?.T.IsWall == true)
+        {
+            if (selected.Count == 0) return new(PointerKind.Arrow);
+            if (!ctrl && hit.Side <= 0) return new(PointerKind.Blocked, "围墙占用");
+            return selected.Any(p => p.Deployed && world.CanAttackTarget(p, hit))
+                ? new(PointerKind.Attack) : new(PointerKind.Blocked, "需要能破坏围墙的武器");
+        }
         if (ctrl && !shift)
             return selected.Any(p => p.Deployed && world.Armed(p)) && world.Battlefield.Contains(ground)
                 ? new(PointerKind.Attack) : new(PointerKind.Blocked, "无法强制开火");
@@ -111,8 +119,8 @@ public partial class HarborGame
             if (selected.Any(p => world.CanEngineer(p, hit))) return new(hit.Side == 0 ? PointerKind.Repair : PointerKind.Unload);
             if (selected.Any(p => world.CanRepairVehicle(p, hit))) return new(PointerKind.Repair);
             if (selected.Any(p => world.CanBoard(p, hit) || world.CanEnterHouse(p, hit))) return new(PointerKind.Unload);
-            if (hit.T.Garrison && hit.Side <= 0 && selected.Any(p => p.T.Foot))
-                return new(PointerKind.Blocked, hit.Side < 0 ? "需要空闲工兵" : "房屋已满或单位不能驻防");
+            if (hit.T.Garrison && hit.Side < 0 && selected.Any(p => p.T.Foot))
+                return new(PointerKind.Blocked, "需要空闲工兵");
         }
 
         if (hit?.Side == 0 && !(ctrl && shift)) return new(PointerKind.Select);

@@ -92,13 +92,38 @@ internal partial class RadarView : Control
             float dither = cell == null ? 1 : .88f + (cell.Variation % 21) * .009f;
             image.SetPixel(x, y, new Color(tint.R * dither, tint.G * dither, tint.B * dither));
         }
+        if (map.IsBasin)
+        {
+            float span = map.WidthCells + map.HeightCells;
+            for (int side = 0; side < map.Starts.Length; side++)
+            {
+                var start = map.Starts[side];
+                int x = (int)((start.X - start.Y + map.HeightCells) * width / span);
+                int y = (int)((start.X + start.Y) * height / span);
+                image.FillRect(new Rect2I(x - 3, y - 3, 7, 7), new Color("#171c1b"));
+                image.FillRect(new Rect2I(x - 2, y - 2, 5, 5), BattleArt.Faction(side).Lightened(.17f));
+                if (side == 0) continue;
+                var post = map.BasinPost(side);
+                x = (int)((post.X - post.Y + map.HeightCells) * width / span);
+                y = (int)((post.X + post.Y) * height / span);
+                for (int row = -3; row <= 3; row++)
+                for (int column = -3; column <= 3; column++)
+                {
+                    int distance = Math.Abs(row) + Math.Abs(column);
+                    if (distance <= 3)
+                        image.SetPixel(x + column, y + row, distance == 3 ? new Color("#171c1b") : BattleArt.Faction(side).Lightened(.27f));
+                }
+            }
+        }
         return ImageTexture.CreateFromImage(image);
     }
 
-    private static Color TerrainColor(RiverbendMap.Cell cell) => cell?.Ground switch
+    private static Color TerrainColor(RiverbendMap.Cell cell) => cell?.Railroad == true ? new Color("#c7bf9e") : cell?.Ground switch
     {
         null => new Color("#101b20"),
         RiverbendMap.Surface.Water => new Color("#355e68"),
+        RiverbendMap.Surface.Marsh => new Color("#54736a"),
+        RiverbendMap.Surface.Rock => cell.Cliff ? new Color("#514f49").Lightened(cell.Height * .025f) : new Color("#9a917d"),
         RiverbendMap.Surface.Road or RiverbendMap.Surface.Bridge or RiverbendMap.Surface.Ramp => new Color("#96998a"),
         RiverbendMap.Surface.Sand or RiverbendMap.Surface.Soil => new Color("#a8a27c"),
         RiverbendMap.Surface.Square => new Color("#929385"),

@@ -59,8 +59,9 @@ public partial class BattlefieldView
         int direction = (unit.Dir + 14) % 16;
         if (unit.T.Building)
         {
-            var texture = art.Frame("iso-" + unit.T.Key, false);
-            return texture == null ? PickBody(unit) : art.Ink(texture, BuildingBox(unit, anchor), new Rect2(0, 0, 320, 320));
+            var texture = unit.T.IsWall ? art.Wall(World.WallConnections(unit), BattleArt.Faction(unit.Side))
+                : unit.T.IsOilDerrick ? art.OilDerrick(unit.Side) : art.Frame("iso-" + unit.T.Key, false);
+            return texture == null ? PickBody(unit) : art.Ink(texture, BuildingBox(unit, anchor), new Rect2(Vector2.Zero, texture.GetSize()));
         }
         if (unit.T.Foot)
         {

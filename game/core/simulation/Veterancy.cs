@@ -20,7 +20,9 @@ public partial class Campaign {
   if(killer==null||!killer.T.Trainable||killer.T.Price<=0||killer.Side<0||victim.Side<0||killer.Side==victim.Side||victim.T.Price<=0)return;
   killer.Experience=Math.Min(ReferenceBalance.VeteranCap,killer.Experience+victim.T.Price/(killer.T.Price*ReferenceBalance.VeteranRatio));
  }
- void CombatKill(Piece victim,Piece killer){
+ internal void CombatKill(Piece victim,Piece killer){
+  if(victim.T.IsWall){Kill(victim);return;}
+  if(killer!=null)BasinOperation?.Orders.RecordLoss(victim,killer,ResistanceAsset(victim));
   AwardKillExperience(killer,victim);
   // Transport passengers die with the vehicle. House occupants evacuate and
   // must not award experience until they are actually killed.

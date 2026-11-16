@@ -33,8 +33,8 @@ namespace Greyhaven {
 
         public static readonly MissionBriefing Riverbend = new MissionBriefing(
             "OPERATION 02   /   RIVERBEND", "河湾镇", "西岸出发 / 突破河湾大桥",
-            "旧码头已由保障队接管。北线驻防军扣下白石的运矿车，白石警卫队随即封锁东岸卸货场。两支分部都拒绝撤卡，正在争夺东岸桥头。我方从西岸渡桥，肃清东岸叛军，恢复公路通行。",
-            "从西岸渡桥，击败东岸两支武装，打通通往工业带的公路。",
+            "补给船已经在旧码头卸货，内陆的车却过不了河。北线驻防军和白石矿务警卫队都拒绝撤卡，正在争夺东岸桥头。先遣队从西岸渡桥，让灰港的货能继续往内陆送。",
+            "从西岸渡桥，击败东岸两支武装，恢复公路通行。",
             "消灭两个敌方阵营的全部单位与建筑，或迫使其投降。");
 
         public static readonly MissionBriefing Island = new MissionBriefing(
@@ -42,6 +42,12 @@ namespace Greyhaven {
             "越过河湾后，你先一步抵达西北资源岛。大陆五路武装各争利益：北线驻防军扼守军路，白石警卫队保矿，铁轨卫队争通路，南岸防卫队据守城镇，独立旅袭扰薄弱矿路。它们各自采矿扩军、互不服从。守住唯一堤桥，逐步击败五方，建立内陆反攻支点。",
             "守住资源岛入口，击败大陆五支武装，建立内陆反攻支点。",
             "消灭五个敌方阵营的全部单位与建筑，或迫使其投降。");
+
+        public static readonly MissionBriefing Basin = new MissionBriefing(
+            "OPERATION 03   /   BASIN JUNCTION", "盆地岔口", "河湾公路终点 / 盆地换装站",
+            "河湾大桥刚抢回来，送往石门的补给就上了路。公路只到盆地换装站，往前得换火车。五支地方武装封了沿线道口，石门还在等货。\n沿岸联合保障司令部命先遣队打通正线，放行补给列车。",
+            "在换装站旁建立基地，沿铁路夺回五处道口，收缴各部收到的调度令。",
+            "击败沿线五支武装，或迫使其投降。");
 
         public static readonly MissionBriefing Relay = new MissionBriefing(
             "OPERATION 04   /   MISTRIDGE RELAY", "雾脊中继站", "西南山口 / 北岭通信枢纽",
@@ -51,6 +57,7 @@ namespace Greyhaven {
 
         public static MissionBriefing For(Campaign campaign) {
             if (campaign.FirstChapter) return Prologue;
+            if (campaign.BasinOperation != null) return Basin;
             return campaign.RelayMission ? Relay : campaign.IslandMission ? Island : campaign.River != null ? Riverbend : Training;
         }
     }

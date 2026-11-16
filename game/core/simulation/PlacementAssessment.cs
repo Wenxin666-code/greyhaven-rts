@@ -4,7 +4,7 @@ using System.Drawing;
 using System.Linq;
 
 namespace Greyhaven {
-public enum PlacementBlock { None,OutsideMap,Unexplored,Water,Trees,Bridge,Slope,Uneven,Building,Unit,Ore,Wall,OutOfRange,NoBase }
+public enum PlacementBlock { None,OutsideMap,Unexplored,Water,Trees,Bridge,Slope,Uneven,Building,Unit,Ore,Wall,OutOfRange,NoBase,Rail }
 public sealed class PlacementTile {
  public RectangleF Bounds;public PlacementBlock Block;
  public bool Valid {get{return Block==PlacementBlock.None;}}
@@ -12,6 +12,7 @@ public sealed class PlacementTile {
 public sealed class PlacementAssessment {
  public RectangleF Bounds;public float Height;public PlacementBlock Global;
  public readonly List<PlacementTile> Tiles=new List<PlacementTile>();
+ public IReadOnlyList<RectangleF> WallExtensions {get; internal set;}=Array.Empty<RectangleF>();
  public bool Valid {get{return Global==PlacementBlock.None&&Tiles.All(c=>c.Valid);}}
  public string Summary {
   get{
@@ -26,7 +27,7 @@ public partial class Campaign {
   switch(block){
    case PlacementBlock.OutsideMap:return "超出战区";case PlacementBlock.Unexplored:return "未探索";
    case PlacementBlock.Water:return "水域";
-   case PlacementBlock.Trees:return "树木";case PlacementBlock.Bridge:return "桥梁";
+   case PlacementBlock.Trees:return "树木";case PlacementBlock.Bridge:return "桥梁";case PlacementBlock.Rail:return "铁路";
    case PlacementBlock.Slope:return "坡道";case PlacementBlock.Uneven:return "地面高差";
    case PlacementBlock.Building:return "建筑占用";case PlacementBlock.Unit:return "单位占用";
    case PlacementBlock.Ore:return "矿石";case PlacementBlock.Wall:return "墙体占用";
@@ -40,14 +41,16 @@ public partial class Campaign {
   var c=Terrain.At((int)Math.Floor(cell.X/Tile),(int)Math.Floor(cell.Y/Tile));
   if(c==null)return PlacementBlock.OutsideMap;
   if(c.Ground==RiverbendMap.Surface.Water)return PlacementBlock.Water;
+  if(c.Cliff)return PlacementBlock.Uneven;
   if(c.Tree)return PlacementBlock.Trees;
   if(c.Ground==RiverbendMap.Surface.Bridge)return PlacementBlock.Bridge;
+  if(c.Railroad)return PlacementBlock.Rail;
   if(c.Ground==RiverbendMap.Surface.Ramp)return PlacementBlock.Slope;
   if(level.HasValue&&Math.Abs(level.Value-c.Height)>.05f)return PlacementBlock.Uneven;
   if(MapWalls.Any(r=>r.IntersectsWith(cell))||Sites.Any(s=>s.Body.IntersectsWith(cell)))return PlacementBlock.Wall;
   if(Ore.Any(p=>p.Stock>0&&cell.Contains(p.P)))return PlacementBlock.Ore;
   foreach(var o in Units){if(o==skip||!o.Alive||o.Carrier!=null)continue;
-   if(o.T.Building){if(Footprint(o.T,o.P).IntersectsWith(cell))return PlacementBlock.Building;}
+   if(o.T.Building){if(Footprint(o.T,o.P).IntersectsWith(cell))return o.T.IsWall?PlacementBlock.Wall:PlacementBlock.Building;}
    else if(Inflated(cell,Clearance(o)).Contains(o.P))return PlacementBlock.Unit;
   }
   return PlacementBlock.None;
@@ -65,6 +68,7 @@ public partial class Campaign {
    if(requireBase&&!Live(side).Any(o=>o.T.Key=="hq"))result.Global=PlacementBlock.NoBase;
    else if(!InBuildRange(type,result.Bounds,side))result.Global=PlacementBlock.OutOfRange;
   }
+  if(type.IsWall&&result.Valid)result.WallExtensions=WallExtensions(result.Bounds,side,result.Height);
   return result;
  }
 }

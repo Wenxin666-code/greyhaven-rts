@@ -2,17 +2,17 @@
 
 《断线前沿》是一款等距视角的单人即时战略游戏。你是沿岸联合保障司令部的先遣指挥官。停火协议破裂后，你带队夺回旧码头，再从河湾西岸突破大桥，恢复通往内陆的补给线。
 
-Godot 试玩版开放第一关「断线之夜」和第二关「河湾镇」。你可以建造基地、采矿、排产，调度步兵与装甲单位。第二关的北线与白石会在玩家接管前开始交战，桥西值班室可由工兵占领，再派步兵进驻。
+战役前三关现已开放。你将从灰港的旧码头出发，经过争夺中的河湾大桥，沿盆地铁路夺回封锁的道口，把补给送往石门。主菜单的「战役档案」收录了各方势力的来历、负责人和立场。
 
 ## 下载与运行
 
-在 [v0.23.0 发布页](https://github.com/Wenxin666-code/greyhaven-rts/releases/tag/v0.23.0) 的 Assets 区域选对应系统的试玩包。Assets 中的 `Source code` 是开发用源码压缩包。试玩包附带运行时，玩家无需安装 Godot 或 .NET SDK。
+从 [v1.0.0 发布页](https://github.com/Wenxin666-code/greyhaven-rts/releases/tag/v1.0.0) 的 Assets 区域下载对应系统的游戏包。游戏包附带运行时，解压后可离线游玩，无需安装 Godot 或 .NET SDK。
 
 | 系统 | 下载文件 | 启动方式 |
 | --- | --- | --- |
-| Windows x64（Intel / AMD） | `Greyhaven-v0.23.0-windows-x64.zip` | 完整解压，双击 `Greyhaven.exe`。保留旁边的 `.pck` 和数据文件夹。 |
-| Linux x64（Intel / AMD） | `Greyhaven-v0.23.0-linux-x64.tar.gz` | 解压后打开终端进入 `Greyhaven` 文件夹，运行 `./start-greyhaven.sh`。两关流程和窗口操作已在 Ubuntu（WSL）验证。 |
-| macOS（Apple 芯片 / Intel） | `Greyhaven-v0.23.0-macos-universal.zip` | 在 Finder 解压后打开其中的 `.app`。此包已完成导出和文件检查，待 Mac 实机验证，使用临时签名且未做 Apple 公证。 |
+| Windows x64（Intel / AMD） | `Greyhaven-v1.0.0-windows-x64.zip` | 完整解压，双击 `Greyhaven.exe`。启动程序、`.pck` 和数据文件夹请放在一起。 |
+| Linux x64（Intel / AMD） | `Greyhaven-v1.0.0-linux-x64.tar.gz` | 解压后在 `Greyhaven` 文件夹打开终端，运行 `./start-greyhaven.sh`。 |
+| macOS（Apple 芯片 / Intel） | `Greyhaven-v1.0.0-macos-universal.zip` | 在 Finder 解压后打开 `断线前沿.app`。包使用临时签名，尚未做 Apple 公证和 Mac 实机验证。 |
 
 macOS 若只提示无法验证开发者，请先核对下载来源和发布页的 SHA-256，再按 Apple 指南在「系统设置 → 隐私与安全性」为该应用单独选择「仍要打开」。若显示文件损坏或恶意软件提示，请停止并反馈完整提示。[Apple 指南](https://support.apple.com/en-us/102445)
 
@@ -22,7 +22,7 @@ macOS 若只提示无法验证开发者，请先核对下载来源和发布页�
 
 ## 游戏版本
 
-- **Godot 主线**提供上述两关。第一关结算可直接继续「河湾镇」。第三、四关待迁移。
+- **Godot 主线**包含「断线之夜」「河湾镇」「盆地岔口」。前两关通关后可从结算直接进入下一关。
 - **Windows 旧版**可从 [v0.22.0 发布页](https://github.com/Wenxin666-code/greyhaven-rts/releases/tag/v0.22.0) 下载，可玩四关。WinForms 源码和旧测试保留在 [legacy/windows](legacy/windows/)。
 - 完整改动见[版本记录](CHANGELOG.md)，剧情见[战役主线与关卡规划](docs/design/战役主线与关卡规划.md)。
 

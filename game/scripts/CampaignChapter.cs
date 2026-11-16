@@ -10,7 +10,11 @@ internal sealed record CampaignChapter(MissionBriefing Brief, string SceneTitle,
     internal static readonly CampaignChapter Riverbend = new(MissionBriefing.Riverbend, "河湾镇  /  第二章",
         () => new Campaign(riverbend: true), world => new RiverbendSequence(world));
 
-    internal static readonly CampaignChapter[] Playable = { Harbor, Riverbend };
+    internal static readonly CampaignChapter Basin = new(MissionBriefing.Basin, "盆地岔口  /  第三章",
+        () => new Campaign(basin: true), world => new BasinSequence(world));
+
+    internal static readonly CampaignChapter[] Playable = { Harbor, Riverbend, Basin };
+    internal CampaignChapter Next => this == Harbor ? Riverbend : this == Riverbend ? Basin : null;
 }
 
 internal abstract class ChapterSequence
@@ -19,12 +23,14 @@ internal abstract class ChapterSequence
     internal abstract bool Opening { get; }
     internal abstract bool Departing { get; }
     internal abstract bool Complete { get; }
+    internal virtual bool ResultReady => Complete;
     internal abstract bool CanTakeCommand { get; }
     internal abstract Piece CommandVehicle { get; }
     internal abstract float Fog { get; }
     internal abstract string Caption { get; }
     internal abstract string[] Debrief { get; }
     internal virtual string FieldRadio => null;
+    internal virtual string Failure => "先遣队未能完成任务。";
     internal abstract bool TakeCommand();
     internal abstract bool BeginDeparture(Point from);
     internal abstract void Tick(float step);

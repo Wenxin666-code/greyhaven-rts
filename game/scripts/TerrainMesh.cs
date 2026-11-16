@@ -60,6 +60,10 @@ internal sealed class TerrainMesh : IDisposable
             var c = Project(x1, y1, cell.Height);
             var d = Project(x0, y1, cell.Height);
             var tint = Colors[(int)cell.Ground] * (.965f + cell.Variation % 9 * .004f);
+            if (cell.Cliff)
+                tint = new Color("#a09585") * (.74f + cell.Height * .065f + cell.Variation % 13 * .006f);
+            if (cell.Railroad && cell.Ground == Surface.Square)
+                tint = new Color("#a59a83") * (.94f + cell.Variation % 15 * .008f);
             tint.A = 1;
             int material = cell.Ground switch
             {

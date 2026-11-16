@@ -25,7 +25,7 @@ public partial class Campaign {
  public static string FactionName(int side){return side==0?"我方":"敌方"+(side>=1&&side<=5?new[]{"一","二","三","四","五"}[side-1]:side.ToString());}
  int AiCount(int side,string key){return Units.Count(u=>u.Side==side&&u.Alive&&u.T.Key==key);}
  int AiPending(int side,string key){return Live(side).Sum(u=>u.Queue.Count(t=>t.Key==key));}
- Piece[] AiKnown(int side){return Units.Where(u=>u.Alive&&u.Side>=0&&u.Side!=side&&u.Carrier==null&&!IsRelayStation(u)&&VisibleTo(side,u)).ToArray();}
+ Piece[] AiKnown(int side){return Units.Where(u=>u.Alive&&u.Side>=0&&u.Side!=side&&u.Carrier==null&&!u.T.IsWall&&!IsRelayStation(u)&&VisibleTo(side,u)).ToArray();}
  PointF AiOpenPoint(PointF target){
   if(!Blocked(target,9,null))return target;
   for(int ring=1;ring<=22;ring++)for(int i=0;i<16;i++){double angle=i*Math.PI/8;var p=new PointF(target.X+(float)Math.Cos(angle)*ring*Tile,target.Y+(float)Math.Sin(angle)*ring*Tile);if(!Blocked(p,9,null))return p;}
@@ -162,11 +162,12 @@ public partial class Campaign {
   int assemblySlots=RelayMission?RelayRecruitSlots():StoryWingMaximum(side)*(OreReceipts[side]>=2*LoadValue?freeWings:1)+RaidTeamSize;
   int armouredSlots=vehiclesOnline?(int)Math.Ceiling(assemblySlots*StoryArmouredShare(side)):0;
   int queuedArmour=vehiclesOnline?vehicleQueue.Queue.Count(t=>t.Hit>0):0;
-  int queuedInfantry=facilities.Where(p=>p.T.Key=="barracks"&&!p.ProductionPaused).Sum(p=>p.Queue.Count(t=>t.Hit>0));
+  var infantryQueue=InfantryQueue(side);
+  int queuedInfantry=infantryQueue!=null&&!infantryQueue.ProductionPaused?infantryQueue.Queue.Count(t=>t.Hit>0):0;
   int armourNeeded=Math.Max(0,armouredSlots-ready.Count(p=>!p.T.Foot)-queuedArmour);
   int infantryNeeded=Math.Max(0,guardSlots+postSlots+assemblySlots-armouredSlots-ready.Count(p=>p.T.Foot)-queuedInfantry);
   bool queuedVehicle=false;
-  var queues=facilities.Where(p=>p.T.Key=="barracks"||p==vehicleQueue);
+  var queues=facilities.Where(p=>p==infantryQueue||p==vehicleQueue);
   foreach(var facility in queues.OrderBy(p=>p.T.Key=="factory"?0:1).ThenBy(p=>p.Queue.Count)){
    if(facility.Queue.Count>=2||facility.ProductionPaused)continue;
    bool vehicles=facility.T.Key=="factory";

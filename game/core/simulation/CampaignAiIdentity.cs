@@ -90,13 +90,16 @@ namespace Greyhaven {public partial class Campaign {
  public string StoryNotice {get;private set;}
  public float StoryNoticeUntil {get;private set;}
  void TickStoryIntelligence(){
-  if(!StoryBattle||Time<storyCheckAt||Time<StoryNoticeUntil)return;storyCheckAt=Time+2;
+  if(!StoryBattle||Time<storyCheckAt||Time<StoryNoticeUntil||BasinOperation is { CommandTaken:false } or { StillBriefing:true })return;storyCheckAt=Time+2;
+  var scouts=BasinOperation==null?null:Live(0).Where(o=>!o.T.Building).ToArray();
   for(int side=1;side<FactionCount;side++){
-   if(storyContact[side]||!Units.Any(u=>u.Alive&&u.Side==side&&Visible(u)))continue;
+   if(storyContact[side]||!Units.Any(u=>u.Alive&&u.Side==side&&u.Carrier==null&&Visible(u)&&
+       (scouts==null||scouts.Any(scout=>Dist(scout.P,u.P)<=Sight(scout)))))continue;
    storyContact[side]=true;
    string[] intel={"","这支北线驻防军重视交通线，注意装甲与路口警戒。","白石警卫队主要保护采矿和生产设施，受袭后会回防。","铁轨卫队偏好机动小队，注意交通节点和侧翼。","南岸防卫队依托城镇据守，侦察房屋归属再推进。","独立旅更愿意袭扰薄弱矿路，保护落单矿车。"};
-   string message=RiverbendOperation!=null&&side==2?"白石警卫队重视矿运，出击时会盯着对手的矿车和精炼厂。":intel[side];
-   StoryNotice="许岑："+message;StoryNoticeUntil=Time+14;Radio=StoryNotice;break;
+   string message=BasinOperation!=null?BasinOperation.ContactReport(side):
+    RiverbendOperation!=null&&side==2?"白石警卫队重视矿运，出击时会盯着对手的矿车和精炼厂。":intel[side];
+   StoryNotice=message;StoryNoticeUntil=Time+14;Radio="许岑："+message;break;
   }
  }
 }}

@@ -10,17 +10,47 @@ public partial class Campaign {
  }
  public static float TargetDistance(Piece unit,Piece target){return Dist(unit.P,TargetPoint(unit.P,target));}
  static bool Targetable(Piece e){return e.Alive&&e.Carrier==null&&(e.Ready>=1||e.T.Building);}
+ static bool HostileTo(Piece unit,Piece target){return target.Side>=0&&target.Side!=unit.Side;}
+ WeaponProfile ThreatWeapon(Piece target){
+  var weapon=ReferenceBalance.Weapon(target);
+  if(weapon!=null||!target.T.Garrison)return weapon;
+  foreach(var occupant in Units)
+   if(occupant.Alive&&occupant.Carrier==target&&ReferenceBalance.Weapon(occupant) is WeaponProfile profile)return profile;
+  return null;
+ }
+ bool CanAutoTarget(Piece unit,Piece target){
+  if(target.T.IsWall||!HostileTo(unit,target)||!Targetable(target)||!UsefulTarget(unit,target)||IsRelayStation(target))return false;
+  // Player-controlled units passively acquire buildings that can fight.
+  return unit.Side!=0||!target.T.Building||ThreatWeapon(target)!=null;
+ }
+ float TargetThreat(Piece unit,Piece target,WeaponProfile weapon){
+  // YR 1.001's default threat coefficients, using this game's weapon and armor profiles.
+  const float effectiveness=200, health=200, specialThreat=200, enemyHouseBonus=400, distancePenalty=1;
+  var opposingWeapon=ThreatWeapon(target);
+  float opposingEffect=opposingWeapon?.Verses[(int)unit.T.Armor]??0;
+  if(target.Target==unit)opposingEffect=-opposingEffect;
+  float healthRatio=target.Hp/target.T.Hp;
+  float priority=target.T.RuleId is "ENGINEER" or "FV" or "AMCV" or "GASPYSAT"?specialThreat:0;
+  if(unit.Side>=0&&brains[unit.Side]?.Opponent==target.Side)priority+=enemyHouseBonus;
+  int distanceBeyondRange=Math.Max(0,(int)(Dist(unit.P,target.P)/Tile)-(int)(weapon.Range/Tile));
+  return effectiveness*(weapon.Verses[(int)target.T.Armor]+opposingEffect)
+   +health*healthRatio+priority-distancePenalty*distanceBeyondRange;
+ }
  Piece FindContact(Piece o,float range){
-  Piece best=null;float bestDistance=float.MaxValue;
+  var weapon=ReferenceBalance.Weapon(o);
+  var house=o.Carrier;
+  float firingExtent=house!=null&&house.T.Garrison&&house.T.Key!="bunker"
+   ?Math.Max(house.T.FoundationWidth,house.T.FoundationHeight)*Tile*.5f:0;
+  Piece best=null;float bestScore=float.NegativeInfinity,bestDistance=float.MaxValue;
   foreach(var e in Units){
-   if(e.Side<0||e.Side==o.Side||!Targetable(e)||!UsefulTarget(o,e)||IsRelayStation(e))continue;
-   float extent=e.T.Building?Math.Max(e.T.FoundationWidth,e.T.FoundationHeight)*Tile*.5f:0;
+   float extent=firingExtent+(e.T.Building?Math.Max(e.T.FoundationWidth,e.T.FoundationHeight)*Tile*.5f:0);
    if(Math.Abs(e.P.X-o.P.X)>range+extent||Math.Abs(e.P.Y-o.P.Y)>range+extent)continue;
-   float d=TargetDistance(o,e);if(d>range||d<MinimumRange(o)||!VisibleTo(o.Side,e)||!GuardAllows(o,e))continue;
-   bool armed=e.Deployed&&Armed(e);
-   bool bestArmed=best!=null&&best.Deployed&&Armed(best);
-   bool inRange=d<=ReferenceBalance.Range(o),bestInRange=bestDistance<=ReferenceBalance.Range(o);
-   if(best==null||inRange&&!bestInRange||inRange==bestInRange&&((armed&&!bestArmed)||(armed==bestArmed&&d<bestDistance))){best=e;bestDistance=d;}
+   float distance=WeaponDistance(o,e);
+   if(distance>range||distance<weapon.MinimumRange||!VisibleTo(o.Side,e)||!GuardAllows(o,e)||!CanAutoTarget(o,e))continue;
+   float score=TargetThreat(o,e,weapon);
+   if(score>bestScore||score==bestScore&&distance<bestDistance){
+    best=e;bestScore=score;bestDistance=distance;
+   }
   }
   return best;
  }
@@ -34,12 +64,22 @@ public partial class Campaign {
   o.ResumeMarch=false;
  }
  void OnIncomingFire(Piece defender,Piece attacker){
+  if(!HostileTo(defender,attacker))return;
   if(defender.Path.Count>0&&!defender.Advancing&&!defender.GuardHome.HasValue)return;
   if(defender.GuardReturning||defender.GuardTravelling||!GuardAllows(defender,attacker))return;
-  if(!defender.Deployed||!Armed(defender)||defender.FirePoint.HasValue||defender.Contact==ContactOrder.Directed)return;
+  if(!defender.Deployed||defender.FirePoint.HasValue||defender.Contact==ContactOrder.Directed)return;
+  if(defender.Side==0&&defender.Target!=null)return;
+  var weapon=ReferenceBalance.Weapon(defender);
+  if(weapon==null){
+   if(!defender.Mining&&CloseEnoughToPursueCrush(defender,attacker))
+    Move(defender,attacker.P,false,MineTraffic(defender,attacker.P));
+   return;
+  }
+  if(weapon.Verses[(int)attacker.T.Armor]<=.01f)return;
   if((defender.T.Building||defender.Entrenched)&&TargetDistance(defender,attacker)>ReferenceBalance.Range(defender))return;
+  if(defender.Target!=null&&Targetable(defender.Target)&&HostileTo(defender,defender.Target)&&
+     TargetThreat(defender,defender.Target,weapon)>TargetThreat(defender,attacker,weapon))return;
   if(defender.Target==attacker){defender.LastContact=attacker.P;defender.Contact=ContactOrder.ReturnFire;return;}
-  if(defender.Contact==ContactOrder.ReturnFire&&defender.Target!=null&&Targetable(defender.Target)&&VisibleTo(defender.Side,defender.Target)&&TargetDistance(defender,defender.Target)<=ReferenceBalance.Range(defender))return;
   TakeContact(defender,attacker,ContactOrder.ReturnFire);
  }
  // Reuse a valid long detour when a distant target shifts by a few pixels.
@@ -61,13 +101,14 @@ public partial class Campaign {
   return true;
  }
  void MovingTankFire(Piece tank,float dt){
-  if(tank.ScanIn<=0){
-   tank.ScanIn=.18f;
-   tank.MovingFireTarget=FindContact(tank,ReferenceBalance.Range(tank));
-  }
   var target=tank.MovingFireTarget;
-  if(target==null||target.Side==tank.Side||!Targetable(target)||!CanShootAt(tank,target)||!VisibleTo(tank.Side,target)){
-   tank.MovingFireTarget=null;
+  if(target!=null&&(!CanAutoTarget(tank,target)||!CanShootAt(tank,target)||!VisibleTo(tank.Side,target)))target=null;
+  if(target==null&&tank.ScanIn<=0){
+   tank.ScanIn=.18f;
+   target=FindContact(tank,ReferenceBalance.Range(tank));
+  }
+  tank.MovingFireTarget=target;
+  if(target==null){
    RotateToward(ref tank.TurretTurn,tank.Turn,dt);
    return;
   }
@@ -88,11 +129,12 @@ public partial class Campaign {
   if(e!=null){
    bool visible=VisibleTo(o.Side,e);
    if(!Targetable(e)||(!visible&&o.Contact!=ContactOrder.ReturnFire)||
-      (o.Contact!=ContactOrder.Directed&&(!GuardAllows(o,e)||o.Contact==ContactOrder.Automatic&&TargetDistance(o,e)>ScanRange(o)))){EndContact(o);e=null;}
+      (o.Contact!=ContactOrder.Directed&&(!HostileTo(o,e)||!GuardAllows(o,e)))||
+      (o.Contact==ContactOrder.Automatic&&(!CanAutoTarget(o,e)||TargetDistance(o,e)>ScanRange(o)))){EndContact(o);e=null;}
   }
-  if(!o.GuardReturning&&o.ScanIn<=0&&(e==null||o.Contact==ContactOrder.Automatic&&TargetDistance(o,e)>ReferenceBalance.Range(o))){
+  if(e==null&&!o.GuardReturning&&o.ScanIn<=0){
    o.ScanIn=.18f;var found=FindContact(o,ScanRange(o));
-   if(found!=null&&(e==null||TargetDistance(o,found)<=ReferenceBalance.Range(o))){e=found;TakeContact(o,e,ContactOrder.Automatic);}
+   if(found!=null){e=found;TakeContact(o,e,ContactOrder.Automatic);}
   }
   if(e==null){
    if(o.T.Key=="tank")RotateToward(ref o.TurretTurn,o.Turn,dt);
@@ -101,6 +143,7 @@ public partial class Campaign {
   }
   bool seen=VisibleTo(o.Side,e);
   if(seen){o.LastContact=e.P;PrepareAiInfantry(o,e);if(ChangingStance(o))return true;}
+  if(seen&&PursueCrush(o,e))return false;
   if(seen&&CanShootAt(o,e)){
    o.Path.Clear();o.Replan=0;
    bool aimed=AimWeapon(o,o.T.Key=="tank"?TargetPoint(o.P,e):e.P,dt);
@@ -111,7 +154,7 @@ public partial class Campaign {
   if(o.T.Building||o.Entrenched)return false;
   if(!seen&&Explored(o.Side,o.LastContact)){EndContact(o);return false;}
   if(o.Replan<=0){
-   o.Replan=1;
+   o.Replan=.6f;
    if(seen){if(ChaseRouteNeedsUpdate(o,e))FindFiringPosition(o,e.P);}
    else if(!Route(o,o.LastContact))ApproachPoint(o,o.LastContact);
   }

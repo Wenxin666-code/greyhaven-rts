@@ -8,7 +8,7 @@ public partial class Campaign {
  static void ClearMission(Piece o){o.OreSearchToken++;o.OreSearching=false;o.RallySource=null;o.RallySlot=0;o.PendingDeploy=false;o.SupportTarget=null;o.SupportAutomatic=false;o.SupportScanAt=0;o.Entering=null;o.RouteRetryAt=0;o.NoProgressFor=0;o.StalledFor=0;o.DepartingDock=null;o.DockAccessAt=0;
   o.GuardHome=null;o.Escort=null;o.GuardTravelling=false;o.GuardReturning=false;
   o.MovingFireTarget=null;
-  o.Waypoints.Clear();o.WaypointIndex=0;o.PatrolStart=0;o.Patrol=false;o.ForceMoving=false;
+  o.Waypoints.Clear();o.WaypointIndex=0;o.PatrolStart=0;o.Patrol=false;
  }
  public static float ScanRange(Piece o){
   if(o.T.Building||o.Entrenched)return ReferenceBalance.Range(o);
@@ -27,13 +27,23 @@ public partial class Campaign {
   o.EscortOffset=new PointF((float)Math.Cos(angle)*radius,(float)Math.Sin(angle)*radius);
   o.GuardHome=new PointF(friend.P.X+o.EscortOffset.X,friend.P.Y+o.EscortOffset.Y);o.Replan=0;return true;
  }
- public bool ForceMove(Piece o,PointF p){if(!Move(o,p,false))return false;o.ForceMoving=true;return true;}
  public void Scatter(Piece[] troops){
-  if(troops.Length==0)return;var center=new PointF(troops.Average(u=>u.P.X),troops.Average(u=>u.P.Y));
+  var reserved=new List<(TypeInfo Type,PointF Position)>();
   foreach(var u in troops){
-   double angle=Dist(center,u.P)<1?u.Id*2.4:Math.Atan2(u.P.Y-center.Y,u.P.X-center.X);
-   for(int i=0;i<8;i++){double a=angle+(i%2==0?1:-1)*(i/2)*Math.PI/4;
-    if(Move(u,new PointF(u.P.X+(float)Math.Cos(a)*48,u.P.Y+(float)Math.Sin(a)*48),false))break;}
+   if(!u.Deployed||u.T.Building||u.Path.Count>0||u.Entrenched||ChangingStance(u)||u.PendingDeploy||
+      u.Entering!=null||u.DockReserved)continue;
+   var pad=Clearance(u);var barriers=Grid(pad).Barriers;
+   var center=Middle(GroundCell(u.P));
+   // Vary the order of nearby cells per unit and per command without affecting combat RNG.
+   int first=(u.Id*5+(int)(Time*30))%ExitYieldDirections.Length;
+   for(int i=0;i<ExitYieldDirections.Length;i++){
+    var direction=ExitYieldDirections[(first+i)%ExitYieldDirections.Length];
+    var slot=new PointF(center.X+direction.X*Tile,center.Y+direction.Y*Tile);
+    if(!ExitClear(u,u.T,slot)||reserved.Any(r=>TrafficContact(u.T,slot,r.Type,r.Position))||
+       !CanLink(!u.T.Foot,u.P,slot,barriers,pad))continue;
+    if(!Move(u,slot,false))continue;
+    reserved.Add((u.T,slot));break;
+   }
   }
  }
  public bool SetWaypoints(Piece o,PointF[] points,bool patrol,int loopStart=0){
@@ -60,7 +70,6 @@ public partial class Campaign {
    if(next>=o.Waypoints.Count){if(!o.Patrol){o.Waypoints.Clear();o.Advancing=false;return;}next=o.PatrolStart;}
    if(o.Replan<=0){o.Replan=.7f;if(Route(o,o.Waypoints[next])){o.WaypointIndex=next;o.Goal=o.Waypoints[next];}}
   }
-  if(o.Path.Count==0)o.ForceMoving=false;
  }
  bool GuardAllows(Piece o,Piece target){
   return !o.GuardHome.HasValue||Dist(o.GuardHome.Value,TargetPoint(o.GuardHome.Value,target))<=ReferenceBalance.LockRange(o);

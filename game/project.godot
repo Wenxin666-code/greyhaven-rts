@@ -3,6 +3,7 @@ config_version=5
 
 [application]
 config/name="断线前沿"
+config/version="1.0.0"
 run/main_scene="res://scenes/Harbor.tscn"
 config/features=PackedStringArray("4.7", "C#", "GL Compatibility")
 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 namespace Greyhaven {
@@ -8,12 +9,13 @@ public partial class Campaign {
  public int MapHeight {get{return River==null?Height:River.HeightCells*Tile;}}
  static readonly RectangleF[] EmptyTerrain=new RectangleF[0];
  RectangleF[] MapRoads {get{return River==null?Roads:EmptyTerrain;}}
- RectangleF[] MapWalls {get{return HarborOperation!=null?HarborOperation.Barriers:River==null?YardWalls:EmptyTerrain;}}
+ RectangleF[] MapWalls {get{return HarborOperation!=null?HarborOperation.Barriers:River==null?YardWalls:BasinOperation?.Freight.DepotBarriers??EmptyTerrain;}}
  public PointF Home(int side){if(River==null)return side==0?new PointF(152,514):EnemyHome;var p=River.Starts[side];return new PointF((p.X+.5f)*Tile,(p.Y+.5f)*Tile);}
  void SetupRiverbend(){
   if(RelayMission){SetupRelayMission();return;}
   Ore.Clear();foreach(var p in River.Ore)Ore.Add(new OrePatch((p.X+.5f)*Tile,(p.Y+.5f)*Tile,2400));
-  if(River.IsRiverbendChapter)RiverbendOperation=new RiverbendOperation(this);
+  if(River.IsBasin){BasinOperation=new BasinOperation(this);Changed();}
+  else if(River.IsRiverbendChapter)RiverbendOperation=new RiverbendOperation(this);
   else{
    for(int side=0;side<FactionCount;side++){
     var home=Home(side);Spawn("mcv",side,home.X,home.Y);Spawn("squad",side,home.X+48,home.Y-48);Spawn("squad",side,home.X+72,home.Y-48);Spawn("engineer",side,home.X,home.Y-48);
@@ -23,8 +25,9 @@ public partial class Campaign {
   foreach(var h in River.Houses)Spawn(h.Kind,-1,(h.Lot.X+h.Lot.Width*.5f)*Tile,(h.Lot.Y+h.Lot.Height*.5f)*Tile);
  }
  public float GroundHeight(PointF p){var c=Terrain.At((int)Math.Floor(p.X/Tile),(int)Math.Floor(p.Y/Tile));return c==null?0:c.Height;}
- bool GroundOpen(float x,float y){var c=Terrain.At((int)Math.Floor(x/Tile),(int)Math.Floor(y/Tile));return c!=null&&c.Ground!=RiverbendMap.Surface.Water&&!c.Tree;}
- bool CornerGround(float x,float y,float height){var c=Terrain.At((int)Math.Floor(x/Tile),(int)Math.Floor(y/Tile));return c!=null&&c.Ground!=RiverbendMap.Surface.Water&&!c.Tree&&Math.Abs(c.Height-height)<=.27f;}
+ static bool PassableGround(RiverbendMap.Cell cell){return cell!=null&&cell.Ground!=RiverbendMap.Surface.Water&&!cell.Tree&&!cell.Cliff;}
+ bool GroundOpen(float x,float y){return PassableGround(Terrain.At((int)Math.Floor(x/Tile),(int)Math.Floor(y/Tile)));}
+ bool CornerGround(float x,float y,float height){var c=Terrain.At((int)Math.Floor(x/Tile),(int)Math.Floor(y/Tile));return PassableGround(c)&&Math.Abs(c.Height-height)<=.27f;}
  bool TerrainOpen(PointF p,float pad){
   if(!Battlefield.ContainsFootprint(p,pad)||!GroundOpen(p.X,p.Y))return false;float h=GroundHeight(p);
   return CornerGround(p.X-pad,p.Y-pad,h)&&CornerGround(p.X+pad,p.Y-pad,h)&&CornerGround(p.X-pad,p.Y+pad,h)&&CornerGround(p.X+pad,p.Y+pad,h);
@@ -51,7 +54,7 @@ public partial class Campaign {
  bool TerrainBuildable(RectangleF r){
   float? height=null;
   for(int y=(int)Math.Floor(r.Top/Tile);y<(int)Math.Ceiling(r.Bottom/Tile);y++)for(int x=(int)Math.Floor(r.Left/Tile);x<(int)Math.Ceiling(r.Right/Tile);x++){
-   var c=Terrain.At(x,y);if(c==null||c.Tree||c.Ground==RiverbendMap.Surface.Water||c.Ground==RiverbendMap.Surface.Bridge||c.Ground==RiverbendMap.Surface.Ramp)return false;
+   var c=Terrain.At(x,y);if(!PassableGround(c)||c.Railroad||c.Ground==RiverbendMap.Surface.Bridge||c.Ground==RiverbendMap.Surface.Ramp)return false;
    if(height.HasValue&&Math.Abs(height.Value-c.Height)>.05f)return false;height=c.Height;
   }return true;
  }
@@ -61,20 +64,54 @@ public partial class Campaign {
   if(unit!=null&&unit.T.Key=="engineer")return CanEngineer(unit,house);
   if(house==null||!house.Alive||!house.T.Garrison||unit==null||!unit.Deployed||!unit.T.Foot)return false;
   if(house.Side<0)return unit.T.Key=="engineer"&&!Units.Any(u=>u.Alive&&u!=unit&&(u.Carrier==house||u.Entering==house));
-  return house.Ready>=1&&house.Packing<=0&&house.Side==unit.Side&&unit.T.Key!="engineer"&&unit.T.Key!="sniper"&&(house.T.Key!="bunker"||unit.T.Key=="squad")&&Units.Count(u=>u.Alive&&(u.Carrier==house||u.Entering==house))<HouseCapacity(house);
+  return CanKeepEntering(unit,house)&&Units.Count(u=>u!=unit&&u.Alive&&(u.Carrier==house||u.Entering==house))<HouseCapacity(house);
  }
+ bool CanKeepEntering(Piece unit,Piece house){return house.Deployed&&house.Side==unit.Side&&!house.Selling&&
+  (unit.T.Key=="squad"||house.T.Key!="bunker"&&unit.T.Key=="at");}
  public bool EnterHouse(Piece unit,Piece house){
   if(unit!=null&&unit.T.Key=="engineer")return EngineerOrder(unit,house);
-  if(!CanEnterHouse(unit,house))return false;var door=Middle(ExitApron(house.T,Footprint(house.T,house.P)));
-  if(!Move(unit,door,false))return false;unit.Entering=house;if(unit.Side==0)Radio="步兵正在前往驻防位置。";return true;
+  if(!CanEnterHouse(unit,house)||!RouteToEntrance(unit,house,start:true))return false;
+  unit.Entering=house;if(unit.Side==0)Radio="步兵正在前往驻防位置。";return true;
+ }
+ IEnumerable<PointF> BuildingEntrances(Piece house){
+  var lot=Footprint(house.T,house.P);
+  yield return Middle(ExitApron(house.T,lot));
+  for(float x=lot.Left+Tile*.5f;x<lot.Right;x+=Tile){
+   yield return new PointF(x,lot.Top-Tile*.5f);
+   yield return new PointF(x,lot.Bottom+Tile*.5f);
+  }
+  for(float y=lot.Top+Tile*.5f;y<lot.Bottom;y+=Tile){
+   yield return new PointF(lot.Left-Tile*.5f,y);
+   yield return new PointF(lot.Right+Tile*.5f,y);
+  }
+ }
+ bool RouteToEntrance(Piece unit,Piece house,bool start){
+  var entries=BuildingEntrances(house).Distinct().OrderBy(point=>Dist(unit.P,point));
+  var nearby=Units.Where(other=>other!=unit&&other.Deployed&&!other.T.Building&&
+   (other.Entering==house||Dist(other.P,house.P)<4*Tile)).ToArray();
+  foreach(var point in entries){
+   if(nearby.Any(other=>other.Entering==house&&Dist(other.Goal,point)<Tile*.4f||
+    TrafficContact(unit.T,point,other.T,other.P)))continue;
+   var traffic=MineTraffic(unit,point);
+   if(start?!Move(unit,point,false,traffic):!PlanRoute(unit,point,traffic))continue;
+   unit.Goal=point;return true;
+  }
+  return false;
+ }
+ bool ReachEntrance(Piece unit,Piece house){
+  if(Dist(unit.P,unit.Goal)<=9)return true;
+  if((unit.Path.Count==0||unit.StalledFor>=.5f||unit.NoProgressFor>=.6f)&&Time>=unit.RouteRetryAt){
+   unit.RouteRetryAt=Time+.6f;
+   RouteToEntrance(unit,house,start:false);
+  }
+  return false;
  }
  bool TickEntry(Piece unit,float dt){
   if(unit.Entering!=null&&unit.Entering.T.Key=="ifv")return TickBoard(unit);
   if(unit.Entering!=null&&unit.T.Key=="engineer")return TickEngineerEntry(unit,dt);
   var house=unit.Entering;if(house==null)return false;
-  if(!house.Deployed||house.Side!=unit.Side||unit.T.Key=="sniper"||(house.T.Key=="bunker"&&unit.T.Key!="squad")||HouseCount(house)>=HouseCapacity(house)){unit.Entering=null;unit.Path.Clear();return false;}
-  var door=Middle(ExitApron(house.T,Footprint(house.T,house.P)));
-  if(Dist(unit.P,door)>14){if(unit.Path.Count==0&&unit.Replan<=0){unit.Replan=1;Route(unit,door);}return false;}
+  if(!CanKeepEntering(unit,house)||HouseCount(house)>=HouseCapacity(house)){unit.Entering=null;unit.Path.Clear();return false;}
+  if(!ReachEntrance(unit,house))return false;
   unit.Path.Clear();unit.Target=null;unit.Entering=null;unit.Carrier=house;unit.P=house.P;unit.Capturing=house.Side<0;unit.CaptureWork=0;return true;
  }
  bool ExitHouseUnit(Piece unit,Piece house){
@@ -93,7 +130,9 @@ public partial class Campaign {
   if(unit.T.Key=="engineer"){ExitHouseUnit(unit,house);return;}
   unit.Cool-=dt;TickBurst(unit,dt);if(unit.Cool>0)return;
   float range=ReferenceBalance.Weapon(unit).Range;
-  var enemy=Units.Where(e=>e.Alive&&e.Side>=0&&e.Side!=unit.Side&&e.Carrier==null&&UsefulTarget(unit,e)&&VisibleTo(unit.Side,e)&&WeaponDistance(unit,e)<=range).OrderBy(e=>Dist(e.P,house.P)).FirstOrDefault();
+  var enemy=unit.Target;
+  if(enemy==null||!CanAutoTarget(unit,enemy)||!VisibleTo(unit.Side,enemy)||!CanShootAt(unit,enemy))
+   unit.Target=enemy=FindContact(unit,range);
   if(enemy==null)return;Fire(unit,enemy);var shot=Shots.Last();shot.Garrison=true;shot.SourceId=house.Id;shot.A=TargetPoint(enemy.P,house);shot.A=new PointF(shot.A.X+(house.P.X-shot.A.X)*.12f,shot.A.Y+(house.P.Y-shot.A.Y)*.12f);
  }
  void EnemyHousing(int side){

@@ -9,8 +9,8 @@ public partial class HarborGame
     private RichTextLabel pauseStory, pauseOrders, pauseVictory;
     private Button[] rateButtons;
     private bool diplomacyOpen;
-    private readonly Label[] factionLabels = new Label[3], factionStates = new Label[3], factionOrders = new Label[3];
-    private readonly ColorRect[] factionColors = new ColorRect[3];
+    private readonly Label[] factionLabels = new Label[Campaign.MaxFactions], factionStates = new Label[Campaign.MaxFactions], factionOrders = new Label[Campaign.MaxFactions];
+    private readonly ColorRect[] factionColors = new ColorRect[Campaign.MaxFactions];
 
     private void MakePausePanels()
     {
@@ -66,20 +66,21 @@ public partial class HarborGame
             factionOrders[i].ClipText = true;
         }
         AddButton(diplomacyPanel, "返回战场", 655, 467, 205, 39, () => SetDiplomacy(false));
-
+        MakeBasinTestPanel();
     }
 
     private void RefreshPausePanels()
     {
         pauseCurtain.Visible = started && paused;
+        UpdateBasinTest();
         if (!pauseCurtain.Visible) return;
         bool cinematic = SceneRunning || Finished;
         pauseCurtain.Color = new Color(Ink, (cinematic ? 171 : 177) / 255f);
         scenePause.Visible = cinematic;
         diplomacyPanel.Visible = !cinematic && diplomacyOpen;
         keyboardPanel.Visible = !cinematic && keyboardOpen && !diplomacyOpen;
-        battlePause.Visible = !cinematic && !keyboardOpen && !diplomacyOpen;
-        if (cinematic || keyboardOpen || diplomacyOpen) return;
+        battlePause.Visible = !cinematic && !keyboardOpen && !diplomacyOpen && !basinTestOpen;
+        if (cinematic || keyboardOpen || diplomacyOpen || basinTestOpen) return;
         var mission = activeChapter.Brief;
         pauseCode.Text = mission.Code;
         pauseMission.Text = mission.Title;
@@ -101,6 +102,7 @@ public partial class HarborGame
                 factionLabels[side].Visible = factionStates[side].Visible = factionOrders[side].Visible = factionColors[side].Visible = present;
                 if (!present) continue;
                 factionLabels[side].Text = world.StoryFactionName(side);
+                factionLabels[side].AddThemeColorOverride("font_color", FactionInk(side));
                 factionStates[side].Text = side == 0 ? "我方" : world.HasSurrendered(side) ? "已投降" :
                     world.Remaining(side) == 0 ? "已歼灭" : "互相敌对";
                 factionOrders[side].Text = world.StoryFactionTask(side);

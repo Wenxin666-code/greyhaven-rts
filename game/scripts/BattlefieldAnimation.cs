@@ -57,6 +57,13 @@ public partial class BattlefieldView
 
     private void DrawDamageEffects(Piece piece, Vector2 anchor)
     {
+        if (piece.T.IsWall)
+        {
+            if (!piece.Alive && !piece.Selling && piece.Dead < .32f)
+                DrawCircle(anchor - new Vector2(0, 3 * Zoom), (2 + piece.Dead * 24) * Zoom,
+                    new Color("#a49b7b", .42f * (1 - piece.Dead / .32f)));
+            return;
+        }
         if (piece.T.Foot)
         {
             if (!piece.Alive && piece.Dead < .66f)

@@ -28,9 +28,15 @@ public partial class Campaign {
   }
  }
  void Impact(Piece source,Piece target,PointF point,WeaponProfile weapon){
+  Piece intercepted=null;
+  if(weapon.BlockedByWalls){
+   var origin=source.Carrier?.P??source.P;
+   intercepted=FirstWall(origin,target?.T.IsWall==true?target.P:point,out var impact);
+   if(intercepted!=null){target=intercepted;point=impact;}
+  }
   RecordShot(source,point,target);
   if(target!=null)DamageTarget(source,target,ReferenceBalance.Damage(source,target,weapon));
-  if(weapon.Spread<=0)return;
+  if(weapon.Spread<=0||intercepted!=null)return;
   // Small warhead spread, same armor table as direct impact. No duplicate damage
   // to the primary target; carried infantry are protected by their carrier.
   foreach(var other in Units.Where(u=>u!=source&&u!=target&&Targetable(u)&&Dist(point,TargetPoint(point,u))<weapon.Spread).ToArray()){
@@ -39,8 +45,9 @@ public partial class Campaign {
   }
  }
  void DamageTarget(Piece source,Piece target,float amount){
-  if(!target.Alive||amount<=0)return;
-  if(target.Side==0)ReportStrike(target);RememberAiAttack(target,source);target.HitAt=VisualTime;target.Hp-=amount;
+  if(!target.Alive||amount<=0||BasinOperation?.IsStoryTruck(target)==true)return;
+  if(!target.T.IsWall){if(target.Side==0)ReportStrike(target);RememberAiAttack(target,source);}
+  target.HitAt=VisualTime;target.Hp-=amount;
   if(target.Hp<=0)CombatKill(target,source);
   else OnIncomingFire(target,source.Carrier!=null&&source.Carrier.T.Garrison?source.Carrier:source);
  }

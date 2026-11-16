@@ -16,7 +16,7 @@ public partial class Campaign {
    (TrafficContact(unit.T,p,u.T,u.P)||u.Side==unit.Side&&u.Target!=null&&u.Path.Count>0&&TrafficContact(unit.T,p,u.T,u.Path.Last())));
  }
  bool FindFiringPosition(Piece unit,PointF aim){
-  if(Time<unit.RouteRetryAt)return false;unit.RouteRetryAt=Time+.75f+(unit.Id%5)*.04f;
+  if(Time<unit.RouteRetryAt)return false;unit.RouteRetryAt=Time+.55f+(unit.Id%5)*.025f;
   var target=unit.Target;var candidates=new List<PointF>();
   float reach=Math.Max(18,ReferenceBalance.Range(unit)-4),extent=target!=null&&target.T.Building?Math.Max(target.T.FoundationWidth,target.T.FoundationHeight)*Tile*.55f:0;
   var center=target==null?aim:target.P;double toward=Math.Atan2(unit.P.Y-center.Y,unit.P.X-center.X);
@@ -53,7 +53,7 @@ public partial class Campaign {
   }return false;
  }
  void RecoverFootTraffic(Piece unit){
-  if(unit.Path.Count==0||unit.StalledFor<.35f&&unit.NoProgressFor<.6f||Time<unit.RouteRetryAt)return;
+  if(unit.Entering!=null||unit.Path.Count==0||unit.StalledFor<.35f&&unit.NoProgressFor<.6f||Time<unit.RouteRetryAt)return;
   if(unit.Target!=null){FindFiringPosition(unit,unit.Target.P);return;}
   unit.RouteRetryAt=Time+.65f+(unit.Id%5)*.04f;
   var blocker=Units.Where(u=>u!=unit&&u.Deployed&&!u.T.Building&&Dist(u.P,unit.P)<36).OrderBy(u=>Dist(u.P,unit.P)).FirstOrDefault();

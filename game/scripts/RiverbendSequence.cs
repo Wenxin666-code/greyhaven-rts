@@ -10,8 +10,8 @@ internal sealed class RiverbendSequence : ChapterSequence
     private static readonly string[] Departure =
     {
         "指挥官，桥上可以放行了。河湾的善后工作交给保障队。",
-        "北线和白石在矿业盆地还有驻军。刚收到消息，另外三路武装也在那里设了营。",
-        "沿这条公路往内陆走。我们先去西北保障岛，趁他们还在争矿区，\n把通往岛上的堤道守住。"
+        "头两辆货车已经过桥。让司机沿公路把补给送到盆地换装站。",
+        "再往石门得换铁路。指挥官，我们沿公路跟上。"
     };
 
     internal RiverbendSequence(Campaign world)
@@ -30,7 +30,8 @@ internal sealed class RiverbendSequence : ChapterSequence
     internal override string FieldRadio => operation.Guidance;
     internal override string Caption => Departing ? Departure[operation.Elapsed < 4.1f ? 0 : operation.Elapsed < 8.4f ? 1 : 2] : "";
     internal override string[] Debrief => new[] { "河湾大桥恢复通行，保障队接管桥头。",
-        operation.HasDepartureTroops ? "先遣队沿内陆公路向西北保障岛进发。" : "司令部接令，将从内陆公路向西北保障岛推进。" };
+        operation.HasDepartureTroops ? "先遣队沿公路前往盆地换装站。" : "司令部将另派分队前往盆地换装站。" };
+    internal override string Failure => "先遣队未能打通河湾大桥。";
 
     internal override bool TakeCommand() => operation.TakeCommand();
 

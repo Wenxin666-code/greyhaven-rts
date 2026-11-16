@@ -434,7 +434,6 @@ internal sealed class HarborOperation {
             foreach (var slot in slots.OrderByDescending(p => p.X).ThenBy(p => Math.Abs(p.Y - lane)).ToArray()) {
                 if (!battle.MoveHarborDeparture(unit, slot)) continue;
                 unit.PendingDeploy = false;
-                unit.ForceMoving = false;
                 departureColumn.Add(unit);
                 slots.Remove(slot);
                 break;
@@ -516,10 +515,12 @@ public partial class Campaign {
         return Spawn(key, side, point.X, point.Y);
     }
 
-    internal bool TrySetHarborRoute(Piece unit, params PointF[] waypoints) {
+    internal bool TrySetHarborRoute(Piece unit, params PointF[] waypoints) => TrySetHarborRoute(unit, waypoints, null);
+
+    internal bool TrySetHarborRoute(Piece unit, PointF[] waypoints, ICollection<Piece> travelingTogether) {
         float pad = Math.Max(Clearance(unit), unit.T.TrafficRadius);
         var obstacles = Grid(pad).Barriers;
-        var traffic = MineTraffic(unit, waypoints.Last());
+        var traffic = MineTraffic(unit, waypoints.Last(), other => travelingTogether == null || !travelingTogether.Contains(other));
         if (traffic != null) obstacles = obstacles.Concat(traffic).ToArray();
         var path = new Queue<PointF>();
         var from = unit.P;

@@ -7,7 +7,9 @@ namespace Greyhaven {public partial class Campaign {
  // the standing base reserve and the attack wings; all members are normally produced.
  bool StoryPostPoint(int side,out PointF result){
   result=PointF.Empty;if(!StoryBattle||side<=0)return false;var role=StoryRole(side);var home=Home(side);PointF preferred;
-  if(!IslandMission){
+  if(River.IsBasin){
+   var post=River.BasinPost(side);preferred=RiverbendMap.PortPoint(post.X,post.Y);
+  }else if(!IslandMission){
    var bridge=River.Bridges[0];
    float shoulder=side==1?bridge.Top-2.5f:bridge.Bottom+2.5f;
    preferred=new PointF((bridge.Right+4.5f)*Tile,shoulder*Tile);

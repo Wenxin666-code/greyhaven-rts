@@ -7,14 +7,14 @@ using Point = System.Drawing.PointF;
 
 public partial class HarborGame
 {
-    private enum FrontPage { Menu, Missions, Rules }
+    private enum FrontPage { Menu, Missions, Rules, Archive }
     private enum StructureTool { None, Repair, Sell }
     private FrontPage frontPage;
     private StructureTool structureTool;
     private Control ui, panel, top, startPanel, missionPanel, rulesPanel, coach, receipt;
     private Panel messagePanel;
     private Label funds, lesson, lessonPhase, messageSpeaker, selectionText, radarOffline, stats, resultTitle, resultMission;
-    private Label enterPrompt, radarNote;
+    private Label enterPrompt, radarNote, fieldRadioSpeaker;
     private Label chapterHeading, chosenLocation, briefCode, briefTitle, mapLocation;
     private RichTextLabel briefStory, briefOrders, briefVictory;
     private TextureRect briefMap, expandedMap;
@@ -23,6 +23,9 @@ public partial class HarborGame
     private readonly System.Collections.Generic.Dictionary<CampaignChapter, Texture2D> previews = new();
     private Button[] chapterButtons;
     private Button nextChapter, riverbendHandoff;
+    private Control basinObjective;
+    private ColorRect basinCut;
+    private Label basinRemaining;
     private Control fieldRadio;
     private RichTextLabel fieldRadioText;
     private bool viewingMap;
@@ -35,7 +38,12 @@ public partial class HarborGame
     private Font uiBold;
     private ColorRect powerBar, resultRule;
     private static readonly Color Steel = new("#7c8a76"), Dim = HarborSkin.Dim, Teal = HarborSkin.Teal;
-    private static readonly Regex FactionNames = new("北线(?:驻防军|驻防分部|分部)?|白石(?:矿务警卫队|警卫队|分部)?|当地驻军|驻军");
+    private static readonly Regex FactionNames = new(
+        "(?<joint>沿岸联合保障司令部|保障司令部|我方先遣队)|" +
+        "(?<north>北线(?:驻防军|驻防分部|分部)?|当地驻军|驻军)|" +
+        "(?<mine>白石(?:矿务警卫队|警卫队|分部)?(?!装矿道口))|" +
+        "(?<rail>铁轨运输卫队|铁轨卫队)|(?<south>南岸地方防卫队|南岸防卫队)|" +
+        "(?<border>边境独立旅|独立旅)");
 
     private void MakeInterface()
     {
@@ -65,6 +73,9 @@ public partial class HarborGame
         layer.AddChild(ui);
         ui.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         MakeFront();
+        basinCut = Accent(ui, 0, 0, 1472, 819, new Color("#13181700"));
+        basinCut.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        basinCut.Visible = false;
 
         top = Accent(ui, 0, 0, 1472, 50, new Color(Ink, 232 / 255f));
         Accent(top, 34, 17, 4, 17);
@@ -123,8 +134,9 @@ public partial class HarborGame
         enterPrompt = Bold(takeCommand, "Enter", 134, 8, 49, 22, 12);
         enterPrompt.Modulate = Ink;
         nextChapter = AddButton(messagePanel, "下一关 · 河湾镇", 20, 150, 181, 35,
-            () => LaunchChapter(CampaignChapter.Riverbend));
+            () => { if (activeChapter.Next is { } next) LaunchChapter(next); });
         SetLit(nextChapter, true);
+        archiveResult = AddButton(messagePanel, "战役档案", 365, 150, 171, 35, OpenArchive);
         riverbendHandoff = AddButton(ui, "接管先遣队", 1232, 740, 204, 46, TakeCommand);
         SetLit(riverbendHandoff, true);
         Bold(riverbendHandoff, "Enter", 143, 10, 55, 25, 13).Modulate = Ink;
@@ -132,12 +144,21 @@ public partial class HarborGame
         fieldRadio = Strip(ui, "#202c32f5", "#ac925f");
         Position(fieldRadio, 16, 12, 880, 88);
         Accent(fieldRadio, 1, 10, 4, 68);
-        Bold(fieldRadio, ChapterSequence.Speaker, 15, 5, 420, 20, 13).Modulate = Gold;
+        fieldRadioSpeaker = Bold(fieldRadio, ChapterSequence.Speaker, 15, 5, 420, 20, 13);
+        fieldRadioSpeaker.Modulate = Gold;
         fieldRadioText = Paragraph(fieldRadio, 15, 32, 850, 50, 18);
+
+        basinObjective = Strip(ui, "#202c32f5", "#ac925f");
+        Position(basinObjective, 16, 114, 245, 33);
+        basinObjective.MouseFilter = Control.MouseFilterEnum.Ignore;
+        basinRemaining = LabelAt(basinObjective, "", 13, 4, 219, 26, 15);
+        basinRemaining.Modulate = Gold;
 
         MakePointer();
         MakeCommandBar();
         MakePausePanels();
+        MakeRoadOrderPanel();
+        MakeBasinDefeatFeed();
     }
 
     private void MakeFront()
@@ -166,28 +187,22 @@ public partial class HarborGame
         Bold(startPanel, "灰 港 登 陆", 64, 360, 396, 44, 29);
         Accent(startPanel, 64, 428, 398, 1, Steel);
         LabelAt(startPanel, "建立滩头基地，消灭港区的敌方部队与建筑。", 64, 448, 620, 41, 19);
-        var start = AddButton(startPanel, "开始游戏", 64, 545, 335, 61, () => OpenFront(FrontPage.Missions), 23);
+        var start = AddButton(startPanel, "开始游戏", 64, 521, 335, 60, () => OpenFront(FrontPage.Missions), 23);
         SetLit(start, true);
         Bold(start, "›", 301, 0, 28, 45, 30).Modulate = Ink;
-        AddButton(startPanel, "规则介绍", 64, 620, 335, 46, () => OpenFront(FrontPage.Rules));
-        AddButton(startPanel, "退出游戏", 64, 682, 190, 40, () => GetTree().Quit());
+        AddButton(startPanel, "规则介绍", 64, 598, 335, 44, () => OpenFront(FrontPage.Rules));
+        archiveEntry = AddButton(startPanel, "战役档案", 64, 653, 335, 44, OpenArchive);
+        AddButton(startPanel, "退出游戏", 64, 712, 190, 40, () => GetTree().Quit());
 
         missionPanel = Page(front);
         Bold(missionPanel, "行动选择", 58, 82, 360, 62, 46);
-        Bold(missionPanel, "MISSION DIRECTORY   /   01 — 04", 61, 150, 418, 25, 14).Modulate = Gold;
+        Bold(missionPanel, "重连灰港  /  行动目录", 61, 150, 418, 25, 14).Modulate = Gold;
         chapterButtons = new Button[CampaignChapter.Playable.Length];
         for (int i = 0; i < chapterButtons.Length; i++)
         {
             var chapter = CampaignChapter.Playable[i];
             chapterButtons[i] = AddButton(missionPanel, $"0{i + 1}    {chapter.Brief.Title}", 64, 214 + i * 81, 373, 64,
                 () => ChooseChapter(chapter), 23);
-        }
-        string[] later = { "03    孤岛要塞", "04    雾脊中继站" };
-        for (int i = 0; i < later.Length; i++)
-        {
-            var locked = AddButton(missionPanel, later[i], 64, 376 + i * 81, 373, 64, () => { }, 23);
-            locked.Disabled = true;
-            locked.TooltipText = "待剧情重构";
         }
         chosenLocation = LabelAt(missionPanel, "", 84, 540, 340, 29, 15);
         chosenLocation.Modulate = Dim;
@@ -217,6 +232,7 @@ public partial class HarborGame
         Bold(launch, "›", 242, 0, 30, 45, 30).Modulate = Ink;
 
         MakeManual(front);
+        MakeArchive(front);
         mapViewer = SteelPanel(front, 165, 84, 1142, 650);
         mapTitle = Bold(mapViewer, "", 25, 12, 580, 47, 30);
         expandedMap = new TextureRect { ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
@@ -238,10 +254,11 @@ public partial class HarborGame
         ColorParagraph(briefStory, brief.Story);
         ColorParagraph(briefOrders, brief.Orders);
         ColorParagraph(briefVictory, brief.Victory);
-        launchChapterButton.Text = chapter == CampaignChapter.Harbor ? "开始序章" : "进入河湾镇";
+        launchChapterButton.Text = chapter == CampaignChapter.Harbor ? "开始序章" : "进入" + brief.Title;
         if (!previews.TryGetValue(chapter, out var preview))
         {
-            var map = chapter == CampaignChapter.Harbor ? RiverbendMap.ChapterOne() : new RiverbendMap();
+            var map = chapter == CampaignChapter.Harbor ? RiverbendMap.ChapterOne() :
+                chapter == CampaignChapter.Basin ? RiverbendMap.Basin() : new RiverbendMap();
             previews.Add(chapter, preview = RadarView.Preview(map));
         }
         briefMap.Texture = preview;
@@ -363,9 +380,22 @@ public partial class HarborGame
         return label;
     }
 
-    private static void ColorParagraph(RichTextLabel label, string text)
+    private static Color FactionInk(int side, bool onPaper = false) => onPaper
+        ? BattleArt.Faction(side).Lerp(new Color("#302c24"), .34f)
+        : BattleArt.Faction(side).Lerp(Pale, .40f);
+
+    private static string FactionText(string text, bool onPaper = false) =>
+        FactionNames.Replace(text, match =>
+        {
+            int side = match.Groups["joint"].Success ? 0 : match.Groups["north"].Success ? 1
+                : match.Groups["mine"].Success ? 2 : match.Groups["rail"].Success ? 3
+                : match.Groups["south"].Success ? 4 : 5;
+            return $"[color=#{FactionInk(side, onPaper).ToHtml(false)}]{match.Value}[/color]";
+        });
+
+    private static void ColorParagraph(RichTextLabel label, string text, bool onPaper = false)
     {
-        var styled = FactionNames.Replace(text, match => $"[color={(match.Value.StartsWith("白石", StringComparison.Ordinal) ? "#81c688" : "#df8b7b")}]{match.Value}[/color]");
+        var styled = FactionText(text, onPaper);
         if (label.Text != styled) label.Text = styled;
     }
 
@@ -424,32 +454,56 @@ public partial class HarborGame
 
     private void UpdateInterface()
     {
+        UpdateRoadOrderPanel();
         UpdateCommands();
         bool battle = started && !SceneRunning && !Finished;
         var front = ui.GetNode<Control>("Front");
-        front.Visible = !started;
+        front.Visible = !started || ReadingArchive;
         front.GetNode<Control>("DirectoryShade").Visible = frontPage == FrontPage.Missions;
         front.GetNode<Control>("MenuShade").Visible = frontPage != FrontPage.Missions;
         startPanel.Visible = frontPage == FrontPage.Menu;
         missionPanel.Visible = frontPage == FrontPage.Missions && !viewingMap;
         mapViewer.Visible = viewingMap;
         rulesPanel.Visible = frontPage == FrontPage.Rules;
-        top.Visible = started && (SceneRunning || Finished && !world.Lost);
+        archivePanel.Visible = ReadingArchive;
+        top.Visible = started && !ReadingArchive && (SceneRunning || Finished && !world.Lost);
         chapterHeading.Text = activeChapter.SceneTitle;
         panel.Visible = battle;
         RefreshPausePanels();
 
-        messagePanel.Visible = started && (Finished || sequence.Departing || sequence.Opening && world.FirstChapter);
+        var basinSequence = sequence as BasinSequence;
+        bool basinClosing = basinSequence?.Departing == true;
+        messagePanel.Visible = started && !ReadingArchive &&
+            (Finished || sequence.Departing && !basinClosing && sequence.Caption.Length > 0 || sequence.Opening && world.FirstChapter);
         riverbendHandoff.Visible = started && !paused && !world.FirstChapter && sequence.CanTakeCommand;
         takeCommand.Visible = !paused && (sequence.CanTakeCommand && world.FirstChapter || Finished);
-        nextChapter.Visible = Finished && world.Won && world.FirstChapter;
+        nextChapter.Visible = Finished && world.Won && activeChapter.Next != null;
+        if (nextChapter.Visible) nextChapter.Text = "下一关 · " + activeChapter.Next.Brief.Title;
+        archiveResult.Visible = Finished && world.Won;
         takeCommand.Text = Finished ? "返回选关" : "接管先遣队";
         SetLit(takeCommand, !Finished);
         UpdateCaption();
 
-        string guidance = sequence.FieldRadio;
-        fieldRadio.Visible = battle && guidance != null && !WaitingForDeparture;
-        if (fieldRadio.Visible) ColorParagraph(fieldRadioText, guidance);
+        var basin = world.BasinOperation;
+        bool basinRadio = basinSequence != null && (sequence.Opening || basinClosing);
+        string guidance = basinRadio ? sequence.Caption : sequence.FieldRadio;
+        fieldRadio.Visible = started && !ReadingArchive && !string.IsNullOrEmpty(guidance) && !WaitingForDeparture &&
+            (battle || basinRadio && !paused);
+        fieldRadio.Position = new Vector2(16, basinRadio ? 62 : 12);
+        basinObjective.Visible = battle && basin != null && !WaitingForDeparture;
+        if (basinObjective.Visible)
+        {
+            int remaining = Enumerable.Range(1, world.FactionCount - 1).Count(side => world.Remaining(side) > 0);
+            basinRemaining.Text = $"仍在抵抗的武装  {remaining} / 5";
+            basinObjective.Position = new Vector2(16, fieldRadio.Visible ? 114 : 12);
+        }
+        if (fieldRadio.Visible)
+        {
+            fieldRadioSpeaker.Text = basinClosing ? basinSequence.ClosingSpeaker
+                : basinRadio ? basinSequence.OpeningSpeaker : ChapterSequence.Speaker;
+            ColorParagraph(fieldRadioText, guidance);
+        }
+        UpdateBasinDefeatFeed();
         coach.Visible = battle && world.Tutorial && !WaitingForDeparture;
         int stage = world.Lesson;
         lessonPhase.Text = stage < 2 ? "建立滩头基地" : stage < 9 ? "让补给运转起来" : "清除码头守军";
@@ -474,9 +528,14 @@ public partial class HarborGame
         powerBar.Color = power < 0 ? new Color("#ee8b72") : Teal;
         if (online) radar.QueueRedraw();
         stats.Text = $"电力 {power:+#;-#;0}       {TimeSpan.FromSeconds(battleSeconds):mm\\:ss}\n{activeChapter.Brief.Title}          ×{multiplier}";
-        selectionText.Text = selected.Count == 1 && selected[0].T.Key == "miner" ? world.MiningStatus(selected[0])
+        var inspected = selected.Count == 1 ? selected[0] : null;
+        bool showingOil = inspected?.T.IsOilDerrick == true;
+        selectionText.Text = showingOil ? $"油田 +{BasinOperation.OilPayout} / {BasinOperation.OilPayoutSeconds} 秒"
+            : inspected?.T.Key == "miner" ? world.MiningStatus(inspected)
             : world.Radio.Length > 15 ? world.Radio[..14] + "…" : world.Radio;
-        selectionText.TooltipText = world.Radio;
+        selectionText.TooltipText = showingOil
+            ? $"油田每 {BasinOperation.OilPayoutSeconds} 游戏秒入账 {BasinOperation.OilPayout} 军费。"
+            : world.Radio;
         SetLit(repair, structureTool == StructureTool.Repair);
         SetLit(sell, structureTool == StructureTool.Sell);
         RefreshProduction();
@@ -485,12 +544,22 @@ public partial class HarborGame
     private void UpdateCaption()
     {
         var screen = GetViewport().GetVisibleRect().Size;
-        bool departing = sequence.Departing;
-        bool opening = sequence.Opening;
         bool result = Finished;
-        int height = result ? 200 : departing ? 65 + sequence.Caption.Count(c => c == '\n') * 23 : sequence.Caption.Contains('\n') ? 72 : 56;
+        bool departing = sequence.Departing && !result;
+        bool opening = sequence.Opening;
+        int height = result ? 200 : departing ? 65 : sequence.Caption.Contains('\n') ? 72 : 56;
         float width = result ? 556 : departing ? world.FirstChapter ? 772 : 880 : screen.X - 60;
         float x = result ? 24 : departing ? 16 : 30;
+        float textWidth = width - (takeCommand.Visible && !result ? 242 : departing ? 30 : 40);
+        message.AddThemeFontSizeOverride("normal_font_size", result ? 16 : departing ? 18 : 20);
+        ColorParagraph(message, result ? world.Lost ? sequence.Failure :
+            string.Join("\n", sequence.Debrief) + $"\n用时 {TimeSpan.FromSeconds(battleSeconds):mm\\:ss}  /  存活部队 {world.Live(0).Count(p => !p.T.Building)}" :
+            opening || departing ? sequence.Caption : "");
+        if (departing)
+        {
+            message.Size = new Vector2(textWidth, message.Size.Y);
+            height = Math.Max(height, 32 + message.GetContentHeight() + 10);
+        }
         float y = departing ? 62 : screen.Y - height - (result ? 24 : 22);
         Position(messagePanel, x, y, width, height);
         var plate = result ? skin.Plate("#202c32f6", "#a2b398") : departing
@@ -498,18 +567,16 @@ public partial class HarborGame
         if (messagePanel.GetThemeStylebox("panel") != plate) messagePanel.AddThemeStyleboxOverride("panel", plate);
         Position(messagePanel.GetNode<Control>("Accent"), 1, result ? 12 : 10, 4, result ? 47 : height - 20);
         messageSpeaker.Visible = departing;
+        messageSpeaker.Text = ChapterSequence.Speaker;
         resultTitle.Visible = resultMission.Visible = resultRule.Visible = result;
         resultTitle.Text = world.Lost ? "行动终止" : "行动成功";
         resultMission.Text = activeChapter.Brief.Title;
         Position(message, departing ? 15 : 20, result ? 67 : departing ? 32 : height == 72 ? 10 : 15,
-            width - (takeCommand.Visible && !result ? 242 : departing ? 30 : 40), result ? 78 : height - 10);
-        message.AddThemeFontSizeOverride("normal_font_size", result ? 16 : departing ? 18 : 20);
+            textWidth, result ? 78 : departing ? height - 32 : height - 10);
         Position(takeCommand, result ? nextChapter.Visible ? 212 : 20 : width - 211,
             result ? 150 : (height - 39) * .5f, result ? 142 : 188, result ? 35 : 39);
+        if (result) Position(archiveResult, nextChapter.Visible ? 365 : 174, 150, 171, 35);
         enterPrompt.Visible = opening;
-        ColorParagraph(message, result ? world.Lost ? "先遣队未能夺回旧码头。" :
-            string.Join("\n", sequence.Debrief) + $"\n用时 {TimeSpan.FromSeconds(battleSeconds):mm\\:ss}  /  存活部队 {world.Live(0).Count(p => !p.T.Building)}" :
-            opening || departing ? sequence.Caption : "");
     }
 
     private bool IsBuildingLesson => Campaign.Info(world.LessonKey) is { Building: true, Key: not "hq" };

@@ -26,7 +26,7 @@ public partial class Campaign {
  public static RectangleF Gate(RectangleF body){return new RectangleF(body.Left,body.Bottom,body.Width,Tile);}
  public static readonly RectangleF[] YardWalls={new RectangleF(842,214,74,8),new RectangleF(962,214,77,8),new RectangleF(1094,214,70,8)};
  public bool InBuildRange(TypeInfo t,RectangleF r,int side){
-  return Live(side).Any(o=>o.T.Building&&!o.T.Civilian&&!o.T.Defense&&!IsRelayStation(o)&&
+  return Live(side).Any(o=>o.T.Building&&!o.T.Civilian&&!o.T.Defense&&!o.T.IsOilDerrick&&!IsRelayStation(o)&&
    Math.Max(Math.Max(Footprint(o.T,o.P).Left-r.Right,r.Left-Footprint(o.T,o.P).Right),Math.Max(Footprint(o.T,o.P).Top-r.Bottom,r.Top-Footprint(o.T,o.P).Bottom))<=BuildAdjacentCells(t)*Tile+.01f);
  }
  public bool PlacementCell(RectangleF cell,Piece skip,int side){return LocalPlacementBlock(cell,skip,side,null)==PlacementBlock.None;}

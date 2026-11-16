@@ -8,7 +8,7 @@ public partial class Campaign {
  // Adjacent belongs to the building being placed. Diagonal gaps use both grid
  // axes (a rectangular neighborhood), not a circular world-space radius.
  // A defensive structure does not become an anchor for further expansion.
- public static int BuildAdjacentCells(TypeInfo type){return type.Key=="post"?4:2;}
+ public static int BuildAdjacentCells(TypeInfo type){return type.IsWall?8:type.Key=="post"?4:2;}
 
  bool AiDefenseGround(RectangleF body){
   for(int y=(int)Math.Floor(body.Top/Tile);y<(int)Math.Ceiling(body.Bottom/Tile);y++)for(int x=(int)Math.Floor(body.Left/Tile);x<(int)Math.Ceiling(body.Right/Tile);x++){

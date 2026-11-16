@@ -11,9 +11,10 @@ using WorldRect = System.Drawing.RectangleF;
 public partial class BattlefieldView : Node2D
 {
     internal const float Axis = .87f, Rise = .435f;
+    internal const float DefaultZoom = 1.55f;
     internal Campaign World { get; private set; }
     internal Point CameraPosition { get; private set; }
-    internal float Zoom { get; private set; } = 1.55f;
+    internal float Zoom { get; private set; } = DefaultZoom;
     internal Rect2 Area;
     internal bool Cinematic;
     internal float FogStrength;
@@ -40,6 +41,7 @@ public partial class BattlefieldView : Node2D
     private BattlefieldShroud shroud;
     private Vector2[] tankMounts, tankMuzzles;
     private static readonly Color Gold = new("#c6b17b"), Aqua = new("#90cabf");
+    private static readonly Color AttackLineColor = new("#ff0000");
     private static readonly Color HarborCoat = new("#abb5ac");
 
     public override void _Ready()
@@ -66,9 +68,10 @@ public partial class BattlefieldView : Node2D
         terrain?.Dispose();
         shroud?.Dispose();
         World = world;
+        if (world.BasinOperation != null) freightSprites ??= new FreightSprites();
         terrain = new TerrainMesh(world.River, art.Static("ground.png"), GD.Load<Texture2D>("res://assets/sand.png"));
         shroud = new BattlefieldShroud(world);
-        Zoom = 1.55f;
+        Zoom = DefaultZoom;
         Mark = null;
         Hovered = null;
         moveOrders.Clear();
@@ -87,8 +90,16 @@ public partial class BattlefieldView : Node2D
     internal Point? DisplayedMoveTarget(Piece unit)
     {
         if (moveOrders.TryGetValue(unit, out var order) && unit.Deployed && unit.Goal == order.Slot &&
-            (unit.Path.Count > 0 || unit.Advancing)) return order.Destination;
+            unit.Contact != ContactOrder.Directed && !unit.FirePoint.HasValue && (unit.Path.Count > 0 || unit.Advancing)) return order.Destination;
         return null;
+    }
+
+    internal Point? DisplayedAttackTarget(Piece unit)
+    {
+        if (!unit.Deployed || !World.Armed(unit)) return null;
+        if (unit.Contact == ContactOrder.Directed && unit.Target is { Alive: true, Carrier: null } target && World.Visible(target))
+            return target.P;
+        return unit.FirePoint;
     }
 
     public override void _ExitTree()
@@ -98,8 +109,9 @@ public partial class BattlefieldView : Node2D
         art?.Dispose();
     }
 
-    internal void Center(Point target)
+    internal void Center(Point target, float? zoom = null)
     {
+        if (zoom.HasValue) Zoom = zoom.Value;
         CameraPosition = World.Battlefield.ClampCenter(target, ProjectionArea.Size.X / (2 * Axis * Zoom), Area.Size.Y / (2 * Rise * Zoom));
     }
 
@@ -131,25 +143,32 @@ public partial class BattlefieldView : Node2D
         Center(new Point(CameraPosition.X + anchor.X - after.X, CameraPosition.Y + anchor.Y - after.Y));
     }
 
-    internal Piece Pick(Vector2 point, bool preferOre = false)
+    internal Piece Pick(Vector2 point, bool preferOre = false, bool preferGarrison = false)
     {
         var ground = Ground(point);
-        Piece exact = null, near = null, foundation = null;
+        Piece exact = null, near = null, foundation = null, garrison = null;
         float closest = float.MaxValue;
         foreach (var unit in World.Units.Where(p => p.Alive && p.Carrier == null && World.Visible(p))
                      .OrderByDescending(p => p.P.X + p.P.Y))
         {
             var bounds = PickBody(unit);
-            if (exact == null && bounds.HasPoint(point) && PickInk(unit, point)) exact = unit;
             if (unit.T.Building)
             {
-                if (foundation == null && Campaign.Footprint(unit.T, unit.P).Contains(ground)) foundation = unit;
+                bool onFoundation = Campaign.Footprint(unit.T, unit.P).Contains(ground);
+                bool onBuilding = PickInk(unit, point);
+                if (exact == null && onBuilding) exact = unit;
+                if (foundation == null && onFoundation) foundation = unit;
+                if (preferGarrison && garrison == null && unit.Deployed && unit.Side <= 0 && unit.T.Garrison &&
+                    (onBuilding || onFoundation)) garrison = unit;
                 continue;
             }
-            if (!bounds.Grow(unit.T.Foot ? 7 : 5).HasPoint(point)) continue;
+            if (exact == null && bounds.HasPoint(point) && PickInk(unit, point)) exact = unit;
+            if (!bounds.Grow(unit.T.Foot ? 8 : 6).HasPoint(point)) continue;
             float score = bounds.GetCenter().DistanceSquaredTo(point);
             if (score < closest) { near = unit; closest = score; }
         }
+        if (exact is { T.Building: false }) return exact;
+        if (garrison != null) return garrison;
         if (exact != null) return exact;
         if (preferOre && near?.T.Key == "miner" && World.Explored(0, ground) && World.OreAt(ground) != null) return foundation;
         return near ?? foundation;
@@ -170,8 +189,15 @@ public partial class BattlefieldView : Node2D
         int direction = (unit.Dir + 14) % 16;
         if (unit.T.Building)
         {
-            var texture = art.Frame("iso-" + unit.T.Key, false);
-            return texture != null && art.Opaque(texture, BuildingBox(unit, anchor), new Rect2(0, 0, 320, 320), cursor);
+            var box = BuildingBox(unit, anchor);
+            if (!box.HasPoint(cursor)) return false;
+            if (unit.T.IsWall)
+            {
+                var wall = art.Wall(World.WallConnections(unit), BattleArt.Faction(unit.Side));
+                return art.Opaque(wall, box, new Rect2(Vector2.Zero, wall.GetSize()), cursor);
+            }
+            var texture = unit.T.IsOilDerrick ? art.OilDerrick(unit.Side) : art.Frame(BuildingFrame(unit), false);
+            return texture != null && art.Opaque(texture, box, new Rect2(Vector2.Zero, texture.GetSize()), cursor);
         }
         if (unit.T.Foot)
         {
@@ -211,6 +237,7 @@ public partial class BattlefieldView : Node2D
         DrawSetTransform(Vector2.Zero);
 
         DrawBridgeRails();
+        if (World.River.IsBasin) DrawBasinRailway();
         DrawScenery();
         if (FogStrength > 0) DrawFog(origin);
         DrawOre();
@@ -223,6 +250,10 @@ public partial class BattlefieldView : Node2D
             var location = RiverbendMap.RiverExitSign;
             var sign = RiverbendMap.PortPoint(location.X, location.Y);
             if (InShot(sign)) DrawRoadSign(sign, "矿业盆地  ›");
+        }
+        else if (World.BasinOperation is { } basin)
+        {
+            DrawBasinFreight(basin.Freight);
         }
         int nextPost = -1;
         foreach (var unit in World.Units.Where(p => p.Carrier == null && (FullSceneVisibility || World.Visible(p)))
@@ -265,6 +296,8 @@ public partial class BattlefieldView : Node2D
                 foreach (var tile in Placement.Tiles)
                     GroundOutline(tile.Bounds, tile.Valid && Placement.Global == PlacementBlock.None
                         ? new Color("#89d49a") : new Color("#e86e60"), true);
+                foreach (var cell in Placement.WallExtensions)
+                    GroundOutline(cell, new Color("#89d49a", .65f), true);
             }
             if (DragBox is Rect2 drag)
             {
@@ -282,6 +315,15 @@ public partial class BattlefieldView : Node2D
             moveOrders.Remove(unit);
         foreach (var unit in Selection)
         {
+            if (DisplayedAttackTarget(unit) is Point target)
+            {
+                var start = Screen(unit.P, unit.T.Foot ? .22f : .30f);
+                var end = Screen(target);
+                DrawLine(start, end, AttackLineColor);
+                DrawRect(new Rect2(start - Vector2.One, Vector2.One * 3), AttackLineColor);
+                DrawRect(new Rect2(end - Vector2.One, Vector2.One * 3), AttackLineColor);
+                continue;
+            }
             if (DisplayedMoveTarget(unit) is not Point destination) continue;
             var from = Screen(unit.P);
             var to = Screen(destination);
@@ -306,6 +348,52 @@ public partial class BattlefieldView : Node2D
             for (int x = bridge.Left; x <= bridge.Right; x += 2)
                 DrawLine(At(x) + lift, At(x) - lift, new Color("#4b5550"), MathF.Max(1, Zoom), true);
             DrawLine(a - lift, b - lift, new Color("#c2bda4"), MathF.Max(1, 1.7f * Zoom), true);
+        }
+    }
+
+    private void DrawBasinRailway()
+    {
+        const float gauge = .45f;
+        const float sleeperSpacing = .83f;
+        var brown = new Color("#544239");
+        var steel = new Color("#d7cbb4");
+        var visible = Area.Grow(22);
+        var path = RiverbendMap.BasinRail;
+        float sleeperAt = .4f;
+        var lastOffset = Vector2.Zero;
+        Vector2 Cell(int index) => new(path[index].X, path[index].Y);
+        Vector2 DrawAt(Vector2 p) => Screen(new Point(p.X * Campaign.Tile, p.Y * Campaign.Tile));
+        for (int i = 1; i < path.Count; i++)
+        {
+            var a = Cell(i - 1);
+            var b = Cell(i);
+            var direction = (b - a).Normalized();
+            var normal = new Vector2(-direction.Y, direction.X);
+            if (i == 1) lastOffset = normal * gauge;
+            var offset = normal * gauge;
+            if (i + 1 < path.Count)
+            {
+                var next = (Cell(i + 1) - b).Normalized();
+                var miter = (normal + new Vector2(-next.Y, next.X)).Normalized();
+                offset = miter * (gauge / Math.Max(.65f, miter.Dot(normal)));
+            }
+            var start = DrawAt(a);
+            var end = DrawAt(b);
+            float length = a.DistanceTo(b);
+            if (visible.Intersects(new Rect2(start.Min(end), start.Max(end) - start.Min(end)).Grow(12)))
+            {
+                for (; sleeperAt < length; sleeperAt += sleeperSpacing)
+                {
+                    var point = a + direction * sleeperAt;
+                    DrawLine(DrawAt(point - normal * .84f), DrawAt(point + normal * .84f), brown, Math.Max(1, 2.7f * Zoom));
+                }
+                DrawLine(DrawAt(a + lastOffset), DrawAt(b + offset), steel, Math.Max(1, 1.45f * Zoom), true);
+                DrawLine(DrawAt(a - lastOffset), DrawAt(b - offset), steel, Math.Max(1, 1.45f * Zoom), true);
+            }
+            else if (sleeperAt < length)
+                sleeperAt += MathF.Ceiling((length - sleeperAt) / sleeperSpacing) * sleeperSpacing;
+            sleeperAt -= length;
+            lastOffset = offset;
         }
     }
 
@@ -649,26 +737,22 @@ public partial class BattlefieldView : Node2D
 
     private void DrawBuilding(Piece p, Vector2 at, Color tint)
     {
+        if (p.T.IsWall)
+        {
+            if (p.Alive) DrawTextureRect(art.Wall(World.WallConnections(p), BattleArt.Faction(p.Side)), BuildingBox(p, at), false);
+            return;
+        }
         if (!p.Alive && p.Dead >= 1.43f) return;
+        if (p.T.IsOilDerrick)
+        {
+            DrawTextureRect(art.OilDerrick(p.Side, p.Alive ? World.VisualTime : 0), BuildingBox(p, at), false);
+            return;
+        }
         float k = (p.T.FoundationWidth + p.T.FoundationHeight) * Campaign.Tile * Axis * Zoom / 224;
         var rect = BuildingBox(p, at);
         var key = p.T.Key;
-        string frame = $"b08/{key}/background";
+        string frame = BuildingFrame(p);
         bool buildingInMotion = p.Packing > 0 || p.Ready < 1;
-        int damage = p.Hp < p.T.Hp * .25f ? 3 : p.Hp < p.T.Hp * .50f ? 2 : p.Hp < p.T.Hp * .75f ? 1 : 0;
-        if (p.Alive && buildingInMotion)
-        {
-            float progress = p.Packing > 0 ? p.Packing / Campaign.AssemblySeconds : p.Ready;
-            string action = p.BaseTransition && !p.Selling ? "deploy" : "build";
-            int last = action == "deploy" ? 95 : 71;
-            frame = $"b08/{key}/{action}/{Math.Clamp((int)(progress * last), 0, last)}";
-        }
-        else if (damage > 0)
-        {
-            string damaged = p.Alive ? $"b08/{key}/damage-{damage}-background" : $"b08/{key}/damage-3";
-            if (art.Frame(damaged, false) != null) frame = damaged;
-        }
-        if (art.Frame(frame, false) == null) frame = "iso-" + key;
         if (art.Frame(frame, false) == null)
         {
             GroundOutline(Campaign.Footprint(p.T, p.P), tint, true);
@@ -690,6 +774,27 @@ public partial class BattlefieldView : Node2D
                 DrawFrame(frameName, new Rect2(rect.Position + new Vector2(spec.Door.X, spec.Door.Y) * k,
                     new Vector2(spec.Door.Width, spec.Door.Height) * k), tint);
         }
+    }
+
+    private string BuildingFrame(Piece p)
+    {
+        var key = p.T.Key;
+        string frame = $"b08/{key}/background";
+        int damage = p.Hp < p.T.Hp * .25f ? 3 : p.Hp < p.T.Hp * .50f ? 2 : p.Hp < p.T.Hp * .75f ? 1 : 0;
+        if (p.Alive && (p.Packing > 0 || p.Ready < 1))
+        {
+            float progress = p.Packing > 0 ? p.Packing / Campaign.AssemblySeconds : p.Ready;
+            string action = p.BaseTransition && !p.Selling ? "deploy" : "build";
+            int last = action == "deploy" ? 95 : 71;
+            frame = $"b08/{key}/{action}/{Math.Clamp((int)(progress * last), 0, last)}";
+        }
+        else if (damage > 0)
+        {
+            string damaged = p.Alive ? $"b08/{key}/damage-{damage}-background" : $"b08/{key}/damage-3";
+            if (art.Frame(damaged, false) != null) frame = damaged;
+        }
+        if (art.Frame(frame, false) == null) frame = "iso-" + key;
+        return frame;
     }
 
     private void DrawSheet(string key, Rect2 box, Rect2 source, Color tint)
@@ -719,7 +824,7 @@ public partial class BattlefieldView : Node2D
             var at = Screen(unit.P);
             if (!Area.Grow(24).HasPoint(at)) continue;
             bool selected = Selection.Contains(unit);
-            if (selected || unit == Hovered || unit.Hp < unit.T.Hp || unit.Ready < 1 || unit.Repairing)
+            if (!unit.T.IsWall && (selected || unit == Hovered || unit.Hp < unit.T.Hp || unit.Ready < 1 || unit.Repairing))
                 DrawIndicators(unit, at);
             if (unit.T.Garrison && (unit.Side >= 0 || unit == Hovered || Selection.Any(p => p.T.Key == "engineer")))
                 DrawGarrisonCount(unit, at);
@@ -742,11 +847,12 @@ public partial class BattlefieldView : Node2D
             var training = World.Tutorial && World.LessonKey == "hq" ? World.Live(0).FirstOrDefault(p => p.T.Key == "mcv")?.P : LessonFocus;
             if (training is Point focus)
                 DrawString(CaptionFont, Screen(focus) - new Vector2(38, 40), "▼ 训练目标", fontSize: 14, modulate: Gold);
-            foreach (var truck in World.Live(0).Where(p => p.LastReceipt > 0 && World.Time - p.ReceiptAt < 2.3f))
+            foreach (var source in World.Live(0).Where(p => p.LastReceipt > 0 && World.Time - p.ReceiptAt < 2.3f))
             {
-                float age = World.Time - truck.ReceiptAt;
-                DrawString(CaptionFont, Screen(truck.P) - new Vector2(15, 13 + age * 8),
-                    "+" + truck.LastReceipt, fontSize: 15, modulate: Gold);
+                float age = World.Time - source.ReceiptAt;
+                float lift = source.T.IsOilDerrick ? 33 * Zoom : 13;
+                DrawString(CaptionFont, Screen(source.P) - new Vector2(15, lift + age * 8),
+                    "+" + source.LastReceipt, fontSize: 15, modulate: Gold);
             }
         }
 

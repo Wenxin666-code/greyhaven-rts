@@ -8,11 +8,9 @@ public partial class Campaign {
  public bool HasSurrendered(int side){return side>0&&side<surrendered.Length&&surrendered[side];}
  // Count alive assets, including construction, packing and passengers. Temporary
  // power/funding shortages and blocked exits do not mean a lost production base.
- bool CanStillResist(int side){
-  return Units.Any(u=>u.Alive&&u.Side==side&&
-   (u.T.Key=="hq"||u.T.Key=="mcv"||u.T.Key=="barracks"||u.T.Key=="factory"||
-    !u.T.Building&&(u.T.Hit>0||u.T.Key=="engineer")));
- }
+ bool CanStillResist(int side){return Units.Any(u=>u.Alive&&u.Side==side&&ResistanceAsset(u));}
+ static bool ResistanceAsset(Piece unit){return unit.T.Key is "hq" or "mcv" or "barracks" or "factory" ||
+  !unit.T.Building&&(unit.T.Hit>0||unit.T.Key=="engineer");}
  void CheckEnemySurrender(float dt){
   if(Tutorial)return;
   for(int side=1;side<FactionCount;side++){
@@ -31,7 +29,8 @@ public partial class Campaign {
   foreach(var u in remaining){u.Queue.Clear();u.Work=0;u.WorkPaid=0;u.Repairing=false;u.Selling=false;}
   foreach(var u in remaining.OrderBy(u=>u.T.Building))if(u.Alive){if(IsRelayStation(u)){u.Side=-1;u.Target=null;Changed();}else Kill(u);}
   UpdateSatellites();
-  string message=FactionName(side)+"已投降，残余设施正在自毁。";
+  string message=BasinOperation!=null?StoryFactionName(side)+"已经投降。"
+   :FactionName(side)+"已投降，残余设施正在自毁。";
   if(focus!=null)SetEvent(focus.P,message);Radio=message;
  }
  public string EnemyStatus(int side){return HasSurrendered(side)?"已投降":Remaining(side)==0?"已歼灭":Remaining(side).ToString();}

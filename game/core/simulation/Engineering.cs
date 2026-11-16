@@ -6,7 +6,7 @@ public partial class Campaign {
  public bool RepairVehicle(Piece car){return car!=null&&car.Alive&&car.T.Key=="ifv"&&car.Passenger!=null&&car.Passenger.Alive&&car.Passenger.T.Key=="engineer";}
  public bool Armed(Piece u){return u!=null&&ReferenceBalance.Weapon(u)!=null;}
  static bool EngineerBuilding(Piece target){
-  return target!=null&&target.Deployed&&target.T.Building;
+  return target!=null&&target.Deployed&&target.T.Building&&!target.T.IsWall;
  }
  internal bool CanCaptureBuilding(Piece target){
   return EngineerBuilding(target)&&!target.T.Defense&&(!target.T.Civilian||HouseCount(target)==0);
@@ -17,14 +17,12 @@ public partial class Campaign {
  }
  public bool EngineerOrder(Piece unit,Piece target){
   if(!CanEngineer(unit,target))return false;
-  var door=Middle(ExitApron(target.T,Footprint(target.T,target.P)));
-  if(!Move(unit,door,false))return false;
+  if(!RouteToEntrance(unit,target,start:true))return false;
   unit.Entering=target;if(unit.Side==0)Radio=target.Side==unit.Side?"工兵进入后修复建筑；完成后消耗工兵。":"工兵进入后占领建筑；完成后消耗工兵。";return true;
  }
  bool TickEngineerEntry(Piece unit,float dt){
   var target=unit.Entering;if(!CanEngineer(unit,target)){Halt(unit);return false;}
-  var door=Middle(ExitApron(target.T,Footprint(target.T,target.P)));
-  if(Dist(unit.P,door)>14){if(unit.Path.Count==0&&unit.RouteRetryAt<=Time){unit.RouteRetryAt=Time+1;PlanRoute(unit,door,MineTraffic(unit,door));}return false;}
+  if(!ReachEntrance(unit,target))return false;
   if(target.Side==unit.Side){target.Hp=target.T.Hp;target.RepairAt=VisualTime;}
   else {
    TransferProduction(target);target.Side=unit.Side;target.Target=null;target.Contact=ContactOrder.None;target.FirePoint=null;target.Rally=null;target.Primary=false;
