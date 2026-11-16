@@ -144,11 +144,13 @@ internal sealed class BasinSequence : ChapterSequence
         }
     }
 
+    internal override Point OpeningPanTarget => BasinOperation.Layby;
+
     internal override Point Camera()
     {
         if (Departing || Complete) return closingCamera;
         if (elapsed < firstCheckpointAt)
-            return HarborOperation.Glide(operation.ConvoyFocus, BasinOperation.Layby, elapsed / 4.7f);
+            return HarborOperation.Glide(operation.ConvoyFocus, OpeningPanTarget, elapsed / 4.7f);
         if (ReconSide is int side && side > 0)
         {
             float progress = (elapsed - firstCheckpointAt - (side - 1) * HoldPerCheckpoint) / HoldPerCheckpoint;

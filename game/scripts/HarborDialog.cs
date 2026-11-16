@@ -21,9 +21,8 @@ public partial class HarborGame
         Bold(scenePause, "演出已暂停", 30, 20, 429, 50, 35);
         Accent(scenePause, 32, 85, 426, 1, new Color("#5d7265"));
         SetLit(AddButton(scenePause, "继续演出", 32, 112, 200, 45, () => SetPaused(false)), true);
-        AddButton(scenePause, "返回选关", 258, 112, 200, 45, ReturnToMissions);
-        LabelAt(scenePause, "Enter", 37, 165, 92, 23, 13).Modulate = Dim;
-        LabelAt(scenePause, "Esc", 263, 165, 86, 23, 13).Modulate = Dim;
+        AddButton(scenePause, "保存并返回选关", 258, 112, 200, 45, ReturnToMissions);
+        LabelAt(scenePause, "Esc / Enter", 37, 165, 140, 23, 13).Modulate = Dim;
 
         battlePause = Strip(pauseCurtain, "#1f302f", "#a2b398");
         Position(battlePause, 285, 172, 900, 550);
@@ -41,7 +40,7 @@ public partial class HarborGame
         pauseVictory = Paragraph(battlePause, 126, 339, 731, 23, 16);
         SetLit(AddButton(battlePause, "返回战场", 43, 381, 241, 49, () => SetPaused(false)), true);
         AddButton(battlePause, "重开本关", 309, 381, 182, 49, () => LaunchChapter(activeChapter));
-        AddButton(battlePause, "返回选关", 511, 381, 170, 49, ReturnToMissions);
+        AddButton(battlePause, "保存并返回选关", 511, 381, 170, 49, ReturnToMissions);
         AddButton(battlePause, "键盘与鼠标", 43, 443, 391, 36, OpenKeyboard);
         AddButton(battlePause, "生产队列", 456, 443, 391, 36, () => { SetPaused(false); OpenQueue(); });
         Bold(battlePause, "对局速度", 43, 496, 99, 30, 15);

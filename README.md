@@ -6,13 +6,13 @@
 
 ## 下载与运行
 
-从 [v1.0.0 发布页](https://github.com/Wenxin666-code/greyhaven-rts/releases/tag/v1.0.0) 的 Assets 区域下载对应系统的游戏包。游戏包附带运行时，解压后可离线游玩，无需安装 Godot 或 .NET SDK。
+从 [v1.1.0 发布页](https://github.com/Wenxin666-code/greyhaven-rts/releases/tag/v1.1.0) 的 Assets 区域下载对应系统的游戏包。游戏包附带运行时，解压后可离线游玩，无需安装 Godot 或 .NET SDK。
 
 | 系统 | 下载文件 | 启动方式 |
 | --- | --- | --- |
-| Windows x64（Intel / AMD） | `Greyhaven-v1.0.0-windows-x64.zip` | 完整解压，双击 `Greyhaven.exe`。启动程序、`.pck` 和数据文件夹请放在一起。 |
-| Linux x64（Intel / AMD） | `Greyhaven-v1.0.0-linux-x64.tar.gz` | 解压后在 `Greyhaven` 文件夹打开终端，运行 `./start-greyhaven.sh`。 |
-| macOS（Apple 芯片 / Intel） | `Greyhaven-v1.0.0-macos-universal.zip` | 在 Finder 解压后打开 `断线前沿.app`。包使用临时签名，尚未做 Apple 公证和 Mac 实机验证。 |
+| Windows x64（Intel / AMD） | `Greyhaven-v1.1.0-windows-x64.zip` | 完整解压，双击 `Greyhaven.exe`。启动程序、`.pck` 和数据文件夹请放在一起。 |
+| Linux x64（Intel / AMD） | `Greyhaven-v1.1.0-linux-x64.tar.gz` | 解压后在 `Greyhaven` 文件夹打开终端，运行 `./start-greyhaven.sh`。 |
+| macOS（Apple 芯片 / Intel） | `Greyhaven-v1.1.0-macos-universal.zip` | 在 Finder 解压后打开 `断线前沿.app`。包使用临时签名，尚未做 Apple 公证和 Mac 实机验证。 |
 
 macOS 若只提示无法验证开发者，请先核对下载来源和发布页的 SHA-256，再按 Apple 指南在「系统设置 → 隐私与安全性」为该应用单独选择「仍要打开」。若显示文件损坏或恶意软件提示，请停止并反馈完整提示。[Apple 指南](https://support.apple.com/en-us/102445)
 

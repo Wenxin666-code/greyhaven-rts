@@ -44,6 +44,7 @@ internal sealed class HarborSequence : ChapterSequence
     internal override Piece CommandVehicle => operation.CommandVehicle;
     internal override float Fog => operation.FogBlend;
     internal override string[] Debrief => CompletionText;
+    internal override PointF OpeningPanTarget => RiverbendMap.PortPoint(63.45f, 31.25f);
     internal override string Failure => "先遣队未能夺回旧码头。";
     internal override string Caption => operation.Opening
         ? OpeningText[Pages[(int)operation.Scene]]
@@ -87,7 +88,7 @@ internal sealed class HarborSequence : ChapterSequence
         float t = operation.Elapsed;
         return operation.Scene switch
         {
-            HarborScene.SupplyRoad => Pan(63.45f, 31.25f, t / 3.2f),
+            HarborScene.SupplyRoad => HarborOperation.Glide(cameraFrom, OpeningPanTarget, t / 3.2f),
             HarborScene.QuayWork => Pan(49, 22.1f, t / 2.4f),
             HarborScene.Checkpoint => Pan(61.55f, 31.65f, t / 2.65f),
             HarborScene.ApproachShore => PanShore(t / 6.7f),

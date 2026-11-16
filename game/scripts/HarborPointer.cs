@@ -36,10 +36,11 @@ public partial class HarborGame
         pointerTime = .07;
         var position = view.GetGlobalMousePosition();
         bool overMap = CanControl && OverBattlefield(position);
-        view.Hovered = overMap && !rightHeld && !dragStart.HasValue ? PickOrderTarget(position, Input.IsKeyPressed(Key.Shift),
-            Input.IsKeyPressed(Key.Ctrl), Input.IsKeyPressed(Key.Alt)) : null;
+        bool ctrl = Input.IsKeyPressed(Key.Ctrl), shift = Input.IsKeyPressed(Key.Shift), alt = Input.IsKeyPressed(Key.Alt);
+        bool hovered = overMap && !rightHeld && !dragStart.HasValue;
+        view.Hovered = hovered ? PickOrderTarget(position, shift, ctrl, alt) : null;
         var hint = CanControl && (rightHeld || overMap)
-            ? DescribePointer(position, Input.IsKeyPressed(Key.Ctrl), Input.IsKeyPressed(Key.Shift), Input.IsKeyPressed(Key.Alt))
+            ? DescribePointer(position, ctrl, shift, alt, hovered)
             : new PointerHint(PointerKind.Arrow);
         if (pointerKind != hint.Kind)
         {
@@ -55,7 +56,7 @@ public partial class HarborGame
         pointerText.Modulate = hint.Kind == PointerKind.Blocked ? new Color("#ff9c82") : Gold;
     }
 
-    private PointerHint DescribePointer(Vector2 cursor, bool ctrl, bool shift, bool alt)
+    private PointerHint DescribePointer(Vector2 cursor, bool ctrl, bool shift, bool alt, bool useHovered = false)
     {
         if (rightHeld && panned) return new(PointerKind.Pan);
         if (dragStart.HasValue && view.DragBox.HasValue) return new(PointerKind.Select);
@@ -68,7 +69,7 @@ public partial class HarborGame
         }
 
         bool minersOnly = !ctrl && !shift && !alt && selected.Count > 0 && selected.All(p => p.T.Key == "miner");
-        var hit = PickOrderTarget(cursor, shift, ctrl, alt);
+        var hit = useHovered ? view.Hovered : PickOrderTarget(cursor, shift, ctrl, alt);
         if (structureTool != StructureTool.None)
         {
             bool canSell = structureTool == StructureTool.Sell && world.CanSell(hit);

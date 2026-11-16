@@ -26,10 +26,12 @@ public partial class Campaign {
  }
  public float GroundHeight(PointF p){var c=Terrain.At((int)Math.Floor(p.X/Tile),(int)Math.Floor(p.Y/Tile));return c==null?0:c.Height;}
  static bool PassableGround(RiverbendMap.Cell cell){return cell!=null&&cell.Ground!=RiverbendMap.Surface.Water&&!cell.Tree&&!cell.Cliff;}
- bool GroundOpen(float x,float y){return PassableGround(Terrain.At((int)Math.Floor(x/Tile),(int)Math.Floor(y/Tile)));}
  bool CornerGround(float x,float y,float height){var c=Terrain.At((int)Math.Floor(x/Tile),(int)Math.Floor(y/Tile));return PassableGround(c)&&Math.Abs(c.Height-height)<=.27f;}
  bool TerrainOpen(PointF p,float pad){
-  if(!Battlefield.ContainsFootprint(p,pad)||!GroundOpen(p.X,p.Y))return false;float h=GroundHeight(p);
+  if(!Battlefield.ContainsFootprint(p,pad))return false;
+  var cell=Terrain.At((int)Math.Floor(p.X/Tile),(int)Math.Floor(p.Y/Tile));
+  if(!PassableGround(cell))return false;
+  float h=cell.Height;
   return CornerGround(p.X-pad,p.Y-pad,h)&&CornerGround(p.X+pad,p.Y-pad,h)&&CornerGround(p.X-pad,p.Y+pad,h)&&CornerGround(p.X+pad,p.Y+pad,h);
  }
  static void TerrainCuts(System.Collections.Generic.List<float> cuts,float a,float b,float offset){
@@ -39,11 +41,12 @@ public partial class Campaign {
    float t=(cell*Tile-offset-a)/(b-a);if(t>0&&t<1)cuts.Add(t);
   }
  }
+ readonly List<float> terrainCuts=new List<float>(32);
  // Inspect each terrain interval crossed by the center and all footprint corners.
  // Fixed-distance sampling can miss arbitrarily thin diagonal clips of a cell.
  bool TerrainLine(PointF a,PointF b,float pad=0){
   if(!TerrainOpen(a,pad)||!TerrainOpen(b,pad))return false;
-  var cuts=new System.Collections.Generic.List<float>{0,1};TerrainCuts(cuts,a.X,b.X,0);TerrainCuts(cuts,a.Y,b.Y,0);
+  var cuts=terrainCuts;cuts.Clear();cuts.Add(0);cuts.Add(1);TerrainCuts(cuts,a.X,b.X,0);TerrainCuts(cuts,a.Y,b.Y,0);
   if(pad>0){TerrainCuts(cuts,a.X,b.X,-pad);TerrainCuts(cuts,a.X,b.X,pad);TerrainCuts(cuts,a.Y,b.Y,-pad);TerrainCuts(cuts,a.Y,b.Y,pad);}
   cuts.Sort();float prior=GroundHeight(a);
   for(int i=1;i<cuts.Count;i++){

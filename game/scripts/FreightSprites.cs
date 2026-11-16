@@ -2,7 +2,7 @@ using System;
 using Godot;
 using Greyhaven;
 
-internal sealed class FreightSprites
+internal sealed class FreightSprites : IDisposable
 {
     private const int Cell = 256, Views = 16;
     private const float GroundAnchor = 188f / 320;
@@ -32,5 +32,12 @@ internal sealed class FreightSprites
         var target = new Rect2(-span * .5f, -span * GroundAnchor, span, span);
         return cargo < 0 ? new Frame(engine, paint, source, target, turn)
             : new Frame(wagons[cargo], null, source, target, turn);
+    }
+
+    public void Dispose()
+    {
+        engine.Dispose();
+        paint.Dispose();
+        foreach (var wagon in wagons) wagon.Dispose();
     }
 }

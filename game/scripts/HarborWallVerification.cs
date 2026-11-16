@@ -85,6 +85,26 @@ public partial class HarborGame
         int credits = battle.Funds[0];
         Expect(battle.Sell(walls[0]) && battle.Sell(walls[1]) && battle.Funds[0] == credits + 50,
             "Dismantling free connectors cannot generate money");
+        VerifyRoutePreservation();
         GD.Print("PASS: walls / paid construction, valid auto-links, projectile screening, breaches, navigation and refunds.");
+    }
+
+    private static void VerifyRoutePreservation()
+    {
+        const float step = (float)MatchTempo.Step;
+        var battle = new Campaign(tutorial: true);
+        var vehicle = battle.Spawn("miner", 0, 420, 612);
+        var destination = new Point(516, 612);
+        Expect(battle.Move(vehicle, destination, false), "Set a route before construction changes");
+        var original = vehicle.Path;
+        battle.Spawn("wall", 0, 900, 612);
+        battle.MoveHarborVehicle(vehicle, step);
+        Expect(ReferenceEquals(original, vehicle.Path), "Distant construction leaves the existing route in place");
+        battle.Spawn("wall", 0, 468, 612);
+        battle.MoveHarborVehicle(vehicle, step);
+        Expect(!ReferenceEquals(original, vehicle.Path) && vehicle.Path.Count > 0,
+            "A new barrier intersecting the route still causes a detour");
+        for (int i = 0; i < 600 && vehicle.Path.Count > 0; i++) battle.MoveHarborVehicle(vehicle, step);
+        Expect(Campaign.Dist(vehicle.P, destination) < .1f, "The detour reaches the original destination");
     }
 }

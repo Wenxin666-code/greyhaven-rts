@@ -29,8 +29,11 @@ public partial class HarborGame : Node
         view = GetNode<BattlefieldView>("Battlefield");
         desktopMousePosition = DisplayServer.GetName() is "Windows" or "macOS" or "X11";
         string[] options = OS.GetCmdlineUserArgs();
+        chapterSavesEnabled = !options.Any(option => option is "--verify" or "--verify-ui" or "--verify-saves" or "--verify-memory" or "--capture");
+        GetTree().AutoAcceptQuit = false;
+        GetWindow().CloseRequested += RequestExitGame;
         if (DisplayServer.GetName() != "headless" && !options.Contains("--capture") &&
-            !options.Contains("--verify-ui") && !options.Contains("--windowed"))
+            !options.Contains("--verify-ui") && !options.Contains("--verify-memory") && !options.Contains("--windowed"))
             GetWindow().Mode = Window.ModeEnum.Fullscreen;
         GetViewport().SizeChanged += Layout;
         GetWindow().FocusEntered += () => focused = true;
@@ -43,7 +46,15 @@ public partial class HarborGame : Node
             edgeDwell = 0;
             stepper.Reset();
         };
-        MakeInterface();
+        if (chapterSavesEnabled && DisplayServer.GetName() != "headless")
+        {
+            useChapterPreload = true;
+            ShowStartupLogo();
+            return;
+        }
+
+        MakeFrontInterface();
+        MakeBattleInterface();
         ResetChapter(false);
         if (options.Contains("--verify"))
         {
@@ -53,13 +64,21 @@ public partial class HarborGame : Node
         {
             CallDeferred(MethodName.RunInputVerification);
         }
+        else if (options.Contains("--verify-saves"))
+        {
+            CallDeferred(MethodName.RunSaveVerification);
+        }
+        else if (options.Contains("--verify-memory"))
+        {
+            CallDeferred(MethodName.RunMemoryVerification);
+        }
         else if (options.Contains("--capture"))
         {
             CallDeferred(MethodName.CapturePreview);
         }
     }
 
-    private void ResetChapter(bool play, CampaignChapter chapter = null)
+    private void ResetChapter(bool play, CampaignChapter chapter = null, ChapterProgress progress = null)
     {
         paused = false;
         edgeArmed = false;
@@ -91,26 +110,28 @@ public partial class HarborGame : Node
         lastTypeSelection = -10;
         stepper.Reset();
         activeChapter = chapter ?? (play ? chosenChapter : CampaignChapter.Harbor);
-        world = activeChapter.Open();
-        world.PrepareBattleNavigation();
-        sequence = activeChapter.CreateSequence(world);
-        view.Cinematic = true;
-        view.FogStrength = sequence.Fog;
-        view.SetWorld(world);
+        world = progress?.World ?? activeChapter.Open();
+        if (play) world.PrepareBattleNavigation();
+        sequence = progress?.Sequence ?? activeChapter.CreateSequence(world);
+        view.Cinematic = !play || SceneRunning || sequence.Complete;
+        view.FogStrength = view.Cinematic ? sequence.Fog : 1;
+        view.SetWorld(world, play);
         radar.World = world;
         Layout();
-        CenterSequence();
+        if (progress != null) RestorePlayerView(progress);
+        else CenterSequence();
         UpdateInterface();
     }
 
     private bool SceneRunning => sequence.Opening || sequence.Departing;
     private bool Finished => sequence.ResultReady || world.Lost && world.OutcomeReady;
     private bool WaitingForDeparture => world.Won && !SceneRunning && !sequence.Complete;
-    private bool CanControl => started && !paused && !SceneRunning && !ReadingRoadOrder && !world.Lost && !Finished && !WaitingForDeparture;
+    private bool CanControl => started && !paused && exitConfirmation == null && !SceneRunning && !ReadingRoadOrder &&
+        !world.Lost && !Finished && !WaitingForDeparture;
 
     public override void _Process(double elapsed)
     {
-        if (world == null) return;
+        if (world == null || chapterLoading != null || exitConfirmation != null) return;
         if (ReadingRoadOrder) AdvanceRoadOrder((float)Math.Min(elapsed, .08));
         else if (started && focused && !paused)
         {
@@ -190,13 +211,15 @@ public partial class HarborGame : Node
         view.Cinematic = false;
         view.FogStrength = 1;
         Layout();
-        view.Center(world.FirstChapter ? world.Home(0) : sequence.CommandVehicle.P, BattlefieldView.DefaultZoom);
+        view.Center(CommandCamera(), BattlefieldView.DefaultZoom);
         UpdateInterface();
         view.QueueRedraw();
     }
 
     private void CenterSequence() => view.Center(sequence.Camera(),
         sequence is BasinSequence basin ? basin.CameraZoom : null);
+
+    private Point CommandCamera() => world.FirstChapter ? world.Home(0) : sequence.CommandVehicle.P;
 
     private void PollCamera(float dt)
     {
@@ -252,6 +275,20 @@ public partial class HarborGame : Node
 
     public override void _Input(InputEvent input)
     {
+        if (exitConfirmation != null)
+        {
+            if (exitFadeStarted || input is InputEventKey { Keycode: Key.Escape })
+            {
+                if (!exitFadeStarted && input is InputEventKey { Pressed: true, Echo: false }) CancelExitGame();
+                GetViewport().SetInputAsHandled();
+            }
+            return;
+        }
+        if (startupLogo != null || chapterLoading != null)
+        {
+            GetViewport().SetInputAsHandled();
+            return;
+        }
         if (ReadingRoadOrder && input is InputEventKey dossierKey)
         {
             if (dossierKey.Pressed && !dossierKey.Echo && dossierKey.Keycode == Key.Enter) AcknowledgeRoadOrder();
@@ -315,9 +352,7 @@ public partial class HarborGame : Node
         if (input is InputEventKey state && state.Pressed && !state.Echo && started &&
             (state.Keycode == Key.Escape || state.Keycode == Key.Enter && (paused || sequence.CanTakeCommand)))
         {
-            if (state.Keycode == Key.Escape && paused && showObjectives) SetPaused(false);
-            else if (state.Keycode == Key.Escape && paused) ReturnToMissions();
-            else if (state.Keycode == Key.Escape) SetPaused(true);
+            if (state.Keycode == Key.Escape) SetPaused(!paused);
             else if (paused) SetPaused(false);
             else TakeCommand();
             GetViewport().SetInputAsHandled();
@@ -329,8 +364,8 @@ public partial class HarborGame : Node
             if (viewingMap && frontKey.Keycode is Key.Escape or Key.Enter) CloseMapViewer();
             else if (frontPage == FrontPage.Rules && frontKey.Keycode is Key.Left or Key.Right)
                 ShowManualPage(manualIndex + (frontKey.Keycode == Key.Right ? 1 : -1));
-            else if (frontKey.Keycode == Key.Enter) { if (frontPage == FrontPage.Missions) LaunchChapter(chosenChapter); else OpenFront(FrontPage.Missions); }
-            else if (frontKey.Keycode == Key.Escape) { if (frontPage == FrontPage.Menu) GetTree().Quit(); else OpenFront(FrontPage.Menu); }
+            else if (frontKey.Keycode == Key.Enter) { if (frontPage == FrontPage.Missions) OpenChosenChapter(); else OpenFront(FrontPage.Missions); }
+            else if (frontKey.Keycode == Key.Escape) { if (frontPage != FrontPage.Menu) OpenFront(FrontPage.Menu); }
             else return;
             GetViewport().SetInputAsHandled();
             return;

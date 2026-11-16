@@ -59,34 +59,33 @@ public partial class BattlefieldView
         int direction = (unit.Dir + 14) % 16;
         if (unit.T.Building)
         {
-            var texture = unit.T.IsWall ? art.Wall(World.WallConnections(unit), BattleArt.Faction(unit.Side))
+            var texture = unit.T.IsWall ? art.Wall(World.WallConnections(unit), unit.Side)
                 : unit.T.IsOilDerrick ? art.OilDerrick(unit.Side) : art.Frame("iso-" + unit.T.Key, false);
-            return texture == null ? PickBody(unit) : art.Ink(texture, BuildingBox(unit, anchor), new Rect2(Vector2.Zero, texture.GetSize()));
+            return texture == null ? PickBody(unit) : art.Ink(texture, BuildingBox(unit, anchor));
         }
         if (unit.T.Foot)
         {
             float size = unit.T.Size * .54f * Zoom;
             var box = new Rect2(anchor - new Vector2(.5f, .91f) * size, Vector2.One * size);
             string key = unit.T.Key == "at" ? "at-mobile" : unit.T.Key;
-            var texture = key == "engineer" ? art.Static("engineer-base.png") : art.Frame(key + "-base");
             if (unit.Stance > 0 && art.Frame($"stance/{unit.T.Key}/{direction / 2}/{Math.Clamp((int)MathF.Round(unit.Stance * 32), 0, 32)}", false) is { } stance)
             {
                 float pose = size * 3 / 2.7f;
-                return art.Ink(stance, new Rect2(anchor - new Vector2(.5f, .91f) * pose, Vector2.One * pose), new Rect2(0, 0, 384, 384));
+                return art.Ink(stance, new Rect2(anchor - new Vector2(.5f, .91f) * pose, Vector2.One * pose));
             }
-            return art.Ink(texture, box, new Rect2(direction / 2 * 512, 0, 512, 512));
+            return art.Ink(art.Cell(key + "-base", direction / 2), box);
         }
         var vehicle = VehicleBox(unit.T, anchor);
         if (unit.T.Key == "tank")
         {
             int hull = TankFrame(unit.Turn);
             var turret = new Rect2(vehicle.Position + tankMounts[hull] * vehicle.Size, vehicle.Size);
-            return art.Ink(art.Static("tank-hull-base.png"), vehicle, FrameRect(hull, 256))
-                .Merge(art.Ink(art.Static("tank-turret-base.png"), turret, FrameRect(TankFrame(unit.TurretTurn), 256)));
+            return art.Ink(art.Cell("tank-hull-base", hull), vehicle)
+                .Merge(art.Ink(art.Cell("tank-turret-base", TankFrame(unit.TurretTurn)), turret));
         }
         string vehicleKey = unit.T.Key == "miner" && unit.Cargo > 10 ? "miner-full" :
             World.RepairVehicle(unit) ? "ifv-repair" : unit.T.Key;
-        return art.Ink(art.Static(vehicleKey + "-base.png"), vehicle, FrameRect(direction, 512));
+        return art.Ink(art.Cell(vehicleKey + "-base", direction), vehicle);
     }
 
     private void DrawIndicators(Piece unit, Vector2 anchor)

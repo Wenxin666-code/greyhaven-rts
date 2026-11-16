@@ -287,7 +287,7 @@ public partial class Campaign {
   if(!stop)TickUnitMovement(o,dt);
  }
  void TickUnitMovement(Piece o,float dt,float speedScale=1,bool followTraffic=true){
-  if(o.Stance<=0&&!o.Entrenched&&o.Path.Count>0){if(o.RouteVersion!=topology&&!Route(o,o.Path.Last())){o.Path.Clear();return;}var p=o.Path.Peek();
+  if(o.Stance<=0&&!o.Entrenched&&o.Path.Count>0){if(o.RouteVersion!=topology&&!RefreshRouteAfterBuildingChange(o)){o.Path.Clear();return;}var p=o.Path.Peek();
    float speed=(o.Formation==null?ReferenceBalance.Speed(o):o.Formation.Speed(o))*speedScale;
    if(!o.T.Foot)DriveTracks(o,p,followTraffic?FollowingSpeed(o,p,speed,dt):speed,dt);
    else{
@@ -319,8 +319,16 @@ public partial class Campaign {
  public void Tick(float dt){
   if(Won||Lost)return;TickVisuals(dt);Time+=dt;AdvanceSelfHealClock(dt);visionTimer-=dt;if(visionTimer<=0){visionTimer=.20f;Reveal();}
   TickConstruction(dt);
-  bool[] power=Enumerable.Range(0,MaxFactions).Select(s=>Power(s)>=0).ToArray();
-  foreach(var o in Units.ToArray()){var before=o.P;UnitTick(o,dt,o.Side<0||power[o.Side]);if(o.Alive&&o.Carrier==null){float travel=Dist(before,o.P);o.Travel+=travel;if(travel>.001f)o.MovedAt=VisualTime;TrackRouteProgress(o);o.StalledFor=o.Path.Count>0&&travel<o.T.Speed*dt*.15f?o.StalledFor+dt:Math.Max(0,o.StalledFor-dt*2);}}
+  Span<int> power=stackalloc int[MaxFactions];
+  power.Clear();
+  foreach(var unit in Units){
+   int energy=unit.T.Energy;
+   if(energy==0||unit.Side<0||!unit.Deployed)continue;
+   power[unit.Side]+=energy>0?(int)(energy*unit.Hp/unit.T.Hp):energy;
+  }
+  // Production appends units. As before, their first update is on the next tick.
+  int count=Units.Count;
+  for(int i=0;i<count;i++){var o=Units[i];var before=o.P;UnitTick(o,dt,o.Side<0||power[o.Side]>=0);if(o.Alive&&o.Carrier==null){float travel=Dist(before,o.P);o.Travel+=travel;if(travel>.001f)o.MovedAt=VisualTime;TrackRouteProgress(o);o.StalledFor=o.Path.Count>0&&travel<o.T.Speed*dt*.15f?o.StalledFor+dt:Math.Max(0,o.StalledFor-dt*2);}}
   TickAiMarchRequests();CheckEnemySurrender(dt);
   BasinOperation?.TickOilIncome();
   BasinOperation?.Orders.Collect(this);

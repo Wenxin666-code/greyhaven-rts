@@ -865,6 +865,56 @@ public partial class HarborGame
         Expect(view.CameraPosition == before, "Returning to the middle immediately stops scrolling");
     }
 
+    private async void RunMemoryVerification()
+    {
+        try
+        {
+            focused = false;
+            using var process = System.Diagnostics.Process.GetCurrentProcess();
+            for (int run = 1; run <= 3; run++)
+            {
+                LaunchChapter(CampaignChapter.Basin);
+                WaitFor(() => sequence.CanTakeCommand, 110, "Basin opens for memory checks");
+                TakeCommand();
+                long cachePeak = 0, workingPeak = 0;
+                const int stepsPerDraw = 15;
+                for (int frame = 0; frame < 320; frame++)
+                {
+                    // Visit each faction in turn so both animated buildings and its units are drawn.
+                    if (frame % 8 == 0)
+                    {
+                        var scene = world.Home(frame / 8 % world.FactionCount);
+                        world.RevealBasinScene(scene, Campaign.Tile * 14);
+                        view.Center(scene);
+                    }
+                    for (int tick = 0; tick < stepsPerDraw; tick++)
+                        Simulate((float)MatchTempo.Step);
+                    view.QueueRedraw();
+                    await ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
+                    cachePeak = Math.Max(cachePeak, view.Art.CachedFrameBytes);
+                    process.Refresh();
+                    workingPeak = Math.Max(workingPeak, process.WorkingSet64);
+                }
+                Expect(cachePeak > 0 && cachePeak <= BattleArt.FrameBudget * 3 / 2,
+                    "Repeated battlefield draws keep the frame cache within its budget plus the active view");
+                float time = world.Time;
+                ReturnToMissions();
+                await ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
+                process.Refresh();
+                Expect(!view.Visible && view.Art.CachedFrameBytes == 0, "Returning to missions releases battlefield frames");
+                GD.Print($"Basin memory run {run}: {time:F0}s simulated, frame cache peak {cachePeak / 1048576.0:F1} MiB, " +
+                    $"working set peak {workingPeak / 1048576.0:F1} MiB, {process.WorkingSet64 / 1048576.0:F1} MiB after returning.");
+            }
+            GD.Print("PASS: battlefield texture budget and release across three Basin restarts.");
+            GetTree().Quit();
+        }
+        catch (Exception error)
+        {
+            GD.PushError(error.ToString());
+            GetTree().Quit(1);
+        }
+    }
+
     private async void CapturePreview()
     {
         try

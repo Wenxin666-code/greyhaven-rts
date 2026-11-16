@@ -45,9 +45,13 @@ public partial class Campaign {
   if(Math.Abs(delta)<.00001f)return a>=lo&&a<=hi;
   float p=(lo-a)/delta,q=(hi-a)/delta;entry=Math.Max(entry,Math.Min(p,q));exit=Math.Min(exit,Math.Max(p,q));return entry<=exit;
  }
- bool Clear(PointF a,PointF b,RectangleF[] blocks,float pad=0){
+ static bool ClearOfBarriers(PointF a,PointF b,RectangleF[] blocks){
   float left=Math.Min(a.X,b.X),right=Math.Max(a.X,b.X),top=Math.Min(a.Y,b.Y),bottom=Math.Max(a.Y,b.Y);
-  foreach(var r in blocks){if(r.Right<left||r.Left>right||r.Bottom<top||r.Top>bottom)continue;float lo=0,hi=1;if(Slab(a.X,b.X-a.X,r.Left,r.Right,ref lo,ref hi)&&Slab(a.Y,b.Y-a.Y,r.Top,r.Bottom,ref lo,ref hi))return false;}return TerrainLine(a,b,pad);
+  foreach(var r in blocks){if(r.Right<left||r.Left>right||r.Bottom<top||r.Top>bottom)continue;float lo=0,hi=1;if(Slab(a.X,b.X-a.X,r.Left,r.Right,ref lo,ref hi)&&Slab(a.Y,b.Y-a.Y,r.Top,r.Bottom,ref lo,ref hi))return false;}
+  return true;
+ }
+ bool Clear(PointF a,PointF b,RectangleF[] blocks,float pad=0){
+  return ClearOfBarriers(a,b,blocks)&&TerrainLine(a,b,pad);
  }
  const int Step=15;int N {get{return (MapWidth+MapHeight)/Step;}} int M {get{return N;}}
  int NavX(float x){return (int)Math.Floor((x-FogOriginX)/Step);}
@@ -67,6 +71,18 @@ public partial class Campaign {
  NavigationGrid Grid(float pad){
   NavigationGrid grid;if(grids.TryGetValue(pad,out grid))return grid;
   grid=new NavigationGrid{Barriers=Obstacles().Select(r=>Inflated(r,pad)).ToArray()};grids[pad]=grid;return grid;
+ }
+ bool RefreshRouteAfterBuildingChange(Piece unit){
+  var blocks=Grid(Clearance(unit)).Barriers;
+  var previous=unit.P;
+  foreach(var point in unit.Path){
+   if(!ClearOfBarriers(previous,point,blocks))return Route(unit,unit.Path.Last());
+   previous=point;
+  }
+  // Construction changes barriers. Terrain and the existing route's geometry
+  // were already checked when the route was accepted.
+  unit.RouteVersion=topology;
+  return true;
  }
  // A tracked chassis may translate only along map axes or their diagonals.
  // Two legs suffice in open space; test both bend orders against swept obstacles.

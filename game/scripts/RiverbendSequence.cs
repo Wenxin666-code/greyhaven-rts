@@ -57,11 +57,13 @@ internal sealed class RiverbendSequence : ChapterSequence
             departureCamera.Y + (roadAhead.Y - departureCamera.Y) * follow);
     }
 
+    internal override Point OpeningPanTarget => world.Home(0);
+
     internal override Point Camera()
     {
         float t = operation.Elapsed;
         if (Departing || Complete) return HarborOperation.Glide(departureFrom, departureCamera, t / 2.6f);
-        var west = world.Home(0);
+        var west = OpeningPanTarget;
         var bridge = RiverbendMap.PortPoint(operation.Bridge.Right + .5f, 33);
         var junction = RiverbendMap.PortPoint(RiverbendMap.RiverJunction.X, RiverbendMap.RiverJunction.Y);
         if (t < 4.5f) return HarborOperation.Glide(RiverbendMap.PortPoint(22, 34), west, t / 4.5f);

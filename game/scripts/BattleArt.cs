@@ -2,7 +2,6 @@ using Godot;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 using Greyhaven;
 
@@ -10,20 +9,20 @@ internal sealed class BattleArt : IDisposable
 {
     private readonly Dictionary<string, Texture2D> staticTextures = new();
     private readonly Dictionary<string, Texture2D> portraits = new();
-    private readonly Dictionary<(int Mask, Color Tint), Texture2D> walls = new();
-    private readonly Dictionary<(int Frame, int Side), Texture2D> oilFrames = new();
-    private Image wallBase, wallPaint;
     private Image oilBase, oilPaint;
     private const int OilColumns = 12, OilCell = 192, OilFrames = 144, OilFps = 24;
-    private readonly Dictionary<Texture2D, (int Width, byte[] Bits)> hitMasks = new();
-    private readonly Dictionary<(Texture2D Texture, Rect2 Cell), Rect2> inkBounds = new();
-    private readonly Dictionary<string, (ImageTexture Texture, LinkedListNode<string> Age)> frames = new();
-    private readonly LinkedList<string> age = new();
-    private readonly SpriteArchive harbor = new("harbor-v01.pak");
-    private readonly SpriteArchive infantry = new("infantry-v12.pak");
-    private readonly SpriteArchive structures = new("structures-v10.pak");
-    private readonly SpriteArchive buildings = new("buildings-v09.pak");
-    private readonly SpriteArchive gait = new("gait-v09.pak");
+    private sealed record HitMask(int Width, byte[] Bits, Rect2 Bounds);
+    private readonly Dictionary<Texture2D, HitMask> hitMasks = new();
+    internal const long FrameBudget = 64L * 1024 * 1024;
+    private enum FrameSource { Animation, Cell, Wall, Oil }
+    private readonly record struct FrameKey(FrameSource Source, long Index);
+    private sealed record CachedFrame(ImageTexture Texture, LinkedListNode<FrameKey> Age, long Bytes);
+    private readonly Dictionary<FrameKey, CachedFrame> frames = new();
+    private readonly LinkedList<FrameKey> age = new();
+    private long frameBytes;
+    internal long CachedFrameBytes => frameBytes;
+    private readonly SpriteArchive sprites = new("runtime-sprites.pak");
+    private readonly SpriteArchive cells = new("runtime-cells.pak");
     internal static readonly Color[] Factions = {
         new("#3e85be"), new("#b84233"), new("#4a9252"), new("#d1a133"), new("#8955b1"), new("#27aca6")
     };
@@ -35,40 +34,32 @@ internal sealed class BattleArt : IDisposable
         if (portraits.TryGetValue(type.Key, out var old)) return old;
         string key = type.Key == "at" ? "at-mobile" : type.Key;
         Texture2D body, paint;
-        Rect2I cell;
         if (type.IsWall)
         {
-            body = Wall(0, Faction(0));
+            body = Wall(0, 0);
             paint = null;
-            cell = new Rect2I(0, 0, 320, 320);
         }
         else if (type.Building)
         {
             body = Frame("iso-" + key);
             paint = Frame("iso-" + key + "-paint", false);
-            cell = new Rect2I(0, 0, 320, 320);
         }
-        else if (key is "tank" or "engineer" || !type.Foot)
+        else if (key == "tank")
         {
-            int frame = key == "tank" ? 56 : 14;
-            body = Static(key + "-base.png");
-            paint = Static(key + "-paint.png");
-            cell = type.Foot ? new Rect2I(7 * 512, 0, 512, 512)
-                : new Rect2I(frame % 8 * 512, frame / 8 * 512, 512, 512);
+            body = Frame("tank-portrait-base");
+            paint = Frame("tank-portrait-paint");
         }
         else
         {
-            body = Frame(key + "-base");
-            paint = Frame(key + "-paint");
-            cell = new Rect2I(7 * 512, 0, 512, 512);
+            int frame = type.Foot ? 7 : 14;
+            body = Cell(key + "-base", frame);
+            paint = Cell(key + "-paint", frame);
         }
-        using var image = body.GetImage();
-        using var composed = image.GetRegion(cell);
+        using var composed = body.GetImage();
         composed.Convert(Image.Format.Rgba8);
         if (paint != null)
         {
-            using var paintImage = paint.GetImage();
-            using var layer = paintImage.GetRegion(cell);
+            using var layer = paint.GetImage();
             layer.Convert(Image.Format.Rgba8);
             var pixels = composed.GetData();
             var color = layer.GetData();
@@ -93,7 +84,7 @@ internal sealed class BattleArt : IDisposable
             }
             composed.SetData(composed.GetWidth(), composed.GetHeight(), false, Image.Format.Rgba8, pixels);
         }
-        var used = composed.GetUsedRect().Grow(2).Intersection(new Rect2I(0, 0, cell.Size.X, cell.Size.Y));
+        var used = composed.GetUsedRect().Grow(2).Intersection(new Rect2I(Vector2I.Zero, composed.GetSize()));
         using var crop = composed.GetRegion(used);
         float scale = Math.Min(112f / crop.GetWidth(), 64f / crop.GetHeight());
         crop.Resize(Math.Max(1, (int)(crop.GetWidth() * scale)), Math.Max(1, (int)(crop.GetHeight() * scale)), Image.Interpolation.Lanczos);
@@ -110,27 +101,26 @@ internal sealed class BattleArt : IDisposable
         pixels[i + 2] = (byte)Math.Clamp(pixels[i + 2] - paint[i + 2] * weight * (1 - tint.B), 0, 255);
     }
 
-    internal Texture2D Wall(int mask, Color tint)
+    internal Texture2D Wall(int mask, int side)
     {
-        if (walls.TryGetValue((mask, tint), out var old)) return old;
-        wallBase ??= Static("wall-base.png").GetImage();
-        wallPaint ??= Static("wall-paint.png").GetImage();
-        var bounds = new Rect2I(mask % 4 * 320, mask / 4 * 320, 320, 320);
-        var texture = TintRegion(wallBase, wallPaint, bounds, tint);
-        walls.Add((mask, tint), texture);
-        return texture;
+        var key = new FrameKey(FrameSource.Wall, (side + 1) * 16 + mask);
+        if (FindFrame(key) is { } old) return old;
+        using var body = ReadCell("wall-base", mask);
+        using var paint = ReadCell("wall-paint", mask);
+        return RememberFrame(key, TintImages(body, paint, Faction(side)));
     }
 
     internal Texture2D OilDerrick(int side, float time = 0)
     {
         int frame = (int)(time * OilFps) % OilFrames;
-        if (oilFrames.TryGetValue((frame, side), out var old)) return old;
+        var key = new FrameKey(FrameSource.Oil, (side + 1) * OilFrames + frame);
+        if (FindFrame(key) is { } old) return old;
         oilBase ??= LoadOilSheet("oilwell-front-base.png");
         oilPaint ??= LoadOilSheet("oilwell-front-paint.png");
         var bounds = new Rect2I(frame % OilColumns * OilCell, frame / OilColumns * OilCell, OilCell, OilCell);
-        var texture = TintRegion(oilBase, oilPaint, bounds, Faction(side));
-        oilFrames.Add((frame, side), texture);
-        return texture;
+        using var body = oilBase.GetRegion(bounds);
+        using var paint = oilPaint.GetRegion(bounds);
+        return RememberFrame(key, TintImages(body, paint, Faction(side)));
     }
 
     private static Image LoadOilSheet(string name)
@@ -145,17 +135,15 @@ internal sealed class BattleArt : IDisposable
         return image;
     }
 
-    private static Texture2D TintRegion(Image baseLayer, Image paintLayer, Rect2I bounds, Color tint)
+    private static ImageTexture TintImages(Image body, Image layer, Color tint)
     {
-        using var body = baseLayer.GetRegion(bounds);
-        using var layer = paintLayer.GetRegion(bounds);
         body.Convert(Image.Format.Rgba8);
         layer.Convert(Image.Format.Rgba8);
         var pixels = body.GetData();
         var paint = layer.GetData();
         for (int i = 0; i < pixels.Length; i += 4)
             TintContribution(pixels, paint, i, tint);
-        body.SetData(bounds.Size.X, bounds.Size.Y, false, Image.Format.Rgba8, pixels);
+        body.SetData(body.GetWidth(), body.GetHeight(), false, Image.Format.Rgba8, pixels);
         return ImageTexture.CreateFromImage(body);
     }
 
@@ -176,74 +164,90 @@ internal sealed class BattleArt : IDisposable
         return bytes;
     }
 
-    internal Texture2D Frame(string name, bool required = true)
+    internal Texture2D Frame(string name, bool required = true) =>
+        ArchiveFrame(sprites, FrameSource.Animation, name, required);
+
+    internal Texture2D Cell(string atlas, int cell) =>
+        ArchiveFrame(cells, FrameSource.Cell, $"{atlas}/{cell}", true);
+
+    private Image ReadCell(string atlas, int cell)
     {
-        if (frames.TryGetValue(name, out var cached))
+        string name = $"{atlas}/{cell}";
+        if (!cells.TryGet(name, out var entry)) throw new InvalidDataException("Missing frame: " + name);
+        return DecodeImage(name, cells.Read(entry));
+    }
+
+    private ImageTexture ArchiveFrame(SpriteArchive archive, FrameSource source, string name, bool required)
+    {
+        if (!archive.TryGet(name, out var entry))
+        {
+            if (!required) return null;
+            throw new InvalidDataException("Missing frame: " + name);
+        }
+        var key = new FrameKey(source, entry.Offset);
+        return FindFrame(key) ?? RememberFrame(key, Decode(name, archive.Read(entry)));
+    }
+
+    private ImageTexture FindFrame(FrameKey key)
+    {
+        if (frames.TryGetValue(key, out var cached))
         {
             age.Remove(cached.Age);
             age.AddLast(cached.Age);
             return cached.Texture;
         }
 
-        var bytes = harbor.Read(name) ?? infantry.Read(name) ?? structures.Read(name) ?? buildings.Read(name) ?? gait.Read(name);
-        if (bytes == null)
-        {
-            if (!required) return null;
-            throw new InvalidDataException("Missing frame: " + name);
-        }
+        return null;
+    }
 
-        var texture = Decode(name, bytes);
-        frames.Add(name, (texture, age.AddLast(name)));
-        // Draw commands borrow textures until the frame has been submitted.
+    private ImageTexture RememberFrame(FrameKey key, ImageTexture texture)
+    {
+        long bytes = (long)texture.GetWidth() * texture.GetHeight() * 4;
+        frames.Add(key, new CachedFrame(texture, age.AddLast(key), bytes));
+        frameBytes += bytes;
         return texture;
     }
 
-    internal bool Opaque(Texture2D texture, Rect2 box, Rect2 cell, Vector2 point)
+    internal bool Opaque(Texture2D texture, Rect2 box, Vector2 point)
     {
         if (!box.HasPoint(point)) return false;
         var mask = Mask(texture);
-        var pixel = cell.Position + (point - box.Position) / box.Size * cell.Size;
-        return OpaqueAt(mask, (int)pixel.X, (int)pixel.Y);
-    }
-
-    internal Rect2 Ink(Texture2D texture, Rect2 box, Rect2 cell)
-    {
-        if (!inkBounds.TryGetValue((texture, cell), out var bounds))
-        {
-            var mask = Mask(texture);
-            int left = (int)cell.End.X, top = (int)cell.End.Y, right = -1, bottom = -1;
-            for (int y = (int)cell.Position.Y; y < (int)cell.End.Y; y++)
-            for (int x = (int)cell.Position.X; x < (int)cell.End.X; x++)
-            {
-                if (!OpaqueAt(mask, x, y)) continue;
-                left = Math.Min(left, x); top = Math.Min(top, y);
-                right = Math.Max(right, x); bottom = Math.Max(bottom, y);
-            }
-            bounds = right < 0 ? new Rect2(Vector2.Zero, Vector2.One) : new Rect2(
-                (new Vector2(left, top) - cell.Position) / cell.Size, new Vector2(right - left + 1, bottom - top + 1) / cell.Size);
-            inkBounds.Add((texture, cell), bounds);
-        }
-        return new Rect2(box.Position + bounds.Position * box.Size, bounds.Size * box.Size);
-    }
-
-    private static bool OpaqueAt((int Width, byte[] Bits) mask, int x, int y)
-    {
-        int index = y * mask.Width + x;
+        var pixel = (point - box.Position) / box.Size * texture.GetSize();
+        int index = (int)pixel.Y * mask.Width + (int)pixel.X;
         return index >= 0 && index / 8 < mask.Bits.Length && (mask.Bits[index / 8] & (1 << (index % 8))) != 0;
     }
 
-    private (int Width, byte[] Bits) Mask(Texture2D texture)
+    internal Rect2 Ink(Texture2D texture, Rect2 box)
+    {
+        var bounds = Mask(texture).Bounds;
+        return new Rect2(box.Position + bounds.Position * box.Size, bounds.Size * box.Size);
+    }
+
+    private HitMask Mask(Texture2D texture)
     {
         if (!hitMasks.TryGetValue(texture, out var mask))
         {
             using var image = texture.GetImage();
             image.Convert(Image.Format.Rgba8);
             var pixels = image.GetData();
-            int count = pixels.Length / 4;
+            int width = image.GetWidth(), height = image.GetHeight(), count = width * height;
             var bits = new byte[(count + 7) / 8];
-            for (int i = 0; i < count; i++)
-                if (pixels[i * 4 + 3] >= 64) bits[i / 8] |= (byte)(1 << (i % 8));
-            mask = (image.GetWidth(), bits);
+            int left = width, top = height, right = -1, bottom = -1;
+            for (int y = 0; y < height; y++)
+            for (int x = 0; x < width; x++)
+            {
+                int i = y * width + x;
+                if (pixels[i * 4 + 3] < 64) continue;
+                bits[i / 8] |= (byte)(1 << (i % 8));
+                left = Math.Min(left, x);
+                right = Math.Max(right, x);
+                top = Math.Min(top, y);
+                bottom = Math.Max(bottom, y);
+            }
+            Vector2 size = image.GetSize();
+            var bounds = right < 0 ? new Rect2(Vector2.Zero, Vector2.One) : new Rect2(
+                new Vector2(left, top) / size, new Vector2(right - left + 1, bottom - top + 1) / size);
+            mask = new HitMask(width, bits, bounds);
             hitMasks.Add(texture, mask);
         }
         return mask;
@@ -251,14 +255,15 @@ internal sealed class BattleArt : IDisposable
 
     internal void Trim()
     {
-        while (frames.Count > 112)
+        // The previous draw has finished. Keep all frames borrowed by the current draw alive.
+        while (frameBytes > FrameBudget)
         {
             var key = age.First.Value;
             age.RemoveFirst();
-            var texture = frames[key].Texture;
+            var entry = frames[key];
+            frameBytes -= entry.Bytes;
+            var texture = entry.Texture;
             hitMasks.Remove(texture);
-            foreach (var entry in inkBounds.Keys.Where(entry => entry.Texture == texture).ToArray())
-                inkBounds.Remove(entry);
             texture.Dispose();
             frames.Remove(key);
         }
@@ -266,27 +271,40 @@ internal sealed class BattleArt : IDisposable
 
     private static ImageTexture Decode(string name, byte[] bytes)
     {
-        using var image = new Image();
-        if (image.LoadPngFromBuffer(bytes) != Error.Ok) throw new InvalidDataException("Invalid PNG: " + name);
+        using var image = DecodeImage(name, bytes);
         return ImageTexture.CreateFromImage(image);
+    }
+
+    private static Image DecodeImage(string name, byte[] bytes)
+    {
+        var image = new Image();
+        bool webp = bytes.Length >= 12 && bytes.AsSpan(0, 4).SequenceEqual("RIFF"u8) &&
+            bytes.AsSpan(8, 4).SequenceEqual("WEBP"u8);
+        var error = webp ? image.LoadWebpFromBuffer(bytes) : image.LoadPngFromBuffer(bytes);
+        if (error == Error.Ok) return image;
+        image.Dispose();
+        throw new InvalidDataException("Invalid sprite frame: " + name);
+    }
+
+    internal void ReleaseBattleFrames()
+    {
+        foreach (var entry in frames.Values) entry.Texture.Dispose();
+        frames.Clear();
+        age.Clear();
+        hitMasks.Clear();
+        frameBytes = 0;
+        oilBase?.Dispose();
+        oilPaint?.Dispose();
+        oilBase = oilPaint = null;
     }
 
     public void Dispose()
     {
         foreach (var texture in staticTextures.Values) texture.Dispose();
         foreach (var texture in portraits.Values) texture.Dispose();
-        foreach (var texture in walls.Values) texture.Dispose();
-        foreach (var texture in oilFrames.Values) texture.Dispose();
-        wallBase?.Dispose();
-        wallPaint?.Dispose();
-        oilBase?.Dispose();
-        oilPaint?.Dispose();
-        foreach (var entry in frames.Values) entry.Texture.Dispose();
-        harbor.Dispose();
-        infantry.Dispose();
-        structures.Dispose();
-        buildings.Dispose();
-        gait.Dispose();
+        ReleaseBattleFrames();
+        sprites.Dispose();
+        cells.Dispose();
     }
 
     private sealed class SpriteArchive : IDisposable
@@ -314,9 +332,10 @@ internal sealed class BattleArt : IDisposable
             dataStart = stream.Position;
         }
 
-        internal byte[] Read(string name)
+        internal bool TryGet(string name, out (long Offset, int Size) entry) => entries.TryGetValue(name, out entry);
+
+        internal byte[] Read((long Offset, int Size) entry)
         {
-            if (!entries.TryGetValue(name, out var entry)) return null;
             stream.Position = dataStart + entry.Offset;
             var bytes = new byte[entry.Size];
             stream.ReadExactly(bytes);

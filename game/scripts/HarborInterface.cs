@@ -45,7 +45,7 @@ public partial class HarborGame
         "(?<rail>铁轨运输卫队|铁轨卫队)|(?<south>南岸地方防卫队|南岸防卫队)|" +
         "(?<border>边境独立旅|独立旅)");
 
-    private void MakeInterface()
+    private void MakeFrontInterface()
     {
         var layer = GetNode<CanvasLayer>("Interface");
         ui = new Control { MouseFilter = Control.MouseFilterEnum.Ignore };
@@ -73,6 +73,10 @@ public partial class HarborGame
         layer.AddChild(ui);
         ui.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         MakeFront();
+    }
+
+    private void MakeBattleInterface()
+    {
         basinCut = Accent(ui, 0, 0, 1472, 819, new Color("#13181700"));
         basinCut.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         basinCut.Visible = false;
@@ -134,7 +138,7 @@ public partial class HarborGame
         enterPrompt = Bold(takeCommand, "Enter", 134, 8, 49, 22, 12);
         enterPrompt.Modulate = Ink;
         nextChapter = AddButton(messagePanel, "下一关 · 河湾镇", 20, 150, 181, 35,
-            () => { if (activeChapter.Next is { } next) LaunchChapter(next); });
+            ProceedToNextChapter);
         SetLit(nextChapter, true);
         archiveResult = AddButton(messagePanel, "战役档案", 365, 150, 171, 35, OpenArchive);
         riverbendHandoff = AddButton(ui, "接管先遣队", 1232, 740, 204, 46, TakeCommand);
@@ -192,7 +196,7 @@ public partial class HarborGame
         Bold(start, "›", 301, 0, 28, 45, 30).Modulate = Ink;
         AddButton(startPanel, "规则介绍", 64, 598, 335, 44, () => OpenFront(FrontPage.Rules));
         archiveEntry = AddButton(startPanel, "战役档案", 64, 653, 335, 44, OpenArchive);
-        AddButton(startPanel, "退出游戏", 64, 712, 190, 40, () => GetTree().Quit());
+        AddButton(startPanel, "退出游戏", 64, 712, 190, 40, RequestExitGame);
 
         missionPanel = Page(front);
         Bold(missionPanel, "行动选择", 58, 82, 360, 62, 46);
@@ -227,6 +231,8 @@ public partial class HarborGame
         LabelAt(brief, "胜利条件", 36, 488, 82, 25, 14).Modulate = Dim;
         briefVictory = Paragraph(brief, 121, 486, 745, 34, 16);
         launchChapterButton = AddButton(brief, "开始序章", 586, 529, 278, 62, () => LaunchChapter(chosenChapter), 23);
+        resumeChapterButton = AddButton(brief, "继续上次进度", 300, 529, 270, 62, ResumeChosenChapter, 22);
+        SetLit(resumeChapterButton, true);
         var launch = launchChapterButton;
         SetLit(launch, true);
         Bold(launch, "›", 242, 0, 30, 45, 30).Modulate = Ink;
@@ -242,7 +248,7 @@ public partial class HarborGame
         AddButton(mapViewer, "返回选关", 28, 591, 185, 38, CloseMapViewer);
     }
 
-    private Button launchChapterButton;
+    private Button launchChapterButton, resumeChapterButton;
 
     private void ChooseChapter(CampaignChapter chapter)
     {
@@ -254,7 +260,7 @@ public partial class HarborGame
         ColorParagraph(briefStory, brief.Story);
         ColorParagraph(briefOrders, brief.Orders);
         ColorParagraph(briefVictory, brief.Victory);
-        launchChapterButton.Text = chapter == CampaignChapter.Harbor ? "开始序章" : "进入" + brief.Title;
+        RefreshChapterProgressButtons();
         if (!previews.TryGetValue(chapter, out var preview))
         {
             var map = chapter == CampaignChapter.Harbor ? RiverbendMap.ChapterOne() :
@@ -265,11 +271,16 @@ public partial class HarborGame
         for (int i = 0; i < chapterButtons.Length; i++) SetLit(chapterButtons[i], chapter == CampaignChapter.Playable[i]);
     }
 
-    private void LaunchChapter(CampaignChapter chapter)
+    private void LaunchChapter(CampaignChapter chapter) =>
+        EnterChapter(() => BeginChapter(chapter), preloadOpening: true);
+
+    private void BeginChapter(CampaignChapter chapter)
     {
+        bool replacing = HasChapterProgress(chapter);
         chosenChapter = chapter;
         viewingMap = false;
         ResetChapter(true, chapter);
+        if (replacing) SaveBeforeLeavingChapter();
     }
 
     private void OpenMapViewer()
@@ -304,6 +315,7 @@ public partial class HarborGame
 
     private void ReturnToMissions()
     {
+        if (!SaveBeforeLeavingChapter()) return;
         ResetChapter(false);
         OpenFront(FrontPage.Missions);
     }

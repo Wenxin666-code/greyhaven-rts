@@ -19,6 +19,11 @@ public partial class Campaign {
   // barriers remain dynamic and use the normal invalidation path.
   foreach(var type in Types)if(!type.Building)TerrainNavigation(type.Clearance);
  }
+ internal void ResetRestoredNavigation(){
+  grids.Clear();
+  wallCells.Clear();
+  wallTopology=-1;
+ }
  // Traffic grids live only for a synchronous route call. Reuse their large
  // arrays and stamp link entries, leaving persistent building grids untouched.
  bool[] temporaryNavigationOpen;ushort[] temporaryNavigationLinks;int[] temporaryNavigationStamps;int temporaryNavigationEpoch;

@@ -63,14 +63,22 @@ public partial class BattlefieldView : Node2D
 
     private static float Parse(string number) => float.Parse(number, CultureInfo.InvariantCulture);
 
-    internal void SetWorld(Campaign world)
+    internal void SetWorld(Campaign world, bool playable)
     {
+        Hide();
         terrain?.Dispose();
         shroud?.Dispose();
+        art.ReleaseBattleFrames();
+        visibleUnits.Clear();
         World = world;
-        if (world.BasinOperation != null) freightSprites ??= new FreightSprites();
-        terrain = new TerrainMesh(world.River, art.Static("ground.png"), GD.Load<Texture2D>("res://assets/sand.png"));
-        shroud = new BattlefieldShroud(world);
+        if (world.BasinOperation == null)
+        {
+            freightSprites?.Dispose();
+            freightSprites = null;
+        }
+        else if (playable) freightSprites ??= new FreightSprites();
+        terrain = playable ? new TerrainMesh(world.River, art.Static("ground.png"), GD.Load<Texture2D>("res://assets/sand.png")) : null;
+        shroud = playable ? new BattlefieldShroud(world) : null;
         Zoom = DefaultZoom;
         Mark = null;
         Hovered = null;
@@ -81,7 +89,10 @@ public partial class BattlefieldView : Node2D
         Beacons.Clear();
         SelectedBeacon = -1;
         DragBox = null;
+        MarkedTarget = null;
+        Selection = Array.Empty<Piece>();
         Center(world.Home(0));
+        Visible = playable;
         QueueRedraw();
     }
 
@@ -106,6 +117,7 @@ public partial class BattlefieldView : Node2D
     {
         terrain?.Dispose();
         shroud?.Dispose();
+        freightSprites?.Dispose();
         art?.Dispose();
     }
 
@@ -148,24 +160,29 @@ public partial class BattlefieldView : Node2D
         var ground = Ground(point);
         Piece exact = null, near = null, foundation = null, garrison = null;
         float closest = float.MaxValue;
-        foreach (var unit in World.Units.Where(p => p.Alive && p.Carrier == null && World.Visible(p))
-                     .OrderByDescending(p => p.P.X + p.P.Y))
+        float exactDepth = float.NegativeInfinity, nearDepth = exactDepth, foundationDepth = exactDepth, garrisonDepth = exactDepth;
+        foreach (var unit in World.Units)
         {
-            var bounds = PickBody(unit);
+            if (!unit.Alive || unit.Carrier != null || !World.Visible(unit)) continue;
+            float depth = unit.P.X + unit.P.Y;
+            var anchor = Screen(unit.P);
             if (unit.T.Building)
             {
                 bool onFoundation = Campaign.Footprint(unit.T, unit.P).Contains(ground);
-                bool onBuilding = PickInk(unit, point);
-                if (exact == null && onBuilding) exact = unit;
-                if (foundation == null && onFoundation) foundation = unit;
-                if (preferGarrison && garrison == null && unit.Deployed && unit.Side <= 0 && unit.T.Garrison &&
-                    (onBuilding || onFoundation)) garrison = unit;
+                bool onBuilding = PickInk(unit, point, anchor);
+                if (depth > exactDepth && onBuilding) { exact = unit; exactDepth = depth; }
+                if (depth > foundationDepth && onFoundation) { foundation = unit; foundationDepth = depth; }
+                if (preferGarrison && depth > garrisonDepth && unit.Deployed && unit.Side <= 0 && unit.T.Garrison &&
+                    (onBuilding || onFoundation)) { garrison = unit; garrisonDepth = depth; }
                 continue;
             }
-            if (exact == null && bounds.HasPoint(point) && PickInk(unit, point)) exact = unit;
+            var bounds = PickBody(unit, anchor);
+            if (depth > exactDepth && bounds.HasPoint(point) && PickInk(unit, point, anchor))
+            { exact = unit; exactDepth = depth; }
             if (!bounds.Grow(unit.T.Foot ? 8 : 6).HasPoint(point)) continue;
             float score = bounds.GetCenter().DistanceSquaredTo(point);
-            if (score < closest) { near = unit; closest = score; }
+            if (score < closest || score == closest && depth > nearDepth)
+            { near = unit; closest = score; nearDepth = depth; }
         }
         if (exact is { T.Building: false }) return exact;
         if (garrison != null) return garrison;
@@ -174,18 +191,18 @@ public partial class BattlefieldView : Node2D
         return near ?? foundation;
     }
 
-    internal Rect2 PickBody(Piece p)
+    internal Rect2 PickBody(Piece p) => PickBody(p, Screen(p.P));
+
+    private Rect2 PickBody(Piece p, Vector2 screen)
     {
-        var screen = Screen(p.P);
         float width = (p.T.Building ? (p.T.FoundationWidth + p.T.FoundationHeight) * 12
             : p.T.Foot ? 19 : 31) * Zoom;
         float height = (p.T.Building ? 36 : p.T.Foot ? 21 : 19) * Zoom;
         return new Rect2(screen - new Vector2(width * .5f, height * .92f), new Vector2(width, height * 1.15f));
     }
 
-    private bool PickInk(Piece unit, Vector2 cursor)
+    private bool PickInk(Piece unit, Vector2 cursor, Vector2 anchor)
     {
-        var anchor = Screen(unit.P);
         int direction = (unit.Dir + 14) % 16;
         if (unit.T.Building)
         {
@@ -193,30 +210,29 @@ public partial class BattlefieldView : Node2D
             if (!box.HasPoint(cursor)) return false;
             if (unit.T.IsWall)
             {
-                var wall = art.Wall(World.WallConnections(unit), BattleArt.Faction(unit.Side));
-                return art.Opaque(wall, box, new Rect2(Vector2.Zero, wall.GetSize()), cursor);
+                var wall = art.Wall(World.WallConnections(unit), unit.Side);
+                return art.Opaque(wall, box, cursor);
             }
             var texture = unit.T.IsOilDerrick ? art.OilDerrick(unit.Side) : art.Frame(BuildingFrame(unit), false);
-            return texture != null && art.Opaque(texture, box, new Rect2(Vector2.Zero, texture.GetSize()), cursor);
+            return texture != null && art.Opaque(texture, box, cursor);
         }
         if (unit.T.Foot)
         {
             float size = unit.T.Size * .54f * Zoom;
             var box = new Rect2(anchor - new Vector2(.5f, .91f) * size, Vector2.One * size);
             string key = unit.T.Key == "at" ? "at-mobile" : unit.T.Key;
-            var texture = key == "engineer" ? art.Static("engineer-base.png") : art.Frame(key + "-base");
-            return art.Opaque(texture, box, new Rect2(direction / 2 * 512, 0, 512, 512), cursor);
+            return box.HasPoint(cursor) && art.Opaque(art.Cell(key + "-base", direction / 2), box, cursor);
         }
         var vehicle = VehicleBox(unit.T, anchor);
         if (unit.T.Key != "tank")
         {
             string key = unit.T.Key == "miner" && unit.Cargo > 10 ? "miner-full" : World.RepairVehicle(unit) ? "ifv-repair" : unit.T.Key;
-            return art.Opaque(art.Static(key + "-base.png"), vehicle, FrameRect(direction, 512), cursor);
+            return vehicle.HasPoint(cursor) && art.Opaque(art.Cell(key + "-base", direction), vehicle, cursor);
         }
         int hull = TankFrame(unit.Turn);
         var turret = new Rect2(vehicle.Position + tankMounts[hull] * vehicle.Size, vehicle.Size);
-        return art.Opaque(art.Static("tank-hull-base.png"), vehicle, FrameRect(hull, 256), cursor) ||
-            art.Opaque(art.Static("tank-turret-base.png"), turret, FrameRect(TankFrame(unit.TurretTurn), 256), cursor);
+        return (vehicle.HasPoint(cursor) && art.Opaque(art.Cell("tank-hull-base", hull), vehicle, cursor)) ||
+            (turret.HasPoint(cursor) && art.Opaque(art.Cell("tank-turret-base", TankFrame(unit.TurretTurn)), turret, cursor));
     }
 
     private Rect2 BuildingBox(Piece p, Vector2 at)
@@ -225,9 +241,11 @@ public partial class BattlefieldView : Node2D
         return new Rect2(at - new Vector2(160, 220) * k, Vector2.One * (320 * k));
     }
 
+    private readonly List<(Piece Unit, Vector2 Screen)> visibleUnits = new();
+
     public override void _Draw()
     {
-        if (World == null) return;
+        if (terrain == null) return;
         art.Trim();
         DrawRect(new Rect2(Vector2.Zero, GetViewportRect().Size), new Color("#355e68"));
         var origin = ProjectionArea.GetCenter() - TerrainMesh.Project(CameraPosition.X, CameraPosition.Y) * Zoom;
@@ -255,9 +273,22 @@ public partial class BattlefieldView : Node2D
         {
             DrawBasinFreight(basin.Freight);
         }
+        visibleUnits.Clear();
+        var unitArea = Area.Grow(150);
+        bool revealScene = FullSceneVisibility;
+        foreach (var unit in World.Units)
+        {
+            if (unit.Carrier != null || !revealScene && !World.Visible(unit)) continue;
+            var at = Screen(unit.P);
+            if (unitArea.HasPoint(at)) visibleUnits.Add((unit, at));
+        }
+        visibleUnits.Sort(static (a, b) =>
+        {
+            int depth = (a.Unit.P.X + a.Unit.P.Y).CompareTo(b.Unit.P.X + b.Unit.P.Y);
+            return depth != 0 ? depth : a.Unit.Id.CompareTo(b.Unit.Id);
+        });
         int nextPost = -1;
-        foreach (var unit in World.Units.Where(p => p.Carrier == null && (FullSceneVisibility || World.Visible(p)))
-                     .OrderBy(p => p.P.X + p.P.Y))
+        foreach (var (unit, at) in visibleUnits)
         {
             while (raisedGate && nextPost <= 1)
             {
@@ -266,12 +297,8 @@ public partial class BattlefieldView : Node2D
                 DrawRaisedGatePost(nextPost);
                 nextPost += 2;
             }
-            var at = Screen(unit.P);
-            if (Area.Grow(150).HasPoint(at))
-            {
-                DrawUnit(unit, at);
-                DrawDamageEffects(unit, at);
-            }
+            DrawUnit(unit, at);
+            DrawDamageEffects(unit, at);
         }
         while (raisedGate && nextPost <= 1)
         {
@@ -704,19 +731,18 @@ public partial class BattlefieldView : Node2D
             int hull = TankFrame(p.Turn), turret = TankFrame(p.TurretTurn);
             if (!p.Alive)
             {
-                DrawTextureRectRegion(art.Static("tank-wreck.png"), vehicle, FrameRect(hull, 512));
+                DrawTextureRect(art.Cell("tank-wreck", hull), vehicle, false);
                 return;
             }
-            DrawSheet("tank-hull", vehicle, FrameRect(hull, 256), tint);
+            DrawCell("tank-hull", hull, vehicle, tint);
             var turretBox = new Rect2(vehicle.Position + tankMounts[hull] * vehicle.Size, vehicle.Size);
-            DrawSheet("tank-turret", turretBox, FrameRect(turret, 256), tint);
+            DrawCell("tank-turret", turret, turretBox, tint);
             return;
         }
 
-        var cell = FrameRect(dir, 512);
-        if (!p.Alive) DrawTextureRectRegion(art.Static(key + "-wreck.png"), vehicle, cell);
-        else DrawSheet(key == "miner" && p.Cargo > 10 ? "miner-full" : World.RepairVehicle(p) ? "ifv-repair" : key,
-            vehicle, cell, tint);
+        if (!p.Alive) DrawTextureRect(art.Cell(key + "-wreck", dir), vehicle, false);
+        else DrawCell(key == "miner" && p.Cargo > 10 ? "miner-full" : World.RepairVehicle(p) ? "ifv-repair" : key,
+            dir, vehicle, tint);
         if (p.Alive && Cinematic && World.HarborOperation?.RoadVehicle == p)
         {
             var harbor = World.HarborOperation;
@@ -739,7 +765,7 @@ public partial class BattlefieldView : Node2D
     {
         if (p.T.IsWall)
         {
-            if (p.Alive) DrawTextureRect(art.Wall(World.WallConnections(p), BattleArt.Faction(p.Side)), BuildingBox(p, at), false);
+            if (p.Alive) DrawTextureRect(art.Wall(World.WallConnections(p), p.Side), BuildingBox(p, at), false);
             return;
         }
         if (!p.Alive && p.Dead >= 1.43f) return;
@@ -797,10 +823,10 @@ public partial class BattlefieldView : Node2D
         return frame;
     }
 
-    private void DrawSheet(string key, Rect2 box, Rect2 source, Color tint)
+    private void DrawCell(string key, int frame, Rect2 box, Color tint)
     {
-        DrawTextureRectRegion(art.Static(key + "-base.png"), box, source, Colors.White, false, true);
-        DrawTextureRectRegion(art.Static(key + "-paint.png"), box, source, tint, false, true);
+        DrawTextureRect(art.Cell(key + "-base", frame), box, false);
+        DrawTextureRect(art.Cell(key + "-paint", frame), box, false, tint);
     }
 
     private Rect2 VehicleBox(TypeInfo t, Vector2 at)
@@ -815,18 +841,18 @@ public partial class BattlefieldView : Node2D
     }
 
     private static int TankFrame(float turn) => ((int)MathF.Round(turn * 4) + 56) % 64;
-    private static Rect2 FrameRect(int index, int size) => new(index % 8 * size, index / 8 * size, size, size);
 
     private void DrawBattleFeedback()
     {
-        foreach (var unit in World.Units.Where(p => p.Alive && p.Carrier == null && World.Visible(p)))
+        var area = Area.Grow(24);
+        bool engineerSelected = Selection.Any(p => p.T.Key == "engineer");
+        foreach (var (unit, at) in visibleUnits)
         {
-            var at = Screen(unit.P);
-            if (!Area.Grow(24).HasPoint(at)) continue;
+            if (!unit.Alive || !area.HasPoint(at)) continue;
             bool selected = Selection.Contains(unit);
             if (!unit.T.IsWall && (selected || unit == Hovered || unit.Hp < unit.T.Hp || unit.Ready < 1 || unit.Repairing))
                 DrawIndicators(unit, at);
-            if (unit.T.Garrison && (unit.Side >= 0 || unit == Hovered || Selection.Any(p => p.T.Key == "engineer")))
+            if (unit.T.Garrison && (unit.Side >= 0 || unit == Hovered || engineerSelected))
                 DrawGarrisonCount(unit, at);
             if (unit == Hovered)
                 DrawCornerMarks(VisibleBody(unit, at).Grow(3), unit.Side < 0 ? new Color("#f3eee0") : unit.Side == 0 ? Aqua : BattleArt.Faction(unit.Side));

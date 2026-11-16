@@ -14,7 +14,6 @@ public partial class BattlefieldView
         var standing = new Rect2(anchor - new Vector2(.5f, .91f) * width, Vector2.One * width);
         float gaitWidth = width * 3 / 2.7f;
         var gaitBox = new Rect2(anchor - new Vector2(.5f, .91f) * gaitWidth, Vector2.One * gaitWidth);
-        var imageCell = new Rect2(direction * 512, 0, 512, 512);
         float age = World.VisualTime - unit.MovedAt;
 
         bool combat = Campaign.CombatInfantry(unit) && (!Campaign.ChangingStance(unit) ||
@@ -47,8 +46,7 @@ public partial class BattlefieldView
                 return;
             }
         }
-        if (key == "engineer") DrawSheet(key, standing, imageCell, tint);
-        else DrawLayered(baseKey + "-base", standing, tint, imageCell, baseKey + "-paint");
+        DrawCell(baseKey, direction, standing, tint);
     }
 
     private static Rect2 CropGait(Rect2 box, DrawingRect crop) => new(
@@ -108,7 +106,7 @@ public partial class BattlefieldView
         {
             int frame = (int)(after / .91f * 95);
             var box = new Rect2(anchor - new Vector2(.5f, .83f) * size, Vector2.One * size);
-            DrawTextureRectRegion(art.Static("blast-cloud-v11.png"), box, FrameRect(frame, 192));
+            DrawTextureRect(art.Cell("blast-cloud-v11", frame), box, false);
         }
         if (after < 1.14f) DrawDebris(piece.Id, anchor, after, size);
         if (after > .19f) Smoke(anchor - new Vector2(0, 10) * Zoom, after * .51f, size * .3f);
@@ -135,7 +133,7 @@ public partial class BattlefieldView
     {
         var box = new Rect2(anchor - new Vector2(.5f, .72f) * size, Vector2.One * size);
         int frame = (int)(MathF.Abs(time) * 28) % 96;
-        DrawTextureRectRegion(art.Static("hazard-flame-v10.png"), box, FrameRect(frame, 128));
+        DrawTextureRect(art.Cell("hazard-flame-v10", frame), box, false);
     }
 
     private void Smoke(Vector2 anchor, float time, float size)
@@ -178,12 +176,10 @@ public partial class BattlefieldView
             }
             else
             {
-                var sprite = art.Static("debris-base-v11.png");
-                float cellSize = sprite.GetWidth() / 8f;
                 int frame = ((int)(time * 38) + i * 3) % 8;
                 float edge = size * (.12f + (i % 3) * .017f);
-                DrawTextureRectRegion(sprite, new Rect2(center - Vector2.One * edge * .5f, Vector2.One * edge),
-                    new Rect2(frame * cellSize, 0, cellSize, cellSize), new Color(Colors.White, opacity));
+                DrawTextureRect(art.Cell("debris-base-v11", frame),
+                    new Rect2(center - Vector2.One * edge * .5f, Vector2.One * edge), false, new Color(Colors.White, opacity));
             }
         }
     }
